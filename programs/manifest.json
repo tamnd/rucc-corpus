@@ -1,6 +1,6 @@
 {
   "schema": "1",
-  "corpus_sha256": "7b4209805ef6afad2181a339a7d27c599fd5828f9b80e9a19e043ab63aca259f",
+  "corpus_sha256": "1363ad19c0d25d3dd4d3fea0686eecbd4c2a71127172d4ec52ded4b00597e657",
   "count": 1018,
   "cases": [
     {
@@ -1525,7 +1525,7 @@
       "source_sha256": "598766505da36a8eb939562f6252082fcf967e6dc795463175b06be5d03f2e2e"
     },
     {
-      "id": "constant-fold.i32.rem.c17.fbc7282d",
+      "id": "constant-fold.i32.rem.c17.62828176",
       "facet": "constant-fold",
       "phase": "local",
       "dialect": "c17",
@@ -1534,9 +1534,9 @@
         "op": "rem"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n0\n0\n-2\n0\n-128\n-1\n-8\n0\n0\n0\n-2\n0\n-8\n-8\n-1\n-1\n0\n0\n-1\n-1\n-1\n-1\n1\n1\n0\n0\n1\n1\n1\n1\n3\n3\n0\n0\n0\n3\n3\n3\n8\n0\n0\n0\n2\n0\n8\n8\n255\n7\n0\n0\n0\n7\n0\n255\n2147483647\n7\n0\n0\n1\n7\n127\n0\n",
+      "expect": "0\n0\n0\n-2\n0\n-128\n-1\n-8\n0\n0\n0\n-2\n0\n-8\n-8\n-1\n-1\n0\n0\n-1\n-1\n-1\n-1\n1\n1\n0\n0\n1\n1\n1\n1\n3\n3\n0\n0\n0\n3\n3\n3\n8\n0\n0\n0\n2\n0\n8\n8\n255\n7\n0\n0\n0\n7\n0\n255\n2147483647\n7\n0\n0\n1\n7\n127\n0\n",
       "tags": [],
-      "source_sha256": "fbc7282dce709d00dc1e436237eb76469c5dba86d2949d2a3ab026d05a9fdd34"
+      "source_sha256": "6282817646db01d75b1c86d6b926f4c52cf8585c4e2793927971a675143376b3"
     },
     {
       "id": "constant-fold.i32.shl.c17.e08ac91f",
@@ -1721,7 +1721,7 @@
       "source_sha256": "21c3675c5c95d4b22bfd967103a534a90f56b81f14ad3b970c052157da429584"
     },
     {
-      "id": "constant-fold.i64.rem.c17.310f36bd",
+      "id": "constant-fold.i64.rem.c17.18b8c469",
       "facet": "constant-fold",
       "phase": "local",
       "dialect": "c17",
@@ -1730,9 +1730,9 @@
         "op": "rem"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n0\n0\n-2\n0\n-128\n-1\n-8\n0\n0\n0\n-2\n0\n-8\n-8\n-1\n-1\n0\n0\n-1\n-1\n-1\n-1\n1\n1\n0\n0\n1\n1\n1\n1\n3\n3\n0\n0\n0\n3\n3\n3\n8\n0\n0\n0\n2\n0\n8\n8\n255\n7\n0\n0\n0\n7\n0\n255\n9223372036854775807\n7\n0\n0\n1\n7\n127\n0\n",
+      "expect": "0\n0\n0\n-2\n0\n-128\n-1\n-8\n0\n0\n0\n-2\n0\n-8\n-8\n-1\n-1\n0\n0\n-1\n-1\n-1\n-1\n1\n1\n0\n0\n1\n1\n1\n1\n3\n3\n0\n0\n0\n3\n3\n3\n8\n0\n0\n0\n2\n0\n8\n8\n255\n7\n0\n0\n0\n7\n0\n255\n9223372036854775807\n7\n0\n0\n1\n7\n127\n0\n",
       "tags": [],
-      "source_sha256": "310f36bd6ebbd337d51e02b8eef246ac3d84967db91b8c9789dce99edaba3644"
+      "source_sha256": "18b8c469c294914b543e6b108b0c69789afbc1182c4f5125c3d3e6b1226271de"
     },
     {
       "id": "constant-fold.i64.shl.c17.7ea54e22",

@@ -25,6 +25,8 @@ pub struct Tally {
     pub wrong: usize,
     /// Would not compile a valid program.
     pub rejected: usize,
+    /// Would not compile a valid program and said so, which is a gap and not a bug.
+    pub unimplemented: usize,
     /// Compiled a program that is not valid C.
     pub accepted: usize,
     /// Died, hung, or was killed.
@@ -40,6 +42,7 @@ impl Tally {
             Verdict::Pass => &mut self.pass,
             Verdict::Wrong => &mut self.wrong,
             Verdict::Rejected => &mut self.rejected,
+            Verdict::Unimplemented => &mut self.unimplemented,
             Verdict::Accepted => &mut self.accepted,
             Verdict::Crashed => &mut self.crashed,
             Verdict::Skipped => &mut self.skipped,
@@ -50,7 +53,7 @@ impl Tally {
     /// How many were actually run.
     #[must_use]
     pub const fn ran(&self) -> usize {
-        self.pass + self.wrong + self.rejected + self.accepted + self.crashed
+        self.pass + self.wrong + self.rejected + self.unimplemented + self.accepted + self.crashed
     }
 
     /// How many went wrong in any way.

@@ -349,13 +349,26 @@ pub fn eval(op: Op, ty: Ty, left: i128, right: i128) -> Option<i128> {
         Op::Sub => left.checked_sub(right)?,
         Op::Mul => left.checked_mul(right)?,
         Op::Div => {
-            if right == 0 {
+            if right == 0 || overflows(out, left, right) {
                 return None;
             }
             left / right
         }
         Op::Rem => {
-            if right == 0 {
+            // The remainder is refused on the same pair the division is, and the reason is worth
+            // writing down because the obvious reading of the code says it should be allowed.
+            // C17 6.5.5p6 makes both undefined when the quotient is not representable, and for
+            // the most negative value over minus one the quotient is the thing that overflows
+            // while the remainder is a perfectly ordinary zero. Checking the result would let
+            // this through, so the check is on the quotient for both operators.
+            //
+            // It matters in practice rather than on paper. This is one x86-64 instruction with
+            // one flag deciding which half you read, and it raises rather than answering, so a
+            // compiler that folds the expression prints zero and a compiler that emits the
+            // divide dies with a floating point exception. Both are right. A corpus case that
+            // asserts either answer is a case that reports a correct compiler as broken, which
+            // is what it did on the first run against rucc on x86-64 Linux.
+            if right == 0 || overflows(out, left, right) {
                 return None;
             }
             left % right
@@ -402,6 +415,16 @@ pub fn eval(op: Op, ty: Ty, left: i128, right: i128) -> Option<i128> {
         return Some(out.convert(value));
     }
     if out.holds(value) { Some(value) } else { None }
+}
+
+/// Whether dividing these two gives a quotient the type cannot hold.
+///
+/// One pair, on a signed type: the most negative value over minus one. There is no other, because
+/// dividing makes the magnitude smaller in every other case, and it is the pair every hand written
+/// division test forgets.
+#[must_use]
+fn overflows(out: Ty, left: i128, right: i128) -> bool {
+    out.signed() && left == out.min() && right == -1
 }
 
 /// A handful of operand values worth trying for a type.
@@ -485,6 +508,27 @@ mod tests {
         assert_eq!(eval(Op::Div, Ty::I32, 7, 2), Some(3));
         assert_eq!(eval(Op::Div, Ty::I32, -7, 2), Some(-3));
         assert_eq!(eval(Op::Rem, Ty::I32, -7, 2), Some(-1));
+    }
+
+    #[test]
+    fn the_remainder_is_refused_on_the_pair_the_division_overflows_on() {
+        // The remainder is zero and fits, and the expression is still undefined, because C17
+        // 6.5.5p6 asks about the quotient for both operators. The first full run against rucc on
+        // x86-64 Linux is what found this: gcc folded the expression to zero and rucc emitted the
+        // divide, which raises, and both compilers were right.
+        for &ty in &[Ty::I32, Ty::I64] {
+            assert_eq!(eval(Op::Rem, ty, ty.min(), -1), None, "{}", ty.name());
+            assert_eq!(eval(Op::Div, ty, ty.min(), -1), None, "{}", ty.name());
+            // And nothing else on the type is refused for this reason.
+            assert_eq!(eval(Op::Rem, ty, ty.min(), 1), Some(0), "{}", ty.name());
+            assert_eq!(eval(Op::Rem, ty, ty.min() + 1, -1), Some(0), "{}", ty.name());
+        }
+        // A narrow signed type has no such pair, because the promotion happens first and the
+        // quotient of the most negative `char` over minus one is an `int` that holds it easily.
+        assert_eq!(eval(Op::Rem, Ty::I8, Ty::I8.min(), -1), Some(0));
+        assert_eq!(eval(Op::Div, Ty::I16, Ty::I16.min(), -1), Some(32_768));
+        // An unsigned type has no most negative value and no minus one, so nothing is refused.
+        assert_eq!(eval(Op::Rem, Ty::U32, Ty::U32.max(), 1), Some(0));
     }
 
     #[test]

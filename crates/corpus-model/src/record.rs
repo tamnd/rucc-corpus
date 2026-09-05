@@ -302,6 +302,19 @@ pub enum Verdict {
     Wrong,
     /// It did not compile, and it should have.
     Rejected,
+    /// It did not compile, and the compiler said plainly that the construct is not built yet.
+    ///
+    /// Split off from [`Verdict::Rejected`] because the two want different responses. A rejection
+    /// is a bug: the compiler read valid C and got it wrong, and somebody has to find out why.
+    /// This is a gap: the compiler read valid C, recognised it, and said it has not been taught to
+    /// lower it, which is a line on a to-do list that already exists.
+    ///
+    /// It does not turn the build red, and that is the only concession it gets. It is counted, it
+    /// is listed in the human report with the compiler's own words, and the count going up between
+    /// two runs is a regression the diff will show. A corpus that hid these would be a corpus that
+    /// stopped measuring the thing it was built to measure, and one that failed on them would be a
+    /// corpus nobody could run until the compiler was finished.
+    Unimplemented,
     /// It compiled and should not have.
     Accepted,
     /// The compiler failed in a way that is not a diagnostic, such as a crash or a timeout.
@@ -318,6 +331,7 @@ impl Verdict {
             Self::Pass => "pass",
             Self::Wrong => "wrong",
             Self::Rejected => "rejected",
+            Self::Unimplemented => "unimplemented",
             Self::Accepted => "accepted",
             Self::Crashed => "crashed",
             Self::Skipped => "skipped",
@@ -328,6 +342,14 @@ impl Verdict {
     #[must_use]
     pub const fn is_failure(self) -> bool {
         matches!(self, Self::Wrong | Self::Rejected | Self::Accepted | Self::Crashed)
+    }
+
+    /// Whether this is a gap the compiler admitted to rather than a bug it does not know it has.
+    ///
+    /// Reported separately and counted, per [`Verdict::Unimplemented`].
+    #[must_use]
+    pub const fn is_gap(self) -> bool {
+        matches!(self, Self::Unimplemented)
     }
 }
 

@@ -77,6 +77,7 @@ fn tally_json(tally: &Tally) -> Json {
         ("pass", Json::int(tally.pass as i64)),
         ("wrong", Json::int(tally.wrong as i64)),
         ("rejected", Json::int(tally.rejected as i64)),
+        ("unimplemented", Json::int(tally.unimplemented as i64)),
         ("accepted", Json::int(tally.accepted as i64)),
         ("crashed", Json::int(tally.crashed as i64)),
         ("skipped", Json::int(tally.skipped as i64)),
@@ -250,6 +251,10 @@ fn describe_rule(id: &str) -> String {
             "The compiled program printed something other than the answer the generator computed."
         }
         "rejected" => "The compiler refused a program that is valid C.",
+        "unimplemented" => {
+            "The compiler refused a program that is valid C, and said itself that it has not \
+             built the construct yet. A gap on a to-do list rather than a bug."
+        }
         "accepted" => "The compiler accepted a program that is not valid C.",
         "crashed" => "The compiler or the program it produced did not finish.",
         _ => "The case did not come out as expected.",

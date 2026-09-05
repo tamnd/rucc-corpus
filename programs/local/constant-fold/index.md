@@ -29,7 +29,7 @@ folding an operation on constants into a constant. Part of the local phase of th
 | [`constant-fold.i32.neg.c17.0f4ae7f0`](constant-fold.i32.neg.c17.0f4ae7f0.c) | type=i32, op=neg | c17 | `8 1 -1 ...` and 4 more lines |
 | [`constant-fold.i32.not.c17.4985b244`](constant-fold.i32.not.c17.4985b244.c) | type=i32, op=not | c17 | `2147483647 7 0 ...` and 5 more lines |
 | [`constant-fold.i32.or.c17.59876650`](constant-fold.i32.or.c17.59876650.c) | type=i32, op=or | c17 | `-2147483648 -8 -1 ...` and 61 more lines |
-| [`constant-fold.i32.rem.c17.fbc7282d`](constant-fold.i32.rem.c17.fbc7282d.c) | type=i32, op=rem | c17 | `0 0 0 ...` and 61 more lines |
+| [`constant-fold.i32.rem.c17.62828176`](constant-fold.i32.rem.c17.62828176.c) | type=i32, op=rem | c17 | `0 0 0 ...` and 60 more lines |
 | [`constant-fold.i32.shl.c17.e08ac91f`](constant-fold.i32.shl.c17.e08ac91f.c) | type=i32, op=shl | c17 | `1 2 8 ...` and 14 more lines |
 | [`constant-fold.i32.shr.c17.f4895332`](constant-fold.i32.shr.c17.f4895332.c) | type=i32, op=shr | c17 | `1 0 0 ...` and 22 more lines |
 | [`constant-fold.i32.sub.c17.be0ff9c1`](constant-fold.i32.sub.c17.be0ff9c1.c) | type=i32, op=sub | c17 | `0 -2147483640 -2147483647 ...` and 48 more lines |
@@ -43,7 +43,7 @@ folding an operation on constants into a constant. Part of the local phase of th
 | [`constant-fold.i64.neg.c17.aa50e68b`](constant-fold.i64.neg.c17.aa50e68b.c) | type=i64, op=neg | c17 | `8 1 -1 ...` and 4 more lines |
 | [`constant-fold.i64.not.c17.fb9dea03`](constant-fold.i64.not.c17.fb9dea03.c) | type=i64, op=not | c17 | `9223372036854775807 7 0 ...` and 5 more lines |
 | [`constant-fold.i64.or.c17.21c3675c`](constant-fold.i64.or.c17.21c3675c.c) | type=i64, op=or | c17 | `-9223372036854775808 -8 -1 ...` and 61 more lines |
-| [`constant-fold.i64.rem.c17.310f36bd`](constant-fold.i64.rem.c17.310f36bd.c) | type=i64, op=rem | c17 | `0 0 0 ...` and 61 more lines |
+| [`constant-fold.i64.rem.c17.18b8c469`](constant-fold.i64.rem.c17.18b8c469.c) | type=i64, op=rem | c17 | `0 0 0 ...` and 60 more lines |
 | [`constant-fold.i64.shl.c17.7ea54e22`](constant-fold.i64.shl.c17.7ea54e22.c) | type=i64, op=shl | c17 | `1 2 8 ...` and 14 more lines |
 | [`constant-fold.i64.shr.c17.912365fb`](constant-fold.i64.shr.c17.912365fb.c) | type=i64, op=shr | c17 | `1 0 0 ...` and 22 more lines |
 | [`constant-fold.i64.sub.c17.a152b9d6`](constant-fold.i64.sub.c17.a152b9d6.c) | type=i64, op=sub | c17 | `0 -9223372036854775800 -9223372036854775807 ...` and 48 more lines |

@@ -92,19 +92,20 @@
       }
     },
     "tally": {
-      "description": "How a set of builds came out. Every build lands in exactly one of the six verdicts, so pass through skipped sum to ran.",
+      "description": "How a set of builds came out. Every build lands in exactly one of the seven verdicts, so pass through crashed sum to ran and skipped is the rest.",
       "type": "object",
-      "required": ["pass", "wrong", "rejected", "accepted", "crashed", "skipped", "ran", "failures", "pass_rate"],
+      "required": ["pass", "wrong", "rejected", "unimplemented", "accepted", "crashed", "skipped", "ran", "failures", "pass_rate"],
       "additionalProperties": false,
       "properties": {
         "pass": { "description": "Did what the generator said it would.", "type": "integer", "minimum": 0 },
         "wrong": { "description": "Compiled, ran, printed something else. The worst kind.", "type": "integer", "minimum": 0 },
         "rejected": { "description": "Refused a program that is valid C.", "type": "integer", "minimum": 0 },
+        "unimplemented": { "description": "Refused a program that is valid C, having said itself that the construct is not built yet. Counted and reported, and not a failure.", "type": "integer", "minimum": 0 },
         "accepted": { "description": "Accepted a program that is not valid C, or rejected it for the wrong reason.", "type": "integer", "minimum": 0 },
         "crashed": { "description": "Fell over, timed out, or died on a signal.", "type": "integer", "minimum": 0 },
         "skipped": { "description": "Not built, because the case asked to be left out.", "type": "integer", "minimum": 0 },
         "ran": { "description": "Everything except skipped.", "type": "integer", "minimum": 0 },
-        "failures": { "description": "Everything except pass and skipped.", "type": "integer", "minimum": 0 },
+        "failures": { "description": "Everything that is a bug, so wrong plus rejected plus accepted plus crashed. Not unimplemented, which is a gap the compiler declared, and not skipped.", "type": "integer", "minimum": 0 },
         "pass_rate": { "description": "Passes over ran, or zero when nothing ran.", "type": "number", "minimum": 0, "maximum": 1 }
       }
     },
@@ -171,7 +172,7 @@
         "facet": { "type": "string" },
         "toolchain": { "type": "string" },
         "level": { "enum": ["O0", "O1", "O2", "O3", "Os"] },
-        "verdict": { "enum": ["wrong", "rejected", "accepted", "crashed"] },
+        "verdict": { "enum": ["wrong", "rejected", "unimplemented", "accepted", "crashed"] },
         "summary": { "description": "The finding in one line, for a list.", "type": "string" },
         "expected": { "description": "What it should have printed, or the diagnostic it should have produced.", "type": "string" },
         "actual": { "description": "What it printed, or what the compiler said.", "type": "string" }

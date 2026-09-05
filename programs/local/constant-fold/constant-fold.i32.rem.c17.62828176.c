@@ -6,7 +6,6 @@ int printf(const char *, ...);
 int main(void) {
     printf("%lld\n", (long long)(((int)(-2147483647 - 1)) % ((int)(-2147483647 - 1))));
     printf("%lld\n", (long long)(((int)(-2147483647 - 1)) % ((int)(-8))));
-    printf("%lld\n", (long long)(((int)(-2147483647 - 1)) % ((int)(-1))));
     printf("%lld\n", (long long)(((int)(-2147483647 - 1)) % ((int)1)));
     printf("%lld\n", (long long)(((int)(-2147483647 - 1)) % ((int)3)));
     printf("%lld\n", (long long)(((int)(-2147483647 - 1)) % ((int)8)));

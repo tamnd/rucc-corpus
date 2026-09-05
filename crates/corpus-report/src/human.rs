@@ -13,6 +13,7 @@
 use crate::summary::{FacetSummary, Summary, Tally};
 use corpus_model::{Finding, Phase};
 use corpus_run::Run;
+use std::collections::BTreeMap;
 
 /// How many facets are listed in each direction in the code quality section.
 const RANKED: usize = 8;
@@ -28,6 +29,7 @@ pub fn report_md(run: &Run, summary: &Summary) -> String {
     targets(&mut out, summary);
     totals(&mut out, summary);
     findings(&mut out, run);
+    gaps(&mut out, run);
     code_quality(&mut out, summary);
     by_phase(&mut out, summary);
     reference_opinion(&mut out, summary);
@@ -99,14 +101,15 @@ fn targets(out: &mut String, summary: &Summary) {
 /// How the cases came out, per compiler.
 fn totals(out: &mut String, summary: &Summary) {
     out.push_str("## What happened\n\n");
-    out.push_str("| compiler | ran | passed | wrong answer | wrongly rejected | wrongly accepted | crashed | skipped |\n|---|---|---|---|---|---|---|---|\n");
+    out.push_str("| compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |\n|---|---|---|---|---|---|---|---|---|\n");
     for (id, tally) in &summary.totals {
         out.push_str(&format!(
-            "| `{id}` | {} | {} | {} | {} | {} | {} | {} |\n",
+            "| `{id}` | {} | {} | {} | {} | {} | {} | {} | {} |\n",
             tally.ran(),
             tally.pass,
             tally.wrong,
             tally.rejected,
+            tally.unimplemented,
             tally.accepted,
             tally.crashed,
             tally.skipped
@@ -117,18 +120,71 @@ fn totals(out: &mut String, summary: &Summary) {
 
 /// Everything that went wrong, in enough detail to act on.
 fn findings(out: &mut String, run: &Run) {
-    if run.findings.is_empty() {
+    let bugs: Vec<&Finding> =
+        run.findings.iter().filter(|finding| finding.verdict.is_failure()).collect();
+    if bugs.is_empty() {
         return;
     }
     out.push_str("## What went wrong\n\n");
-    for finding in run.findings.iter().take(LISTED) {
+    for finding in bugs.iter().take(LISTED) {
         one_finding(out, finding);
     }
-    if run.findings.len() > LISTED {
+    if bugs.len() > LISTED {
         out.push_str(&format!(
             "And {} more, which are all in `findings.sarif` and in `report.json`.\n\n",
-            run.findings.len() - LISTED
+            bugs.len() - LISTED
         ));
+    }
+}
+
+/// The cases a compiler refused while saying itself that it has not built the construct yet.
+///
+/// Its own section rather than a line in the failures, because the response is different. A
+/// failure is somebody debugging tonight. This is a list of features, and the useful form of it is
+/// one line each with the compiler's own sentence, grouped so that twenty cases blocked on the
+/// same missing thing read as one missing thing.
+fn gaps(out: &mut String, run: &Run) {
+    let mut by_compiler: BTreeMap<&str, BTreeMap<String, Vec<&str>>> = BTreeMap::new();
+    for finding in run.findings.iter().filter(|finding| finding.verdict.is_gap()) {
+        let said = first_line(&finding.actual);
+        by_compiler
+            .entry(&finding.toolchain)
+            .or_default()
+            .entry(said)
+            .or_default()
+            .push(&finding.case);
+    }
+    if by_compiler.is_empty() {
+        return;
+    }
+    out.push_str("## What is not built yet\n\n");
+    out.push_str(
+        "These are cases a compiler refused while saying itself that the construct is not implemented. They are valid C and they are counted, and they do not turn the build red, because a compiler that tells you what it has not written yet is doing the right thing. The count going up between two runs is a regression and `rucc-corpus diff` will say so.\n\n",
+    );
+    for (id, said) in by_compiler {
+        out.push_str(&format!("### `{id}`\n\n"));
+        for (message, cases) in said {
+            out.push_str(&format!(
+                "- {message} ({} case{}, first is `{}`)\n",
+                cases.len(),
+                if cases.len() == 1 { "" } else { "s" },
+                cases[0]
+            ));
+        }
+        out.push('\n');
+    }
+}
+
+/// The first line of a diagnostic with the file, line and column taken off the front.
+///
+/// A diagnostic is `path:line:col: error: what`, and the path and the position are what make two
+/// reports of the same missing feature look like two different things.
+fn first_line(diagnostics: &str) -> String {
+    let line = diagnostics.lines().next().unwrap_or_default();
+    let after = line.find(": error: ").or_else(|| line.find(": warning: "));
+    match after {
+        Some(at) => line[at..].trim_start_matches(": ").to_owned(),
+        None => line.to_owned(),
     }
 }
 
@@ -235,6 +291,7 @@ fn by_phase(out: &mut String, summary: &Summary) {
                     tally.pass += score.tally.pass;
                     tally.wrong += score.tally.wrong;
                     tally.rejected += score.tally.rejected;
+                    tally.unimplemented += score.tally.unimplemented;
                     tally.accepted += score.tally.accepted;
                     tally.crashed += score.tally.crashed;
                     tally.skipped += score.tally.skipped;

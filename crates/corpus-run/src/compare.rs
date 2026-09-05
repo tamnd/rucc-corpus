@@ -31,8 +31,11 @@ fn judge_running_case(record: &RunRecord, wanted: &str) -> Verdict {
         // A compiler that died without saying anything crashed. A compiler that printed a
         // diagnostic and gave up rejected a program it should have accepted. They are both
         // bugs and they are found in completely different places, so they are told apart.
-        return if record.compile.diagnostics.is_empty() || record.compile.status < 0 {
-            Verdict::Crashed
+        if record.compile.diagnostics.is_empty() || record.compile.status < 0 {
+            return Verdict::Crashed;
+        }
+        return if admits_a_gap(&record.compile.diagnostics) {
+            Verdict::Unimplemented
         } else {
             Verdict::Rejected
         };
@@ -54,6 +57,33 @@ fn judge_rejected_case(record: &RunRecord, mentions: &str) -> Verdict {
     if mentions_it(&record.compile.diagnostics, mentions) { Verdict::Pass } else { Verdict::Wrong }
 }
 
+/// The wordings a compiler uses to say it has not built the thing yet.
+///
+/// Every entry is a phrase a compiler prints about itself, and that is the whole basis for
+/// treating this differently from an ordinary rejection. Guessing from the shape of the program
+/// which constructs a compiler probably does not have would put the corpus in the business of
+/// tracking somebody else's roadmap, and would go quietly stale the day the feature landed. A
+/// compiler that says the words is a compiler that has told us, and one that stops saying them is
+/// one whose case starts passing on its own.
+///
+/// GCC's is `sorry, unimplemented:`, which it has printed since the nineties. rucc's is the note
+/// it attaches to the E0653 family, `this construct is not lowered yet`. Clang's is
+/// `unsupported ... in this compiler`, which is close enough to the same sentence.
+const ADMISSIONS: &[&str] = &[
+    "sorry, unimplemented",
+    "not lowered yet",
+    "not implemented yet",
+    "is not yet supported",
+    "unsupported by this compiler",
+];
+
+/// Whether the compiler said, in its own words, that it has not built this yet.
+#[must_use]
+pub fn admits_a_gap(diagnostics: &str) -> bool {
+    let lowered = diagnostics.to_ascii_lowercase();
+    ADMISSIONS.iter().any(|phrase| lowered.contains(phrase))
+}
+
 /// Whether a diagnostic said the thing the case expected it to say.
 ///
 /// Case insensitive, and a fragment rather than the whole message. Requiring the exact wording
@@ -69,10 +99,12 @@ pub fn mentions_it(diagnostics: &str, wanted: &str) -> bool {
 
 /// Turns a verdict that is not a pass into something a person can act on.
 ///
-/// Returns `None` for a pass or a skip, so the caller can collect findings by filtering.
+/// Returns `None` for a pass or a skip, so the caller can collect findings by filtering. A gap
+/// gets a finding like a failure does, because it is a thing somebody has to act on eventually,
+/// and the verdict on the finding is what keeps the two apart in the report.
 #[must_use]
 pub fn finding(case: &Case, record: &RunRecord, verdict: Verdict) -> Option<Finding> {
-    if !verdict.is_failure() {
+    if !verdict.is_failure() && !verdict.is_gap() {
         return None;
     }
     let (summary, expected, actual) = describe(case, record, verdict);
@@ -109,6 +141,11 @@ fn describe(case: &Case, record: &RunRecord, verdict: Verdict) -> (String, Strin
         },
         Verdict::Rejected => (
             format!("{} would not compile a valid program about {what}", record.toolchain),
+            "the program compiles".to_owned(),
+            record.compile.diagnostics.clone(),
+        ),
+        Verdict::Unimplemented => (
+            format!("{} has not built the part of {what} this case needs yet", record.toolchain),
             "the program compiles".to_owned(),
             record.compile.diagnostics.clone(),
         ),
@@ -284,6 +321,59 @@ mod tests {
             text_bytes: 0,
         };
         assert_eq!(judge(&case, &record_for(&case, killed, Execute::skipped())), Verdict::Crashed);
+    }
+
+    #[test]
+    fn a_compiler_that_says_it_has_not_built_the_thing_yet_is_a_gap_and_not_a_bug() {
+        let case = running_case();
+        // rucc's wording, from the E0653 family, taken from a real run on x86-64 Linux.
+        let admitted = Compile {
+            ok: false,
+            status: 1,
+            micros: 900,
+            diagnostics: "f.c:8:26: error: cannot generate code for 'main': no rule lowers a `trunc` producing a `i12` [E0653]\nf.c:8:26: note: this construct is not lowered yet".to_owned(),
+            bytes: 0,
+            text_bytes: 0,
+        };
+        let record = record_for(&case, admitted, Execute::skipped());
+        let verdict = judge(&case, &record);
+        assert_eq!(verdict, Verdict::Unimplemented);
+        assert!(!verdict.is_failure(), "a declared gap does not turn the build red");
+        assert!(verdict.is_gap());
+        // It still gets a finding, because it is still something somebody has to do.
+        let found = finding(&case, &record, verdict).expect("a gap is reported");
+        assert_eq!(found.verdict, Verdict::Unimplemented);
+        assert!(found.actual.contains("not lowered yet"));
+    }
+
+    #[test]
+    fn an_ordinary_rejection_is_still_a_bug() {
+        // The same shape without the admission. This is the compiler getting valid C wrong, and
+        // nothing about the phrasing should let it into the quiet pile.
+        let case = running_case();
+        let refused = Compile {
+            ok: false,
+            status: 1,
+            micros: 900,
+            diagnostics: "f.c:3:1: error: expected a declaration".to_owned(),
+            bytes: 0,
+            text_bytes: 0,
+        };
+        assert_eq!(
+            judge(&case, &record_for(&case, refused, Execute::skipped())),
+            Verdict::Rejected
+        );
+    }
+
+    #[test]
+    fn the_admissions_are_the_words_compilers_actually_print() {
+        assert!(super::admits_a_gap("note: this construct is not lowered yet"));
+        assert!(super::admits_a_gap("sorry, unimplemented: non-trivial designated initializers"));
+        assert!(super::admits_a_gap("SORRY, UNIMPLEMENTED: shouting"));
+        assert!(!super::admits_a_gap("error: expected a declaration"));
+        assert!(!super::admits_a_gap(""));
+        // Not a guess about which features a compiler has. Only what it said about itself.
+        assert!(!super::admits_a_gap("error: _BitInt is not a type"));
     }
 
     #[test]
