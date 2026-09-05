@@ -8,10 +8,44 @@
           "name": "rucc-corpus",
           "version": "0.1.0",
           "informationUri": "https://github.com/tamnd/rucc-corpus",
-          "rules": []
+          "rules": [
+            {
+              "id": "unimplemented",
+              "name": "unimplemented",
+              "shortDescription": {
+                "text": "The compiler refused a program that is valid C, and said itself that it has not built the construct yet. A gap on a to-do list rather than a bug."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            }
+          ]
         }
       },
-      "results": []
+      "results": [
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of language shape rather than optimization, including C23 this case needs yet. Expected the program compiles, got case.c:8:26: error: cannot generate code for 'main': no rule lowers a `trunc` producing a `i12` [E0653] / case.c:8:26: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/floor/frontend/frontend.bit-precise.c23.6f93abb7.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "frontend",
+            "toolchain": "rucc",
+            "level": "O0"
+          }
+        }
+      ]
     }
   ]
 }

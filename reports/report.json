@@ -2,7 +2,7 @@
   "schema": "1",
   "milestone": "M4",
   "tool": "rucc-corpus 0.1.0",
-  "corpus_digest": "7b4209805ef6afad2181a339a7d27c599fd5828f9b80e9a19e043ab63aca259f",
+  "corpus_digest": "1363ad19c0d25d3dd4d3fea0686eecbd4c2a71127172d4ec52ded4b00597e657",
   "cases": 1018,
   "reference": "gcc-16",
   "levels": [
@@ -15,9 +15,15 @@
   "toolchains": [
     {
       "id": "gcc-16",
-      "program": "/opt/homebrew/bin/gcc-16",
-      "version": "gcc-16 (Homebrew GCC 16.2.0) 16.2.0",
+      "program": "gcc-16",
+      "version": "gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]",
       "reference": true
+    },
+    {
+      "id": "rucc",
+      "program": "/root/m4/rucc/target/release/rucc",
+      "version": "rucc 0.4.1",
+      "reference": false
     }
   ],
   "totals": [
@@ -27,12 +33,28 @@
         "pass": 5058,
         "wrong": 0,
         "rejected": 0,
+        "unimplemented": 0,
         "accepted": 0,
         "crashed": 0,
         "skipped": 0,
         "ran": 5058,
         "failures": 0,
         "pass_rate": 1
+      }
+    },
+    {
+      "toolchain": "rucc",
+      "tally": {
+        "pass": 5057,
+        "wrong": 0,
+        "rejected": 0,
+        "unimplemented": 1,
+        "accepted": 0,
+        "crashed": 0,
+        "skipped": 0,
+        "ran": 5058,
+        "failures": 0,
+        "pass_rate": 1.0
       }
     }
   ],
@@ -43,6 +65,20 @@
       "threshold": 0,
       "actual": 0,
       "met": true
+    },
+    {
+      "name": "code-quality:rucc",
+      "wanted": "the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2",
+      "threshold": 1.1,
+      "actual": 1.099,
+      "met": true
+    },
+    {
+      "name": "compile-throughput:rucc",
+      "wanted": "rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00",
+      "threshold": 1,
+      "actual": 0.451,
+      "met": true
     }
   ],
   "facets": [
@@ -52,8 +88,8 @@
       "describes": "programs with no optimization target, which every level must get right",
       "cases": 10,
       "reference_said": {
-        "optimized": 32,
-        "missed": 131
+        "optimized": 34,
+        "missed": 99
       },
       "scores": [
         {
@@ -62,6 +98,7 @@
             "pass": 50,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -73,6 +110,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 50,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 50,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 10,
+          "size_ratio": 1.151,
+          "speed_ratio": 0.726,
+          "compile_ratio": 0.482
         }
       ]
     },
@@ -92,6 +148,7 @@
             "pass": 560,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -103,6 +160,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 560,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 560,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 112,
+          "size_ratio": 1.233,
+          "speed_ratio": 1.11,
+          "compile_ratio": 0.448
         }
       ]
     },
@@ -122,6 +198,7 @@
             "pass": 120,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -133,6 +210,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 120,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 120,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 24,
+          "size_ratio": 1.2,
+          "speed_ratio": 1.132,
+          "compile_ratio": 0.387
         }
       ]
     },
@@ -152,6 +248,7 @@
             "pass": 40,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -163,6 +260,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 40,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 40,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 8,
+          "size_ratio": 1.553,
+          "speed_ratio": 1.023,
+          "compile_ratio": 0.482
         }
       ]
     },
@@ -182,6 +298,7 @@
             "pass": 100,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -193,6 +310,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1.165,
+          "speed_ratio": 0.686,
+          "compile_ratio": 0.442
         }
       ]
     },
@@ -212,6 +348,7 @@
             "pass": 60,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -223,6 +360,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 0.958,
+          "speed_ratio": 1.001,
+          "compile_ratio": 0.622
         }
       ]
     },
@@ -242,6 +398,7 @@
             "pass": 60,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -253,6 +410,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1.001,
+          "speed_ratio": 0.811,
+          "compile_ratio": 0.517
         }
       ]
     },
@@ -272,6 +448,7 @@
             "pass": 25,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -283,6 +460,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 25,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 25,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 5,
+          "size_ratio": 1.057,
+          "speed_ratio": 2.217,
+          "compile_ratio": 0.368
         }
       ]
     },
@@ -302,6 +498,7 @@
             "pass": 80,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -313,6 +510,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1.06,
+          "speed_ratio": 0.609,
+          "compile_ratio": 0.548
         }
       ]
     },
@@ -332,6 +548,7 @@
             "pass": 80,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -343,6 +560,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1.004,
+          "speed_ratio": 0.998,
+          "compile_ratio": 0.461
         }
       ]
     },
@@ -362,6 +598,7 @@
             "pass": 60,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -373,6 +610,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1.055,
+          "speed_ratio": 0.908,
+          "compile_ratio": 0.789
         }
       ]
     },
@@ -392,6 +648,7 @@
             "pass": 60,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -403,6 +660,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 0.944,
+          "speed_ratio": 1.373,
+          "compile_ratio": 0.443
         }
       ]
     },
@@ -422,6 +698,7 @@
             "pass": 80,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -433,6 +710,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 0.996,
+          "speed_ratio": 0.891,
+          "compile_ratio": 0.41
         }
       ]
     },
@@ -452,6 +748,7 @@
             "pass": 20,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -463,6 +760,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 20,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 20,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 4,
+          "size_ratio": 1.328,
+          "speed_ratio": 1.333,
+          "compile_ratio": 0.499
         }
       ]
     },
@@ -482,6 +798,7 @@
             "pass": 80,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -493,6 +810,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1.066,
+          "speed_ratio": 1.024,
+          "compile_ratio": 0.432
         }
       ]
     },
@@ -512,6 +848,7 @@
             "pass": 100,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -523,6 +860,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 0.999,
+          "speed_ratio": 0.98,
+          "compile_ratio": 0.57
         }
       ]
     },
@@ -542,6 +898,7 @@
             "pass": 160,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -553,6 +910,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 160,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 160,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 32,
+          "size_ratio": 1.14,
+          "speed_ratio": 1.179,
+          "compile_ratio": 0.453
         }
       ]
     },
@@ -572,6 +948,7 @@
             "pass": 160,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -583,6 +960,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 160,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 160,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 32,
+          "size_ratio": 1.341,
+          "speed_ratio": 1.257,
+          "compile_ratio": 0.539
         }
       ]
     },
@@ -592,8 +988,8 @@
       "describes": "removing a test the loop guard already decided",
       "cases": 64,
       "reference_said": {
-        "optimized": 176,
-        "missed": 164
+        "optimized": 134,
+        "missed": 212
       },
       "scores": [
         {
@@ -602,6 +998,7 @@
             "pass": 320,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -613,6 +1010,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1.07,
+          "speed_ratio": 1.134,
+          "compile_ratio": 0.396
         }
       ]
     },
@@ -622,7 +1038,7 @@
       "describes": "unrolling a loop body, known trip count or not",
       "cases": 64,
       "reference_said": {
-        "optimized": 172,
+        "optimized": 196,
         "missed": 128
       },
       "scores": [
@@ -632,6 +1048,7 @@
             "pass": 320,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -643,6 +1060,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1.061,
+          "speed_ratio": 1.153,
+          "compile_ratio": 0.511
         }
       ]
     },
@@ -652,8 +1088,8 @@
       "describes": "recognizing a loop the runtime already implements",
       "cases": 64,
       "reference_said": {
-        "optimized": 382,
-        "missed": 86
+        "optimized": 395,
+        "missed": 76
       },
       "scores": [
         {
@@ -662,6 +1098,7 @@
             "pass": 320,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -673,6 +1110,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1.158,
+          "speed_ratio": 1.057,
+          "compile_ratio": 0.364
         }
       ]
     },
@@ -682,8 +1138,8 @@
       "describes": "deleting a loop whose body nobody reads",
       "cases": 24,
       "reference_said": {
-        "optimized": 64,
-        "missed": 54
+        "optimized": 76,
+        "missed": 48
       },
       "scores": [
         {
@@ -692,6 +1148,7 @@
             "pass": 120,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -703,6 +1160,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 120,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 120,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 24,
+          "size_ratio": 1.14,
+          "speed_ratio": 1.074,
+          "compile_ratio": 0.371
         }
       ]
     },
@@ -722,6 +1198,7 @@
             "pass": 320,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -733,6 +1210,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1.084,
+          "speed_ratio": 1.031,
+          "compile_ratio": 0.445
         }
       ]
     },
@@ -742,8 +1238,8 @@
       "describes": "exchanging or fusing loops for locality",
       "cases": 48,
       "reference_said": {
-        "optimized": 275,
-        "missed": 72
+        "optimized": 262,
+        "missed": 60
       },
       "scores": [
         {
@@ -752,6 +1248,7 @@
             "pass": 240,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -763,6 +1260,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 240,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 240,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 48,
+          "size_ratio": 1.306,
+          "speed_ratio": 0.865,
+          "compile_ratio": 0.4
         }
       ]
     },
@@ -782,6 +1298,7 @@
             "pass": 180,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -793,6 +1310,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 180,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 180,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 36,
+          "size_ratio": 1.223,
+          "speed_ratio": 0.94,
+          "compile_ratio": 0.445
         }
       ]
     },
@@ -802,8 +1338,8 @@
       "describes": "turning a call in tail position into a jump",
       "cases": 36,
       "reference_said": {
-        "optimized": 324,
-        "missed": 456
+        "optimized": 300,
+        "missed": 480
       },
       "scores": [
         {
@@ -812,6 +1348,7 @@
             "pass": 180,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -823,6 +1360,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 180,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 180,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 36,
+          "size_ratio": 1.114,
+          "speed_ratio": 0.985,
+          "compile_ratio": 0.456
         }
       ]
     },
@@ -842,6 +1398,7 @@
             "pass": 100,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -853,6 +1410,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1.197,
+          "speed_ratio": 1.108,
+          "compile_ratio": 0.44
         }
       ]
     },
@@ -863,7 +1439,7 @@
       "cases": 12,
       "reference_said": {
         "optimized": 84,
-        "missed": 48
+        "missed": 44
       },
       "scores": [
         {
@@ -872,6 +1448,7 @@
             "pass": 60,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -883,6 +1460,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1.144,
+          "speed_ratio": 0.79,
+          "compile_ratio": 0.613
         }
       ]
     },
@@ -902,6 +1498,7 @@
             "pass": 45,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -913,6 +1510,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 45,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 45,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 9,
+          "size_ratio": 0.956,
+          "speed_ratio": 1.125,
+          "compile_ratio": 0.364
         }
       ]
     },
@@ -932,6 +1548,7 @@
             "pass": 20,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -943,6 +1560,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 20,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 20,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 4,
+          "size_ratio": 1.065,
+          "speed_ratio": 1.317,
+          "compile_ratio": 0.443
         }
       ]
     },
@@ -953,7 +1589,7 @@
       "cases": 40,
       "reference_said": {
         "optimized": 0,
-        "missed": 252
+        "missed": 244
       },
       "scores": [
         {
@@ -962,6 +1598,7 @@
             "pass": 200,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -973,6 +1610,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 200,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 200,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 40,
+          "size_ratio": 0.98,
+          "speed_ratio": 0.984,
+          "compile_ratio": 0.543
         }
       ]
     },
@@ -982,8 +1638,8 @@
       "describes": "assigning registers and deciding what to spill",
       "cases": 40,
       "reference_said": {
-        "optimized": 104,
-        "missed": 92
+        "optimized": 20,
+        "missed": 104
       },
       "scores": [
         {
@@ -992,6 +1648,7 @@
             "pass": 200,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1003,6 +1660,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 200,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 200,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 40,
+          "size_ratio": 1.609,
+          "speed_ratio": 1.204,
+          "compile_ratio": 0.529
         }
       ]
     },
@@ -1013,7 +1689,7 @@
       "cases": 12,
       "reference_said": {
         "optimized": 24,
-        "missed": 71
+        "missed": 64
       },
       "scores": [
         {
@@ -1022,6 +1698,7 @@
             "pass": 60,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1033,6 +1710,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1.681,
+          "speed_ratio": 0.623,
+          "compile_ratio": 0.41
         }
       ]
     },
@@ -1042,7 +1738,7 @@
       "describes": "laying out blocks so the common path falls through",
       "cases": 4,
       "reference_said": {
-        "optimized": 5,
+        "optimized": 11,
         "missed": 14
       },
       "scores": [
@@ -1052,6 +1748,7 @@
             "pass": 20,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1063,6 +1760,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 20,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 20,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 4,
+          "size_ratio": 1.024,
+          "speed_ratio": 0.727,
+          "compile_ratio": 0.575
         }
       ]
     },
@@ -1072,8 +1788,8 @@
       "describes": "turning a short branch into branchless code",
       "cases": 20,
       "reference_said": {
-        "optimized": 31,
-        "missed": 98
+        "optimized": 17,
+        "missed": 126
       },
       "scores": [
         {
@@ -1082,6 +1798,7 @@
             "pass": 100,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1093,6 +1810,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1.144,
+          "speed_ratio": 1.004,
+          "compile_ratio": 0.501
         }
       ]
     },
@@ -1102,8 +1838,8 @@
       "describes": "choosing how to lower a switch",
       "cases": 9,
       "reference_said": {
-        "optimized": 56,
-        "missed": 94
+        "optimized": 52,
+        "missed": 100
       },
       "scores": [
         {
@@ -1112,6 +1848,7 @@
             "pass": 45,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1123,6 +1860,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 45,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 45,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 9,
+          "size_ratio": 1.3,
+          "speed_ratio": 0.873,
+          "compile_ratio": 0.257
         }
       ]
     },
@@ -1132,7 +1888,7 @@
       "describes": "deciding what a call saves and restores",
       "cases": 10,
       "reference_said": {
-        "optimized": 44,
+        "optimized": 42,
         "missed": 57
       },
       "scores": [
@@ -1142,6 +1898,7 @@
             "pass": 50,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1153,6 +1910,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 50,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 50,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 10,
+          "size_ratio": 1.243,
+          "speed_ratio": 1.234,
+          "compile_ratio": 0.463
         }
       ]
     },
@@ -1172,6 +1948,7 @@
             "pass": 110,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1183,6 +1960,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 110,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 110,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 22,
+          "size_ratio": 0.986,
+          "speed_ratio": 0.849,
+          "compile_ratio": 0.484
         }
       ]
     },
@@ -1202,6 +1998,7 @@
             "pass": 35,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1213,6 +2010,25 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 35,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 35,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 7,
+          "size_ratio": 1.037,
+          "speed_ratio": 1.812,
+          "compile_ratio": 0.423
         }
       ]
     },
@@ -1232,6 +2048,7 @@
             "pass": 118,
             "wrong": 0,
             "rejected": 0,
+            "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
@@ -1243,10 +2060,40 @@
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 117,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 1,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 118,
+            "failures": 0,
+            "pass_rate": 0.992
+          },
+          "compared": 22,
+          "size_ratio": 1.01,
+          "speed_ratio": 0.88,
+          "compile_ratio": 0.393
         }
       ]
     }
   ],
-  "findings": []
+  "findings": [
+    {
+      "case": "frontend.bit-precise.c23.6f93abb7",
+      "facet": "frontend",
+      "toolchain": "rucc",
+      "level": "O0",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of language shape rather than optimization, including C23 this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:8:26: error: cannot generate code for 'main': no rule lowers a `trunc` producing a `i12` [E0653]\ncase.c:8:26: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    }
+  ]
 }
 
