@@ -104,9 +104,25 @@ impl Run {
     }
 
     /// Whether anything happened that should turn the build red.
+    ///
+    /// A declared gap does not. It is in `findings` because somebody has to act on it eventually,
+    /// and it is not a failure because the compiler already told us about it, so counting it here
+    /// would make the exit status disagree with the correctness target two lines above it.
     #[must_use]
     pub fn failed(&self) -> bool {
-        !self.findings.is_empty()
+        self.findings.iter().any(|finding| finding.verdict.is_failure())
+    }
+
+    /// How many results are bugs.
+    #[must_use]
+    pub fn failures(&self) -> usize {
+        self.findings.iter().filter(|finding| finding.verdict.is_failure()).count()
+    }
+
+    /// How many results are gaps a compiler declared.
+    #[must_use]
+    pub fn gaps(&self) -> usize {
+        self.findings.iter().filter(|finding| finding.verdict.is_gap()).count()
     }
 }
 

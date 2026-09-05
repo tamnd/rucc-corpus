@@ -156,8 +156,15 @@ fn run(args: &Args) -> Result<ExitCode, String> {
     for target in &summary.targets {
         println!("  {:<28} {}", target.name, if target.met { "met" } else { "not met" });
     }
+    let gaps = outcome.gaps();
+    if gaps > 0 {
+        println!(
+            "{gaps} case{} needs something a compiler has not built yet, listed under \"what is not built yet\"",
+            if gaps == 1 { "" } else { "s" }
+        );
+    }
     if outcome.failed() {
-        println!("{} results did not come out as expected", outcome.findings.len());
+        println!("{} results did not come out as expected", outcome.failures());
         return Ok(ExitCode::FAILURE);
     }
     println!("every case produced the answer the generator computed");
