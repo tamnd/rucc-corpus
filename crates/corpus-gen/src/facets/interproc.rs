@@ -175,7 +175,8 @@ fn tail_call(sink: &mut Sink<'_>) {
 /// The attribute shapes are tagged `gnu`, because they use a GCC extension and a run that is
 /// only checking standard C should be able to leave them out.
 fn function_purity(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["inferred-const", "inferred-pure", "declared-const", "declared-pure", "impure"];
+    const SHAPES: &[&str] =
+        &["inferred-const", "inferred-pure", "declared-const", "declared-pure", "impure"];
     for &ty in TYPES {
         for &shape in SHAPES {
             if !sink.wants(Facet::FunctionPurity) {
@@ -311,7 +312,9 @@ fn reachability(sink: &mut Sink<'_>) {
                     // called by the one before it and nothing calls the first.
                     for at in 0..count {
                         if at == 0 {
-                            program.top("static int link0(int value) { return value + 1; }".to_owned());
+                            program.top(
+                                "static int link0(int value) { return value + 1; }".to_owned(),
+                            );
                         } else {
                             program.top(format!(
                                 "static int link{at}(int value) {{ return link{}(value) + 1; }}",
@@ -374,12 +377,7 @@ fn devirtualize(sink: &mut Sink<'_>) {
         };
         program.blank();
         program.check(Ty::I32, "call(seed)", answer);
-        sink.push(
-            Facet::Devirtualize,
-            Axes::of([("shape", shape)]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::Devirtualize, Axes::of([("shape", shape)]), Dialect::C17, program);
     }
 }
 
@@ -472,8 +470,7 @@ mod tests {
         let agree = cases
             .iter()
             .find(|c| {
-                c.axes.get("shape") == Some("all-sites-agree")
-                    && c.axes.get("type") == Some("i32")
+                c.axes.get("shape") == Some("all-sites-agree") && c.axes.get("type") == Some("i32")
             })
             .unwrap();
         let disagree = cases
@@ -507,10 +504,7 @@ mod tests {
     fn every_devirtualization_shape_calls_something_and_knows_what_it_returns() {
         let cases = cases_for(Facet::Devirtualize);
         assert_eq!(cases.len(), 4);
-        let direct = cases
-            .iter()
-            .find(|c| c.axes.get("shape") == Some("direct-assign"))
-            .unwrap();
+        let direct = cases.iter().find(|c| c.axes.get("shape") == Some("direct-assign")).unwrap();
         assert_eq!(output(direct), "14\n");
         for case in &cases {
             assert!(case.source.contains("call(seed)"), "{}", case.id);

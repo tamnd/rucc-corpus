@@ -197,12 +197,8 @@ pub(crate) fn compare(old: &Json, new: &Json) -> Comparison {
             continue;
         }
         let (facet, toolchain) = key;
-        let moved = Moved {
-            facet: facet.clone(),
-            toolchain: toolchain.clone(),
-            before: *was,
-            after: *now,
-        };
+        let moved =
+            Moved { facet: facet.clone(), toolchain: toolchain.clone(), before: *was, after: *now };
         if change > 0.0 { out.worse.push(moved) } else { out.better.push(moved) }
     }
     out.worse.sort_by(|a, b| b.change().total_cmp(&a.change()));

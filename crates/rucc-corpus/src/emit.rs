@@ -62,7 +62,8 @@ pub(crate) fn write_programs(root: &Path, corpus: &Manifest) -> Result<usize, St
 /// When the file cannot be written.
 pub(crate) fn write_manifest(path: &Path, corpus: &Manifest) -> Result<(), String> {
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|error| format!("{}: {error}", parent.display()))?;
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("{}: {error}", parent.display()))?;
     }
     let mut text = corpus.to_json().to_pretty();
     text.push('\n');
@@ -83,11 +84,8 @@ fn top_index(corpus: &Manifest) -> String {
     out.push_str(&format!("Corpus digest `{}`.\n\n", corpus.digest()));
 
     for phase in Phase::ALL {
-        let facets: Vec<(Facet, usize)> = corpus
-            .by_facet()
-            .into_iter()
-            .filter(|(facet, _)| facet.phase() == *phase)
-            .collect();
+        let facets: Vec<(Facet, usize)> =
+            corpus.by_facet().into_iter().filter(|(facet, _)| facet.phase() == *phase).collect();
         if facets.is_empty() {
             continue;
         }
@@ -112,7 +110,11 @@ fn top_index(corpus: &Manifest) -> String {
 fn facet_index(facet: Facet, cases: &[&Case]) -> String {
     let mut out = String::new();
     out.push_str(&format!("# {}\n\n", facet.name()));
-    out.push_str(&format!("{}. Part of the {} phase of the M4 plan.\n\n", facet.describe(), facet.phase().name()));
+    out.push_str(&format!(
+        "{}. Part of the {} phase of the M4 plan.\n\n",
+        facet.describe(),
+        facet.phase().name()
+    ));
     out.push_str(&format!(
         "{} programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.\n\n",
         cases.len()
@@ -171,8 +173,8 @@ mod tests {
     }
 
     fn scratch(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir()
-            .join(format!("rucc-corpus-emit-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rucc-corpus-emit-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }
@@ -220,8 +222,7 @@ mod tests {
         assert!(top.contains("constant-fold"));
         assert!(top.contains(&corpus.digest()));
 
-        let inner =
-            std::fs::read_to_string(dir.join("local/constant-fold/index.md")).unwrap();
+        let inner = std::fs::read_to_string(dir.join("local/constant-fold/index.md")).unwrap();
         assert!(inner.contains("`42`"), "{inner}");
         assert!(inner.contains("must print"));
         let _ = std::fs::remove_dir_all(&dir);
@@ -277,10 +278,7 @@ mod tests {
         let text = std::fs::read_to_string(&path).unwrap();
         let parsed = corpus_model::json::parse(&text).unwrap();
         assert_eq!(parsed.get("count").unwrap().as_f64(), Some(1.0));
-        assert_eq!(
-            parsed.get("corpus_sha256").unwrap().as_str(),
-            Some(corpus.digest().as_str())
-        );
+        assert_eq!(parsed.get("corpus_sha256").unwrap().as_str(), Some(corpus.digest().as_str()));
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

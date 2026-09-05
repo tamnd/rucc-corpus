@@ -167,8 +167,7 @@ impl<'a> Sink<'a> {
             return;
         }
         let (source, expected) = program.finish();
-        let case = Case::new(facet, axes, dialect, source, Expect::Output(expected))
-            .tagged(tags);
+        let case = Case::new(facet, axes, dialect, source, Expect::Output(expected)).tagged(tags);
         *self.counts.entry(facet).or_insert(0) += 1;
         self.cases.push(case);
     }
@@ -185,13 +184,7 @@ impl<'a> Sink<'a> {
         if !self.wants(facet) || !self.opts.wants_dialect(dialect) {
             return;
         }
-        let case = Case::new(
-            facet,
-            axes,
-            dialect,
-            source,
-            Expect::Rejected(mentions.into()),
-        );
+        let case = Case::new(facet, axes, dialect, source, Expect::Rejected(mentions.into()));
         *self.counts.entry(facet).or_insert(0) += 1;
         self.cases.push(case);
     }
@@ -258,8 +251,7 @@ mod tests {
     fn every_facet_produces_at_least_one_case() {
         let corpus = generate(&Options::all()).unwrap();
         let covered: BTreeSet<Facet> = corpus.cases.iter().map(|c| c.facet).collect();
-        let missing: Vec<&Facet> =
-            Facet::ALL.iter().filter(|f| !covered.contains(f)).collect();
+        let missing: Vec<&Facet> = Facet::ALL.iter().filter(|f| !covered.contains(f)).collect();
         assert!(missing.is_empty(), "no cases for {missing:?}");
     }
 

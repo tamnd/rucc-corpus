@@ -83,9 +83,8 @@ Options for run:
 fn generate(args: &Args) -> Result<ExitCode, String> {
     args.only(&["out", "manifest", "facet", "limit", "clean"])?;
     let out = PathBuf::from(args.value_or("out", "programs"));
-    let manifest_path = args
-        .value("manifest")
-        .map_or_else(|| out.join("manifest.json"), PathBuf::from);
+    let manifest_path =
+        args.value("manifest").map_or_else(|| out.join("manifest.json"), PathBuf::from);
 
     let corpus = corpus_gen::generate(&options(args)?)?;
     if args.flag("clean") && out.exists() {
@@ -155,11 +154,7 @@ fn run(args: &Args) -> Result<ExitCode, String> {
 
     println!("wrote the reports to {}", reports.display());
     for target in &summary.targets {
-        println!(
-            "  {:<28} {}",
-            target.name,
-            if target.met { "met" } else { "not met" }
-        );
+        println!("  {:<28} {}", target.name, if target.met { "met" } else { "not met" });
     }
     if outcome.failed() {
         println!("{} results did not come out as expected", outcome.findings.len());

@@ -190,11 +190,7 @@ impl Summary {
     /// The compilers under test, which is everything except the reference.
     #[must_use]
     pub fn under_test(&self) -> Vec<&str> {
-        self.toolchains
-            .iter()
-            .map(String::as_str)
-            .filter(|id| *id != self.reference)
-            .collect()
+        self.toolchains.iter().map(String::as_str).filter(|id| *id != self.reference).collect()
     }
 }
 
@@ -267,10 +263,8 @@ fn summarise_facets(run: &Run, toolchains: &[String], reference: &str) -> Vec<Fa
             }
         }
 
-        let scores = toolchains
-            .iter()
-            .map(|id| score_facet(run, &records, id, reference))
-            .collect();
+        let scores =
+            toolchains.iter().map(|id| score_facet(run, &records, id, reference)).collect();
 
         out.push(FacetSummary {
             facet,
@@ -285,12 +279,7 @@ fn summarise_facets(run: &Run, toolchains: &[String], reference: &str) -> Vec<Fa
 }
 
 /// What one compiler did with one facet.
-fn score_facet(
-    run: &Run,
-    records: &[&RunRecord],
-    toolchain: &str,
-    reference: &str,
-) -> FacetScore {
+fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &str) -> FacetScore {
     let mut tally = Tally::default();
     let mut sizes = Vec::new();
     let mut speeds = Vec::new();
@@ -358,7 +347,9 @@ fn check_targets(
     let failures: usize = totals.values().map(Tally::failures).sum();
     targets.push(Target {
         name: "correctness".to_owned(),
-        wanted: "every case prints the answer the generator computed, on every compiler, at every level".to_owned(),
+        wanted:
+            "every case prints the answer the generator computed, on every compiler, at every level"
+                .to_owned(),
         threshold: Some(0.0),
         actual: Some(failures as f64),
         met: failures == 0,
@@ -402,8 +393,8 @@ fn check_targets(
 mod tests {
     use super::{Tally, median, summarise};
     use corpus_model::{
-        Axes, Case, Compile, Dialect, Execute, Expect, Facet, Level, Manifest, RunRecord, Toolchain,
-        Verdict,
+        Axes, Case, Compile, Dialect, Execute, Expect, Facet, Level, Manifest, RunRecord,
+        Toolchain, Verdict,
     };
     use corpus_run::Run;
     use std::collections::BTreeMap;
@@ -487,9 +478,8 @@ mod tests {
 
     #[test]
     fn the_headline_ratio_is_a_median_so_a_handful_of_tiny_cases_cannot_set_it() {
-        let cases: Vec<Case> = (0..5)
-            .map(|n| case_for(Facet::ConstantFold, &n.to_string()))
-            .collect();
+        let cases: Vec<Case> =
+            (0..5).map(|n| case_for(Facet::ConstantFold, &n.to_string())).collect();
         let mut records = Vec::new();
         for (at, case) in cases.iter().enumerate() {
             records.push(record_for(case, "gcc-16", Level::O2, 100, 100));

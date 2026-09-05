@@ -159,9 +159,6 @@ mod tests {
         let bytes = std::fs::read(path).unwrap();
         let size = text_size(&bytes).expect("this platform is neither ELF nor Mach-O");
         assert!(size > 4096, "the test binary claims to hold {size} bytes of code");
-        assert!(
-            size < bytes.len() as u64,
-            "the code cannot be larger than the file it is in"
-        );
+        assert!(size < bytes.len() as u64, "the code cannot be larger than the file it is in");
     }
 }

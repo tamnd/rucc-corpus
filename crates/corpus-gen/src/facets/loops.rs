@@ -144,9 +144,8 @@ fn loop_unswitch(sink: &mut Sink<'_>) {
                     return;
                 }
                 let trips128 = i128::from(trips);
-                let total: i128 = (0..trips128)
-                    .map(|at| if flag == 1 { at * 2 } else { at + 1 })
-                    .sum();
+                let total: i128 =
+                    (0..trips128).map(|at| if flag == 1 { at * 2 } else { at + 1 }).sum();
                 if !fits(ty, total) {
                     continue;
                 }
@@ -274,11 +273,7 @@ fn loop_idiom(sink: &mut Sink<'_>) {
                         program.line("}");
                         program.blank();
                         program.check(ty.promoted(), "target[0]", 1);
-                        program.check(
-                            ty.promoted(),
-                            &format!("target[{}]", trips - 1),
-                            trips128,
-                        );
+                        program.check(ty.promoted(), &format!("target[{}]", trips - 1), trips128);
                     }
                     "sum" => {
                         let total: i128 = (1..=trips128).sum();
@@ -306,11 +301,7 @@ fn loop_idiom(sink: &mut Sink<'_>) {
                 }
                 sink.push(
                     Facet::LoopIdiom,
-                    Axes::of([
-                        ("type", ty.name()),
-                        ("trips", &trips.to_string()),
-                        ("kind", kind),
-                    ]),
+                    Axes::of([("type", ty.name()), ("trips", &trips.to_string()), ("kind", kind)]),
                     Dialect::C17,
                     program,
                 );
@@ -469,10 +460,8 @@ fn loop_restructure(sink: &mut Sink<'_>) {
                 if !fits(ty, total) {
                     continue;
                 }
-                let mut program = Program::new(format!(
-                    "a {side} by {side} {} traversal, {shape}",
-                    ty.c_name()
-                ));
+                let mut program =
+                    Program::new(format!("a {side} by {side} {} traversal, {shape}", ty.c_name()));
                 let name = ty.c_name();
                 program.line(format!("static {name} grid[{side}][{side}];"));
                 program.line(format!("{name} total = 0;"));
@@ -519,11 +508,7 @@ fn loop_restructure(sink: &mut Sink<'_>) {
                 program.check(ty.promoted(), "total", total);
                 sink.push(
                     Facet::LoopRestructure,
-                    Axes::of([
-                        ("type", ty.name()),
-                        ("side", &side.to_string()),
-                        ("shape", shape),
-                    ]),
+                    Axes::of([("type", ty.name()), ("side", &side.to_string()), ("shape", shape)]),
                     Dialect::C17,
                     program,
                 );

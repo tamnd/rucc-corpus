@@ -33,16 +33,8 @@ pub enum Ty {
 
 impl Ty {
     /// Every type, narrowest first, signed before unsigned at each width.
-    pub const ALL: &'static [Self] = &[
-        Self::I8,
-        Self::U8,
-        Self::I16,
-        Self::U16,
-        Self::I32,
-        Self::U32,
-        Self::I64,
-        Self::U64,
-    ];
+    pub const ALL: &'static [Self] =
+        &[Self::I8, Self::U8, Self::I16, Self::U16, Self::I32, Self::U32, Self::I64, Self::U64];
 
     /// The four types at least as wide as `int`, where no promotion changes the result type.
     pub const WIDE: &'static [Self] = &[Self::I32, Self::U32, Self::I64, Self::U64];
@@ -121,11 +113,7 @@ impl Ty {
     /// The highest value of the type.
     #[must_use]
     pub const fn max(self) -> i128 {
-        if self.signed() {
-            (1i128 << (self.bits() - 1)) - 1
-        } else {
-            (1i128 << self.bits()) - 1
-        }
+        if self.signed() { (1i128 << (self.bits() - 1)) - 1 } else { (1i128 << self.bits()) - 1 }
     }
 
     /// Whether a value fits without conversion.
@@ -251,12 +239,10 @@ impl Op {
     ];
 
     /// The arithmetic ones, which is what most facets want.
-    pub const ARITH: &'static [Self] =
-        &[Self::Add, Self::Sub, Self::Mul, Self::Div, Self::Rem];
+    pub const ARITH: &'static [Self] = &[Self::Add, Self::Sub, Self::Mul, Self::Div, Self::Rem];
 
     /// The bitwise ones.
-    pub const BITWISE: &'static [Self] =
-        &[Self::And, Self::Or, Self::Xor, Self::Shl, Self::Shr];
+    pub const BITWISE: &'static [Self] = &[Self::And, Self::Or, Self::Xor, Self::Shl, Self::Shr];
 
     /// The name used on an axis and in a case id.
     #[must_use]
@@ -384,8 +370,7 @@ pub fn eval(op: Op, ty: Ty, left: i128, right: i128) -> Option<i128> {
             }
             // Shifting a negative value left, or shifting a one out of the sign bit of a
             // signed type, is undefined. The generator refuses rather than guessing.
-            if out.signed() && (left < 0 || left.checked_shl(right.try_into().ok()?)? > out.max())
-            {
+            if out.signed() && (left < 0 || left.checked_shl(right.try_into().ok()?)? > out.max()) {
                 return None;
             }
             left << right

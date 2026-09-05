@@ -119,8 +119,7 @@ mod tests {
 
     #[test]
     fn all_four_files_are_written_and_the_two_reports_agree_with_each_other() {
-        let dir = std::env::temp_dir()
-            .join(format!("rucc-corpus-report-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("rucc-corpus-report-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let summary = write_all(&dir, &sample(), "abc123", 1).unwrap();
 

@@ -459,13 +459,8 @@ mod tests {
             bytes: 16_384,
             text_bytes: 1_234,
         };
-        record.execute = Execute {
-            ok: true,
-            status: 0,
-            micros: 900,
-            repeats: 5,
-            output: "0\n".to_owned(),
-        };
+        record.execute =
+            Execute { ok: true, status: 0, micros: 900, repeats: 5, output: "0\n".to_owned() };
         record.insights = vec![Insight {
             kind: "optimized".to_owned(),
             pass: "inline".to_owned(),

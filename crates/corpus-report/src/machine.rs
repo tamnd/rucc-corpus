@@ -53,17 +53,15 @@ pub fn report_json(run: &Run, summary: &Summary) -> String {
         ("cases", Json::int(summary.cases as i64)),
         ("reference", Json::string(summary.reference.clone())),
         ("levels", Json::array(summary.levels.iter().map(|l| Json::string(l.name())))),
-        (
-            "toolchains",
-            Json::array(run.toolchains.iter().map(corpus_model::Toolchain::to_json)),
-        ),
+        ("toolchains", Json::array(run.toolchains.iter().map(corpus_model::Toolchain::to_json))),
         (
             "totals",
-            Json::array(
-                summary.totals.iter().map(|(id, tally)| {
-                    Json::object([("toolchain", Json::string(id.clone())), ("tally", tally_json(tally))])
-                }),
-            ),
+            Json::array(summary.totals.iter().map(|(id, tally)| {
+                Json::object([
+                    ("toolchain", Json::string(id.clone())),
+                    ("tally", tally_json(tally)),
+                ])
+            })),
         ),
         ("targets", Json::array(summary.targets.iter().map(target_json))),
         ("facets", Json::array(summary.facets.iter().map(facet_json))),
@@ -140,14 +138,8 @@ pub fn findings_sarif(run: &Run) -> String {
             Json::object([
                 ("id", Json::string(id.clone())),
                 ("name", Json::string(id.replace('-', " "))),
-                (
-                    "shortDescription",
-                    Json::object([("text", Json::string(describe_rule(&id)))]),
-                ),
-                (
-                    "defaultConfiguration",
-                    Json::object([("level", Json::string("error"))]),
-                ),
+                ("shortDescription", Json::object([("text", Json::string(describe_rule(&id)))])),
+                ("defaultConfiguration", Json::object([("level", Json::string("error"))])),
             ])
         })
         .collect();
@@ -156,10 +148,7 @@ pub fn findings_sarif(run: &Run) -> String {
 
     let document = Json::object([
         ("version", Json::string("2.1.0")),
-        (
-            "$schema",
-            Json::string("https://json.schemastore.org/sarif-2.1.0.json"),
-        ),
+        ("$schema", Json::string("https://json.schemastore.org/sarif-2.1.0.json")),
         (
             "runs",
             Json::array([Json::object([
@@ -191,10 +180,7 @@ fn result_json(finding: &Finding) -> Json {
     Json::object([
         ("ruleId", Json::string(finding.verdict.name())),
         ("level", Json::string("error")),
-        (
-            "message",
-            Json::object([("text", Json::string(message_for(finding)))]),
-        ),
+        ("message", Json::object([("text", Json::string(message_for(finding)))])),
         (
             "locations",
             Json::array([Json::object([(
@@ -260,7 +246,9 @@ fn rule_ids(run: &Run) -> Vec<String> {
 
 fn describe_rule(id: &str) -> String {
     match id {
-        "wrong" => "The compiled program printed something other than the answer the generator computed.",
+        "wrong" => {
+            "The compiled program printed something other than the answer the generator computed."
+        }
         "rejected" => "The compiler refused a program that is valid C.",
         "accepted" => "The compiler accepted a program that is not valid C.",
         "crashed" => "The compiler or the program it produced did not finish.",
@@ -320,13 +308,38 @@ mod tests {
         let report = json::parse(&report_json(&run, &summary)).unwrap();
 
         keys_agree(&schema, &[], &report, "report");
-        keys_agree(&schema, &["$defs", "toolchain"], &report.get("toolchains").unwrap().as_array().unwrap()[0], "toolchain");
-        keys_agree(&schema, &["$defs", "target"], &report.get("targets").unwrap().as_array().unwrap()[0], "target");
-        keys_agree(&schema, &["$defs", "facet"], &report.get("facets").unwrap().as_array().unwrap()[0], "facet");
-        keys_agree(&schema, &["$defs", "finding"], &report.get("findings").unwrap().as_array().unwrap()[0], "finding");
+        keys_agree(
+            &schema,
+            &["$defs", "toolchain"],
+            &report.get("toolchains").unwrap().as_array().unwrap()[0],
+            "toolchain",
+        );
+        keys_agree(
+            &schema,
+            &["$defs", "target"],
+            &report.get("targets").unwrap().as_array().unwrap()[0],
+            "target",
+        );
+        keys_agree(
+            &schema,
+            &["$defs", "facet"],
+            &report.get("facets").unwrap().as_array().unwrap()[0],
+            "facet",
+        );
+        keys_agree(
+            &schema,
+            &["$defs", "finding"],
+            &report.get("findings").unwrap().as_array().unwrap()[0],
+            "finding",
+        );
 
         let facet = &report.get("facets").unwrap().as_array().unwrap()[0];
-        keys_agree(&schema, &["$defs", "score_line"], &facet.get("scores").unwrap().as_array().unwrap()[0], "score line");
+        keys_agree(
+            &schema,
+            &["$defs", "score_line"],
+            &facet.get("scores").unwrap().as_array().unwrap()[0],
+            "score line",
+        );
         let score = &facet.get("scores").unwrap().as_array().unwrap()[0];
         keys_agree(&schema, &["$defs", "tally"], score.get("tally").unwrap(), "tally");
 
@@ -356,13 +369,8 @@ mod tests {
                 bytes: text * 4,
                 text_bytes: text,
             };
-            record.execute = Execute {
-                ok: true,
-                status: 0,
-                micros: 40,
-                repeats: 5,
-                output: "42\n".to_owned(),
-            };
+            record.execute =
+                Execute { ok: true, status: 0, micros: 40, repeats: 5, output: "42\n".to_owned() };
             records.push(record);
         }
         let verdicts: BTreeMap<String, Verdict> =
@@ -468,11 +476,7 @@ mod tests {
         assert_eq!(results[0].get("ruleId").unwrap().as_str(), Some("wrong"));
         let message = results[0].get("message").unwrap().get("text").unwrap().as_str().unwrap();
         assert!(message.contains("Expected 42"), "{message}");
-        let uri = results[0]
-            .get("locations")
-            .unwrap()
-            .as_array()
-            .unwrap()[0]
+        let uri = results[0].get("locations").unwrap().as_array().unwrap()[0]
             .get("physicalLocation")
             .unwrap()
             .get("artifactLocation")

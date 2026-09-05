@@ -379,10 +379,7 @@ fn parse_string(bytes: &[u8], at: &mut usize) -> Result<String, ParseError> {
                             .get(*at..*at + 4)
                             .and_then(|h| std::str::from_utf8(h).ok())
                             .and_then(|h| u32::from_str_radix(h, 16).ok())
-                            .ok_or(ParseError {
-                                at: *at,
-                                message: "four hex digits".to_owned(),
-                            })?;
+                            .ok_or(ParseError { at: *at, message: "four hex digits".to_owned() })?;
                         *at += 4;
                         out.push(char::from_u32(hex).unwrap_or('\u{fffd}'));
                     }
@@ -393,10 +390,8 @@ fn parse_string(bytes: &[u8], at: &mut usize) -> Result<String, ParseError> {
                 // The input is a `&str`, so the bytes are valid UTF-8 and a multi-byte
                 // sequence can be copied through byte by byte only if the boundary is kept.
                 // Finding the char at this position and taking its length does that.
-                let rest = std::str::from_utf8(&bytes[*at - 1..]).map_err(|_| ParseError {
-                    at: *at,
-                    message: "valid UTF-8".to_owned(),
-                })?;
+                let rest = std::str::from_utf8(&bytes[*at - 1..])
+                    .map_err(|_| ParseError { at: *at, message: "valid UTF-8".to_owned() })?;
                 let ch = rest.chars().next().unwrap_or('\u{fffd}');
                 out.push(ch);
                 *at += ch.len_utf8() - 1;

@@ -196,7 +196,9 @@ fn ratio_table(out: &mut String, toolchain: &str, ranked: &[(&FacetSummary, f64)
             facet.cases,
             as_change(*size),
             score.and_then(|s| s.speed_ratio).map_or_else(|| "not measured".to_owned(), as_change),
-            score.and_then(|s| s.compile_ratio).map_or_else(|| "not measured".to_owned(), as_change),
+            score
+                .and_then(|s| s.compile_ratio)
+                .map_or_else(|| "not measured".to_owned(), as_change),
         ));
     }
 }
@@ -266,11 +268,8 @@ fn reference_opinion(out: &mut String, summary: &Summary) {
         summary.reference
     ));
     out.push_str("| facet | phase | it optimized | it says it missed |\n|---|---|---|---|\n");
-    let mut ranked: Vec<&FacetSummary> = summary
-        .facets
-        .iter()
-        .filter(|facet| facet.optimized + facet.missed > 0)
-        .collect();
+    let mut ranked: Vec<&FacetSummary> =
+        summary.facets.iter().filter(|facet| facet.optimized + facet.missed > 0).collect();
     ranked.sort_by_key(|facet| std::cmp::Reverse(facet.optimized + facet.missed));
     for facet in ranked.iter().take(20) {
         out.push_str(&format!(
@@ -377,10 +376,7 @@ mod tests {
     }
 
     fn sample(findings: Vec<Finding>) -> (Run, Vec<Case>) {
-        let cases = vec![
-            case_for(Facet::ConstantFold, "one"),
-            case_for(Facet::LoopUnroll, "two"),
-        ];
+        let cases = vec![case_for(Facet::ConstantFold, "one"), case_for(Facet::LoopUnroll, "two")];
         let mut records = Vec::new();
         for case in &cases {
             let mut reference = record_for(case, "gcc-16", 100);

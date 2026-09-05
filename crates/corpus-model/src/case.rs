@@ -79,20 +79,13 @@ impl Axes {
     /// The point on one axis.
     #[must_use]
     pub fn get(&self, axis: &str) -> Option<&str> {
-        self.points
-            .iter()
-            .find(|(name, _)| name == axis)
-            .map(|(_, point)| point.as_str())
+        self.points.iter().find(|(name, _)| name == axis).map(|(_, point)| point.as_str())
     }
 
     /// The points joined with dots, which is what a case id is built from.
     #[must_use]
     pub fn slug(&self) -> String {
-        self.points
-            .iter()
-            .map(|(_, point)| point.as_str())
-            .collect::<Vec<_>>()
-            .join(".")
+        self.points.iter().map(|(_, point)| point.as_str()).collect::<Vec<_>>().join(".")
     }
 
     /// The axes as JSON, one field per axis.
@@ -115,9 +108,7 @@ impl Axes {
         Self {
             points: fields
                 .iter()
-                .filter_map(|(axis, point)| {
-                    point.as_str().map(|p| (axis.clone(), p.to_owned()))
-                })
+                .filter_map(|(axis, point)| point.as_str().map(|p| (axis.clone(), p.to_owned())))
                 .collect(),
         }
     }
@@ -343,9 +334,7 @@ impl Manifest {
     pub fn by_facet(&self) -> Vec<(Facet, usize)> {
         Facet::ALL
             .iter()
-            .map(|facet| {
-                (*facet, self.cases.iter().filter(|c| c.facet == *facet).count())
-            })
+            .map(|facet| (*facet, self.cases.iter().filter(|c| c.facet == *facet).count()))
             .filter(|(_, count)| *count > 0)
             .collect()
     }

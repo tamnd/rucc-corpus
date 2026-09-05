@@ -73,8 +73,7 @@ fn selection(sink: &mut Sink<'_>) {
             if !ty.promoted().holds(value) {
                 continue;
             }
-            let mut program =
-                Program::new(format!("the {name} pattern on {}", ty.c_name()));
+            let mut program = Program::new(format!("the {name} pattern on {}", ty.c_name()));
             program.input(ty, "a", a);
             program.input(ty, "b", b);
             program.input(ty, "c", c);
@@ -105,10 +104,8 @@ fn register_alloc(sink: &mut Sink<'_>) {
                     return;
                 }
                 let name = ty.c_name();
-                let mut program = Program::new(format!(
-                    "{live} live {} values at once, {shape}",
-                    ty.c_name()
-                ));
+                let mut program =
+                    Program::new(format!("{live} live {} values at once, {shape}", ty.c_name()));
                 program.input(ty, "seed", 1);
                 program.blank();
                 for at in 0..live {
@@ -138,11 +135,7 @@ fn register_alloc(sink: &mut Sink<'_>) {
                 program.check(ty.promoted(), "total", total);
                 sink.push(
                     Facet::RegisterAlloc,
-                    Axes::of([
-                        ("type", ty.name()),
-                        ("live", &live.to_string()),
-                        ("shape", shape),
-                    ]),
+                    Axes::of([("type", ty.name()), ("live", &live.to_string()), ("shape", shape)]),
                     Dialect::C17,
                     program,
                 );
@@ -178,7 +171,10 @@ fn scheduling(sink: &mut Sink<'_>) {
                 program.line("for (int i = 0; i < 4; i++) {");
                 for _ in 0..length {
                     for chain in 0..chains {
-                        program.line_at(1, format!("c{chain} = c{chain} * {} + {};", lit(ty, 3), lit(ty, 1)));
+                        program.line_at(
+                            1,
+                            format!("c{chain} = c{chain} * {} + {};", lit(ty, 3), lit(ty, 1)),
+                        );
                     }
                 }
                 program.line("}");
@@ -276,12 +272,7 @@ fn block_layout(sink: &mut Sink<'_>) {
         program.line("}");
         program.blank();
         program.check(Ty::I64, "total", total);
-        sink.push(
-            Facet::BlockLayout,
-            Axes::of([("shape", shape)]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::BlockLayout, Axes::of([("shape", shape)]), Dialect::C17, program);
     }
 }
 
@@ -299,8 +290,10 @@ fn if_conversion(sink: &mut Sink<'_>) {
                 return;
             }
             let name = ty.c_name();
-            let mut program =
-                Program::new(format!("a {shape} on {} with an unpredictable condition", ty.c_name()));
+            let mut program = Program::new(format!(
+                "a {shape} on {} with an unpredictable condition",
+                ty.c_name()
+            ));
             program.input(ty, "a", 20);
             program.input(ty, "b", 12);
             program.blank();
@@ -325,13 +318,26 @@ fn if_conversion(sink: &mut Sink<'_>) {
                 }
                 "abs" => {
                     program.line_at(1, format!("{name} shifted = odd ? a : b;"));
-                    program.line_at(1, format!("total += shifted > {} ? shifted : {} - shifted;", lit(ty, 0), lit(ty, 0)));
+                    program.line_at(
+                        1,
+                        format!(
+                            "total += shifted > {} ? shifted : {} - shifted;",
+                            lit(ty, 0),
+                            lit(ty, 0)
+                        ),
+                    );
                     500 * 20 + 500 * 12
                 }
                 _ => {
                     program.line_at(1, format!("{name} raw = odd ? a : b;"));
-                    program.line_at(1, format!("{name} low = raw < {} ? {} : raw;", lit(ty, 15), lit(ty, 15)));
-                    program.line_at(1, format!("total += low > {} ? {} : low;", lit(ty, 18), lit(ty, 18)));
+                    program.line_at(
+                        1,
+                        format!("{name} low = raw < {} ? {} : raw;", lit(ty, 15), lit(ty, 15)),
+                    );
+                    program.line_at(
+                        1,
+                        format!("total += low > {} ? {} : low;", lit(ty, 18), lit(ty, 18)),
+                    );
                     // Odd iterations clamp twenty down to eighteen, even ones clamp twelve
                     // up to fifteen, and neither bound is hit by both.
                     500 * 18 + 500 * 15
@@ -366,8 +372,7 @@ fn switch_lowering(sink: &mut Sink<'_>) {
             if !sink.wants(Facet::SwitchLowering) {
                 return;
             }
-            let mut program =
-                Program::new(format!("a {density} switch with {labels} labels"));
+            let mut program = Program::new(format!("a {density} switch with {labels} labels"));
             program.top("static int classify(int value) {".to_owned());
             program.top("    switch (value) {".to_owned());
             for label in 0..labels {
@@ -418,11 +423,7 @@ fn calling_convention(sink: &mut Sink<'_>) {
         program.blank();
         let args: Vec<String> = (0..count).map(|at| format!("seed + {at}")).collect();
         let expected: i128 = (0..count as i128).map(|at| 1 + at).sum();
-        program.check(
-            Ty::I64,
-            &format!("total{count}({})", args.join(", ")),
-            expected,
-        );
+        program.check(Ty::I64, &format!("total{count}({})", args.join(", ")), expected);
         sink.push(
             Facet::CallingConvention,
             Axes::of([("count", &count.to_string()), ("kind", "integer")]),
@@ -431,7 +432,8 @@ fn calling_convention(sink: &mut Sink<'_>) {
         );
     }
 
-    const AGGREGATES: &[(&str, usize)] = &[("one-field", 1), ("two-fields", 2), ("four-fields", 4), ("sixteen-fields", 16)];
+    const AGGREGATES: &[(&str, usize)] =
+        &[("one-field", 1), ("two-fields", 2), ("four-fields", 4), ("sixteen-fields", 16)];
     for &(name, fields) in AGGREGATES {
         if !sink.wants(Facet::CallingConvention) {
             return;
@@ -599,7 +601,9 @@ mod tests {
         }
         let mad = cases
             .iter()
-            .find(|c| c.axes.get("pattern") == Some("multiply-add") && c.axes.get("type") == Some("i32"))
+            .find(|c| {
+                c.axes.get("pattern") == Some("multiply-add") && c.axes.get("type") == Some("i32")
+            })
             .unwrap();
         assert_eq!(output(mad), "340\n");
     }
@@ -668,7 +672,9 @@ mod tests {
         let cases = cases_for(Facet::SwitchLowering);
         let sparse = cases
             .iter()
-            .find(|c| c.axes.get("density") == Some("very-sparse") && c.axes.get("labels") == Some("8"))
+            .find(|c| {
+                c.axes.get("density") == Some("very-sparse") && c.axes.get("labels") == Some("8")
+            })
             .unwrap();
         assert!(sparse.source.contains("case 7000:"), "{}", sparse.source);
     }
@@ -696,10 +702,7 @@ mod tests {
         for case in &cases {
             assert_eq!(case.has_tag("headers"), case.source.contains("#include"), "{}", case.id);
         }
-        let varargs = cases
-            .iter()
-            .find(|c| c.axes.get("kind") == Some("varargs"))
-            .unwrap();
+        let varargs = cases.iter().find(|c| c.axes.get("kind") == Some("varargs")).unwrap();
         assert!(varargs.source.contains("#include <stdarg.h>"));
         assert_eq!(output(varargs), "21\n");
     }

@@ -109,14 +109,7 @@ pub fn run<S: AsRef<OsStr>>(
     let stdout = out_reader.join().unwrap_or_default();
     let stderr = err_reader.join().unwrap_or_default();
     let code = status.and_then(|exit| exit.code()).unwrap_or(-1);
-    Ok(Outcome {
-        ok: !timed_out && code == 0,
-        status: code,
-        timed_out,
-        stdout,
-        stderr,
-        micros,
-    })
+    Ok(Outcome { ok: !timed_out && code == 0, status: code, timed_out, stdout, stderr, micros })
 }
 
 /// Runs a program several times and keeps the fastest.

@@ -94,10 +94,7 @@ fn describe(case: &Case, record: &RunRecord, verdict: Verdict) -> (String, Strin
     match verdict {
         Verdict::Wrong => match &case.expect {
             Expect::Output(wanted) => (
-                format!(
-                    "{} printed the wrong answer for a case about {what}",
-                    record.toolchain
-                ),
+                format!("{} printed the wrong answer for a case about {what}", record.toolchain),
                 wanted.clone(),
                 record.execute.output.clone(),
             ),

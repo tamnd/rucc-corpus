@@ -37,11 +37,7 @@ fn constant_fold(sink: &mut Sink<'_>) {
             let mut program =
                 Program::new(format!("fold {} on {} operands", op.name(), ty.c_name()));
             let lefts = spread(&interesting(ty), 8);
-            let rights = if op.is_shift() {
-                shift_counts(ty)
-            } else {
-                spread(&interesting(ty), 8)
-            };
+            let rights = if op.is_shift() { shift_counts(ty) } else { spread(&interesting(ty), 8) };
             let out = result_ty(op, ty);
             for &left in &lefts {
                 for &right in &rights {
@@ -84,11 +80,8 @@ fn strength(sink: &mut Sink<'_>) {
             if !sink.wants(Facet::Strength) {
                 return;
             }
-            let mut program = Program::new(format!(
-                "{} of an unknown {} by a constant",
-                op.name(),
-                ty.c_name()
-            ));
+            let mut program =
+                Program::new(format!("{} of an unknown {} by a constant", op.name(), ty.c_name()));
             let out = result_ty(op, ty);
             let operands = spread(&interesting(ty), 6);
             for (at, &operand) in operands.iter().enumerate() {
@@ -177,12 +170,7 @@ fn simplify(sink: &mut Sink<'_>) {
             }
             program.blank();
         }
-        sink.push(
-            Facet::Simplify,
-            Axes::of([("type", ty.name())]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::Simplify, Axes::of([("type", ty.name())]), Dialect::C17, program);
     }
 }
 
@@ -336,7 +324,8 @@ fn dead_store(sink: &mut Sink<'_>) {
 /// ever did, so a compiler that picks the wrong side fails loudly rather than by a size
 /// difference nobody notices.
 fn unreachable_code(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["if-false", "if-true", "while-false", "switch-constant", "early-return"];
+    const SHAPES: &[&str] =
+        &["if-false", "if-true", "while-false", "switch-constant", "early-return"];
     for &shape in SHAPES {
         if !sink.wants(Facet::UnreachableCode) {
             return;
@@ -383,12 +372,7 @@ fn unreachable_code(sink: &mut Sink<'_>) {
         }
         program.blank();
         program.check(Ty::I32, "answer", 11);
-        sink.push(
-            Facet::UnreachableCode,
-            Axes::of([("shape", shape)]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::UnreachableCode, Axes::of([("shape", shape)]), Dialect::C17, program);
     }
 }
 
@@ -435,9 +419,7 @@ mod tests {
     fn every_identity_case_prints_at_least_one_value_per_operand_it_declares() {
         for case in cases_for(Facet::Simplify) {
             let inputs = case.source.matches("static volatile").count();
-            let Expect::Output(text) = &case.expect else {
-                panic!("{} should run", case.id)
-            };
+            let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
             assert!(text.lines().count() >= inputs, "{}", case.id);
         }
     }
@@ -445,9 +427,7 @@ mod tests {
     #[test]
     fn a_reassociation_case_writes_the_same_chain_four_ways_and_expects_one_answer() {
         for case in cases_for(Facet::Reassociate) {
-            let Expect::Output(text) = &case.expect else {
-                panic!("{} should run", case.id)
-            };
+            let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
             let lines: Vec<&str> = text.lines().collect();
             assert_eq!(lines.len(), 4, "{}", case.id);
             assert!(lines.windows(2).all(|w| w[0] == w[1]), "{}", case.id);
@@ -460,7 +440,9 @@ mod tests {
         let shallow = cases.iter().find(|c| c.axes.get("depth") == Some("1")).unwrap();
         let deep = cases
             .iter()
-            .find(|c| c.axes.get("depth") == Some("16") && c.axes.get("type") == shallow.axes.get("type"))
+            .find(|c| {
+                c.axes.get("depth") == Some("16") && c.axes.get("type") == shallow.axes.get("type")
+            })
             .unwrap();
         assert!(deep.source.len() > shallow.source.len());
         assert_eq!(shallow.expect, deep.expect);

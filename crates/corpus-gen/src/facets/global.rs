@@ -100,7 +100,8 @@ fn common_subexpr(sink: &mut Sink<'_>) {
 /// second store somewhere else, a branch, or a loop that runs once. What is being checked is
 /// that the value read is the value written, whether or not the load survived.
 fn load_forwarding(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["same-slot", "other-slot-between", "across-branch", "through-pointer"];
+    const SHAPES: &[&str] =
+        &["same-slot", "other-slot-between", "across-branch", "through-pointer"];
     for &ty in Ty::WIDE {
         for &shape in SHAPES {
             if !sink.wants(Facet::LoadForwarding) {
@@ -218,8 +219,7 @@ fn copy_propagation(sink: &mut Sink<'_>) {
             if !sink.wants(Facet::CopyPropagation) {
                 return;
             }
-            let mut program =
-                Program::new(format!("a chain of {depth} {} copies", ty.c_name()));
+            let mut program = Program::new(format!("a chain of {depth} {} copies", ty.c_name()));
             let name = ty.c_name();
             program.input(ty, "start", 12);
             program.blank();
@@ -273,7 +273,12 @@ fn constant_propagation(sink: &mut Sink<'_>) {
                     program.line("}");
                 }
                 _ => {
-                    program.line(format!("{name} table[3] = {{ {}, {}, {} }};", lit(ty, 21), lit(ty, 22), lit(ty, 23)));
+                    program.line(format!(
+                        "{name} table[3] = {{ {}, {}, {} }};",
+                        lit(ty, 21),
+                        lit(ty, 22),
+                        lit(ty, 23)
+                    ));
                     program.line(format!("{name} value = table[0];"));
                 }
             }
@@ -333,12 +338,7 @@ fn value_range(sink: &mut Sink<'_>) {
             program.line("}");
             program.check(Ty::I32, "halved", 1);
         }
-        sink.push(
-            Facet::ValueRange,
-            Axes::of([("type", ty.name())]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::ValueRange, Axes::of([("type", ty.name())]), Dialect::C17, program);
     }
 }
 
@@ -355,8 +355,7 @@ fn alias_analysis(sink: &mut Sink<'_>) {
             if !sink.wants(Facet::AliasAnalysis) {
                 return;
             }
-            let mut program =
-                Program::new(format!("two {} references, {shape}", ty.c_name()));
+            let mut program = Program::new(format!("two {} references, {shape}", ty.c_name()));
             let name = ty.c_name();
             program.input(ty, "seed", 5);
             program.blank();
@@ -423,7 +422,8 @@ fn alias_analysis(sink: &mut Sink<'_>) {
 /// the memory. The answer is what is checked, and the size of the frame is what the report
 /// notices, since a compiler that failed to split still has to allocate the whole struct.
 fn scalar_replacement(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["struct", "nested-struct", "array-constant-index", "address-taken", "union"];
+    const SHAPES: &[&str] =
+        &["struct", "nested-struct", "array-constant-index", "address-taken", "union"];
     for &ty in Ty::WIDE {
         for &shape in SHAPES {
             if !sink.wants(Facet::ScalarReplacement) {
@@ -526,14 +526,9 @@ mod tests {
     #[test]
     fn the_may_alias_case_expects_the_answer_you_get_when_the_pointers_do_alias() {
         let cases = cases_for(Facet::AliasAnalysis);
-        let aliasing = cases
-            .iter()
-            .find(|c| c.axes.get("shape") == Some("may-alias"))
-            .unwrap();
-        let distinct = cases
-            .iter()
-            .find(|c| c.axes.get("shape") == Some("distinct-locals"))
-            .unwrap();
+        let aliasing = cases.iter().find(|c| c.axes.get("shape") == Some("may-alias")).unwrap();
+        let distinct =
+            cases.iter().find(|c| c.axes.get("shape") == Some("distinct-locals")).unwrap();
         assert_eq!(aliasing.expect, Expect::Output("14\n".to_owned()));
         assert_eq!(distinct.expect, Expect::Output("13\n".to_owned()));
     }
@@ -557,9 +552,7 @@ mod tests {
     #[test]
     fn every_range_question_has_the_answer_yes() {
         for case in cases_for(Facet::ValueRange) {
-            let Expect::Output(text) = &case.expect else {
-                panic!("{} should run", case.id)
-            };
+            let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
             assert!(text.lines().all(|line| line == "1"), "{} expects {text:?}", case.id);
         }
     }

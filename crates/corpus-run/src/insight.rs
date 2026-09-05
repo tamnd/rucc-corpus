@@ -63,7 +63,12 @@ fn parse_line(line: &str) -> Option<Insight> {
         return None;
     }
     let message = message.to_owned();
-    Some(Insight { kind: kind.to_owned(), pass: classify(&message).to_owned(), line: line_number, message })
+    Some(Insight {
+        kind: kind.to_owned(),
+        pass: classify(&message).to_owned(),
+        line: line_number,
+        message,
+    })
 }
 
 /// Whether a line is about the harness rather than about the program.

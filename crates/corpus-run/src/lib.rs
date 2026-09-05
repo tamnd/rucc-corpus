@@ -172,7 +172,8 @@ pub fn execute(
         }
     });
 
-    let mut collected = collected.into_inner().map_err(|_| "a worker thread panicked".to_owned())?;
+    let mut collected =
+        collected.into_inner().map_err(|_| "a worker thread panicked".to_owned())?;
     collected.sort_by_key(|(at, _, _)| *at);
 
     let mut records = Vec::with_capacity(collected.len());
@@ -187,7 +188,10 @@ pub fn execute(
         records.push(record);
     }
     findings.sort_by(|a, b| {
-        a.verdict.cmp(&b.verdict).then_with(|| a.case.cmp(&b.case)).then_with(|| a.toolchain.cmp(&b.toolchain))
+        a.verdict
+            .cmp(&b.verdict)
+            .then_with(|| a.case.cmp(&b.case))
+            .then_with(|| a.toolchain.cmp(&b.toolchain))
     });
 
     Ok(Run { toolchains, records, verdicts, findings })
@@ -250,8 +254,8 @@ mod tests {
     use corpus_model::{Axes, Case, Dialect, Expect, Facet, Level, Manifest, Verdict};
 
     fn scratch(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir()
-            .join(format!("rucc-corpus-run-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rucc-corpus-run-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }

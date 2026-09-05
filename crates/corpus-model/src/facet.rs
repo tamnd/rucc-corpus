@@ -208,7 +208,9 @@ impl Facet {
     #[must_use]
     pub const fn describe(self) -> &'static str {
         match self {
-            Self::Baseline => "programs with no optimization target, which every level must get right",
+            Self::Baseline => {
+                "programs with no optimization target, which every level must get right"
+            }
             Self::ConstantFold => "folding an operation on constants into a constant",
             Self::Strength => "rewriting an operation into a cheaper one with the same value",
             Self::Simplify => "algebraic identities and the local peephole rules",
@@ -445,10 +447,7 @@ mod tests {
     #[test]
     fn every_phase_has_at_least_one_facet_so_no_section_of_the_report_is_empty() {
         for phase in Phase::ALL {
-            assert!(
-                Facet::ALL.iter().any(|f| f.phase() == *phase),
-                "{phase} has no facet"
-            );
+            assert!(Facet::ALL.iter().any(|f| f.phase() == *phase), "{phase} has no facet");
         }
     }
 

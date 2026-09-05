@@ -205,12 +205,7 @@ pub(crate) fn baseline(sink: &mut Sink<'_>) {
                 }
             }
         }
-        sink.push(
-            Facet::Baseline,
-            Axes::of([("program", name)]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::Baseline, Axes::of([("program", name)]), Dialect::C17, program);
     }
 }
 
@@ -315,12 +310,7 @@ pub(crate) fn barrier(sink: &mut Sink<'_>) {
                 program.check(Ty::I32, "slot", 8);
             }
         }
-        sink.push(
-            Facet::Barrier,
-            Axes::of([("shape", shape)]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::Barrier, Axes::of([("shape", shape)]), Dialect::C17, program);
     }
 }
 
@@ -370,7 +360,9 @@ fn accepted_c17(sink: &mut Sink<'_>) {
             }
             "compound-literal" => {
                 program.top("struct pair { int first; int second; };");
-                program.top("static int total(struct pair value) { return value.first + value.second; }");
+                program.top(
+                    "static int total(struct pair value) { return value.first + value.second; }",
+                );
                 program.blank();
                 program.line("int *slice = (int[]){ 4, 5, 6 };");
                 program.blank();
@@ -391,7 +383,8 @@ fn accepted_c17(sink: &mut Sink<'_>) {
                 program.check(Ty::I32, "name(as_char)", 0);
             }
             "anonymous-members" => {
-                program.top("struct outer { int tag; union { int as_int; unsigned int as_bits; }; };");
+                program
+                    .top("struct outer { int tag; union { int as_int; unsigned int as_bits; }; };");
                 program.blank();
                 program.line("struct outer held;");
                 program.line("held.tag = 1;");
@@ -415,7 +408,9 @@ fn accepted_c17(sink: &mut Sink<'_>) {
             "flexible-array" => {
                 program.top("struct message { int count; int values[]; };");
                 program.top("static struct message *storage(void) {");
-                program.top("    static union { struct message head; unsigned char space[64]; } backing;");
+                program.top(
+                    "    static union { struct message head; unsigned char space[64]; } backing;",
+                );
                 program.top("    return &backing.head;");
                 program.top("}");
                 program.blank();
@@ -448,7 +443,9 @@ fn accepted_c17(sink: &mut Sink<'_>) {
             }
             "nested-declarators" => {
                 program.top("static int add(int a, int b) { return a + b; }");
-                program.top("static int (*chooser(int which))(int, int) { return which ? add : add; }");
+                program.top(
+                    "static int (*chooser(int which))(int, int) { return which ? add : add; }",
+                );
                 program.blank();
                 program.line("int (*table[2])(int, int) = { add, add };");
                 program.line("int (*picked)(int, int) = chooser(1);");
@@ -468,12 +465,7 @@ fn accepted_c17(sink: &mut Sink<'_>) {
                 program.check(Ty::I32, "(int)large", 1000);
             }
         }
-        sink.push(
-            Facet::Frontend,
-            Axes::of([("dialect-feature", shape)]),
-            Dialect::C17,
-            program,
-        );
+        sink.push(Facet::Frontend, Axes::of([("dialect-feature", shape)]), Dialect::C17, program);
     }
 }
 
@@ -563,7 +555,9 @@ fn accepted_c23(sink: &mut Sink<'_>) {
             }
             "attributes" => {
                 program.top("[[nodiscard]] static int compute(int value) { return value * 2; }");
-                program.top("static int ignore([[maybe_unused]] int unused, int used) { return used; }");
+                program.top(
+                    "static int ignore([[maybe_unused]] int unused, int used) { return used; }",
+                );
                 program.blank();
                 program.check(Ty::I32, "compute(21)", 42);
                 program.check(Ty::I32, "ignore(1, 12)", 12);
@@ -624,11 +618,7 @@ fn rejected(sink: &mut Sink<'_>) {
             "int main(void) {\n    int value = 1;\n    switch (value) {\n    case 1: return 1;\n    case 1: return 2;\n    }\n    return 0;\n}\n",
             "duplicate case",
         ),
-        (
-            "undeclared-identifier",
-            "int main(void) {\n    return missing_name;\n}\n",
-            "undeclared",
-        ),
+        ("undeclared-identifier", "int main(void) {\n    return missing_name;\n}\n", "undeclared"),
         (
             "too-few-arguments",
             "static int two(int a, int b) { return a + b; }\nint main(void) {\n    return two(1);\n}\n",
@@ -654,11 +644,7 @@ fn rejected(sink: &mut Sink<'_>) {
             "static int give(void) {\n    struct empty { int value; } made = { 1 };\n    return made;\n}\nint main(void) {\n    return give();\n}\n",
             "incompatible",
         ),
-        (
-            "break-outside-loop",
-            "int main(void) {\n    break;\n    return 0;\n}\n",
-            "break",
-        ),
+        ("break-outside-loop", "int main(void) {\n    break;\n    return 0;\n}\n", "break"),
     ];
     for &(name, source, mentions) in CASES {
         if !sink.wants(Facet::Frontend) {
@@ -727,10 +713,7 @@ mod tests {
     #[test]
     fn no_barrier_case_prints_anything_that_depends_on_byte_order() {
         let cases = cases_for(Facet::Barrier);
-        let punning = cases
-            .iter()
-            .find(|c| c.axes.get("shape") == Some("union-punning"))
-            .unwrap();
+        let punning = cases.iter().find(|c| c.axes.get("shape") == Some("union-punning")).unwrap();
         // The whole word is only checked for being non zero, never for its value.
         assert!(punning.source.contains("held.whole != 0"));
         assert!(!punning.source.contains("printf(\"%llu\\n\", (unsigned long long)(held.whole))"));
@@ -771,15 +754,11 @@ mod tests {
     #[test]
     fn every_rejected_case_names_a_short_fragment_of_the_diagnostic() {
         let cases = cases_for(Facet::Frontend);
-        let rejected: Vec<&Case> = cases
-            .iter()
-            .filter(|c| matches!(c.expect, Expect::Rejected(_)))
-            .collect();
+        let rejected: Vec<&Case> =
+            cases.iter().filter(|c| matches!(c.expect, Expect::Rejected(_))).collect();
         assert!(rejected.len() >= 8);
         for case in rejected {
-            let Expect::Rejected(text) = &case.expect else {
-                unreachable!()
-            };
+            let Expect::Rejected(text) = &case.expect else { unreachable!() };
             assert!(!text.is_empty(), "{}", case.id);
             assert_eq!(*text, text.to_lowercase(), "{} expects mixed case", case.id);
             assert!(text.len() < 24, "{} expects too much of the wording", case.id);

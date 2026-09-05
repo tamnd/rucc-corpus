@@ -75,7 +75,8 @@ pub fn build_and_run(
     let source = dir.join(SOURCE);
     let binary = dir.join(BINARY);
     let opinions = dir.join(OPINIONS);
-    std::fs::write(&source, &case.source).map_err(|error| format!("{}: {error}", source.display()))?;
+    std::fs::write(&source, &case.source)
+        .map_err(|error| format!("{}: {error}", source.display()))?;
 
     // Everything on the command line is named relative to the directory the compiler is run
     // in, so the command in the report is one somebody can paste after a cd into that
@@ -117,8 +118,13 @@ pub fn build_and_run(
     let execute = if should_run {
         // With a dot and a slash on the front, because a bare name would be looked for on the
         // path and the path is not where this was just built.
-        let ran =
-            exec::run_repeatedly::<String>(&format!("./{BINARY}"), &[], Some(dir), EXECUTE_TIMEOUT, repeats)
+        let ran = exec::run_repeatedly::<String>(
+            &format!("./{BINARY}"),
+            &[],
+            Some(dir),
+            EXECUTE_TIMEOUT,
+            repeats,
+        )
         .map_err(|error| format!("could not run {}: {error}", binary.display()))?;
         Execute {
             ok: ran.ok,
@@ -160,7 +166,9 @@ pub fn work_dir(root: &Path, case: &Case, toolchain: &str, level: Level) -> Path
     let safe: String = case
         .id
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+        .map(
+            |c| if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' },
+        )
         .collect();
     root.join(toolchain).join(level.name()).join(safe)
 }
@@ -227,7 +235,8 @@ mod tests {
     }
 
     fn scratch(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("rucc-corpus-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rucc-corpus-test-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }
