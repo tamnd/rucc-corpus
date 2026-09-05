@@ -1,0 +1,37 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85.0"
+license = "Apache-2.0"
+repository = "https://github.com/tamnd/rucc-corpus"
+homepage = "https://github.com/tamnd/rucc-corpus"
+authors = ["tamnd <tamnd87@gmail.com>"]
+readme = "README.md"
+
+# Nothing outside the standard library. The compiler under test has that rule for reasons of
+# its own, and the harness keeps it for one reason: a harness that pulls in a serialization
+# crate, a CLI crate and a parallelism crate is a harness whose output format is somebody
+# else's decision, and the machine report here is a contract other tools read.
+[workspace.dependencies]
+corpus-model = { version = "=0.1.0", path = "crates/corpus-model" }
+corpus-gen = { version = "=0.1.0", path = "crates/corpus-gen" }
+corpus-run = { version = "=0.1.0", path = "crates/corpus-run" }
+corpus-report = { version = "=0.1.0", path = "crates/corpus-report" }
+
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+rust_2018_idioms = "warn"
+unreachable_pub = "warn"
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+doc_markdown = "allow"
+todo = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

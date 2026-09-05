@@ -1,0 +1,21 @@
+/target
+**/*.rs.bk
+
+# Everything the harness produces. Generated C, run records, reports and the scratch
+# directory the compilers write objects into. All of it is regenerable from a commit hash
+# and a toolchain list, which is the point.
+/out
+/generated
+*.profraw
+*.profdata
+
+# The raw record of every build in a run, one JSON object per line. Kept out of the history
+# because it is a few megabytes a night and everything worth reading from it is already
+# summarised in report.json. CI uploads it as a build artifact, so when a number in the
+# summary needs chasing back to the build that produced it, the record is there.
+/reports/runs.jsonl
+
+.DS_Store
+.idea/
+.vscode/
+*.swp

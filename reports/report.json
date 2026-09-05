@@ -1,0 +1,1252 @@
+{
+  "schema": "1",
+  "milestone": "M4",
+  "tool": "rucc-corpus 0.1.0",
+  "corpus_digest": "7b4209805ef6afad2181a339a7d27c599fd5828f9b80e9a19e043ab63aca259f",
+  "cases": 1018,
+  "reference": "gcc-16",
+  "levels": [
+    "O0",
+    "O1",
+    "O2",
+    "O3",
+    "Os"
+  ],
+  "toolchains": [
+    {
+      "id": "gcc-16",
+      "program": "/opt/homebrew/bin/gcc-16",
+      "version": "gcc-16 (Homebrew GCC 16.2.0) 16.2.0",
+      "reference": true
+    }
+  ],
+  "totals": [
+    {
+      "toolchain": "gcc-16",
+      "tally": {
+        "pass": 5058,
+        "wrong": 0,
+        "rejected": 0,
+        "accepted": 0,
+        "crashed": 0,
+        "skipped": 0,
+        "ran": 5058,
+        "failures": 0,
+        "pass_rate": 1
+      }
+    }
+  ],
+  "targets": [
+    {
+      "name": "correctness",
+      "wanted": "every case prints the answer the generator computed, on every compiler, at every level",
+      "threshold": 0,
+      "actual": 0,
+      "met": true
+    }
+  ],
+  "facets": [
+    {
+      "facet": "baseline",
+      "phase": "floor",
+      "describes": "programs with no optimization target, which every level must get right",
+      "cases": 10,
+      "reference_said": {
+        "optimized": 32,
+        "missed": 131
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 50,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 50,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 10,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "constant-fold",
+      "phase": "local",
+      "describes": "folding an operation on constants into a constant",
+      "cases": 112,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 0
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 560,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 560,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 112,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "strength",
+      "phase": "local",
+      "describes": "rewriting an operation into a cheaper one with the same value",
+      "cases": 24,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 288
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 120,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 120,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 24,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "simplify",
+      "phase": "local",
+      "describes": "algebraic identities and the local peephole rules",
+      "cases": 8,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 96
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 40,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 40,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 8,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "reassociate",
+      "phase": "local",
+      "describes": "reassociating a chain to shorten its dependency height",
+      "cases": 20,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 160
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "dead-code",
+      "phase": "local",
+      "describes": "removing a computation whose result nothing reads",
+      "cases": 12,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 24
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "dead-store",
+      "phase": "local",
+      "describes": "removing a store a later store makes invisible",
+      "cases": 12,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 24
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "unreachable-code",
+      "phase": "local",
+      "describes": "removing a branch with a known condition and its dead arm",
+      "cases": 5,
+      "reference_said": {
+        "optimized": 3,
+        "missed": 11
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 25,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 25,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 5,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "common-subexpr",
+      "phase": "global",
+      "describes": "reusing an earlier computation instead of repeating it",
+      "cases": 16,
+      "reference_said": {
+        "optimized": 12,
+        "missed": 100
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "load-forwarding",
+      "phase": "global",
+      "describes": "replacing a load with the value already in that place",
+      "cases": 16,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 64
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "code-motion",
+      "phase": "global",
+      "describes": "moving a computation to where it runs no more often",
+      "cases": 12,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 72
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "copy-propagation",
+      "phase": "global",
+      "describes": "propagating a copy so the copy becomes dead",
+      "cases": 12,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 24
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "constant-propagation",
+      "phase": "global",
+      "describes": "propagating a value constant on every reaching path",
+      "cases": 16,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 32
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "value-range",
+      "phase": "global",
+      "describes": "narrowing an integer to the range it can hold",
+      "cases": 4,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 8
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 20,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 20,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 4,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "alias-analysis",
+      "phase": "global",
+      "describes": "proving two references cannot name the same object",
+      "cases": 16,
+      "reference_said": {
+        "optimized": 12,
+        "missed": 40
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 80,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 80,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 16,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "scalar-replacement",
+      "phase": "global",
+      "describes": "turning a non-escaping local back into a value",
+      "cases": 20,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 40
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-invariant",
+      "phase": "loops",
+      "describes": "hoisting an invariant computation out of a loop",
+      "cases": 32,
+      "reference_said": {
+        "optimized": 60,
+        "missed": 128
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 160,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 160,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 32,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "induction-variable",
+      "phase": "loops",
+      "describes": "rewriting induction variables into a cheaper set",
+      "cases": 32,
+      "reference_said": {
+        "optimized": 99,
+        "missed": 0
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 160,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 160,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 32,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-unswitch",
+      "phase": "loops",
+      "describes": "removing a test the loop guard already decided",
+      "cases": 64,
+      "reference_said": {
+        "optimized": 176,
+        "missed": 164
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-unroll",
+      "phase": "loops",
+      "describes": "unrolling a loop body, known trip count or not",
+      "cases": 64,
+      "reference_said": {
+        "optimized": 172,
+        "missed": 128
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-idiom",
+      "phase": "loops",
+      "describes": "recognizing a loop the runtime already implements",
+      "cases": 64,
+      "reference_said": {
+        "optimized": 382,
+        "missed": 86
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-deletion",
+      "phase": "loops",
+      "describes": "deleting a loop whose body nobody reads",
+      "cases": 24,
+      "reference_said": {
+        "optimized": 64,
+        "missed": 54
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 120,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 120,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 24,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-rotate",
+      "phase": "loops",
+      "describes": "rotating a loop so the test lands at the bottom",
+      "cases": 64,
+      "reference_said": {
+        "optimized": 224,
+        "missed": 0
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 320,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 320,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 64,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "loop-restructure",
+      "phase": "loops",
+      "describes": "exchanging or fusing loops for locality",
+      "cases": 48,
+      "reference_said": {
+        "optimized": 275,
+        "missed": 72
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 240,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 240,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 48,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "inline",
+      "phase": "interprocedural",
+      "describes": "replacing a call with the body of what it called",
+      "cases": 36,
+      "reference_said": {
+        "optimized": 900,
+        "missed": 372
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 180,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 180,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 36,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "tail-call",
+      "phase": "interprocedural",
+      "describes": "turning a call in tail position into a jump",
+      "cases": 36,
+      "reference_said": {
+        "optimized": 324,
+        "missed": 456
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 180,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 180,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 36,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "function-purity",
+      "phase": "interprocedural",
+      "describes": "proving purity and using it at the call sites",
+      "cases": 20,
+      "reference_said": {
+        "optimized": 80,
+        "missed": 64
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "constant-args",
+      "phase": "interprocedural",
+      "describes": "specializing a function to a constant argument",
+      "cases": 12,
+      "reference_said": {
+        "optimized": 84,
+        "missed": 48
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "reachability",
+      "phase": "interprocedural",
+      "describes": "removing what nothing references",
+      "cases": 9,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 18
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 45,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 45,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 9,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "devirtualize",
+      "phase": "interprocedural",
+      "describes": "turning an indirect call into a direct one",
+      "cases": 4,
+      "reference_said": {
+        "optimized": 6,
+        "missed": 22
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 20,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 20,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 4,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "selection",
+      "phase": "backend",
+      "describes": "choosing the machine instruction for an operation",
+      "cases": 40,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 252
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 200,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 200,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 40,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "register-alloc",
+      "phase": "backend",
+      "describes": "assigning registers and deciding what to spill",
+      "cases": 40,
+      "reference_said": {
+        "optimized": 104,
+        "missed": 92
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 200,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 200,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 40,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "scheduling",
+      "phase": "backend",
+      "describes": "ordering instructions within a block",
+      "cases": 12,
+      "reference_said": {
+        "optimized": 24,
+        "missed": 71
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 60,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 60,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 12,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "block-layout",
+      "phase": "backend",
+      "describes": "laying out blocks so the common path falls through",
+      "cases": 4,
+      "reference_said": {
+        "optimized": 5,
+        "missed": 14
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 20,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 20,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 4,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "if-conversion",
+      "phase": "backend",
+      "describes": "turning a short branch into branchless code",
+      "cases": 20,
+      "reference_said": {
+        "optimized": 31,
+        "missed": 98
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 100,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 100,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 20,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "switch-lowering",
+      "phase": "backend",
+      "describes": "choosing how to lower a switch",
+      "cases": 9,
+      "reference_said": {
+        "optimized": 56,
+        "missed": 94
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 45,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 45,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 9,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "calling-convention",
+      "phase": "backend",
+      "describes": "deciding what a call saves and restores",
+      "cases": 10,
+      "reference_said": {
+        "optimized": 44,
+        "missed": 57
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 50,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 50,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 10,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "machine-peephole",
+      "phase": "backend",
+      "describes": "the rules that only make sense on machine instructions",
+      "cases": 22,
+      "reference_said": {
+        "optimized": 0,
+        "missed": 88
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 110,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 110,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 22,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "barrier",
+      "phase": "correctness",
+      "describes": "programs where the compiler must not act, and a firing is a bug",
+      "cases": 7,
+      "reference_said": {
+        "optimized": 6,
+        "missed": 51
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 35,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 35,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 7,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    },
+    {
+      "facet": "frontend",
+      "phase": "floor",
+      "describes": "language shape rather than optimization, including C23",
+      "cases": 30,
+      "reference_said": {
+        "optimized": 33,
+        "missed": 14
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 118,
+            "wrong": 0,
+            "rejected": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 118,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 22,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        }
+      ]
+    }
+  ],
+  "findings": []
+}
+

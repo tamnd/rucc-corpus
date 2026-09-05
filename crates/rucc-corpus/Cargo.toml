@@ -1,0 +1,24 @@
+[package]
+name = "rucc-corpus"
+description = "The command line front end to the corpus: generate it, run it, report on it, compare two runs."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+
+[[bin]]
+name = "rucc-corpus"
+path = "src/main.rs"
+
+[dependencies]
+corpus-gen.workspace = true
+corpus-model.workspace = true
+corpus-report.workspace = true
+corpus-run.workspace = true
+
+[lints]
+workspace = true

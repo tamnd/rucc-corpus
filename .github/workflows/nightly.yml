@@ -1,0 +1,137 @@
+# The full run, every night, committed back.
+#
+# This is what makes the corpus a record rather than a snapshot. Every night it builds the
+# current tip of the compiler, runs all five optimization levels against GCC 16 on the same
+# machine, and commits the reports. The reports in `reports/` are therefore always yesterday's
+# answer to the question the M4 plan asks, and `git log reports/report.md` is the history of
+# the compiler getting better or worse, phase by phase.
+#
+# A regression fails the job. Falling behind on code size for one facet does not, because a
+# pass that trades size in one shape for speed in another is doing its job. Losing a target or
+# gaining a wrong answer does, because those were promised.
+
+name: nightly
+
+on:
+  schedule:
+    # 04:00 UTC, an hour after the compiler's own nightly, so it runs against a tip that has
+    # already been through the sanitizers rather than one that has not.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: commit the reports back to main
+        type: boolean
+        default: true
+
+concurrency:
+  group: nightly
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  full:
+    name: the whole corpus at every level
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16
+          gcc-16 --version | head -1
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+
+      - name: which compiler this is
+        run: |
+          echo "RUCC_SHA=$(git -C rucc rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          git -C rucc log -1 --pretty='%h %s' >> "$GITHUB_STEP_SUMMARY"
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+
+      # The C is regenerated first, so a night where the generator grew a facet produces a
+      # report about the corpus as it is now rather than about the corpus as it was checked
+      # in. The digest in the report says which one it was either way.
+      - name: regenerate the corpus
+        run: cargo run --release -p rucc-corpus -- gen --clean
+
+      - name: keep yesterday's report to compare against
+        run: cp reports/report.json /tmp/yesterday.json || true
+
+      # Five repeats, because this is where the timing numbers come from and nothing else
+      # here is in a hurry. Failures are not fatal to the step, because the report is the
+      # output and a run that stopped early has nothing to say.
+      - name: run the corpus
+        id: run
+        continue-on-error: true
+        run: |
+          cargo run --release -p rucc-corpus -- run \
+            --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
+            --reference gcc-16 --repeats 5 \
+            --out reports
+
+      - name: what changed since yesterday
+        id: diff
+        if: hashFiles('/tmp/yesterday.json') != ''
+        continue-on-error: true
+        run: |
+          cargo run --release -p rucc-corpus -- diff \
+            /tmp/yesterday.json reports/report.json | tee /tmp/diff.txt
+
+      - name: the report
+        if: always()
+        run: |
+          cat reports/report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -s /tmp/diff.txt ]; then
+            {
+              echo
+              echo '## What changed since yesterday'
+              echo
+              echo '```'
+              cat /tmp/diff.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: keep everything
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: nightly-reports
+          path: reports/
+          if-no-files-found: ignore
+
+      # The commit is the point. Without it the corpus says what happened last night and
+      # forgets, and the question the plan actually asks is whether phase five was better than
+      # phase four.
+      - name: commit the reports
+        if: github.event_name == 'schedule' || inputs.commit
+        run: |
+          git config user.name "rucc corpus"
+          git config user.email "noreply@github.com"
+          git add programs reports
+          if git diff --cached --quiet; then
+            echo "nothing moved"
+            exit 0
+          fi
+          git commit -m "nightly: corpus run against rucc ${RUCC_SHA}"
+          git push
+
+      # Last, so that the reports are committed even on a night the compiler went backwards.
+      - name: a regression is a failure
+        if: steps.diff.outcome == 'failure' || steps.run.outcome == 'failure'
+        run: |
+          echo "The run found something. Read the report above."
+          exit 1

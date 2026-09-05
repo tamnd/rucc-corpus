@@ -1,0 +1,162 @@
+# The per-commit gate.
+#
+# Three claims are checked here and they are checked in this order, cheapest first.
+#
+# One, the crates build and their tests pass. Two, the C in `programs/` is exactly what the
+# generator produces, so nobody can hand-edit a case into passing. Three, every program in the
+# corpus prints the answer this repository computed in Rust, checked against GCC 16, which is
+# the only way to find out that an expected answer was wrong.
+#
+# The third claim is the one worth the machine time. The generator works out every answer
+# itself and never asks a compiler, so an answer that is wrong is wrong in a way no
+# differential harness would ever notice. GCC 16 disagreeing with it is the signal.
+#
+# Actions are pinned to a patch version rather than a major tag, the same rule as in the
+# compiler repository. A major tag is a moving reference, and a corpus that cannot reproduce
+# its own run is not evidence of anything.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+
+jobs:
+  quick:
+    name: format, lints and tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: cargo fmt
+        run: cargo fmt --all --check
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --all-features
+      - name: cargo test
+        run: cargo test --workspace --all-features
+
+  # The C in the repository has to be the C the generator produces, or the files are
+  # decoration. Regenerating and asking git whether anything moved is the whole check, and it
+  # also proves the generator is deterministic, because a generator that produced a different
+  # digest on a different machine would fail here every time.
+  generated:
+    name: the C in the repository is the C the generator produces
+    needs: quick
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: regenerate
+        run: cargo run --release -p rucc-corpus -- gen --clean
+      - name: nothing moved
+        run: |
+          if ! git diff --quiet -- programs; then
+            echo "The generated C does not match what is checked in."
+            echo "Run 'cargo run --release -p rucc-corpus -- gen --clean' and commit the result."
+            git diff --stat -- programs
+            exit 1
+          fi
+
+  # GCC 16 as the oracle check. Ubuntu 24.04 ships GCC 13, so 16 comes from the toolchain
+  # archive, the same recipe the compiler repository uses for its differential job.
+  #
+  # Two levels rather than five. -O0 catches an expected answer that was simply wrong and -O2
+  # catches one that is only right when nothing is optimized, which is the interesting failure.
+  # The other three levels run nightly, where the wall clock does not matter.
+  reference:
+    name: gcc 16 agrees with every expected answer
+    needs: quick
+    runs-on: ubuntu-24.04
+    steps:
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16
+          gcc-16 --version | head -1
+      - uses: actions/checkout@v7.0.1
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: run the corpus
+        run: |
+          cargo run --release -p rucc-corpus -- run \
+            --toolchain gcc-16 --reference gcc-16 \
+            --level O0 --level O2 --repeats 1 \
+            --out reports-ci
+      - name: keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: reference-reports
+          path: reports-ci/
+          if-no-files-found: ignore
+
+  # What rucc actually does with the corpus, measured against GCC 16 on the same machine in
+  # the same run. This is the number the M4 milestones are judged on.
+  #
+  # It does not gate a merge to this repository, because rucc is under development and a
+  # corpus that goes red every time the compiler has not got to a pass yet is a corpus nobody
+  # reads. The reports go up as an artifact and the nightly job commits them.
+  compiler:
+    name: rucc against gcc 16
+    needs: quick
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16
+          gcc-16 --version | head -1
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: run the corpus
+        run: |
+          cargo run --release -p rucc-corpus -- run \
+            --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
+            --reference gcc-16 --level O0 --level O2 --repeats 3 \
+            --out reports-ci
+      - name: what it said
+        if: always()
+        run: cat reports-ci/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: compiler-reports
+          path: reports-ci/
+          if-no-files-found: ignore
+
+  # A single required check, so branch protection does not have to list every job above.
+  # The rucc job is deliberately not in the list, for the reason given on it.
+  ci:
+    name: ci
+    if: always()
+    needs: [quick, generated, reference]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: every required job passed
+        run: |
+          echo "${{ join(needs.*.result, ' ') }}"
+          test "${{ contains(needs.*.result, 'failure') }}" = "false"
+          test "${{ contains(needs.*.result, 'cancelled') }}" = "false"

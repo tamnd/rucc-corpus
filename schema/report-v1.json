@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tamnd/rucc-corpus/blob/main/schema/report-v1.json",
+  "title": "rucc corpus report, version 1",
+  "description": "The machine readable summary of one corpus run. Written to reports/report.json. The schema version is in the report itself, in the schema field, and it is a string rather than a number so that a version can be a date if it ever needs to be. A field is added without a version bump. A field is removed or changes meaning only with one.",
+  "type": "object",
+  "required": [
+    "schema",
+    "milestone",
+    "tool",
+    "corpus_digest",
+    "cases",
+    "reference",
+    "levels",
+    "toolchains",
+    "totals",
+    "targets",
+    "facets",
+    "findings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "description": "The version of this schema the report was written against.",
+      "type": "string",
+      "const": "1"
+    },
+    "milestone": {
+      "description": "Which milestone of the compiler plan the corpus is written for.",
+      "type": "string"
+    },
+    "tool": {
+      "description": "What wrote the report, with its version.",
+      "type": "string"
+    },
+    "corpus_digest": {
+      "description": "SHA-256 over every case in the corpus. Two reports with different digests are about different programs, and comparing their numbers directly is a mistake. This is what rucc-corpus diff checks before it says anything.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "cases": {
+      "description": "How many programs are in the corpus.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "reference": {
+      "description": "The id of the toolchain the others are measured against.",
+      "type": "string"
+    },
+    "levels": {
+      "description": "The optimization levels that were built.",
+      "type": "array",
+      "items": { "enum": ["O0", "O1", "O2", "O3", "Os"] }
+    },
+    "toolchains": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/toolchain" }
+    },
+    "totals": {
+      "description": "One entry per toolchain, counting every build it did across every level.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/score_line" }
+    },
+    "targets": {
+      "description": "The falsifiable claims the compiler plan makes, and whether this run met them.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/target" }
+    },
+    "facets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/facet" }
+    },
+    "findings": {
+      "description": "Every result that was not what the generator said it would be. Empty is the good case.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    }
+  },
+  "$defs": {
+    "toolchain": {
+      "type": "object",
+      "required": ["id", "program", "version", "reference"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "What it is called in every other part of this report. Chosen by whoever ran it, so that a report from a laptop and a report from CI line up even though the binary was in a different place.",
+          "type": "string"
+        },
+        "program": { "description": "What was actually run.", "type": "string" },
+        "version": { "description": "The first line it printed for --version.", "type": "string" },
+        "reference": { "description": "Whether the others are measured against it.", "type": "boolean" }
+      }
+    },
+    "tally": {
+      "description": "How a set of builds came out. Every build lands in exactly one of the six verdicts, so pass through skipped sum to ran.",
+      "type": "object",
+      "required": ["pass", "wrong", "rejected", "accepted", "crashed", "skipped", "ran", "failures", "pass_rate"],
+      "additionalProperties": false,
+      "properties": {
+        "pass": { "description": "Did what the generator said it would.", "type": "integer", "minimum": 0 },
+        "wrong": { "description": "Compiled, ran, printed something else. The worst kind.", "type": "integer", "minimum": 0 },
+        "rejected": { "description": "Refused a program that is valid C.", "type": "integer", "minimum": 0 },
+        "accepted": { "description": "Accepted a program that is not valid C, or rejected it for the wrong reason.", "type": "integer", "minimum": 0 },
+        "crashed": { "description": "Fell over, timed out, or died on a signal.", "type": "integer", "minimum": 0 },
+        "skipped": { "description": "Not built, because the case asked to be left out.", "type": "integer", "minimum": 0 },
+        "ran": { "description": "Everything except skipped.", "type": "integer", "minimum": 0 },
+        "failures": { "description": "Everything except pass and skipped.", "type": "integer", "minimum": 0 },
+        "pass_rate": { "description": "Passes over ran, or zero when nothing ran.", "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "score_line": {
+      "type": "object",
+      "required": ["toolchain", "tally"],
+      "properties": {
+        "toolchain": { "type": "string" },
+        "tally": { "$ref": "#/$defs/tally" },
+        "compared": {
+          "description": "How many cases had a number on both sides, so the ratios below are medians over this many.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "size_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's executable section bytes over the reference's, at -O2. One is level with the reference and more than one is bigger." },
+        "speed_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's run time over the reference's. Less than one is faster." },
+        "compile_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's compile time over the reference's. Less than one is faster to compile." }
+      }
+    },
+    "ratio": {
+      "description": "A median ratio against the reference, or null when neither side produced a number. Never one as a stand-in for missing, because a missing measurement and a measurement that came out level are different facts. Medians rather than means throughout, because the corpus is full of tiny programs where one instruction is twenty percent.",
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0
+    },
+    "target": {
+      "description": "One claim from the compiler plan, checked.",
+      "type": "object",
+      "required": ["name", "wanted", "met"],
+      "properties": {
+        "name": { "description": "For example correctness, or code-quality:rucc.", "type": "string" },
+        "wanted": { "description": "The claim in words.", "type": "string" },
+        "threshold": { "description": "The number the claim has to beat.", "type": ["number", "null"] },
+        "actual": { "description": "The number this run got.", "type": ["number", "null"] },
+        "met": { "type": "boolean" }
+      }
+    },
+    "facet": {
+      "description": "One named transformation, and how every toolchain did on the programs written for it.",
+      "type": "object",
+      "required": ["facet", "phase", "cases", "scores"],
+      "properties": {
+        "facet": { "type": "string" },
+        "phase": { "enum": ["floor", "local", "global", "loops", "interprocedural", "backend", "correctness"] },
+        "describes": { "description": "What the facet is about, in one sentence.", "type": "string" },
+        "cases": { "type": "integer", "minimum": 0 },
+        "reference_said": {
+          "description": "What the reference compiler reported through -fopt-info on these programs. Reference data and not a pass or fail signal. A high missed count means the transformation was available and the reference did not take it, which is a hint about the program rather than about anybody's compiler.",
+          "type": "object",
+          "required": ["optimized", "missed"],
+          "properties": {
+            "optimized": { "type": "integer", "minimum": 0 },
+            "missed": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "scores": { "type": "array", "items": { "$ref": "#/$defs/score_line" } }
+      }
+    },
+    "finding": {
+      "description": "One build that did not come out as the generator said it would.",
+      "type": "object",
+      "required": ["case", "facet", "toolchain", "level", "verdict"],
+      "properties": {
+        "case": { "description": "The case id, which is also the file name under programs.", "type": "string" },
+        "facet": { "type": "string" },
+        "toolchain": { "type": "string" },
+        "level": { "enum": ["O0", "O1", "O2", "O3", "Os"] },
+        "verdict": { "enum": ["wrong", "rejected", "accepted", "crashed"] },
+        "summary": { "description": "The finding in one line, for a list.", "type": "string" },
+        "expected": { "description": "What it should have printed, or the diagnostic it should have produced.", "type": "string" },
+        "actual": { "description": "What it printed, or what the compiler said.", "type": "string" }
+      }
+    }
+  }
+}

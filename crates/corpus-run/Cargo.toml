@@ -1,0 +1,17 @@
+[package]
+name = "corpus-run"
+description = "Compiles and runs the corpus against every toolchain and every level, and captures what the compiler said about its own work."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+
+[dependencies]
+corpus-model.workspace = true
+
+[lints]
+workspace = true

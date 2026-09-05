@@ -1,0 +1,18 @@
+[package]
+name = "corpus-report"
+description = "Turns a run into a report a person can read and a report a machine can read."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+
+[dependencies]
+corpus-model.workspace = true
+corpus-run.workspace = true
+
+[lints]
+workspace = true
