@@ -317,53 +317,228 @@ fn signed_twin(ty: Ty) -> Ty {
 /// compiler that folds `x - x` to zero and a compiler that leaves the subtraction alone both
 /// pass here, which is correct: this facet proves the rewrite is sound, and the size numbers
 /// in the report say whether it happened.
+///
+/// One program per group rather than one per type, because a type on its own is too coarse to
+/// report against. The tier one rule set in `crates/rucc-opt/rules/simplify.rules` is a hundred
+/// and twenty five separate rules, and a single program per type that exercises all of them
+/// gives one size number for the lot, so a rule that stopped firing is invisible next to the
+/// twenty that still do. The groups below are the families that file is written in, and a size
+/// number per group is a number that moves when one family lands and does not when it does not.
 fn simplify(sink: &mut Sink<'_>) {
     for &ty in Ty::ALL {
-        if !sink.wants(Facet::Simplify) {
-            return;
+        for &group in GROUPS {
+            if !sink.wants(Facet::Simplify) {
+                return;
+            }
+            // The last group is about arithmetic C widened and the program narrowed again, so
+            // there is nothing for it to say about a type that was never widened.
+            if group == "narrowed" && ty.bits() >= 32 {
+                continue;
+            }
+            let mut program = Program::new(format!("{group} identities on {}", ty.c_name()));
+            for (at, &operand) in spread(&interesting(ty), 6).iter().enumerate() {
+                let x = format!("x{at}");
+                let mut emitted = false;
+                for (expr, value, out) in identities(group, ty, &x, operand) {
+                    if !emitted {
+                        program.input(ty, &x, operand);
+                        emitted = true;
+                    }
+                    program.check(out, &expr, value);
+                }
+                if emitted {
+                    program.blank();
+                }
+            }
+            sink.push(
+                Facet::Simplify,
+                Axes::of([("type", ty.name()), ("group", group)]),
+                Dialect::C17,
+                program,
+            );
         }
-        let ones = all_ones(ty);
-        let mut program = Program::new(format!("algebraic identities on {}", ty.c_name()));
-        for (at, &operand) in spread(&interesting(ty), 6).iter().enumerate() {
-            let x = format!("x{at}");
-            program.input(ty, &x, operand);
-            let wide = ty.promoted();
-            let candidates: Vec<(String, Option<i128>, Ty)> = vec![
-                (format!("{x} + {}", lit(ty, 0)), eval(Op::Add, ty, operand, 0), wide),
-                (format!("{x} - {}", lit(ty, 0)), eval(Op::Sub, ty, operand, 0), wide),
-                (format!("{x} * {}", lit(ty, 1)), eval(Op::Mul, ty, operand, 1), wide),
-                (format!("{x} * {}", lit(ty, 0)), eval(Op::Mul, ty, operand, 0), wide),
-                (format!("{x} / {}", lit(ty, 1)), eval(Op::Div, ty, operand, 1), wide),
-                (format!("{x} % {}", lit(ty, 1)), eval(Op::Rem, ty, operand, 1), wide),
-                (format!("{x} & {x}"), eval(Op::And, ty, operand, operand), wide),
-                (format!("{x} | {x}"), eval(Op::Or, ty, operand, operand), wide),
-                (format!("{x} ^ {x}"), eval(Op::Xor, ty, operand, operand), wide),
-                (format!("{x} - {x}"), eval(Op::Sub, ty, operand, operand), wide),
-                (format!("{x} & {}", lit(ty, 0)), eval(Op::And, ty, operand, 0), wide),
-                (format!("{x} | {}", lit(ty, ones)), eval(Op::Or, ty, operand, ones), wide),
-                (format!("{x} & {}", lit(ty, ones)), eval(Op::And, ty, operand, ones), wide),
-                (format!("{x} ^ {}", lit(ty, 0)), eval(Op::Xor, ty, operand, 0), wide),
-                (format!("{x} << 0"), eval(Op::Shl, ty, operand, 0), wide),
-                (format!("{x} >> 0"), eval(Op::Shr, ty, operand, 0), wide),
+    }
+    one_bit_identities(sink);
+}
+
+/// The families the identities fall into, one program each.
+const GROUPS: &[&str] = &[
+    "additive",
+    "multiplicative",
+    "bitwise-self",
+    "bitwise-constant",
+    "shift",
+    "involution",
+    "narrowed",
+];
+
+/// Every identity in a group that has a defined answer for this operand.
+///
+/// The constant is written on both sides wherever the operation is commutative. That is not
+/// padding. A rewrite table matches a shape, so a rule about the constant on the right is a
+/// different rule from one about the constant on the left, and a compiler can easily have one
+/// and not the other. Writing only `x + 0` would leave half the table with no evidence.
+fn identities(group: &str, ty: Ty, x: &str, operand: i128) -> Vec<(String, i128, Ty)> {
+    // Where the arithmetic actually happens, which is not always where the operand lives. Two
+    // `unsigned char` values are added as `int`, so the identity a narrow case exercises is the
+    // one at `int` width, and the constant has to be written at that width to say so. A mask of
+    // `255u` against an `unsigned char` leaves the value alone as well, but it is a masking rule
+    // rather than an all ones rule, and the two are not the same rewrite.
+    let wide = ty.promoted();
+    let zero = lit(wide, 0);
+    let one = lit(wide, 1);
+    let ones = lit(wide, all_ones(wide));
+    let set = all_ones(wide);
+    let candidates: Vec<(String, Option<i128>, Ty)> = match group {
+        "additive" => vec![
+            (format!("{x} + {zero}"), eval(Op::Add, wide, operand, 0), wide),
+            (format!("{zero} + {x}"), eval(Op::Add, wide, 0, operand), wide),
+            (format!("{x} - {zero}"), eval(Op::Sub, wide, operand, 0), wide),
+            (format!("{x} - {x}"), eval(Op::Sub, ty, operand, operand), wide),
+        ],
+        "multiplicative" => vec![
+            (format!("{x} * {one}"), eval(Op::Mul, wide, operand, 1), wide),
+            (format!("{one} * {x}"), eval(Op::Mul, wide, 1, operand), wide),
+            (format!("{x} * {zero}"), eval(Op::Mul, wide, operand, 0), wide),
+            (format!("{zero} * {x}"), eval(Op::Mul, wide, 0, operand), wide),
+            (format!("{x} / {one}"), eval(Op::Div, wide, operand, 1), wide),
+            (format!("{x} % {one}"), eval(Op::Rem, wide, operand, 1), wide),
+        ],
+        "bitwise-self" => vec![
+            (format!("{x} & {x}"), eval(Op::And, ty, operand, operand), wide),
+            (format!("{x} | {x}"), eval(Op::Or, ty, operand, operand), wide),
+            (format!("{x} ^ {x}"), eval(Op::Xor, ty, operand, operand), wide),
+        ],
+        "bitwise-constant" => vec![
+            (format!("{x} & {zero}"), eval(Op::And, wide, operand, 0), wide),
+            (format!("{zero} & {x}"), eval(Op::And, wide, 0, operand), wide),
+            (format!("{x} & {ones}"), eval(Op::And, wide, operand, set), wide),
+            (format!("{ones} & {x}"), eval(Op::And, wide, set, operand), wide),
+            (format!("{x} | {zero}"), eval(Op::Or, wide, operand, 0), wide),
+            (format!("{zero} | {x}"), eval(Op::Or, wide, 0, operand), wide),
+            (format!("{x} | {ones}"), eval(Op::Or, wide, operand, set), wide),
+            (format!("{ones} | {x}"), eval(Op::Or, wide, set, operand), wide),
+            (format!("{x} ^ {zero}"), eval(Op::Xor, wide, operand, 0), wide),
+            (format!("{zero} ^ {x}"), eval(Op::Xor, wide, 0, operand), wide),
+        ],
+        // A shift by nothing, at all three of the shifts the IR has. Which one a case reaches is
+        // decided by the type: a left shift is one instruction whatever the sign, and a right
+        // shift on a signed operand keeps the sign bit where an unsigned one does not, so the
+        // signed and the unsigned program of this group are about different rules.
+        "shift" => vec![
+            (format!("{x} << 0"), eval(Op::Shl, ty, operand, 0), wide),
+            (format!("{x} >> 0"), eval(Op::Shr, ty, operand, 0), wide),
+        ],
+        // An identity that is not one until the width comes back off. C widens an `unsigned
+        // char` to `int` before it does anything, so `x & 255` at `int` width really does mask
+        // and is nobody's identity there. Narrow it back to the eight bits the program stores it
+        // in and the constant is every bit set, which is the identity. Every case in this group
+        // is written that way round: a constant chosen so that the operation does something at
+        // `int` width and nothing at the width the answer is kept at.
+        //
+        // This is the group that says whether the narrow widths of a rule table are reachable at
+        // all. They are not reachable from anything C writes directly, because the promotion
+        // happens first, so a table with a rule per width has most of its rules waiting on a
+        // pass that puts the width back. What the size number here says is whether the compiler
+        // looks again after it has done that.
+        "narrowed" => {
+            let step = 1i128 << ty.bits();
+            let mask = step - 1;
+            let name = ty.c_name();
+            let narrowed =
+                |op: Op, right: i128| eval(op, wide, operand, right).map(|value| ty.convert(value));
+            vec![
+                (format!("({name})({x} + {})", lit(wide, step)), narrowed(Op::Add, step), wide),
+                (format!("({name})({x} - {})", lit(wide, step)), narrowed(Op::Sub, step), wide),
                 (
-                    format!("~~{x}"),
-                    eval(Op::Not, ty, operand, 0)
-                        .and_then(|value| eval(Op::Not, result_ty(Op::Not, ty), value, 0)),
+                    format!("({name})({x} * {})", lit(wide, step + 1)),
+                    narrowed(Op::Mul, step + 1),
                     wide,
                 ),
-                (format!("{x} == {x}"), Some(1), Ty::I32),
-                (format!("{x} < {x}"), Some(0), Ty::I32),
-            ];
-            for (expr, value, out) in candidates {
-                let Some(value) = value else {
-                    continue;
-                };
-                program.check(out, &expr, value);
-            }
-            program.blank();
+                (format!("({name})({x} & {})", lit(wide, mask)), narrowed(Op::And, mask), wide),
+                (format!("({name})({x} | {})", lit(wide, mask)), narrowed(Op::Or, mask), wide),
+                (format!("({name})({x} & {})", lit(wide, step)), narrowed(Op::And, step), wide),
+                (format!("({name})({x} | {})", lit(wide, step)), narrowed(Op::Or, step), wide),
+                (format!("({name})({x} ^ {})", lit(wide, step)), narrowed(Op::Xor, step), wide),
+            ]
         }
-        sink.push(Facet::Simplify, Axes::of([("type", ty.name())]), Dialect::C17, program);
+        // Two of a thing that undoes itself, and a comparison of a value with itself. Neither
+        // needs a constant, and both need the compiler to look through one instruction to the
+        // one that produced its operand, which is a strictly harder match than the groups above.
+        _ => vec![
+            (
+                format!("~~{x}"),
+                eval(Op::Not, ty, operand, 0)
+                    .and_then(|value| eval(Op::Not, result_ty(Op::Not, ty), value, 0)),
+                wide,
+            ),
+            (
+                format!("-(-{x})"),
+                eval(Op::Neg, ty, operand, 0)
+                    .and_then(|value| eval(Op::Neg, result_ty(Op::Neg, ty), value, 0)),
+                wide,
+            ),
+            (format!("{x} == {x}"), Some(1), Ty::I32),
+            (format!("{x} != {x}"), Some(0), Ty::I32),
+            (format!("{x} < {x}"), Some(0), Ty::I32),
+            (format!("{x} > {x}"), Some(0), Ty::I32),
+            (format!("{x} <= {x}"), Some(1), Ty::I32),
+            (format!("{x} >= {x}"), Some(1), Ty::I32),
+        ],
+    };
+    candidates
+        .into_iter()
+        .filter_map(|(expr, value, out)| value.map(|value| (expr, value, out)))
+        .collect()
+}
+
+/// The same identities at one bit, which is the width a truth value has.
+///
+/// Worth a program of its own because one bit is the width where the constants change meaning.
+/// Every bit set is `1` rather than `-1`, so `x | 1` is the rule that says every bit is set and
+/// `x & 1` is the rule that changes nothing, which is the other way round from every width
+/// above. A rule set written by copying the wider cases and leaving the constants alone would
+/// pass every program in this facet except this one.
+///
+/// The operands are a `_Bool` and a comparison, because those are the two things in C that carry
+/// one bit. Both go through the usual promotions before an operator sees them, so what a
+/// compiler does with the width is its own business, and what is checked here is that the answer
+/// survived whatever it did.
+fn one_bit_identities(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::Simplify) {
+        return;
     }
+    let mut program = Program::new("algebraic identities on one bit values");
+    program.top("static volatile int truth_in = 1;");
+    program.top("static volatile int falsity_in = 0;");
+    program.top("static volatile int counter_in = 7;");
+    program.line("_Bool p = truth_in != 0;");
+    program.line("_Bool q = falsity_in != 0;");
+    program.line("int counter = counter_in;");
+    program.line("_Bool r = counter > 3;");
+    program.blank();
+    for (name, value) in [("p", 1i128), ("q", 0), ("r", 1)] {
+        program.check(Ty::I32, &format!("{name} & {name}"), value);
+        program.check(Ty::I32, &format!("{name} | {name}"), value);
+        program.check(Ty::I32, &format!("{name} ^ {name}"), 0);
+        program.check(Ty::I32, &format!("{name} & 0"), 0);
+        program.check(Ty::I32, &format!("0 & {name}"), 0);
+        program.check(Ty::I32, &format!("{name} & 1"), value);
+        program.check(Ty::I32, &format!("1 & {name}"), value);
+        program.check(Ty::I32, &format!("{name} | 0"), value);
+        program.check(Ty::I32, &format!("0 | {name}"), value);
+        program.check(Ty::I32, &format!("{name} | 1"), 1);
+        program.check(Ty::I32, &format!("1 | {name}"), 1);
+        program.check(Ty::I32, &format!("{name} ^ 0"), value);
+        program.check(Ty::I32, &format!("0 ^ {name}"), value);
+        program.blank();
+    }
+    sink.push(
+        Facet::Simplify,
+        Axes::of([("type", "bool"), ("group", "one-bit")]),
+        Dialect::C17,
+        program,
+    );
 }
 
 /// Chains of associative operations, written every way round.
@@ -662,6 +837,99 @@ mod tests {
             let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
             assert!(text.lines().count() >= inputs, "{}", case.id);
         }
+    }
+
+    #[test]
+    fn every_identity_group_is_generated_at_every_type() {
+        let cases = cases_for(Facet::Simplify);
+        for ty in ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"] {
+            for group in ["additive", "multiplicative", "bitwise-self", "bitwise-constant", "shift"]
+            {
+                assert!(
+                    cases.iter().any(|c| {
+                        c.axes.get("type") == Some(ty) && c.axes.get("group") == Some(group)
+                    }),
+                    "no {group} program for {ty}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_commutative_identity_is_written_with_the_constant_on_both_sides() {
+        // Which is the point of splitting this facet up. A table matches a shape, so the rule
+        // for a constant on the left is a different rule from the one for a constant on the
+        // right, and a case that only ever writes one of them can only ever prove one of them.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("type") == Some("i32") && c.axes.get("group") == Some("additive"))
+            .expect("the signed int additive program");
+        assert!(case.source.contains("x0 + (int)0"), "{}", case.source);
+        assert!(case.source.contains("(int)0 + x0"), "{}", case.source);
+    }
+
+    #[test]
+    fn the_all_ones_constant_is_written_at_the_width_the_operation_happens_at() {
+        // An `unsigned char` operand is promoted to `int` before the `and`, so the constant that
+        // makes the operation an identity is minus one at `int` width. Writing `255u` would
+        // leave the value alone as well and would be a mask rather than the rule under test.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| {
+                c.axes.get("type") == Some("u8") && c.axes.get("group") == Some("bitwise-constant")
+            })
+            .expect("the unsigned char bitwise program");
+        assert!(case.source.contains("(int)(-1)"), "{}", case.source);
+        assert!(!case.source.contains("& (unsigned char)"), "{}", case.source);
+    }
+
+    #[test]
+    fn a_narrowed_identity_exists_only_where_there_was_a_promotion_to_undo() {
+        let cases = cases_for(Facet::Simplify);
+        for ty in ["i8", "u8", "i16", "u16"] {
+            assert!(
+                cases.iter().any(|c| {
+                    c.axes.get("type") == Some(ty) && c.axes.get("group") == Some("narrowed")
+                }),
+                "no narrowed program for {ty}"
+            );
+        }
+        for ty in ["i32", "u32", "i64", "u64"] {
+            assert!(
+                !cases.iter().any(|c| {
+                    c.axes.get("type") == Some(ty) && c.axes.get("group") == Some("narrowed")
+                }),
+                "{ty} was never widened, so it has nothing to narrow back"
+            );
+        }
+    }
+
+    #[test]
+    fn a_narrowed_case_uses_a_constant_that_does_something_at_int_width() {
+        // Which is the whole point of the group. `x & 255` really does mask when the operand has
+        // been promoted to `int`, and it is the identity at the eight bits the answer is kept
+        // at, so a compiler only gets to remove it if it looks again after taking the width off.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("type") == Some("u8") && c.axes.get("group") == Some("narrowed"))
+            .expect("the unsigned char narrowed program");
+        assert!(case.source.contains("(unsigned char)(x0 & (int)255)"), "{}", case.source);
+        assert!(case.source.contains("(unsigned char)(x0 * (int)257)"), "{}", case.source);
+    }
+
+    #[test]
+    fn the_one_bit_program_writes_every_bit_set_as_one_rather_than_minus_one() {
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("group") == Some("one-bit"))
+            .expect("the one bit program");
+        assert!(case.source.contains("_Bool p = truth_in != 0;"), "{}", case.source);
+        assert!(case.source.contains("p | 1"), "{}", case.source);
+        assert!(!case.source.contains("-1"), "{}", case.source);
     }
 
     #[test]
