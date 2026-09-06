@@ -1,8 +1,36 @@
 {
   "schema": "1",
-  "corpus_sha256": "1363ad19c0d25d3dd4d3fea0686eecbd4c2a71127172d4ec52ded4b00597e657",
-  "count": 1018,
+  "corpus_sha256": "c3a615a2df67001d46d2e9b342cd8d034c093993a40f825220573a835b9d3ff1",
+  "count": 1119,
   "cases": [
+    {
+      "id": "alias-analysis.i32.char-pointer.c17.2c550cb8",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "char-pointer"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "2c550cb8ea0000c3323cf288e0c07abdc86319cbd7e3091d391934cd0bb7be6c"
+    },
+    {
+      "id": "alias-analysis.i32.computed-same-index.c17.56d27958",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "computed-same-index"
+      },
+      "expect_kind": "output",
+      "expect": "14\n",
+      "tags": [],
+      "source_sha256": "56d27958e74cf2e4c7a84d0191b6dad01ec2703965611116b55c0011b1d21913"
+    },
     {
       "id": "alias-analysis.i32.distinct-indices.c17.3cd5cae7",
       "facet": "alias-analysis",
@@ -30,6 +58,34 @@
       "expect": "13\n",
       "tags": [],
       "source_sha256": "9f9f3d085a8773725d8daf03f3e01e560ecfc2adc972613639640e582b7ae159"
+    },
+    {
+      "id": "alias-analysis.i32.distinct-types.c17.84b3fa35",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "distinct-types"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "84b3fa35642e1a7e34276e8edc30c2c3f54649ef46457d27cb66c636449dde76"
+    },
+    {
+      "id": "alias-analysis.i32.escaped-local.c17.051bcf33",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "escaped-local"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "051bcf337c576f03c7312515928c6ca2dab18d788a4b71d4bbfdf454011941d0"
     },
     {
       "id": "alias-analysis.i32.may-alias.c17.600624a4",
@@ -60,6 +116,48 @@
       "source_sha256": "04c007e28081243102c6a31d85df8c3955c1d4e4d06e44da01dd602f3f9e0edd"
     },
     {
+      "id": "alias-analysis.i32.union-pun.c17.fe8474a9",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "union-pun"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "fe8474a9f93d1d9dfaf2aa1b9b68f6b0e7a5b120e945cfac1437cfabc8bb78ef"
+    },
+    {
+      "id": "alias-analysis.i64.char-pointer.c17.4be55c4f",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "char-pointer"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "4be55c4fe54c516abb4b182236af3f2936a0abeb468c25cafb9c6beaa5eba221"
+    },
+    {
+      "id": "alias-analysis.i64.computed-same-index.c17.eb7c5c73",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "computed-same-index"
+      },
+      "expect_kind": "output",
+      "expect": "14\n",
+      "tags": [],
+      "source_sha256": "eb7c5c73e8de66f969214e103f3b40800a885f6e4e58d46330f00b3e1f790543"
+    },
+    {
       "id": "alias-analysis.i64.distinct-indices.c17.d56c27c7",
       "facet": "alias-analysis",
       "phase": "global",
@@ -86,6 +184,34 @@
       "expect": "13\n",
       "tags": [],
       "source_sha256": "62d1e29a3722d5a1a05e6b4b9829d1e83e25156d04691c2ff939e8ac46968850"
+    },
+    {
+      "id": "alias-analysis.i64.distinct-types.c17.2d1b2e60",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "distinct-types"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "2d1b2e6058149c97af5ba67f17960bcd6476493535f51967d11301db4c94eb24"
+    },
+    {
+      "id": "alias-analysis.i64.escaped-local.c17.380f753c",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "escaped-local"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "380f753c789158576b9d9747d6a999245fdf4d829ab492b9c62bf32c2af54726"
     },
     {
       "id": "alias-analysis.i64.may-alias.c17.d8ec6558",
@@ -116,6 +242,48 @@
       "source_sha256": "561a499046e679017f46983ac89bb6ed5532da683a758063b0f7f2673c9e45b5"
     },
     {
+      "id": "alias-analysis.i64.union-pun.c17.baac9db3",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "union-pun"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "baac9db3f6e28398f26be6520b3101184535829acd8ca69486772d6aa0152e07"
+    },
+    {
+      "id": "alias-analysis.u32.char-pointer.c17.356a7067",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "char-pointer"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "356a706748de0e1c439d3b0e48414b9c4b139f2b49720bec2b90f2e5d1395de0"
+    },
+    {
+      "id": "alias-analysis.u32.computed-same-index.c17.35e0a5f1",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "computed-same-index"
+      },
+      "expect_kind": "output",
+      "expect": "14\n",
+      "tags": [],
+      "source_sha256": "35e0a5f143971697a5a2f8dd7e7f77e294df8feb0b9c12b5bfecbd8bdea91aca"
+    },
+    {
       "id": "alias-analysis.u32.distinct-indices.c17.ac08e171",
       "facet": "alias-analysis",
       "phase": "global",
@@ -142,6 +310,34 @@
       "expect": "13\n",
       "tags": [],
       "source_sha256": "b793c74acc8c52960697cf9be9d0eaa04033607f39373f22e4ed232047ab4422"
+    },
+    {
+      "id": "alias-analysis.u32.distinct-types.c17.cd887661",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "distinct-types"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "cd8876615733271f4edae817f2f2f43a9191433e0f863a403740d5f87e4013eb"
+    },
+    {
+      "id": "alias-analysis.u32.escaped-local.c17.b71abb7f",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "escaped-local"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "b71abb7fb37e206e0bdba6b236f77ef6cc739b7ad80ea82b55c08f6e4b2cbd6c"
     },
     {
       "id": "alias-analysis.u32.may-alias.c17.8b2aa55b",
@@ -172,6 +368,48 @@
       "source_sha256": "d67e0d70b1266ed17998865fc1b81c9914cb77aede687afc047f8d0b7fafc074"
     },
     {
+      "id": "alias-analysis.u32.union-pun.c17.a8cfccbd",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "union-pun"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "a8cfccbd079c577090cd9d803f0474c94cdb19b4a9cca3af37182ed544a00ef5"
+    },
+    {
+      "id": "alias-analysis.u64.char-pointer.c17.3f74031b",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "char-pointer"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "3f74031b179e9c24a66a3d5e0b67d395dd02599ee07a61760d338e44c47f7b9c"
+    },
+    {
+      "id": "alias-analysis.u64.computed-same-index.c17.70d5a244",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "computed-same-index"
+      },
+      "expect_kind": "output",
+      "expect": "14\n",
+      "tags": [],
+      "source_sha256": "70d5a244aee041353d3f11799d0c5859f29bc5112a14efce9879e2106de3ea33"
+    },
+    {
       "id": "alias-analysis.u64.distinct-indices.c17.233c0752",
       "facet": "alias-analysis",
       "phase": "global",
@@ -200,6 +438,34 @@
       "source_sha256": "ad8bd0d3bf024e9aeec6bbc94e5c39fd846aeb3674707978d4b4009ae1bebc95"
     },
     {
+      "id": "alias-analysis.u64.distinct-types.c17.53904136",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "distinct-types"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "53904136871d6ec040991ea69bb78e5de623f9af6fb2babad1b1bb5a20b0b6ce"
+    },
+    {
+      "id": "alias-analysis.u64.escaped-local.c17.8f66aa4a",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "escaped-local"
+      },
+      "expect_kind": "output",
+      "expect": "8\n",
+      "tags": [],
+      "source_sha256": "8f66aa4a80d1e45daf096f5a0c49e59118439686608ebe86e0b440779eea2abe"
+    },
+    {
       "id": "alias-analysis.u64.may-alias.c17.6134a36b",
       "facet": "alias-analysis",
       "phase": "global",
@@ -226,6 +492,20 @@
       "expect": "13\n",
       "tags": [],
       "source_sha256": "66f42ddf6f76e8714385dabee35f9374fa8f067d603684f7041b035a027e32f8"
+    },
+    {
+      "id": "alias-analysis.u64.union-pun.c17.cdff97f0",
+      "facet": "alias-analysis",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "union-pun"
+      },
+      "expect_kind": "output",
+      "expect": "7\n",
+      "tags": [],
+      "source_sha256": "cdff97f02e74f16e6560a0fd2976bf0f0ceefaec692110fd93b992d63bcd8912"
     },
     {
       "id": "barrier.char-aliasing.c17.c3cc419e",
@@ -2995,6 +3275,138 @@
       "source_sha256": "8178ff62dd7ebfae6befb1df23c5c838d23a8f101db86b5b1fdfaff70b05b876"
     },
     {
+      "id": "control-flow.computed-goto.c17.e6bdb014",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "computed-goto"
+      },
+      "expect_kind": "output",
+      "expect": "104\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "e6bdb014acea9a68c5d9b29b0aecffb75b0d3dda85adeb03610d8a4f224ab5df"
+    },
+    {
+      "id": "control-flow.continue-and-break.c17.d30b2e3d",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "continue-and-break"
+      },
+      "expect_kind": "output",
+      "expect": "18\n",
+      "tags": [],
+      "source_sha256": "d30b2e3d048fb404f5c52e48ff250e14fd389780f0c7523d5e3d81351786dccf"
+    },
+    {
+      "id": "control-flow.irreducible.c17.662a0a0f",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "irreducible"
+      },
+      "expect_kind": "output",
+      "expect": "21\n",
+      "tags": [],
+      "source_sha256": "662a0a0f5d80fe7ce1f5b042d6d09d398bcbe8c5565967d232c8bc509cda6d32"
+    },
+    {
+      "id": "control-flow.jumped-over-block.c17.f15166df",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "jumped-over-block"
+      },
+      "expect_kind": "output",
+      "expect": "5\n",
+      "tags": [],
+      "source_sha256": "f15166df0eea94c4376d592f39b371594fa33d485515f57b43dd731690d0172c"
+    },
+    {
+      "id": "control-flow.loop-with-no-exit.c17.c65b95a8",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "loop-with-no-exit"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "c65b95a8886840bc269b68cfbe7b6cd478936467a62116b8ec4b6c8bb75d3e7f"
+    },
+    {
+      "id": "control-flow.many-returns.c17.bc0f4b9a",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "many-returns"
+      },
+      "expect_kind": "output",
+      "expect": "1\n2\n3\n4\n5\n",
+      "tags": [],
+      "source_sha256": "bc0f4b9a72f2071785f8d41d82da7e76a8c57cc417558a28d3756faf649572af"
+    },
+    {
+      "id": "control-flow.nested-five-deep.c17.32b2c0c2",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "nested-five-deep"
+      },
+      "expect_kind": "output",
+      "expect": "1215\n",
+      "tags": [],
+      "source_sha256": "32b2c0c2e33f4c15e48988ef897733245ccf2baab68cea29dd41960455f8d46a"
+    },
+    {
+      "id": "control-flow.switch-shared-arms.c17.fbfcdf3d",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "switch-shared-arms"
+      },
+      "expect_kind": "output",
+      "expect": "23\n",
+      "tags": [],
+      "source_sha256": "fbfcdf3dc54d6597e672f810c777d855e928e30c89d19a53afc8ececf6688fef"
+    },
+    {
+      "id": "control-flow.two-exit-loop.c17.23b51e46",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "two-exit-loop"
+      },
+      "expect_kind": "output",
+      "expect": "15\n1\n",
+      "tags": [],
+      "source_sha256": "23b51e464ee630873bf0a7d87ca55b9ddeb84661b10e484a821cbbba02795341"
+    },
+    {
+      "id": "control-flow.wide-if-chain.c17.4cc10cde",
+      "facet": "control-flow",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "wide-if-chain"
+      },
+      "expect_kind": "output",
+      "expect": "15\n",
+      "tags": [],
+      "source_sha256": "4cc10cde01201e67bcf07d2f8be183c308d1a471aa9ed7c92501c5646cf7bd9b"
+    },
+    {
       "id": "copy-propagation.i32.2.c17.d1db2169",
       "facet": "copy-propagation",
       "phase": "global",
@@ -4541,6 +4953,45 @@
       "source_sha256": "315c29f65930af037ad04e9c82214702aed5d12533a88c54a283bc2bd9317125"
     },
     {
+      "id": "induction-variable.counts-down.c17.099af0c6",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "counts-down"
+      },
+      "expect_kind": "output",
+      "expect": "4\n22\n",
+      "tags": [],
+      "source_sha256": "099af0c6c5e9683f4bb4d831c74ce2a022a13821bd9ba6e7762f2641fcd4b38c"
+    },
+    {
+      "id": "induction-variable.derived-counter.c17.823bad98",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "derived-counter"
+      },
+      "expect_kind": "output",
+      "expect": "9\n25\n117\n",
+      "tags": [],
+      "source_sha256": "823bad98881c3ef5723d9d1ad2ccf845e210d1f21584f404837d52da12391d08"
+    },
+    {
+      "id": "induction-variable.exit-on-not-equal.c17.e4e901d6",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exit-on-not-equal"
+      },
+      "expect_kind": "output",
+      "expect": "5\n20\n",
+      "tags": [],
+      "source_sha256": "e4e901d6924879bece9ac2dd360b9612bac6fd17ed76a4d209f632edec4c1132"
+    },
+    {
       "id": "induction-variable.i32.1.c17.e53c9d8e",
       "facet": "induction-variable",
       "phase": "loops",
@@ -4765,6 +5216,58 @@
       "source_sha256": "2dac0580840e7ed2b8334df8e53d6ed60101918b0fdd40b211f8b4e2f218231a"
     },
     {
+      "id": "induction-variable.inner-depends-on-outer.c17.7335dd51",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "inner-depends-on-outer"
+      },
+      "expect_kind": "output",
+      "expect": "28\n56\n",
+      "tags": [],
+      "source_sha256": "7335dd515373a0288a96c8a3b964b38679e3225a0cfc3f093ab9da64a3025465"
+    },
+    {
+      "id": "induction-variable.starts-past-the-limit.c17.89e7dab1",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "starts-past-the-limit"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n",
+      "tags": [],
+      "source_sha256": "89e7dab13d2c077a5bfd5a59e5e785866390aa063c11f9af84ae33efd286dd15"
+    },
+    {
+      "id": "induction-variable.step-does-not-divide.c17.ac778db9",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "step-does-not-divide"
+      },
+      "expect_kind": "output",
+      "expect": "4\n9\n",
+      "tags": [],
+      "source_sha256": "ac778db95e6cd67dc6dfc9e3280d04c4d750d0b37a3b63b4a708ea33d8ba5230"
+    },
+    {
+      "id": "induction-variable.two-exits.c17.aee22939",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "two-exits"
+      },
+      "expect_kind": "output",
+      "expect": "5\n1\n",
+      "tags": [],
+      "source_sha256": "aee229392fb625a1efb36e5ea3975e4d6c8fac95d4d97d0ed5cd6a9286568010"
+    },
+    {
       "id": "induction-variable.u32.1.c17.97aa82f0",
       "facet": "induction-variable",
       "phase": "loops",
@@ -4987,6 +5490,45 @@
       "expect": "112\n28\n8\n",
       "tags": [],
       "source_sha256": "12eab8b5840729f309023c586256a344264e3282505bb709fe3f020b94e798b6"
+    },
+    {
+      "id": "induction-variable.unknown-limit.c17.2e79552b",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "unknown-limit"
+      },
+      "expect_kind": "output",
+      "expect": "7\n21\n",
+      "tags": [],
+      "source_sha256": "2e79552bd0e7382efe2995d5f3d4dd50b1c06be8681b94806797a19b26ce579b"
+    },
+    {
+      "id": "induction-variable.unsigned-wraps-round.c17.46a45a75",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "unsigned-wraps-round"
+      },
+      "expect_kind": "output",
+      "expect": "12\n12\n",
+      "tags": [],
+      "source_sha256": "46a45a75e6f569bb50431b96d34862e3cf160694fa4b7ebe944726ec0c2d4e8c"
+    },
+    {
+      "id": "induction-variable.walks-a-pointer.c17.cb78cd71",
+      "facet": "induction-variable",
+      "phase": "loops",
+      "dialect": "c17",
+      "axes": {
+        "shape": "walks-a-pointer"
+      },
+      "expect_kind": "output",
+      "expect": "4\n36\n",
+      "tags": [],
+      "source_sha256": "cb78cd71817a777176b26d2405ff4ab934d14f21abb02f5caa859f291465a157"
     },
     {
       "id": "inline.i32.1.1.c17.ae0e3d28",
@@ -5543,6 +6085,62 @@
       "source_sha256": "125a63df4a77cd2176328448c39f1062e002d24cc8f09a1378d207d330c9d302"
     },
     {
+      "id": "load-forwarding.i32.across-opaque-call.c17.6b4a3786",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "across-opaque-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "6b4a378698640e6f3931b817b671c13e27875ab1f65b9809db03defb9c34962b"
+    },
+    {
+      "id": "load-forwarding.i32.across-reading-call.c17.ef5eb9ac",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "across-reading-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "ef5eb9acf387f919b76a507abb1d21937559d09b597a573fd3f7103462c27cc1"
+    },
+    {
+      "id": "load-forwarding.i32.copied-over.c17.e0fcf64d",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "copied-over"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "e0fcf64d0e624b12bbb64d1850e253f6aead4851b174dc9f56883eafe6c78d36"
+    },
+    {
+      "id": "load-forwarding.i32.long-chain.c17.a095137d",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "long-chain"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "a095137dcaa7bf2c0f69b8ebff842f38a7a9639d2e3f78bec4291b203c70cd4c"
+    },
+    {
       "id": "load-forwarding.i32.other-slot-between.c17.c0a8dc5e",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5555,6 +6153,20 @@
       "expect": "41\n",
       "tags": [],
       "source_sha256": "c0a8dc5ee90c86c35c454d07ce7ba1f08fc55d4e2fc2c9527fffa4910bba97c1"
+    },
+    {
+      "id": "load-forwarding.i32.phi-translation.c17.7cdf5aa7",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "phi-translation"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "7cdf5aa7447ce1239a6c5400d2e6b3fef560fb3b855e002fd77a3093a52a05dc"
     },
     {
       "id": "load-forwarding.i32.same-slot.c17.73db4c8a",
@@ -5585,6 +6197,20 @@
       "source_sha256": "e4d8e94767ff8d9859b33b5efe91322758f93f54f561e54fec52de6dc165f339"
     },
     {
+      "id": "load-forwarding.i32.volatile-store.c17.18ffa92a",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "shape": "volatile-store"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "18ffa92af0db967cbb8fbb226fc1a22f6ce01b92c67014566a569b59626759c3"
+    },
+    {
       "id": "load-forwarding.i64.across-branch.c17.f652bc9a",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5599,6 +6225,62 @@
       "source_sha256": "f652bc9ad2c7f9fb7f2a9cde813bb962f6d5dbaaaa21b669d226800d0c79c384"
     },
     {
+      "id": "load-forwarding.i64.across-opaque-call.c17.c88fea48",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "across-opaque-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "c88fea48181358bc5db7df9a20dc0f4f74e336123aff49ed23b4468234409996"
+    },
+    {
+      "id": "load-forwarding.i64.across-reading-call.c17.b8610027",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "across-reading-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "b8610027f2792caa7e51d1858f64676ca8cd016c7746f1dc38d90d71740f59b9"
+    },
+    {
+      "id": "load-forwarding.i64.copied-over.c17.38b176a4",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "copied-over"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "38b176a4107bee01396a487199657937e4477a41cdc9256437a8fe8b0ace174c"
+    },
+    {
+      "id": "load-forwarding.i64.long-chain.c17.96fc26fd",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "long-chain"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "96fc26fd5b458c2b416e8dfe14c1c24b79188774e6193fd3515c2584b5492d37"
+    },
+    {
       "id": "load-forwarding.i64.other-slot-between.c17.cbdec153",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5611,6 +6293,20 @@
       "expect": "41\n",
       "tags": [],
       "source_sha256": "cbdec153c2d8eb0cc68506c6b3e98c6570f0a9ebd101ed601f62102fe3c71d07"
+    },
+    {
+      "id": "load-forwarding.i64.phi-translation.c17.8b44e7cb",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "phi-translation"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "8b44e7cb3c50235cd52dba998f38396fa7ac7996985a31569e3118bfbb5317d1"
     },
     {
       "id": "load-forwarding.i64.same-slot.c17.dc24222a",
@@ -5641,6 +6337,20 @@
       "source_sha256": "fa90a69a4090eec5fff7c1d25da52e6fac22d1c1c22644d6ca5bc265e1d30288"
     },
     {
+      "id": "load-forwarding.i64.volatile-store.c17.9b1ce9ce",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "shape": "volatile-store"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "9b1ce9ce901fcd19f6964d391a077bd40fd6cc43f7d1a4f89aab9e0941cd7bc2"
+    },
+    {
       "id": "load-forwarding.u32.across-branch.c17.bc2b8d54",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5655,6 +6365,62 @@
       "source_sha256": "bc2b8d5415041dd636418f0f5b82c1bff8a3d7fae341a7ff9f516953d2c5a7e9"
     },
     {
+      "id": "load-forwarding.u32.across-opaque-call.c17.5958a7c5",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "across-opaque-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "5958a7c559be39b8a97fe2cd137ebebff831b2a015c9da3c9dc33956895ea9e4"
+    },
+    {
+      "id": "load-forwarding.u32.across-reading-call.c17.2b17af57",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "across-reading-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "2b17af57e06f5c31c9c4a7274033ac740918f2215af8e00ac8d01f13c680d0ff"
+    },
+    {
+      "id": "load-forwarding.u32.copied-over.c17.158ec6ec",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "copied-over"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "158ec6eca6eb307e4159a37fa3335554d3ad18e927243597a027a2b02a3f081e"
+    },
+    {
+      "id": "load-forwarding.u32.long-chain.c17.31198196",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "long-chain"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "31198196f33a6b6eccf156388a7d6ec2e27e4a8540cd0a84e878860af663bb1f"
+    },
+    {
       "id": "load-forwarding.u32.other-slot-between.c17.2b50cf29",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5667,6 +6433,20 @@
       "expect": "41\n",
       "tags": [],
       "source_sha256": "2b50cf29448d3a0e7dff1ed3d6630d25989ebeccf2c8662c9e186faf1bfdd1b6"
+    },
+    {
+      "id": "load-forwarding.u32.phi-translation.c17.ef38d87d",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "phi-translation"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "ef38d87d6ee16acc425f5dfacb0208a6d4ca003149704917680f76b1d31d031e"
     },
     {
       "id": "load-forwarding.u32.same-slot.c17.ff249032",
@@ -5697,6 +6477,20 @@
       "source_sha256": "e779100c30ae4329047d423b749d1687fbea0593b6673048f79a713d6a1f1337"
     },
     {
+      "id": "load-forwarding.u32.volatile-store.c17.073cad35",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "shape": "volatile-store"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "073cad35eb939df5c343e91cbf94a09ef85b13eeef570c731a7612a3790f8896"
+    },
+    {
       "id": "load-forwarding.u64.across-branch.c17.c7f88101",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5711,6 +6505,62 @@
       "source_sha256": "c7f88101a0bc0d11dd60f96db1803520c8ea544427325a4f95713cc2c6b131cc"
     },
     {
+      "id": "load-forwarding.u64.across-opaque-call.c17.f98d7aa6",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "across-opaque-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "f98d7aa680fb7d99ff5c31beb240abf70747baf1fd879872aabd988dcd1da714"
+    },
+    {
+      "id": "load-forwarding.u64.across-reading-call.c17.639d1167",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "across-reading-call"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "639d1167a4a18fcf4c6f2aecbdce98cb85432bcf3b7ebcee4724e75bfd4a60ee"
+    },
+    {
+      "id": "load-forwarding.u64.copied-over.c17.04d71d0b",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "copied-over"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "04d71d0bbedd01900e2d7ddb12cf639a143306336fa48b9ccba55f13cd475030"
+    },
+    {
+      "id": "load-forwarding.u64.long-chain.c17.ee7f67a0",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "long-chain"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "ee7f67a0b7282350e979ad0d5ed9bd538816c7f67acb76cf4669009fcdc50d4d"
+    },
+    {
       "id": "load-forwarding.u64.other-slot-between.c17.47fc1edf",
       "facet": "load-forwarding",
       "phase": "global",
@@ -5723,6 +6573,20 @@
       "expect": "41\n",
       "tags": [],
       "source_sha256": "47fc1edfe91005487263b2822c1416488c12b471f5991ca91b07d8896759e00b"
+    },
+    {
+      "id": "load-forwarding.u64.phi-translation.c17.aee2513c",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "phi-translation"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "aee2513c97a5f1e58280332aa7b717155860a55491e5253699404346377399c9"
     },
     {
       "id": "load-forwarding.u64.same-slot.c17.054b9e2f",
@@ -5751,6 +6615,20 @@
       "expect": "41\n",
       "tags": [],
       "source_sha256": "82e6a75098bfafc71f38becfbcbd2c1950fd6ce6d26a25cc8d04d0192a107cd6"
+    },
+    {
+      "id": "load-forwarding.u64.volatile-store.c17.bee8690f",
+      "facet": "load-forwarding",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "shape": "volatile-store"
+      },
+      "expect_kind": "output",
+      "expect": "41\n",
+      "tags": [],
+      "source_sha256": "bee8690f4f9a8138abfaed3be1cc17c77c071994563dd7f182fd74ffeaf508a1"
     },
     {
       "id": "loop-deletion.i32.100.known.c17.0e4c8bec",
@@ -11429,6 +12307,398 @@
       "source_sha256": "d77b123e4d55285f55af4a4a697139e2cc2003207fe11c23d7cb7d6834356b03"
     },
     {
+      "id": "narrowing.i16.bit-field.c17.f8c2c249",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "bit-field"
+      },
+      "expect_kind": "output",
+      "expect": "7\n7\n7\n21\n",
+      "tags": [],
+      "source_sha256": "f8c2c24917b5b28688799a0f103c1f7174357aece36e37606b87b8f62ce8d34d"
+    },
+    {
+      "id": "narrowing.i16.divide.c17.7fd20627",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "divide"
+      },
+      "expect_kind": "output",
+      "expect": "-10922\n-2\n0\n-2\n0\n2\n5\n1\n10922\n1\n",
+      "tags": [],
+      "source_sha256": "7fd206278250466b06ad837c2d976e5ed27aba615828ccaadfae8c11cac3febd"
+    },
+    {
+      "id": "narrowing.i16.mixed-sign.c17.cf5906bf",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "mixed-sign"
+      },
+      "expect_kind": "output",
+      "expect": "-32765\n1\n5\n19\n-32766\n",
+      "tags": [],
+      "source_sha256": "cf5906bf58ba85f8814d407d10d1ea6f2aba07c38662641c6e9025de00f38fb3"
+    },
+    {
+      "id": "narrowing.i16.round-trip.c17.001ce1de",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "round-trip"
+      },
+      "expect_kind": "output",
+      "expect": "1\n-32767\n1\n-1\n1\n3\n1\n17\n1\n-32768\n",
+      "tags": [],
+      "source_sha256": "001ce1def1be793aba0f6288b2bc4382e9d1d7055aad22b3f6393092c819d853"
+    },
+    {
+      "id": "narrowing.i16.shift.c17.132bb9fc",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "16\n1024\n128\n8192\n-8\n-512\n",
+      "tags": [],
+      "source_sha256": "132bb9fc207c825d56e1da20e5105e17ace342b5efa01ef434d79d37e9e1160c"
+    },
+    {
+      "id": "narrowing.i16.stored-back.c17.ff62d4be",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "stored-back"
+      },
+      "expect_kind": "output",
+      "expect": "-32763\n32763\n-32768\n0\n-32763\n-32763\n3\n-7\n-10\n4\n-1\n-5\n7\n-3\n10\n0\n7\n7\n21\n11\n80\n0\n21\n21\n-32764\n32762\n32763\n5\n32767\n32762\n",
+      "tags": [],
+      "source_sha256": "ff62d4bebaac4071b9566327eb6079777e3103d63309ff1a9d69cbe4bbe523b8"
+    },
+    {
+      "id": "narrowing.i16.wide-use.c17.565bc239",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "shape": "wide-use"
+      },
+      "expect_kind": "output",
+      "expect": "-1\n32765\n32769\n32783\n65534\n",
+      "tags": [],
+      "source_sha256": "565bc239fa17c6abea3195b69c42efb219cc8b56ea114acdd98aff1f53f5c014"
+    },
+    {
+      "id": "narrowing.i8.bit-field.c17.d539a5ca",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "bit-field"
+      },
+      "expect_kind": "output",
+      "expect": "7\n7\n7\n21\n",
+      "tags": [],
+      "source_sha256": "d539a5ca91635da93c0c46df783f3f63babcb3eb5cb2d599fc1874aa146b90b1"
+    },
+    {
+      "id": "narrowing.i8.divide.c17.686084da",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "divide"
+      },
+      "expect_kind": "output",
+      "expect": "-42\n-2\n0\n-2\n0\n1\n2\n1\n42\n1\n",
+      "tags": [],
+      "source_sha256": "686084da446d73f6eb6e2989603781cbf7c5de0d899cd91e070924f32681fd69"
+    },
+    {
+      "id": "narrowing.i8.mixed-sign.c17.3623efef",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "mixed-sign"
+      },
+      "expect_kind": "output",
+      "expect": "-125\n1\n4\n10\n-126\n",
+      "tags": [],
+      "source_sha256": "3623efefe4ef622bd416c2f0cabf43682f269657e2d6d50a7ed70f778184c9a9"
+    },
+    {
+      "id": "narrowing.i8.round-trip.c17.d04f6291",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "round-trip"
+      },
+      "expect_kind": "output",
+      "expect": "1\n-127\n1\n-1\n1\n2\n1\n8\n1\n-128\n",
+      "tags": [],
+      "source_sha256": "d04f6291fb3c7a2c0feff8d3f3b0b5c6fe11c564a1e06d8ae9e419491ef644a6"
+    },
+    {
+      "id": "narrowing.i8.shift.c17.be6a1a70",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "8\n0\n56\n0\n-8\n0\n",
+      "tags": [],
+      "source_sha256": "be6a1a70f22697ca173ef0781b15cca02cc84fca1252104096a227e100666a96"
+    },
+    {
+      "id": "narrowing.i8.stored-back.c17.e7b4d379",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "stored-back"
+      },
+      "expect_kind": "output",
+      "expect": "-123\n123\n-128\n0\n-123\n-123\n3\n-7\n-10\n4\n-1\n-5\n6\n-4\n5\n1\n5\n4\n12\n2\n35\n5\n7\n2\n-124\n122\n123\n5\n127\n122\n",
+      "tags": [],
+      "source_sha256": "e7b4d3791574c73a84ad1bc9b549f624aeb5a8b9aec2feb2905821cd25b0797d"
+    },
+    {
+      "id": "narrowing.i8.wide-use.c17.f9828900",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "shape": "wide-use"
+      },
+      "expect_kind": "output",
+      "expect": "-1\n125\n128\n134\n254\n",
+      "tags": [],
+      "source_sha256": "f9828900819caf498dd8a3bdbb33cd91da105177ba17d8a29724bea73f61eb57"
+    },
+    {
+      "id": "narrowing.u16.bit-field.c17.8b84bb86",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "bit-field"
+      },
+      "expect_kind": "output",
+      "expect": "7\n7\n7\n21\n",
+      "tags": [],
+      "source_sha256": "8b84bb86f67bdd1f7b2154e57b530a320ca941d78f2aee54240b5de5a23e994f"
+    },
+    {
+      "id": "narrowing.u16.divide.c17.1380b1a1",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "divide"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n2\n2\n2\n85\n0\n21845\n0\n",
+      "tags": [],
+      "source_sha256": "1380b1a1bb452f07f24b8bb50545aa169849a434e25e800f3e3effbdadce78f7"
+    },
+    {
+      "id": "narrowing.u16.mixed-sign.c17.691a0dce",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "mixed-sign"
+      },
+      "expect_kind": "output",
+      "expect": "3\n5\n11\n258\n2\n",
+      "tags": [],
+      "source_sha256": "691a0dce3a1d7a81c8d96f556509fbdfb3bc558006e79f19217cb3711cc93e82"
+    },
+    {
+      "id": "narrowing.u16.round-trip.c17.a603092d",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "round-trip"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n3\n1\n9\n1\n256\n1\n0\n",
+      "tags": [],
+      "source_sha256": "a603092d137a08de0c3cc03aaacc81695728d515f7f9d9eb5c0db2db7045a810"
+    },
+    {
+      "id": "narrowing.u16.shift.c17.1255246f",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n16\n1024\n64\n4096\n2040\n65024\n65528\n65024\n",
+      "tags": [],
+      "source_sha256": "1255246f5a7d4b3ac791c653b3130c70ef553711a06f6eefc74e5fe7eea8fb8e"
+    },
+    {
+      "id": "narrowing.u16.stored-back.c17.91c77af5",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "stored-back"
+      },
+      "expect_kind": "output",
+      "expect": "5\n65531\n0\n0\n5\n5\n7\n65533\n10\n0\n7\n7\n13\n3\n40\n0\n13\n13\n260\n250\n1275\n5\n255\n250\n4\n65530\n65531\n5\n65535\n65530\n",
+      "tags": [],
+      "source_sha256": "91c77af53a999bad3c678026dd76731ad74460c23dbcf832bbda623a219c6afd"
+    },
+    {
+      "id": "narrowing.u16.wide-use.c17.03304a4e",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "shape": "wide-use"
+      },
+      "expect_kind": "output",
+      "expect": "65535\n65537\n65543\n65790\n131070\n",
+      "tags": [],
+      "source_sha256": "03304a4ed735c9d13af7b1da5920fd3c8de1a8305d19695d26ce2d9b461990e0"
+    },
+    {
+      "id": "narrowing.u8.bit-field.c17.454b8dd2",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "bit-field"
+      },
+      "expect_kind": "output",
+      "expect": "7\n7\n7\n21\n",
+      "tags": [],
+      "source_sha256": "454b8dd224c80667581d77a9d794d75a1f6f75f4430f1f1186d2114c887f041d"
+    },
+    {
+      "id": "narrowing.u8.divide.c17.4f85b987",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "divide"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n1\n1\n0\n2\n2\n85\n0\n",
+      "tags": [],
+      "source_sha256": "4f85b9876b3abc6ab04e1eea4b00662a6badfab627cd5fd6296d862c3f6a41ab"
+    },
+    {
+      "id": "narrowing.u8.mixed-sign.c17.d49085f3",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "mixed-sign"
+      },
+      "expect_kind": "output",
+      "expect": "3\n4\n6\n11\n2\n",
+      "tags": [],
+      "source_sha256": "d49085f330101f500237941f50d2c2da82abe1cb3e68f56ba9712c3c4d142bf0"
+    },
+    {
+      "id": "narrowing.u8.round-trip.c17.55bf6dbc",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "round-trip"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n2\n1\n4\n1\n9\n1\n0\n",
+      "tags": [],
+      "source_sha256": "55bf6dbc6b71a6a7cc98a706fec2d0bf6c33661ad06ab2292291e7e7782412e5"
+    },
+    {
+      "id": "narrowing.u8.shift.c17.46cde2e6",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n8\n0\n24\n0\n64\n0\n248\n0\n",
+      "tags": [],
+      "source_sha256": "46cde2e6ebc2b3d9c208d99044766a0a75f9ad9d5e1e3d34b12b4411188d5c26"
+    },
+    {
+      "id": "narrowing.u8.stored-back.c17.80cffd5b",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "stored-back"
+      },
+      "expect_kind": "output",
+      "expect": "5\n251\n0\n0\n5\n5\n6\n252\n5\n1\n5\n4\n8\n254\n15\n1\n7\n6\n13\n3\n40\n0\n13\n13\n4\n250\n251\n5\n255\n250\n",
+      "tags": [],
+      "source_sha256": "80cffd5bff4606ffbcea7631d2850bf770ee8bf54ed34fbdb6d4dea1b6c4e90b"
+    },
+    {
+      "id": "narrowing.u8.wide-use.c17.a76ee834",
+      "facet": "narrowing",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "shape": "wide-use"
+      },
+      "expect_kind": "output",
+      "expect": "255\n256\n258\n263\n510\n",
+      "tags": [],
+      "source_sha256": "a76ee83429087f03287cc6f005eabe8c5966d09848bf65f86f71e880b7416348"
+    },
+    {
       "id": "reachability.1.chain.c17.628ba521",
       "facet": "reachability",
       "phase": "interprocedural",
@@ -14650,6 +15920,71 @@
       "source_sha256": "815f8255143bc236b7edbd24d09b9a2fa58fcf1732df8394c812219910a6317c"
     },
     {
+      "id": "value-range.both-edges.c17.cc26b3d1",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "both-edges"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "cc26b3d177ddf1ce77e2dfbae850b9df824bf9f0f8048ea71ee0962b4db1edc2"
+    },
+    {
+      "id": "value-range.carried-round-a-loop.c17.d3e1bc04",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "carried-round-a-loop"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n",
+      "tags": [],
+      "source_sha256": "d3e1bc04933a8d5a650bdd1d5001fa61a347676b9c42035fd0cfdc01bfd65e0b"
+    },
+    {
+      "id": "value-range.guard-keeps-the-divide.c17.ad0655ca",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "guard-keeps-the-divide"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "ad0655caf36623036c3066fc40c2bdfcceca93770b1f2a62b1cd2e79ef5e6659"
+    },
+    {
+      "id": "value-range.guard-keeps-the-index.c17.b4461bd1",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "guard-keeps-the-index"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "b4461bd120bf1712ae21d008022a5f5bc97e1df85dd7db02b102ef2f7dac23f1"
+    },
+    {
+      "id": "value-range.guard-keeps-the-shift.c17.10b611ce",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "guard-keeps-the-shift"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "10b611ceb163b171f5151e106605e699cd085cd5e7964a37812acdba2f1a0f79"
+    },
+    {
       "id": "value-range.i32.c17.62b45c41",
       "facet": "value-range",
       "phase": "global",
@@ -14674,6 +16009,58 @@
       "expect": "1\n1\n1\n1\n1\n",
       "tags": [],
       "source_sha256": "3659dfd350f23c73d596785a122b03c6e71e3bc82c06952cbd23818303663b42"
+    },
+    {
+      "id": "value-range.inverted-condition.c17.c6ce6f75",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "inverted-condition"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "c6ce6f75e048d7fe4c7e0447acacce3ccfb2200b2f3c240b9c4c18d5abd5b765"
+    },
+    {
+      "id": "value-range.relation-between-two.c17.16363e85",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "relation-between-two"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "16363e85e76b41a348678b0843447f5f37341041fe05deb5bc97911312ac11d3"
+    },
+    {
+      "id": "value-range.switch-arms.c17.149995c6",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "switch-arms"
+      },
+      "expect_kind": "output",
+      "expect": "1\n",
+      "tags": [],
+      "source_sha256": "149995c6fb6e22594d915154ced34e33305e50539d074cfaaf9830a528e5f1f2"
+    },
+    {
+      "id": "value-range.through-a-cast.c17.09f330f1",
+      "facet": "value-range",
+      "phase": "global",
+      "dialect": "c17",
+      "axes": {
+        "shape": "through-a-cast"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n",
+      "tags": [],
+      "source_sha256": "09f330f16c9763638c0e7f63077b027c0e472ff57508a9f09a914b5a1dbf2216"
     },
     {
       "id": "value-range.u32.c17.c8bfc2a4",

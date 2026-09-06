@@ -209,6 +209,275 @@ pub(crate) fn baseline(sink: &mut Sink<'_>) {
     }
 }
 
+/// The control flow shapes that break the analyses sitting under every pass.
+///
+/// The graph, the two dominance relations and the loop forest are computed before any
+/// transformation runs and are consulted by all of them. When one of them is wrong the
+/// failure surfaces somewhere else entirely, in whichever pass happened to ask, so the shapes
+/// that break them deserve programs of their own rather than being reached by accident from a
+/// facet about something else.
+///
+/// None of these is about an optimization, and the numbers they print are small. What they
+/// check is that the compiler produced a correct program at all for a shape that a
+/// hand written analysis gets wrong: a cycle with two entries, a loop the analysis cannot see
+/// the end of, a switch where two arms are one block, and a jump whose target is a value.
+pub(crate) fn control_flow(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "irreducible",
+        "nested-five-deep",
+        "jumped-over-block",
+        "loop-with-no-exit",
+        "switch-shared-arms",
+        "computed-goto",
+        "many-returns",
+        "wide-if-chain",
+        "two-exit-loop",
+        "continue-and-break",
+    ];
+    for &shape in SHAPES {
+        if !sink.wants(Facet::ControlFlow) {
+            return;
+        }
+        let mut program = Program::new(format!("a {shape} shape, which the analyses have to fit"));
+        let mut gnu = false;
+        match shape {
+            "irreducible" => {
+                // Two ways into the same cycle, which is what makes it irreducible. A natural
+                // loop finder has to refuse this rather than pick one of the two entries and
+                // call it a header, and rucc records it as a cycle that is not a loop.
+                program.input(Ty::I32, "enter_second", 1);
+                program.blank();
+                program.line("int total = 0;");
+                program.line("if (enter_second) goto second;");
+                program.line("first:");
+                program.line_at(1, "total += 1;");
+                program.line_at(1, "if (total > 20) goto out;");
+                program.line_at(1, "goto second;");
+                program.line("second:");
+                program.line_at(1, "total += 2;");
+                program.line_at(1, "if (total > 20) goto out;");
+                program.line_at(1, "goto first;");
+                program.line("out:");
+                program.line_at(1, ";");
+                program.blank();
+                let mut total = 0i128;
+                let mut at_second = true;
+                loop {
+                    total += if at_second { 2 } else { 1 };
+                    if total > 20 {
+                        break;
+                    }
+                    at_second = !at_second;
+                }
+                program.check(Ty::I32, "total", total);
+            }
+            "nested-five-deep" => {
+                // The loop forest has to be five deep and the parent of each level has to be
+                // the level above it. A flat list of loops passes every other facet.
+                program.line("int total = 0;");
+                for depth in 0..5 {
+                    program.line_at(
+                        depth,
+                        format!("for (int i{depth} = 0; i{depth} < 3; i{depth}++) {{"),
+                    );
+                }
+                program.line_at(5, "total += i0 + i1 + i2 + i3 + i4;");
+                for depth in (0..5).rev() {
+                    program.line_at(depth, "}");
+                }
+                program.blank();
+                // Each of the five counters runs nought, one, two over three to the fourth
+                // iterations of the others, so each contributes three times eighty one.
+                let total = 5 * 3 * 81;
+                program.check(Ty::I32, "total", i128::from(total));
+            }
+            "jumped-over-block" => {
+                // A block with no predecessor. Everything downstream of the analysis has to
+                // agree it cannot run, and the wrong answer is in it so a compiler that keeps
+                // it and somehow reaches it fails loudly.
+                program.input(Ty::I32, "seed", 4);
+                program.blank();
+                program.line("int total = seed;");
+                program.line("goto past;");
+                program.line("total = total * 100;");
+                program.line("past:");
+                program.line_at(1, "total += 1;");
+                program.blank();
+                program.check(Ty::I32, "total", 5);
+            }
+            "loop-with-no-exit" => {
+                // A loop the compiler cannot see the end of, in a function that is compiled
+                // and never called. This is the shape that makes post-dominance need an edge
+                // to a fake exit, because without one there is no path from the loop to the
+                // end of the function and the relation is not defined.
+                program.top("static void spin(void) {");
+                program.top("    for (;;) {");
+                program.top("    }");
+                program.top("}");
+                program.input(Ty::I32, "never", 0);
+                program.blank();
+                program.line("int total = 1;");
+                program.line("if (never) {");
+                program.line_at(1, "spin();");
+                program.line_at(1, "total = 100;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "total", 1);
+            }
+            "switch-shared-arms" => {
+                // Two arms that are one block, and a default that is also an arm target. A
+                // graph builder that assumes one edge per case ends up with a block that has
+                // fewer predecessors than it really has, and every dominance answer below it
+                // is then wrong.
+                program.input(Ty::I32, "pick", 3);
+                program.blank();
+                program.line("int total = 0;");
+                program.line("switch (pick) {");
+                program.line_at(1, "case 0:");
+                program.line_at(1, "case 1:");
+                program.line_at(2, "total = 10;");
+                program.line_at(2, "break;");
+                program.line_at(1, "case 2:");
+                program.line_at(1, "case 3:");
+                program.line_at(1, "default:");
+                program.line_at(2, "total = 20;");
+                program.line_at(2, "break;");
+                program.line("}");
+                program.line("switch (pick) {");
+                program.line_at(1, "case 3:");
+                program.line_at(2, "total += 1;");
+                program.line_at(2, "/* falls through */");
+                program.line_at(1, "case 4:");
+                program.line_at(2, "total += 2;");
+                program.line_at(2, "break;");
+                program.line_at(1, "default:");
+                program.line_at(2, "total += 100;");
+                program.line_at(2, "break;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "total", 23);
+            }
+            "computed-goto" => {
+                // The jump target is a value out of an array, so the successors of the block
+                // are whatever the array holds. This is a GCC extension and it is in the
+                // corpus because compatibility with GCC is the goal, but it is tagged so a
+                // run against a compiler that has not got to it yet can leave it out.
+                gnu = true;
+                program.input(Ty::I32, "pick", 2);
+                program.blank();
+                program.line("static void *targets[] = { &&zero, &&one, &&two, &&three };");
+                program.line("int total = 0;");
+                program.line("goto *targets[pick & 3];");
+                program.line("zero:");
+                program.line_at(1, "total += 1;");
+                program.line_at(1, "goto done;");
+                program.line("one:");
+                program.line_at(1, "total += 2;");
+                program.line_at(1, "goto done;");
+                program.line("two:");
+                program.line_at(1, "total += 4;");
+                program.line_at(1, "goto done;");
+                program.line("three:");
+                program.line_at(1, "total += 8;");
+                program.line("done:");
+                program.line_at(1, "total += 100;");
+                program.blank();
+                program.check(Ty::I32, "total", 104);
+            }
+            "many-returns" => {
+                // Five exits from one function. The reverse graph has five roots before the
+                // fake exit is added, and a post-dominator tree built without noticing that
+                // has the wrong root.
+                program.top("static int classify(int value) {");
+                program.top("    if (value < 0) return 1;");
+                program.top("    if (value == 0) return 2;");
+                program.top("    if (value < 10) return 3;");
+                program.top("    if (value < 100) return 4;");
+                program.top("    return 5;");
+                program.top("}");
+                program.input(Ty::I32, "seed", 7);
+                program.blank();
+                program.check(Ty::I32, "classify(-seed)", 1);
+                program.check(Ty::I32, "classify(0)", 2);
+                program.check(Ty::I32, "classify(seed)", 3);
+                program.check(Ty::I32, "classify(seed * 7)", 4);
+                program.check(Ty::I32, "classify(seed * 100)", 5);
+            }
+            "wide-if-chain" => {
+                // Sixteen branches in a row, none of them nested. The dominator tree is one
+                // long spine and the graph is wide rather than deep, which is the shape where
+                // a quadratic dominance algorithm stops being fast enough to keep.
+                let seed = 5i128;
+                program.input(Ty::I32, "seed", seed);
+                program.blank();
+                program.line("int total = 0;");
+                let mut total = 0i128;
+                for at in 0..16i128 {
+                    program.line(format!("if (seed > {at}) total += {};", at + 1));
+                    if seed > at {
+                        total += at + 1;
+                    }
+                }
+                program.blank();
+                program.check(Ty::I32, "total", total);
+            }
+            "two-exit-loop" => {
+                // A loop that can end two ways. The loop has two exit edges and the block
+                // after it has two predecessors, and which one ran decides the answer.
+                program.input(Ty::I32, "limit", 6);
+                program.blank();
+                program.line("int total = 0;");
+                program.line("int hit = 0;");
+                program.line("for (int i = 0; i < 10; i++) {");
+                program.line_at(1, "if (i == limit) { hit = 1; break; }");
+                program.line_at(1, "total += i;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "total", 15);
+                program.check(Ty::I32, "hit", 1);
+            }
+            _ => {
+                // `continue` and `break` in nested loops, which is where the back edge of the
+                // inner loop and the exit edge of the outer one are easiest to mix up.
+                program.input(Ty::I32, "seed", 2);
+                program.blank();
+                program.line("int total = 0;");
+                program.line("for (int i = 0; i < 6; i++) {");
+                program.line_at(1, "if (i % 2) continue;");
+                program.line_at(1, "for (int j = 0; j < 6; j++) {");
+                program.line_at(2, "if (j > i) break;");
+                program.line_at(2, "total += seed;");
+                program.line_at(1, "}");
+                program.line_at(1, "if (total > 100) break;");
+                program.line("}");
+                program.blank();
+                let mut total = 0i128;
+                for i in 0..6i128 {
+                    if i % 2 != 0 {
+                        continue;
+                    }
+                    for j in 0..6i128 {
+                        if j > i {
+                            break;
+                        }
+                        total += 2;
+                    }
+                    if total > 100 {
+                        break;
+                    }
+                }
+                program.check(Ty::I32, "total", total);
+            }
+        }
+        let axes = Axes::of([("shape", shape)]);
+        if gnu {
+            sink.push_tagged(Facet::ControlFlow, axes, Dialect::C17, program, &["gnu"]);
+        } else {
+            sink.push(Facet::ControlFlow, axes, Dialect::C17, program);
+        }
+    }
+}
+
 /// Places where the compiler is required to leave the program alone.
 ///
 /// A `volatile` access has to happen, exactly as many times as it is written, in the order it

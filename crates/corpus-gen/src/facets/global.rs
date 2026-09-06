@@ -15,11 +15,14 @@ use corpus_model::{Axes, Dialect, Facet};
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     common_subexpr(sink);
     load_forwarding(sink);
+    load_forwarding_walk(sink);
     code_motion(sink);
     copy_propagation(sink);
     constant_propagation(sink);
     value_range(sink);
+    value_range_places(sink);
     alias_analysis(sink);
+    alias_layers(sink);
     scalar_replacement(sink);
 }
 
@@ -139,6 +142,133 @@ fn load_forwarding(sink: &mut Sink<'_>) {
             }
             program.blank();
             program.check(ty.promoted(), "read", 41);
+            sink.push(
+                Facet::LoadForwarding,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The cases that decide how far back a load is allowed to look.
+///
+/// Forwarding a load means walking backwards over memory until the store that wrote the place
+/// being read turns up. The walk is where the reasoning is, and each shape here is one of the
+/// things it has to do on the way: translate an address through a join, decide whether a call
+/// wrote the place, stop at something it may not cross, and give up when the walk gets too
+/// long without giving the wrong answer as it goes.
+///
+/// Every case prints forty one, the same as the plain shapes, so the whole facet has one
+/// answer and a wrong one is obvious in the report rather than needing a table to interpret.
+fn load_forwarding_walk(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "phi-translation",
+        "across-opaque-call",
+        "across-reading-call",
+        "volatile-store",
+        "long-chain",
+        "copied-over",
+    ];
+    for &ty in Ty::WIDE {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::LoadForwarding) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program =
+                Program::new(format!("a {} load and a walk that has to {shape}", name));
+            program.input(ty, "value", 41);
+            program.input(Ty::I32, "flag", 1);
+            program.blank();
+            match shape {
+                "phi-translation" => {
+                    // The address of the load is a different expression on each edge, so the
+                    // walk has to carry the address back through the join before it can ask
+                    // which store wrote it.
+                    program.line(format!("{name} slots[4];"));
+                    program.line("slots[0] = value;");
+                    program.line(format!("slots[1] = value + {};", lit(ty, 1)));
+                    program.line(format!("{name} *at;"));
+                    program.line("if (flag) {");
+                    program.line_at(1, "at = &slots[0];");
+                    program.line("} else {");
+                    program.line_at(1, "at = &slots[1];");
+                    program.line("}");
+                    program.line(format!("{name} read = *at;"));
+                    program.blank();
+                    program.check(ty.promoted(), "read", 41);
+                }
+                "across-opaque-call" => {
+                    // The callee holds a pointer to the slot in a global, so it can write the
+                    // place the load reads and the walk has to stop at the call. It adds one,
+                    // and the case takes the one back off, so the facet keeps one answer.
+                    program.top(format!("static {name} *slot;"));
+                    program.top("static void bump(void) {".to_owned());
+                    program.top("    *slot += 1;".to_owned());
+                    program.top("}".to_owned());
+                    program.line(format!("{name} slots[4];"));
+                    program.line("slots[0] = value;");
+                    program.line("slot = &slots[0];");
+                    program.line("bump();");
+                    program.line(format!("{name} read = slots[0];"));
+                    program.blank();
+                    program.check(ty.promoted(), &format!("read - {}", lit(ty, 1)), 41);
+                }
+                "across-reading-call" => {
+                    // The callee touches nothing, so the walk may go straight past it. The
+                    // answer is the same either way and the size is what says whether it did.
+                    program.top(format!("static {name} doubled({name} of) {{"));
+                    program.top("    return of + of;".to_owned());
+                    program.top("}".to_owned());
+                    program.line(format!("{name} slots[4];"));
+                    program.line("slots[0] = value;");
+                    program.line(format!("{name} elsewhere = doubled(value);"));
+                    program.line("slots[2] = elsewhere;");
+                    program.line(format!("{name} read = slots[0];"));
+                    program.blank();
+                    program.check(ty.promoted(), "read", 41);
+                }
+                "volatile-store" => {
+                    // A volatile store has to happen and a volatile load has to happen, so
+                    // nothing here may be forwarded at all. The value is still the value.
+                    program.line(format!("volatile {name} slot;"));
+                    program.line("slot = value;");
+                    program.line(format!("{name} read = slot;"));
+                    program.blank();
+                    program.check(ty.promoted(), "read", 41);
+                }
+                "long-chain" => {
+                    // Thirty two stores to other places between the store and the load. A
+                    // walk with a budget gives up somewhere in here, and giving up has to
+                    // mean leaving the load alone rather than answering from the wrong store.
+                    program.line(format!("{name} slots[40];"));
+                    program.line("slots[0] = value;");
+                    for at in 1..33 {
+                        program.line(format!("slots[{at}] = value + {};", lit(ty, at)));
+                    }
+                    program.line(format!("{name} read = slots[0];"));
+                    program.blank();
+                    program.check(ty.promoted(), "read", 41);
+                }
+                _ => {
+                    // A loop copies one array over another, which is a store the walk cannot
+                    // see the address of without knowing what the loop counter did.
+                    program.line(format!("{name} source[4];"));
+                    program.line(format!("{name} slots[4];"));
+                    program.line("for (int i = 0; i < 4; i++) {");
+                    program.line_at(1, format!("source[i] = value + ({name})i;"));
+                    program.line_at(1, "slots[i] = 0;");
+                    program.line("}");
+                    program.line("for (int i = 0; i < 4; i++) {");
+                    program.line_at(1, "slots[i] = source[i];");
+                    program.line("}");
+                    program.line(format!("{name} read = slots[0];"));
+                    program.blank();
+                    program.check(ty.promoted(), "read", 41);
+                }
+            }
             sink.push(
                 Facet::LoadForwarding,
                 Axes::of([("type", ty.name()), ("shape", shape)]),
@@ -342,6 +472,182 @@ fn value_range(sink: &mut Sink<'_>) {
     }
 }
 
+/// The places a range comes from, and the places it must not be used.
+///
+/// A range analysis worth having answers about a value at a program point rather than about
+/// where the value was defined, and the difference is the whole reason it is a separate
+/// analysis rather than a field on the definition. These are the ways a fact arrives at a
+/// point: an edge out of a branch, an arm of a switch, a condition that has to be run
+/// backwards through the operation that built it, and a relation between two unknowns that no
+/// interval can hold.
+///
+/// The last three shapes are the other half, and they matter more. Each one has a guard that
+/// is doing real work, and a compiler that decided the guarded value could not take the value
+/// it takes here removes the guard and the program does something undefined. Every case prints
+/// one, so the whole facet reads as a column of yes.
+fn value_range_places(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "both-edges",
+        "switch-arms",
+        "inverted-condition",
+        "relation-between-two",
+        "through-a-cast",
+        "carried-round-a-loop",
+        "guard-keeps-the-divide",
+        "guard-keeps-the-shift",
+        "guard-keeps-the-index",
+    ];
+    for &shape in SHAPES {
+        if !sink.wants(Facet::ValueRange) {
+            return;
+        }
+        let mut program = Program::new(format!("a range that comes from {shape}"));
+        match shape {
+            "both-edges" => {
+                // The fact on the false edge is as much a fact as the one on the true edge,
+                // and an analysis that only reads the taken side gets the second answer wrong.
+                program.input(Ty::I32, "x", 20);
+                program.blank();
+                program.line("int settled;");
+                program.line("if (x > 10) {");
+                program.line_at(1, "settled = (x > 5) && (x >= 11);");
+                program.line("} else {");
+                program.line_at(1, "settled = (x <= 10) && (x < 11);");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "settled", 1);
+            }
+            "switch-arms" => {
+                // Each arm knows its own value, and the default knows the one thing no arm
+                // said, which is the part an analysis built on branches alone does not have.
+                program.input(Ty::I32, "pick", 9);
+                program.blank();
+                program.line("int settled = 0;");
+                program.line("switch (pick) {");
+                program.line_at(1, "case 1: settled = (pick == 1) && (pick < 2); break;");
+                program.line_at(1, "case 2: settled = (pick == 2) && (pick > 1); break;");
+                program.line_at(1, "case 3: settled = (pick == 3) && (pick > 2); break;");
+                program.line_at(1, "default: settled = (pick != 1) && (pick != 2) && (pick != 3);");
+                program.line_at(2, "break;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "settled", 1);
+            }
+            "inverted-condition" => {
+                // The condition is built out of two comparisons and then tested. Getting a
+                // range for x out of it means running the `and` backwards, which is the
+                // operation rucc bounds with `ranger-logical-depth`.
+                program.input(Ty::I32, "x", 20);
+                program.input(Ty::I32, "y", 2);
+                program.blank();
+                program.line("int both = (x > 10) & (y < 5);");
+                program.line("int deeper = both & (x < 100);");
+                program.line("int settled = 1;");
+                program.line("if (deeper) {");
+                program.line_at(1, "settled = (x > 5) && (y < 10) && (x < 1000);");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "settled", 1);
+            }
+            "relation-between-two" => {
+                // Neither value is known, so no interval says anything, and the answer is
+                // still decided. This is what the relational oracle is for, and it is the one
+                // question a range on its own cannot answer at any precision.
+                program.input(Ty::I32, "a", 3);
+                program.input(Ty::I32, "b", 8);
+                program.input(Ty::I32, "c", 11);
+                program.blank();
+                program.line("int settled = 1;");
+                program.line("if (a < b) {");
+                program.line_at(1, "if (b < c) {");
+                program.line_at(2, "settled = (a < c) && (a != c) && (c > a);");
+                program.line_at(1, "}");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "settled", 1);
+            }
+            "through-a-cast" => {
+                // The width changes and the range has to change with it. Truncating to eight
+                // bits bounds the value whatever it was, and widening it again is exact.
+                program.input(Ty::I32, "x", 1000);
+                program.blank();
+                program.line("unsigned char narrow = (unsigned char)x;");
+                program.line("int wide = (int)narrow;");
+                program.line("signed char signed_narrow = (signed char)(x & 63);");
+                program.line("int signed_wide = (int)signed_narrow;");
+                program.blank();
+                program.check(Ty::I32, "wide >= 0 && wide <= 255", 1);
+                program.check(Ty::I32, "signed_wide >= 0 && signed_wide <= 63", 1);
+            }
+            "carried-round-a-loop" => {
+                // The counter is bounded by the loop, and the bound holds inside the body and
+                // after the exit. rucc has no widening, so what it says about the counter is
+                // loose, and this case is here to record that loose is not wrong.
+                program.input(Ty::I32, "limit", 10);
+                program.blank();
+                program.line("int inside = 1;");
+                program.line("int i = 0;");
+                program.line("for (i = 0; i < limit; i++) {");
+                program.line_at(1, "inside = inside && (i >= 0) && (i < limit);");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "inside", 1);
+                program.check(Ty::I32, "i >= limit", 1);
+            }
+            "guard-keeps-the-divide" => {
+                // The divisor is zero and the guard is the only thing standing between the
+                // program and a machine trap. A compiler that narrowed the divisor to
+                // something that excludes zero, or that hoisted the division out of the
+                // guard, does not print anything at all here.
+                program.input(Ty::I32, "divisor", 0);
+                program.input(Ty::I32, "numerator", 84);
+                program.blank();
+                program.line("int quotient;");
+                program.line("if (divisor != 0) {");
+                program.line_at(1, "quotient = numerator / divisor;");
+                program.line("} else {");
+                program.line_at(1, "quotient = 7;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "quotient == 7", 1);
+            }
+            "guard-keeps-the-shift" => {
+                // The count is exactly the width, which is undefined to shift by, so the
+                // guard has to survive. Thirty two is not a number an analysis is likely to
+                // rule out by accident, which is why the case uses it rather than something
+                // further out.
+                program.input(Ty::I32, "count", 32);
+                program.input(Ty::I32, "x", 1);
+                program.blank();
+                program.line("int shifted;");
+                program.line("if (count < 32) {");
+                program.line_at(1, "shifted = x << count;");
+                program.line("} else {");
+                program.line_at(1, "shifted = 0;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "shifted == 0", 1);
+            }
+            _ => {
+                // The index is one past the end. The guard is what keeps the read inside the
+                // array, and an analysis that decided the index was in range removes it.
+                program.input(Ty::I32, "index", 4);
+                program.blank();
+                program.line("int table[4] = { 10, 20, 30, 40 };");
+                program.line("int picked;");
+                program.line("if (index >= 0 && index < 4) {");
+                program.line_at(1, "picked = table[index];");
+                program.line("} else {");
+                program.line_at(1, "picked = 9;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "picked == 9", 1);
+            }
+        }
+        sink.push(Facet::ValueRange, Axes::of([("shape", shape)]), Dialect::C17, program);
+    }
+}
+
 /// Two references that either can or cannot name the same object.
 ///
 /// The `restrict` and distinct type shapes are the ones where a wrong answer is a real
@@ -405,6 +711,119 @@ fn alias_analysis(sink: &mut Sink<'_>) {
             let Some(expected) = expected else {
                 continue;
             };
+            program.check(ty.promoted(), "total", expected);
+            sink.push(
+                Facet::AliasAnalysis,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The layers the answer is allowed to come from, one program each.
+///
+/// rucc answers the aliasing question in layers, and a layer that is wrong is a
+/// miscompilation rather than a missed optimization, so each one gets a program that fails
+/// rather than merely getting bigger. Two of these are the promises the language makes to the
+/// compiler, which are the type rules and `restrict`. Two are promises the compiler makes back,
+/// which are that a `char` pointer may touch anything and that a local whose address left the
+/// function is no longer private. The last is a control where the two references really do name
+/// the same byte and the only right answer is the conservative one.
+fn alias_layers(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] =
+        &["distinct-types", "char-pointer", "union-pun", "computed-same-index", "escaped-local"];
+    for &ty in Ty::WIDE {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::AliasAnalysis) {
+                return;
+            }
+            let name = ty.c_name();
+            let bytes = ty.bits() / 8;
+            let mut program = Program::new(format!("{shape} references to {name}"));
+            program.input(ty, "seed", 5);
+            program.input(Ty::I32, "index", 1);
+            program.blank();
+            let expected = match shape {
+                "distinct-types" => {
+                    // Two objects of types that no program can make into one another, which
+                    // is what the type based layer is allowed to use. The store through the
+                    // short cannot reach the other object and the compiler may act on that.
+                    program.line(format!("{name} left = seed;"));
+                    program.line("short right = 1;");
+                    program.line(format!("{name} *pl = &left;"));
+                    program.line("short *pr = &right;");
+                    program.line(format!("*pl = seed + {};", lit(ty, 1)));
+                    program.line("*pr = 2;");
+                    program.line(format!("{name} total = *pl + ({name})*pr;"));
+                    eval(Op::Add, ty, 6, 2)
+                }
+                "char-pointer" => {
+                    // A pointer to character type may be used to touch any object, so the
+                    // byte writes below are visible to the load that follows. Every byte is
+                    // written with the same value, so the answer does not depend on which end
+                    // of the object the machine puts first.
+                    program.line(format!("{name} object = seed;"));
+                    program.line(format!("{name} *at = &object;"));
+                    program.line("unsigned char *bytes = (unsigned char *)&object;");
+                    program.line(format!("*at = seed + {};", lit(ty, 1)));
+                    program.line(format!("for (int i = 0; i < {bytes}; i++) {{"));
+                    program.line_at(1, "bytes[i] = 0;");
+                    program.line("}");
+                    program.line(format!("{name} total = *at + {};", lit(ty, 7)));
+                    Some(7)
+                }
+                "union-pun" => {
+                    // Storing one member and reading another is type punning, which GCC
+                    // defines and which the type based layer has to stop short of. Reading
+                    // the whole after zeroing the bytes has to see the zeros.
+                    program.top(format!(
+                        "union both {{ {name} whole; unsigned char parts[{bytes}]; }};"
+                    ));
+                    program.line("union both holder;");
+                    program.line(format!("holder.whole = seed + {};", lit(ty, 1)));
+                    program.line(format!("for (int i = 0; i < {bytes}; i++) {{"));
+                    program.line_at(1, "holder.parts[i] = 0;");
+                    program.line("}");
+                    program.line(format!("{name} total = holder.whole + {};", lit(ty, 7)));
+                    Some(7)
+                }
+                "computed-same-index" => {
+                    // The two indices are equal and neither is a constant, so the offsets
+                    // cannot be told apart and the second store has to be assumed to land on
+                    // the first. A compiler that guessed otherwise prints the other number.
+                    program.line(format!("{name} buffer[4] = {{ 0 }};"));
+                    program.line("int here = index;");
+                    program.line("int there = index * 3 - 2;");
+                    program.line(format!("buffer[here] = seed + {};", lit(ty, 1)));
+                    program.line(format!("buffer[there] = seed + {};", lit(ty, 2)));
+                    program.line(format!("{name} total = buffer[here] + buffer[there];"));
+                    eval(Op::Add, ty, 7, 7)
+                }
+                _ => {
+                    // The address of the local reaches a global, so anything that runs after
+                    // that may write it and the compiler may not keep the local in a register
+                    // across the call.
+                    program.top(format!("static {name} *kept;"));
+                    program.top(format!("static void keep({name} *of) {{"));
+                    program.top("    kept = of;".to_owned());
+                    program.top("}".to_owned());
+                    program.top("static void overwrite(void) {".to_owned());
+                    program.top("    *kept = *kept + 2;".to_owned());
+                    program.top("}".to_owned());
+                    program.line(format!("{name} local = seed;"));
+                    program.line("keep(&local);");
+                    program.line(format!("local = seed + {};", lit(ty, 1)));
+                    program.line("overwrite();");
+                    program.line(format!("{name} total = local;"));
+                    eval(Op::Add, ty, 6, 2)
+                }
+            };
+            let Some(expected) = expected else {
+                continue;
+            };
+            program.blank();
             program.check(ty.promoted(), "total", expected);
             sink.push(
                 Facet::AliasAnalysis,

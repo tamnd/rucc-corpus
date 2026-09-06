@@ -30,6 +30,7 @@ const TYPES: &[Ty] = Ty::WIDE;
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     loop_invariant(sink);
     induction_variable(sink);
+    trip_counts(sink);
     loop_unswitch(sink);
     loop_unroll(sink);
     loop_idiom(sink);
@@ -127,6 +128,244 @@ fn induction_variable(sink: &mut Sink<'_>) {
                 program,
             );
         }
+    }
+}
+
+/// The loop shapes whose trip count is the thing being tested.
+///
+/// Everything a compiler does to a loop is downstream of how many times it thinks the loop
+/// runs. A wrong trip count is the worst bug the optimizer can have, because it turns into a
+/// loop that runs the wrong number of times after unrolling and there is no later pass that
+/// notices. So every case here counts its own iterations and prints the count, and the number
+/// it prints was worked out by the generator running the same recurrence in Rust.
+///
+/// The shapes are the ones where the arithmetic is not the obvious subtraction. An exit on
+/// `!=` needs the step to divide the distance. A step that does not divide the distance means
+/// the last iteration is short. An unsigned counter that wraps is defined and the count is not
+/// the difference of the endpoints. A counter that starts past its limit runs no times at all,
+/// which is the case a compiler that computes the count as a difference gets spectacularly
+/// wrong.
+fn trip_counts(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "exit-on-not-equal",
+        "step-does-not-divide",
+        "starts-past-the-limit",
+        "unsigned-wraps-round",
+        "counts-down",
+        "walks-a-pointer",
+        "derived-counter",
+        "two-exits",
+        "inner-depends-on-outer",
+        "unknown-limit",
+    ];
+    for &shape in SHAPES {
+        if !sink.wants(Facet::InductionVariable) {
+            return;
+        }
+        let mut program = Program::new(format!("a loop that {shape}, counted by the generator"));
+        match shape {
+            "exit-on-not-equal" => {
+                // The step divides the distance exactly, so the loop ends. If it did not the
+                // counter would run past the limit and round the type, and a compiler that
+                // computed the count without checking would say five.
+                program.line("int counted = 0;");
+                program.line("int total = 0;");
+                program.line("for (int i = 0; i != 10; i += 2) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "total += i;");
+                program.line("}");
+                program.blank();
+                let mut counted = 0i128;
+                let mut total = 0i128;
+                let mut i = 0i128;
+                while i != 10 {
+                    counted += 1;
+                    total += i;
+                    i += 2;
+                }
+                program.check(Ty::I32, "counted", counted);
+                program.check(Ty::I32, "total", total);
+            }
+            "step-does-not-divide" => {
+                // Ten over three is three and a bit, and the answer is four. Rounding the
+                // division the other way is the single most common trip count bug there is.
+                program.line("int counted = 0;");
+                program.line("int last = -1;");
+                program.line("for (int i = 0; i < 10; i += 3) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "last = i;");
+                program.line("}");
+                program.blank();
+                let mut counted = 0i128;
+                let mut last = -1i128;
+                let mut i = 0i128;
+                while i < 10 {
+                    counted += 1;
+                    last = i;
+                    i += 3;
+                }
+                program.check(Ty::I32, "counted", counted);
+                program.check(Ty::I32, "last", last);
+            }
+            "starts-past-the-limit" => {
+                // Zero iterations. The body sets the answer to something wrong, so a compiler
+                // that peeled an iteration it should not have prints that instead.
+                program.input(Ty::I32, "start", 20);
+                program.blank();
+                program.line("int counted = 0;");
+                program.line("int touched = 0;");
+                program.line("for (int i = start; i < 10; i++) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "touched = 100;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "counted", 0);
+                program.check(Ty::I32, "touched", 0);
+            }
+            "unsigned-wraps-round" => {
+                // Unsigned arithmetic wraps and the standard says so, so this loop is defined
+                // and it runs twelve times rather than the negative number the subtraction of
+                // the endpoints suggests.
+                program.line("int counted = 0;");
+                program.line("unsigned int total = 0u;");
+                program.line("for (unsigned int i = 4294967288u; i != 4u; i++) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "total += 1u;");
+                program.line("}");
+                program.blank();
+                let mut counted = 0i128;
+                let mut i = 4_294_967_288u32;
+                while i != 4 {
+                    counted += 1;
+                    i = i.wrapping_add(1);
+                }
+                program.check(Ty::I32, "counted", counted);
+                program.check(Ty::U32, "total", counted);
+            }
+            "counts-down" => {
+                // The step is negative, so the distance and the direction have to be worked
+                // out together. The loop ends on a comparison with zero, which is where a
+                // compiler is most tempted to assume the counter is unsigned.
+                program.line("int counted = 0;");
+                program.line("int total = 0;");
+                program.line("for (int i = 10; i > 0; i -= 3) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "total += i;");
+                program.line("}");
+                program.blank();
+                let mut counted = 0i128;
+                let mut total = 0i128;
+                let mut i = 10i128;
+                while i > 0 {
+                    counted += 1;
+                    total += i;
+                    i -= 3;
+                }
+                program.check(Ty::I32, "counted", counted);
+                program.check(Ty::I32, "total", total);
+            }
+            "walks-a-pointer" => {
+                // The counter is a pointer, so the step is the width of what it points at and
+                // the trip count is a division the compiler has to do rather than read off.
+                program.line("int values[12];");
+                program.line("for (int i = 0; i < 12; i++) {");
+                program.line_at(1, "values[i] = i * 2;");
+                program.line("}");
+                program.line("int counted = 0;");
+                program.line("int total = 0;");
+                program.line("for (int *at = values; at != values + 12; at += 3) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "total += *at;");
+                program.line("}");
+                program.blank();
+                let mut counted = 0i128;
+                let mut total = 0i128;
+                let mut at = 0i128;
+                while at != 12 {
+                    counted += 1;
+                    total += at * 2;
+                    at += 3;
+                }
+                program.check(Ty::I32, "counted", counted);
+                program.check(Ty::I32, "total", total);
+            }
+            "derived-counter" => {
+                // A second variable that is a linear function of the first. Rewriting the loop
+                // in terms of either one is allowed, and the two have to stay in step.
+                program.line("int counted = 0;");
+                program.line("int derived = 1;");
+                program.line("int total = 0;");
+                program.line("for (int i = 0; i < 9; i++) {");
+                program.line_at(1, "derived = i * 3 + 1;");
+                program.line_at(1, "total += derived;");
+                program.line_at(1, "counted++;");
+                program.line("}");
+                program.blank();
+                let mut total = 0i128;
+                for i in 0..9i128 {
+                    total += i * 3 + 1;
+                }
+                program.check(Ty::I32, "counted", 9);
+                program.check(Ty::I32, "derived", 8 * 3 + 1);
+                program.check(Ty::I32, "total", total);
+            }
+            "two-exits" => {
+                // Two ways out, so there is no single trip count. What a compiler may say is a
+                // bound, and the case checks which exit ran as well as how many times round.
+                program.input(Ty::I32, "stop", 5);
+                program.blank();
+                program.line("int counted = 0;");
+                program.line("int reason = 0;");
+                program.line("for (int i = 0; i < 20; i++) {");
+                program.line_at(1, "if (i == stop) { reason = 1; break; }");
+                program.line_at(1, "counted++;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "counted", 5);
+                program.check(Ty::I32, "reason", 1);
+            }
+            "inner-depends-on-outer" => {
+                // The inner trip count is the outer counter, so the total is a triangle rather
+                // than a rectangle and the compiler cannot use one number for both.
+                program.line("int counted = 0;");
+                program.line("int total = 0;");
+                program.line("for (int i = 0; i < 8; i++) {");
+                program.line_at(1, "for (int j = 0; j < i; j++) {");
+                program.line_at(2, "counted++;");
+                program.line_at(2, "total += j;");
+                program.line_at(1, "}");
+                program.line("}");
+                program.blank();
+                let mut counted = 0i128;
+                let mut total = 0i128;
+                for i in 0..8i128 {
+                    for j in 0..i {
+                        counted += 1;
+                        total += j;
+                    }
+                }
+                program.check(Ty::I32, "counted", counted);
+                program.check(Ty::I32, "total", total);
+            }
+            _ => {
+                // The limit comes out of a volatile, so the count is not known at compile
+                // time at all. What a compiler may still say is that the counter is bounded
+                // by the limit, and the case checks that the loop ran the number of times the
+                // limit says once the limit is known at run time.
+                program.input(Ty::I32, "limit", 7);
+                program.blank();
+                program.line("int counted = 0;");
+                program.line("int total = 0;");
+                program.line("for (int i = 0; i < limit; i++) {");
+                program.line_at(1, "counted++;");
+                program.line_at(1, "total += i;");
+                program.line("}");
+                program.blank();
+                program.check(Ty::I32, "counted", 7);
+                program.check(Ty::I32, "total", 21);
+            }
+        }
+        sink.push(Facet::InductionVariable, Axes::of([("shape", shape)]), Dialect::C17, program);
     }
 }
 
