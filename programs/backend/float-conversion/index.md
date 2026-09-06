@@ -1,0 +1,75 @@
+# float-conversion
+
+conversions between the floating types and the integer ones. Part of the backend phase of the M4 plan.
+
+66 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+
+| program | axes | dialect | must print |
+|---|---|---|---|
+| [`float-conversion.narrowing.constant.c17.addf11ab`](float-conversion.narrowing.constant.c17.addf11ab.c) | shape=narrowing, form=constant | c17 | `16777216 16777216 33554436 ...` and 11 more lines |
+| [`float-conversion.narrowing.opaque.c17.3af8c1da`](float-conversion.narrowing.opaque.c17.3af8c1da.c) | shape=narrowing, form=opaque | c17 | `16777216 16777216 33554436 ...` and 11 more lines |
+| [`float-conversion.round-trip.double.i16.constant.c17.c431445e`](float-conversion.round-trip.double.i16.constant.c17.c431445e.c) | shape=round-trip, float=double, type=i16, form=constant | c17 | `-32768 -255 -8 ...` and 13 more lines |
+| [`float-conversion.round-trip.double.i16.opaque.c17.5cff3f77`](float-conversion.round-trip.double.i16.opaque.c17.5cff3f77.c) | shape=round-trip, float=double, type=i16, form=opaque | c17 | `-32768 -255 -8 ...` and 13 more lines |
+| [`float-conversion.round-trip.double.i32.constant.c17.c11a1357`](float-conversion.round-trip.double.i32.constant.c17.c11a1357.c) | shape=round-trip, float=double, type=i32, form=constant | c17 | `-2147483648 -255 -8 ...` and 13 more lines |
+| [`float-conversion.round-trip.double.i32.opaque.c17.b9134944`](float-conversion.round-trip.double.i32.opaque.c17.b9134944.c) | shape=round-trip, float=double, type=i32, form=opaque | c17 | `-2147483648 -255 -8 ...` and 13 more lines |
+| [`float-conversion.round-trip.double.i64.constant.c17.58674cfd`](float-conversion.round-trip.double.i64.constant.c17.58674cfd.c) | shape=round-trip, float=double, type=i64, form=constant | c17 | `-9223372036854775808 -255 -8 ...` and 11 more lines |
+| [`float-conversion.round-trip.double.i64.opaque.c17.8a046b27`](float-conversion.round-trip.double.i64.opaque.c17.8a046b27.c) | shape=round-trip, float=double, type=i64, form=opaque | c17 | `-9223372036854775808 -255 -8 ...` and 11 more lines |
+| [`float-conversion.round-trip.double.i8.constant.c17.cc9928ac`](float-conversion.round-trip.double.i8.constant.c17.cc9928ac.c) | shape=round-trip, float=double, type=i8, form=constant | c17 | `-128 -8 -2 ...` and 9 more lines |
+| [`float-conversion.round-trip.double.i8.opaque.c17.d2ce6afb`](float-conversion.round-trip.double.i8.opaque.c17.d2ce6afb.c) | shape=round-trip, float=double, type=i8, form=opaque | c17 | `-128 -8 -2 ...` and 9 more lines |
+| [`float-conversion.round-trip.double.u16.constant.c17.e87251b7`](float-conversion.round-trip.double.u16.constant.c17.e87251b7.c) | shape=round-trip, float=double, type=u16, form=constant | c17 | `0 1 2 ...` and 8 more lines |
+| [`float-conversion.round-trip.double.u16.opaque.c17.3bbc5565`](float-conversion.round-trip.double.u16.opaque.c17.3bbc5565.c) | shape=round-trip, float=double, type=u16, form=opaque | c17 | `0 1 2 ...` and 8 more lines |
+| [`float-conversion.round-trip.double.u32.constant.c17.ede75966`](float-conversion.round-trip.double.u32.constant.c17.ede75966.c) | shape=round-trip, float=double, type=u32, form=constant | c17 | `0 1 2 ...` and 8 more lines |
+| [`float-conversion.round-trip.double.u32.opaque.c17.f042f1fd`](float-conversion.round-trip.double.u32.opaque.c17.f042f1fd.c) | shape=round-trip, float=double, type=u32, form=opaque | c17 | `0 1 2 ...` and 8 more lines |
+| [`float-conversion.round-trip.double.u64.constant.c17.14955e84`](float-conversion.round-trip.double.u64.constant.c17.14955e84.c) | shape=round-trip, float=double, type=u64, form=constant | c17 | `0 1 2 ...` and 6 more lines |
+| [`float-conversion.round-trip.double.u64.opaque.c17.c5126ac1`](float-conversion.round-trip.double.u64.opaque.c17.c5126ac1.c) | shape=round-trip, float=double, type=u64, form=opaque | c17 | `0 1 2 ...` and 6 more lines |
+| [`float-conversion.round-trip.double.u8.constant.c17.f43d21a1`](float-conversion.round-trip.double.u8.constant.c17.f43d21a1.c) | shape=round-trip, float=double, type=u8, form=constant | c17 | `0 1 2 ...` and 5 more lines |
+| [`float-conversion.round-trip.double.u8.opaque.c17.1fccb2d7`](float-conversion.round-trip.double.u8.opaque.c17.1fccb2d7.c) | shape=round-trip, float=double, type=u8, form=opaque | c17 | `0 1 2 ...` and 5 more lines |
+| [`float-conversion.round-trip.float.i16.constant.c17.648a57d4`](float-conversion.round-trip.float.i16.constant.c17.648a57d4.c) | shape=round-trip, float=float, type=i16, form=constant | c17 | `-32768 -255 -8 ...` and 13 more lines |
+| [`float-conversion.round-trip.float.i16.opaque.c17.7fac41a8`](float-conversion.round-trip.float.i16.opaque.c17.7fac41a8.c) | shape=round-trip, float=float, type=i16, form=opaque | c17 | `-32768 -255 -8 ...` and 13 more lines |
+| [`float-conversion.round-trip.float.i32.constant.c17.0e77a03a`](float-conversion.round-trip.float.i32.constant.c17.0e77a03a.c) | shape=round-trip, float=float, type=i32, form=constant | c17 | `-2147483648 -255 -8 ...` and 11 more lines |
+| [`float-conversion.round-trip.float.i32.opaque.c17.67f2659a`](float-conversion.round-trip.float.i32.opaque.c17.67f2659a.c) | shape=round-trip, float=float, type=i32, form=opaque | c17 | `-2147483648 -255 -8 ...` and 11 more lines |
+| [`float-conversion.round-trip.float.i64.constant.c17.0ba80b15`](float-conversion.round-trip.float.i64.constant.c17.0ba80b15.c) | shape=round-trip, float=float, type=i64, form=constant | c17 | `-9223372036854775808 -255 -8 ...` and 11 more lines |
+| [`float-conversion.round-trip.float.i64.opaque.c17.3b8210c0`](float-conversion.round-trip.float.i64.opaque.c17.3b8210c0.c) | shape=round-trip, float=float, type=i64, form=opaque | c17 | `-9223372036854775808 -255 -8 ...` and 11 more lines |
+| [`float-conversion.round-trip.float.i8.constant.c17.c728858b`](float-conversion.round-trip.float.i8.constant.c17.c728858b.c) | shape=round-trip, float=float, type=i8, form=constant | c17 | `-128 -8 -2 ...` and 9 more lines |
+| [`float-conversion.round-trip.float.i8.opaque.c17.6e91a1f8`](float-conversion.round-trip.float.i8.opaque.c17.6e91a1f8.c) | shape=round-trip, float=float, type=i8, form=opaque | c17 | `-128 -8 -2 ...` and 9 more lines |
+| [`float-conversion.round-trip.float.u16.constant.c17.119d485a`](float-conversion.round-trip.float.u16.constant.c17.119d485a.c) | shape=round-trip, float=float, type=u16, form=constant | c17 | `0 1 2 ...` and 8 more lines |
+| [`float-conversion.round-trip.float.u16.opaque.c17.59678cdd`](float-conversion.round-trip.float.u16.opaque.c17.59678cdd.c) | shape=round-trip, float=float, type=u16, form=opaque | c17 | `0 1 2 ...` and 8 more lines |
+| [`float-conversion.round-trip.float.u32.constant.c17.a6ea0bae`](float-conversion.round-trip.float.u32.constant.c17.a6ea0bae.c) | shape=round-trip, float=float, type=u32, form=constant | c17 | `0 1 2 ...` and 6 more lines |
+| [`float-conversion.round-trip.float.u32.opaque.c17.7cddf8a3`](float-conversion.round-trip.float.u32.opaque.c17.7cddf8a3.c) | shape=round-trip, float=float, type=u32, form=opaque | c17 | `0 1 2 ...` and 6 more lines |
+| [`float-conversion.round-trip.float.u64.constant.c17.16e2a877`](float-conversion.round-trip.float.u64.constant.c17.16e2a877.c) | shape=round-trip, float=float, type=u64, form=constant | c17 | `0 1 2 ...` and 6 more lines |
+| [`float-conversion.round-trip.float.u64.opaque.c17.9350d895`](float-conversion.round-trip.float.u64.opaque.c17.9350d895.c) | shape=round-trip, float=float, type=u64, form=opaque | c17 | `0 1 2 ...` and 6 more lines |
+| [`float-conversion.round-trip.float.u8.constant.c17.37f36c3c`](float-conversion.round-trip.float.u8.constant.c17.37f36c3c.c) | shape=round-trip, float=float, type=u8, form=constant | c17 | `0 1 2 ...` and 5 more lines |
+| [`float-conversion.round-trip.float.u8.opaque.c17.461039e4`](float-conversion.round-trip.float.u8.opaque.c17.461039e4.c) | shape=round-trip, float=float, type=u8, form=opaque | c17 | `0 1 2 ...` and 5 more lines |
+| [`float-conversion.truncate.double.i16.constant.c17.8721b335`](float-conversion.truncate.double.i16.constant.c17.8721b335.c) | shape=truncate, float=double, type=i16, form=constant | c17 | `0 0 0 ...` and 12 more lines |
+| [`float-conversion.truncate.double.i16.opaque.c17.30ecd8ce`](float-conversion.truncate.double.i16.opaque.c17.30ecd8ce.c) | shape=truncate, float=double, type=i16, form=opaque | c17 | `0 0 0 ...` and 12 more lines |
+| [`float-conversion.truncate.double.i32.constant.c17.df27c20d`](float-conversion.truncate.double.i32.constant.c17.df27c20d.c) | shape=truncate, float=double, type=i32, form=constant | c17 | `0 0 0 ...` and 15 more lines |
+| [`float-conversion.truncate.double.i32.opaque.c17.e2b3935c`](float-conversion.truncate.double.i32.opaque.c17.e2b3935c.c) | shape=truncate, float=double, type=i32, form=opaque | c17 | `0 0 0 ...` and 15 more lines |
+| [`float-conversion.truncate.double.i64.constant.c17.8948eaf6`](float-conversion.truncate.double.i64.constant.c17.8948eaf6.c) | shape=truncate, float=double, type=i64, form=constant | c17 | `0 0 0 ...` and 18 more lines |
+| [`float-conversion.truncate.double.i64.opaque.c17.97c043ba`](float-conversion.truncate.double.i64.opaque.c17.97c043ba.c) | shape=truncate, float=double, type=i64, form=opaque | c17 | `0 0 0 ...` and 18 more lines |
+| [`float-conversion.truncate.double.i8.constant.c17.61e42e17`](float-conversion.truncate.double.i8.constant.c17.61e42e17.c) | shape=truncate, float=double, type=i8, form=constant | c17 | `0 0 0 ...` and 9 more lines |
+| [`float-conversion.truncate.double.i8.opaque.c17.4a143afb`](float-conversion.truncate.double.i8.opaque.c17.4a143afb.c) | shape=truncate, float=double, type=i8, form=opaque | c17 | `0 0 0 ...` and 9 more lines |
+| [`float-conversion.truncate.double.u16.constant.c17.8689db89`](float-conversion.truncate.double.u16.constant.c17.8689db89.c) | shape=truncate, float=double, type=u16, form=constant | c17 | `0 0 0 ...` and 8 more lines |
+| [`float-conversion.truncate.double.u16.opaque.c17.a28ccea1`](float-conversion.truncate.double.u16.opaque.c17.a28ccea1.c) | shape=truncate, float=double, type=u16, form=opaque | c17 | `0 0 0 ...` and 8 more lines |
+| [`float-conversion.truncate.double.u32.constant.c17.a93dddae`](float-conversion.truncate.double.u32.constant.c17.a93dddae.c) | shape=truncate, float=double, type=u32, form=constant | c17 | `0 0 0 ...` and 10 more lines |
+| [`float-conversion.truncate.double.u32.opaque.c17.73c7dce6`](float-conversion.truncate.double.u32.opaque.c17.73c7dce6.c) | shape=truncate, float=double, type=u32, form=opaque | c17 | `0 0 0 ...` and 10 more lines |
+| [`float-conversion.truncate.double.u64.constant.c17.00a4ae26`](float-conversion.truncate.double.u64.constant.c17.00a4ae26.c) | shape=truncate, float=double, type=u64, form=constant | c17 | `0 0 0 ...` and 14 more lines |
+| [`float-conversion.truncate.double.u64.opaque.c17.4c8b0055`](float-conversion.truncate.double.u64.opaque.c17.4c8b0055.c) | shape=truncate, float=double, type=u64, form=opaque | c17 | `0 0 0 ...` and 14 more lines |
+| [`float-conversion.truncate.double.u8.constant.c17.65dbb52f`](float-conversion.truncate.double.u8.constant.c17.65dbb52f.c) | shape=truncate, float=double, type=u8, form=constant | c17 | `0 0 0 ...` and 6 more lines |
+| [`float-conversion.truncate.double.u8.opaque.c17.2709e46f`](float-conversion.truncate.double.u8.opaque.c17.2709e46f.c) | shape=truncate, float=double, type=u8, form=opaque | c17 | `0 0 0 ...` and 6 more lines |
+| [`float-conversion.truncate.float.i16.constant.c17.6cdaf698`](float-conversion.truncate.float.i16.constant.c17.6cdaf698.c) | shape=truncate, float=float, type=i16, form=constant | c17 | `0 0 0 ...` and 12 more lines |
+| [`float-conversion.truncate.float.i16.opaque.c17.165f08d4`](float-conversion.truncate.float.i16.opaque.c17.165f08d4.c) | shape=truncate, float=float, type=i16, form=opaque | c17 | `0 0 0 ...` and 12 more lines |
+| [`float-conversion.truncate.float.i32.constant.c17.4cf33e39`](float-conversion.truncate.float.i32.constant.c17.4cf33e39.c) | shape=truncate, float=float, type=i32, form=constant | c17 | `0 0 0 ...` and 14 more lines |
+| [`float-conversion.truncate.float.i32.opaque.c17.ad031a37`](float-conversion.truncate.float.i32.opaque.c17.ad031a37.c) | shape=truncate, float=float, type=i32, form=opaque | c17 | `0 0 0 ...` and 14 more lines |
+| [`float-conversion.truncate.float.i64.constant.c17.30abf207`](float-conversion.truncate.float.i64.constant.c17.30abf207.c) | shape=truncate, float=float, type=i64, form=constant | c17 | `0 0 0 ...` and 15 more lines |
+| [`float-conversion.truncate.float.i64.opaque.c17.b83de5e6`](float-conversion.truncate.float.i64.opaque.c17.b83de5e6.c) | shape=truncate, float=float, type=i64, form=opaque | c17 | `0 0 0 ...` and 15 more lines |
+| [`float-conversion.truncate.float.i8.constant.c17.e2633304`](float-conversion.truncate.float.i8.constant.c17.e2633304.c) | shape=truncate, float=float, type=i8, form=constant | c17 | `0 0 0 ...` and 9 more lines |
+| [`float-conversion.truncate.float.i8.opaque.c17.8b1d115c`](float-conversion.truncate.float.i8.opaque.c17.8b1d115c.c) | shape=truncate, float=float, type=i8, form=opaque | c17 | `0 0 0 ...` and 9 more lines |
+| [`float-conversion.truncate.float.u16.constant.c17.6de67f3b`](float-conversion.truncate.float.u16.constant.c17.6de67f3b.c) | shape=truncate, float=float, type=u16, form=constant | c17 | `0 0 0 ...` and 8 more lines |
+| [`float-conversion.truncate.float.u16.opaque.c17.b677b598`](float-conversion.truncate.float.u16.opaque.c17.b677b598.c) | shape=truncate, float=float, type=u16, form=opaque | c17 | `0 0 0 ...` and 8 more lines |
+| [`float-conversion.truncate.float.u32.constant.c17.cef9ed5d`](float-conversion.truncate.float.u32.constant.c17.cef9ed5d.c) | shape=truncate, float=float, type=u32, form=constant | c17 | `0 0 0 ...` and 8 more lines |
+| [`float-conversion.truncate.float.u32.opaque.c17.77f3be94`](float-conversion.truncate.float.u32.opaque.c17.77f3be94.c) | shape=truncate, float=float, type=u32, form=opaque | c17 | `0 0 0 ...` and 8 more lines |
+| [`float-conversion.truncate.float.u64.constant.c17.2d868894`](float-conversion.truncate.float.u64.constant.c17.2d868894.c) | shape=truncate, float=float, type=u64, form=constant | c17 | `0 0 0 ...` and 9 more lines |
+| [`float-conversion.truncate.float.u64.opaque.c17.af2d8e05`](float-conversion.truncate.float.u64.opaque.c17.af2d8e05.c) | shape=truncate, float=float, type=u64, form=opaque | c17 | `0 0 0 ...` and 9 more lines |
+| [`float-conversion.truncate.float.u8.constant.c17.00e5f499`](float-conversion.truncate.float.u8.constant.c17.00e5f499.c) | shape=truncate, float=float, type=u8, form=constant | c17 | `0 0 0 ...` and 6 more lines |
+| [`float-conversion.truncate.float.u8.opaque.c17.b3091a0b`](float-conversion.truncate.float.u8.opaque.c17.b3091a0b.c) | shape=truncate, float=float, type=u8, form=opaque | c17 | `0 0 0 ...` and 6 more lines |
+

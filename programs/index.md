@@ -1,12 +1,12 @@
 # The corpus
 
-1285 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1429 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `67839b19f50d8e943649aab01886d76ac12f2fc4f77a7503dc09982a73a257be`.
+Corpus digest `b1f554640c2efebb6eee4c6e60c2d2a6ba4a991513d0016e45462d335fbbf9ee`.
 
-## floor (84 programs)
+## floor (109 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
@@ -15,6 +15,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`baseline`](floor/baseline/index.md) | 10 | programs with no optimization target, which every level must get right |
 | [`control-flow`](floor/control-flow/index.md) | 10 | the graph shapes the analyses under every pass have to get right |
 | [`branch-probability`](floor/branch-probability/index.md) | 34 | the odds put on an edge before the program has ever run |
+| [`computed-goto`](floor/computed-goto/index.md) | 25 | the address of a label, and the indirect jump through it |
 | [`frontend`](floor/frontend/index.md) | 30 | language shape rather than optimization, including C23 |
 
 ## local (277 programs)
@@ -76,7 +77,7 @@ Transformations that need to look at more than one function at a time.
 | [`reachability`](interprocedural/reachability/index.md) | 9 | removing what nothing references |
 | [`devirtualize`](interprocedural/devirtualize/index.md) | 4 | turning an indirect call into a direct one |
 
-## backend (205 programs)
+## backend (293 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -91,12 +92,15 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`switch-lowering`](backend/switch-lowering/index.md) | 9 | choosing how to lower a switch |
 | [`calling-convention`](backend/calling-convention/index.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/index.md) | 22 | the rules that only make sense on machine instructions |
+| [`bit-builtins`](backend/bit-builtins/index.md) | 22 | the bit counting builtins, over every position at both widths |
+| [`float-conversion`](backend/float-conversion/index.md) | 66 | conversions between the floating types and the integer ones |
 
-## correctness (7 programs)
+## correctness (38 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
 | facet | programs | what it is about |
 |---|---|---|
 | [`barrier`](correctness/barrier/index.md) | 7 | programs where the compiler must not act, and a firing is a bug |
+| [`atomics`](correctness/atomics/index.md) | 31 | the atomic builtins at every ordering, and the header over them |
 
