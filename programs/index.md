@@ -1,10 +1,10 @@
 # The corpus
 
-1453 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1461 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `3baa08d2fac947939c45935c9e50536cf1083b54045906ceb289f2dcddc776ef`.
+Corpus digest `dbfc0cafbb185c10824de5adefb2a61b10e2acd67716f0e095c91abbc4c2bdf2`.
 
 ## floor (109 programs)
 
@@ -18,7 +18,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`computed-goto`](floor/computed-goto/index.md) | 25 | the address of a label, and the indirect jump through it |
 | [`frontend`](floor/frontend/index.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (301 programs)
+## local (309 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -27,7 +27,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`constant-fold`](local/constant-fold/index.md) | 112 | folding an operation on constants into a constant |
 | [`strength`](local/strength/index.md) | 24 | rewriting an operation into a cheaper one with the same value |
 | [`narrowing`](local/narrowing/index.md) | 52 | taking the width back off arithmetic that C promoted |
-| [`simplify`](local/simplify/index.md) | 61 | algebraic identities and the local peephole rules |
+| [`simplify`](local/simplify/index.md) | 69 | algebraic identities and the local peephole rules |
 | [`reassociate`](local/reassociate/index.md) | 20 | reassociating a chain to shorten its dependency height |
 | [`dead-code`](local/dead-code/index.md) | 12 | removing a computation whose result nothing reads |
 | [`dead-store`](local/dead-store/index.md) | 12 | removing a store a later store makes invisible |
