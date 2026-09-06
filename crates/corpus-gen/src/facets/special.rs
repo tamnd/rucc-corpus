@@ -3,6 +3,11 @@
 //! `baseline` is the floor. If these fail, nothing else in the report means anything, because
 //! the compiler is wrong before any optimization has run.
 //!
+//! `branch-probability` is about the odds the compiler puts on an edge before it has run
+//! anything. Nothing in a program tells you those odds directly, so each case here is written
+//! so that one arm is the one the static predictors are supposed to pick and the other is not,
+//! and the axis says which one the program actually takes.
+//!
 //! `barrier` is the opposite of every other facet. Every case here is a place where the
 //! compiler must not act, and the evidence that it did not is that the answer is right and
 //! the access count in the object file did not go down.
@@ -486,6 +491,185 @@ pub(crate) fn control_flow(sink: &mut Sink<'_>) {
             sink.push_tagged(Facet::ControlFlow, axes, Dialect::C17, program, &["gnu"]);
         } else {
             sink.push(Facet::ControlFlow, axes, Dialect::C17, program);
+        }
+    }
+}
+
+/// The branches the static predictors are supposed to have an opinion about.
+///
+/// Section 11.2 of the plan lists the heuristics a compiler uses to guess which way a branch
+/// goes before it has any measurement. Each shape here is one of those heuristics, written so
+/// the guess is unambiguous: a null pointer test, a comparison against zero, an arm that calls
+/// something, an arm that jumps out, a loop back edge, a loop exit.
+///
+/// Two things are being checked and they are worth keeping apart. The answer must be right
+/// whichever way the branch goes, and the `direction` axis exists so that both are run. What
+/// the report measures on top of that is the layout: the case with `direction=predicted` is
+/// the one where a compiler that believed its own heuristic should have laid the hot arm out
+/// to fall through, and the case with `direction=against` is the one where it should not have
+/// made things worse for guessing wrong.
+pub(crate) fn branch_probability(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "not-negative",
+        "not-equal",
+        "not-null",
+        "arm-with-a-call",
+        "arm-that-jumps-out",
+        "loop-back-edge",
+        "loop-early-exit",
+        "never-returns",
+        "builtin-expect",
+    ];
+    for &ty in &[Ty::I32, Ty::I64] {
+        for &shape in SHAPES {
+            for &direction in &["predicted", "against"] {
+                if !sink.wants(Facet::BranchProbability) {
+                    return;
+                }
+                // Nothing to run in the direction that never comes back.
+                if shape == "never-returns" && direction == "against" {
+                    continue;
+                }
+                let name = ty.c_name();
+                let predicted = direction == "predicted";
+                let mut program = Program::new(format!(
+                    "a {name} branch the static predictors call {shape}, taken as {direction}"
+                ));
+                let expected = match shape {
+                    "not-negative" => {
+                        // A test for a negative value is guessed false.
+                        program.input(ty, "x", if predicted { 7 } else { -7 });
+                        program.blank();
+                        program.line(format!("{name} total;"));
+                        program.line("if (x < 0) {");
+                        program.line_at(1, "total = -x;");
+                        program.line("} else {");
+                        program.line_at(1, "total = x;");
+                        program.line("}");
+                        7
+                    }
+                    "not-equal" => {
+                        // A test for equality against a constant is guessed false.
+                        program.input(ty, "x", if predicted { 7 } else { 0 });
+                        program.blank();
+                        program.line(format!("{name} total;"));
+                        program.line("if (x == 0) {");
+                        program.line_at(1, "total = 7;");
+                        program.line("} else {");
+                        program.line_at(1, "total = x;");
+                        program.line("}");
+                        7
+                    }
+                    "not-null" => {
+                        // A pointer is guessed not to be null.
+                        program.input(Ty::I32, "pick", i128::from(predicted));
+                        program.blank();
+                        program.line(format!("{name} slot = 7;"));
+                        program.line(format!("{name} *at = pick ? &slot : 0;"));
+                        program.line(format!("{name} total;"));
+                        program.line("if (at == 0) {");
+                        program.line_at(1, "total = 7;");
+                        program.line("} else {");
+                        program.line_at(1, "total = *at;");
+                        program.line("}");
+                        7
+                    }
+                    "arm-with-a-call" => {
+                        // The arm that calls something is the cold one.
+                        program.top(format!("static {name} slow({name} v) {{"));
+                        program.top("    return v;".to_owned());
+                        program.top("}".to_owned());
+                        program.input(Ty::I32, "flag", i128::from(!predicted));
+                        program.blank();
+                        program.line(format!("{name} total;"));
+                        program.line("if (flag) {");
+                        program.line_at(1, "total = slow(7);");
+                        program.line("} else {");
+                        program.line_at(1, "total = 7;");
+                        program.line("}");
+                        7
+                    }
+                    "arm-that-jumps-out" => {
+                        // The arm that leaves the region is the cold one.
+                        program.input(Ty::I32, "flag", i128::from(!predicted));
+                        program.blank();
+                        program.line(format!("{name} total = 0;"));
+                        program.line("if (flag) {");
+                        program.line_at(1, "total = 7;");
+                        program.line_at(1, "goto done;");
+                        program.line("}");
+                        program.line("total = 7;");
+                        program.line("done:;");
+                        7
+                    }
+                    "loop-back-edge" => {
+                        // The edge that goes round again is taken far more often than the one
+                        // that leaves, which is the one heuristic that is nearly always right.
+                        let rounds: i128 = if predicted { 16 } else { 1 };
+                        program.input(Ty::I32, "rounds", rounds);
+                        program.blank();
+                        program.line(format!("{name} total = 0;"));
+                        program.line("for (int i = 0; i < rounds; i++) {");
+                        program.line_at(1, "total = total + 1;");
+                        program.line("}");
+                        rounds
+                    }
+                    "loop-early-exit" => {
+                        // An exit out of the middle of a loop is guessed not to be taken.
+                        program.input(Ty::I32, "stop", if predicted { 99 } else { 3 });
+                        program.blank();
+                        program.line(format!("{name} total = 0;"));
+                        program.line("for (int i = 0; i < 16; i++) {");
+                        program.line_at(1, "if (i == stop) {");
+                        program.line_at(2, "break;");
+                        program.line_at(1, "}");
+                        program.line_at(1, "total = total + 1;");
+                        program.line("}");
+                        if predicted { 16 } else { 3 }
+                    }
+                    "never-returns" => {
+                        // An arm that cannot come back is never taken, and this one is not.
+                        program.top("_Noreturn static void nowhere(void) {".to_owned());
+                        program.top("    for (;;) {".to_owned());
+                        program.top("    }".to_owned());
+                        program.top("}".to_owned());
+                        program.input(Ty::I32, "flag", 0);
+                        program.blank();
+                        program.line(format!("{name} total = 7;"));
+                        program.line("if (flag) {");
+                        program.line_at(1, "nowhere();");
+                        program.line("}");
+                        7
+                    }
+                    _ => {
+                        // The one shape where the program says what it expects out loud.
+                        program.input(Ty::I32, "flag", i128::from(!predicted));
+                        program.blank();
+                        program.line(format!("{name} total;"));
+                        program.line("if (__builtin_expect(flag != 0, 0)) {");
+                        program.line_at(1, "total = 7;");
+                        program.line("} else {");
+                        program.line_at(1, "total = 7;");
+                        program.line("}");
+                        7
+                    }
+                };
+                program.blank();
+                program.check(ty.promoted(), "total", expected);
+                let axes =
+                    Axes::of([("type", ty.name()), ("shape", shape), ("direction", direction)]);
+                if shape == "builtin-expect" {
+                    sink.push_tagged(
+                        Facet::BranchProbability,
+                        axes,
+                        Dialect::C17,
+                        program,
+                        &["gnu"],
+                    );
+                } else {
+                    sink.push(Facet::BranchProbability, axes, Dialect::C17, program);
+                }
+            }
         }
     }
 }

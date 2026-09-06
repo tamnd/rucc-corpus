@@ -1,12 +1,12 @@
 # The corpus
 
-1122 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1232 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `31549141a827131586c82c53b768cacbe3bac7d46b539855f493ae66b4fc62a3`.
+Corpus digest `6264779bf77d1d57965d62acc272030f9c290e9edf91638d5dbff886bdc5adb6`.
 
-## floor (50 programs)
+## floor (84 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
@@ -14,6 +14,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 |---|---|---|
 | [`baseline`](floor/baseline/index.md) | 10 | programs with no optimization target, which every level must get right |
 | [`control-flow`](floor/control-flow/index.md) | 10 | the graph shapes the analyses under every pass have to get right |
+| [`branch-probability`](floor/branch-probability/index.md) | 34 | the odds put on an edge before the program has ever run |
 | [`frontend`](floor/frontend/index.md) | 30 | language shape rather than optimization, including C23 |
 
 ## local (224 programs)
@@ -31,7 +32,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`dead-store`](local/dead-store/index.md) | 12 | removing a store a later store makes invisible |
 | [`unreachable-code`](local/unreachable-code/index.md) | 8 | removing a branch with a known condition and its dead arm |
 
-## global (165 programs)
+## global (193 programs)
 
 Transformations across the blocks of one function, which need dataflow rather than a peephole.
 
@@ -44,6 +45,7 @@ Transformations across the blocks of one function, which need dataflow rather th
 | [`constant-propagation`](global/constant-propagation/index.md) | 16 | propagating a value constant on every reaching path |
 | [`value-range`](global/value-range/index.md) | 13 | narrowing an integer to the range it can hold |
 | [`alias-analysis`](global/alias-analysis/index.md) | 36 | proving two references cannot name the same object |
+| [`memory-ssa`](global/memory-ssa/index.md) | 28 | walking back from a load to the store that answers it |
 | [`scalar-replacement`](global/scalar-replacement/index.md) | 20 | turning a non-escaping local back into a value |
 
 ## loops (402 programs)
@@ -74,13 +76,14 @@ Transformations that need to look at more than one function at a time.
 | [`reachability`](interprocedural/reachability/index.md) | 9 | removing what nothing references |
 | [`devirtualize`](interprocedural/devirtualize/index.md) | 4 | turning an indirect call into a direct one |
 
-## backend (157 programs)
+## backend (205 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
 | facet | programs | what it is about |
 |---|---|---|
 | [`selection`](backend/selection/index.md) | 40 | choosing the machine instruction for an operation |
+| [`register-pressure`](backend/register-pressure/index.md) | 48 | how many values are live at once, and what that costs |
 | [`register-alloc`](backend/register-alloc/index.md) | 40 | assigning registers and deciding what to spill |
 | [`scheduling`](backend/scheduling/index.md) | 12 | ordering instructions within a block |
 | [`block-layout`](backend/block-layout/index.md) | 4 | laying out blocks so the common path falls through |

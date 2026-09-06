@@ -23,6 +23,13 @@ pub enum Facet {
     /// transformation. It is about the shapes that break the analysis a transformation asked.
     ControlFlow,
 
+    /// The probability the compiler puts on an edge before it has ever run the program.
+    ///
+    /// The static predictors and the block frequencies worked out from them. A wrong
+    /// probability is not a wrong answer on its own, which is exactly why it needs its own
+    /// facet: the damage shows up later, as a transformation that fired on the cold path.
+    BranchProbability,
+
     /// Folding an operation on constants into a constant.
     ConstantFold,
     /// Rewriting an operation into a cheaper one that computes the same value.
@@ -54,6 +61,8 @@ pub enum Facet {
     ValueRange,
     /// Proving that two memory references cannot be the same object.
     AliasAnalysis,
+    /// Walking back from a load to the store that last wrote what it reads.
+    MemorySsa,
     /// Turning an address-taken local that never escapes back into a value.
     ScalarReplacement,
 
@@ -89,6 +98,8 @@ pub enum Facet {
 
     /// Choosing the machine instruction for an operation.
     Selection,
+    /// How many values are live at once, which is how many registers the code needs.
+    RegisterPressure,
     /// Assigning values to registers and deciding what to spill.
     RegisterAlloc,
     /// Ordering instructions within a block.
@@ -125,6 +136,7 @@ impl Facet {
     pub const ALL: &'static [Self] = &[
         Self::Baseline,
         Self::ControlFlow,
+        Self::BranchProbability,
         Self::ConstantFold,
         Self::Strength,
         Self::Narrowing,
@@ -140,6 +152,7 @@ impl Facet {
         Self::ConstantPropagation,
         Self::ValueRange,
         Self::AliasAnalysis,
+        Self::MemorySsa,
         Self::ScalarReplacement,
         Self::LoopInvariant,
         Self::InductionVariable,
@@ -156,6 +169,7 @@ impl Facet {
         Self::Reachability,
         Self::Devirtualize,
         Self::Selection,
+        Self::RegisterPressure,
         Self::RegisterAlloc,
         Self::Scheduling,
         Self::BlockLayout,
@@ -173,6 +187,7 @@ impl Facet {
         match self {
             Self::Baseline => "baseline",
             Self::ControlFlow => "control-flow",
+            Self::BranchProbability => "branch-probability",
             Self::ConstantFold => "constant-fold",
             Self::Strength => "strength",
             Self::Narrowing => "narrowing",
@@ -188,6 +203,7 @@ impl Facet {
             Self::ConstantPropagation => "constant-propagation",
             Self::ValueRange => "value-range",
             Self::AliasAnalysis => "alias-analysis",
+            Self::MemorySsa => "memory-ssa",
             Self::ScalarReplacement => "scalar-replacement",
             Self::LoopInvariant => "loop-invariant",
             Self::InductionVariable => "induction-variable",
@@ -204,6 +220,7 @@ impl Facet {
             Self::Reachability => "reachability",
             Self::Devirtualize => "devirtualize",
             Self::Selection => "selection",
+            Self::RegisterPressure => "register-pressure",
             Self::RegisterAlloc => "register-alloc",
             Self::Scheduling => "scheduling",
             Self::BlockLayout => "block-layout",
@@ -224,6 +241,7 @@ impl Facet {
                 "programs with no optimization target, which every level must get right"
             }
             Self::ControlFlow => "the graph shapes the analyses under every pass have to get right",
+            Self::BranchProbability => "the odds put on an edge before the program has ever run",
             Self::ConstantFold => "folding an operation on constants into a constant",
             Self::Strength => "rewriting an operation into a cheaper one with the same value",
             Self::Narrowing => "taking the width back off arithmetic that C promoted",
@@ -239,6 +257,7 @@ impl Facet {
             Self::ConstantPropagation => "propagating a value constant on every reaching path",
             Self::ValueRange => "narrowing an integer to the range it can hold",
             Self::AliasAnalysis => "proving two references cannot name the same object",
+            Self::MemorySsa => "walking back from a load to the store that answers it",
             Self::ScalarReplacement => "turning a non-escaping local back into a value",
             Self::LoopInvariant => "hoisting an invariant computation out of a loop",
             Self::InductionVariable => "rewriting induction variables into a cheaper set",
@@ -255,6 +274,7 @@ impl Facet {
             Self::Reachability => "removing what nothing references",
             Self::Devirtualize => "turning an indirect call into a direct one",
             Self::Selection => "choosing the machine instruction for an operation",
+            Self::RegisterPressure => "how many values are live at once, and what that costs",
             Self::RegisterAlloc => "assigning registers and deciding what to spill",
             Self::Scheduling => "ordering instructions within a block",
             Self::BlockLayout => "laying out blocks so the common path falls through",
@@ -274,7 +294,9 @@ impl Facet {
     #[must_use]
     pub const fn phase(self) -> Phase {
         match self {
-            Self::Baseline | Self::ControlFlow | Self::Frontend => Phase::Floor,
+            Self::Baseline | Self::ControlFlow | Self::BranchProbability | Self::Frontend => {
+                Phase::Floor
+            }
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
@@ -290,6 +312,7 @@ impl Facet {
             | Self::ConstantPropagation
             | Self::ValueRange
             | Self::AliasAnalysis
+            | Self::MemorySsa
             | Self::ScalarReplacement => Phase::Global,
             Self::LoopInvariant
             | Self::InductionVariable
@@ -306,6 +329,7 @@ impl Facet {
             | Self::Reachability
             | Self::Devirtualize => Phase::Interprocedural,
             Self::Selection
+            | Self::RegisterPressure
             | Self::RegisterAlloc
             | Self::Scheduling
             | Self::BlockLayout
