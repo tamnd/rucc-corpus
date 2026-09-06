@@ -1,7 +1,7 @@
 {
   "schema": "1",
-  "corpus_sha256": "3baa08d2fac947939c45935c9e50536cf1083b54045906ceb289f2dcddc776ef",
-  "count": 1453,
+  "corpus_sha256": "dbfc0cafbb185c10824de5adefb2a61b10e2acd67716f0e095c91abbc4c2bdf2",
+  "count": 1461,
   "cases": [
     {
       "id": "alias-analysis.i32.char-pointer.c17.2c550cb8",
@@ -19192,6 +19192,20 @@
       "source_sha256": "90bd26406b5469913426efc5b4a98f4355718966addc7b23c180c5f2bce20082"
     },
     {
+      "id": "simplify.i32.greatest.c17.de3741f3",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "edge": "greatest"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n1\n0\n",
+      "tags": [],
+      "source_sha256": "de3741f374a373a32ccc49b75e8dbd17c0043ae55cf577970f6fce72e2bcc7a8"
+    },
+    {
       "id": "simplify.i32.involution.c17.d3542390",
       "facet": "simplify",
       "phase": "local",
@@ -19204,6 +19218,20 @@
       "expect": "-2147483648\n1\n0\n0\n0\n1\n1\n-2\n-2\n1\n0\n0\n0\n1\n1\n1\n1\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n255\n255\n1\n0\n0\n0\n1\n1\n2147483647\n2147483647\n1\n0\n0\n0\n1\n1\n",
       "tags": [],
       "source_sha256": "d35423908628274e30db6ece78205d901fca4abaab11f9b85d8a4f301cfa3b1f"
+    },
+    {
+      "id": "simplify.i32.least.c17.587efa4d",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "edge": "least"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n1\n0\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n",
+      "tags": [],
+      "source_sha256": "587efa4d0645d94ee242b149131738de8d68939c0916423b167cdd193f885c56"
     },
     {
       "id": "simplify.i32.multiplicative.c17.f33a52c9",
@@ -19290,6 +19318,20 @@
       "source_sha256": "d532acf9b075b2ce477567bf83b7ca74a9e369d02d3d118b8da4ede38102cd12"
     },
     {
+      "id": "simplify.i64.greatest.c17.dcd52e23",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "edge": "greatest"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n1\n0\n",
+      "tags": [],
+      "source_sha256": "dcd52e23951d28b6755db30080a2dacdb38fa7b77e313f6f36d6b3b62078cdd5"
+    },
+    {
       "id": "simplify.i64.involution.c17.00667165",
       "facet": "simplify",
       "phase": "local",
@@ -19302,6 +19344,20 @@
       "expect": "-9223372036854775808\n1\n0\n0\n0\n1\n1\n-2\n-2\n1\n0\n0\n0\n1\n1\n1\n1\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n255\n255\n1\n0\n0\n0\n1\n1\n9223372036854775807\n9223372036854775807\n1\n0\n0\n0\n1\n1\n",
       "tags": [],
       "source_sha256": "0066716523a0e6245d005b93c390fca0c282c36befccc0b7fc8e07973d6d0400"
+    },
+    {
+      "id": "simplify.i64.least.c17.87b63984",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "edge": "least"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n1\n0\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n",
+      "tags": [],
+      "source_sha256": "87b63984ffbfdce26b94fc57ed9d66fa55b09fc94f750c92126e63aeeedc1a92"
     },
     {
       "id": "simplify.i64.multiplicative.c17.ff8281fa",
@@ -19612,6 +19668,20 @@
       "source_sha256": "248d8b578af636b53ee5b6eb4cb9e44944eec6a33c643cce8977295653ad7cc4"
     },
     {
+      "id": "simplify.u32.greatest.c17.9c6c8630",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "edge": "greatest"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n1\n0\n",
+      "tags": [],
+      "source_sha256": "9c6c86307cc7da3ec96638d39ab6043322475d00fac38e992da2355b79661f91"
+    },
+    {
       "id": "simplify.u32.involution.c17.9383248e",
       "facet": "simplify",
       "phase": "local",
@@ -19624,6 +19694,20 @@
       "expect": "0\n0\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n16\n16\n1\n0\n0\n0\n1\n1\n65536\n65536\n1\n0\n0\n0\n1\n1\n4294967295\n4294967295\n1\n0\n0\n0\n1\n1\n",
       "tags": [],
       "source_sha256": "9383248ed82c73d8c26952a5c2af1d660a18ade5ee4402a36ee5446a485f000a"
+    },
+    {
+      "id": "simplify.u32.least.c17.60cb52d1",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "edge": "least"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n1\n0\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n",
+      "tags": [],
+      "source_sha256": "60cb52d1af7f28d5b80f921683cca7849acd0cfffa21c76e1a49e1e002b80491"
     },
     {
       "id": "simplify.u32.multiplicative.c17.fae95a40",
@@ -19710,6 +19794,20 @@
       "source_sha256": "66f586ce9aa537621dcd02e03ed1a192e3aeb6bc2193c3d70484d6f88bee2f27"
     },
     {
+      "id": "simplify.u64.greatest.c17.54b086f5",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "edge": "greatest"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n1\n0\n",
+      "tags": [],
+      "source_sha256": "54b086f57515ee1e0065281aad127efac5a234d5ec0ed8fdc15238f7253f94de"
+    },
+    {
       "id": "simplify.u64.involution.c17.7aac3d7e",
       "facet": "simplify",
       "phase": "local",
@@ -19722,6 +19820,20 @@
       "expect": "0\n0\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n16\n16\n1\n0\n0\n0\n1\n1\n4294967296\n4294967296\n1\n0\n0\n0\n1\n1\n18446744073709551615\n18446744073709551615\n1\n0\n0\n0\n1\n1\n",
       "tags": [],
       "source_sha256": "7aac3d7ed376a5847d1dc21ec056290b4203316f9c1530d8a3023fa1f48d8608"
+    },
+    {
+      "id": "simplify.u64.least.c17.e236c8b1",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "edge": "least"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n1\n0\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n0\n1\n",
+      "tags": [],
+      "source_sha256": "e236c8b1cc59ccfba82aa0a83e89750bfb3cc268e9d4f6b4d9b4407c189066e2"
     },
     {
       "id": "simplify.u64.multiplicative.c17.7c9152e3",

@@ -482,6 +482,67 @@ fn simplify(sink: &mut Sink<'_>) {
         }
     }
     one_bit_identities(sink);
+    compare_edge(sink);
+}
+
+/// Comparing a value against the first or the last value its own type can hold.
+///
+/// Four of the ten predicates answer such a comparison without looking at what is on the other
+/// side. Nothing unsigned is below zero, everything unsigned is at least zero, at most zero is
+/// equal to zero, and above zero is different from zero. The same four sentences hold at the
+/// other end of the unsigned range and at both ends of the signed one, so it is four predicates
+/// against two edges of each type.
+///
+/// Only the types at least as wide as `int`. C promotes both sides of a comparison, so a
+/// `short` compared against a `short` is compared at `int` width and the edge of the narrow type
+/// is nowhere near the edge of the type the comparison happens at. Writing the narrow cases would
+/// not exercise a narrow rule, it would exercise the same `int` rule again with a constant that
+/// is not an edge, which is a different thing and one the ordinary identities already cover.
+///
+/// The value is read out of a `volatile` global, because the point of the case is a comparison
+/// the compiler cannot answer by folding both sides. A comparison against an operand it already
+/// knows is a constant is a constant, and no rewrite rule is needed to say so.
+fn compare_edge(sink: &mut Sink<'_>) {
+    // The two edges, as the name that goes on the axis and the way to get the value out of a
+    // type. Written as a flag rather than as a pair of numbers because each type has its own.
+    const EDGES: &[(&str, bool)] = &[("least", true), ("greatest", false)];
+    for &ty in Ty::WIDE {
+        for &(edge, least) in EDGES {
+            if !sink.wants(Facet::Simplify) {
+                return;
+            }
+            let bound = if least { ty.min() } else { ty.max() };
+            let written = ty.literal(bound);
+            let mut program =
+                Program::new(format!("comparisons against the {edge} {}", ty.c_name()));
+            for (at, &value) in spread(&interesting(ty), 6).iter().enumerate() {
+                let x = format!("x{at}");
+                program.input(ty, &x, value);
+                // The two that the type answers first, then the two that come down to equality.
+                // Which pair of orderings is which swaps over at the far edge, since below the
+                // bottom and above the top are the impossible ones.
+                let ordered = if least { ["<", ">=", "<=", ">"] } else { [">", "<=", ">=", "<"] };
+                for op in ordered {
+                    let answer = match op {
+                        "<" => value < bound,
+                        ">=" => value >= bound,
+                        "<=" => value <= bound,
+                        _ => value > bound,
+                    };
+                    // A comparison in C has type `int` whatever it compared, so the answer is
+                    // printed as one and is one or zero rather than the value that was tested.
+                    program.check(Ty::I32, &format!("{x} {op} {written}"), i128::from(answer));
+                }
+                program.blank();
+            }
+            sink.push(
+                Facet::Simplify,
+                Axes::of([("type", ty.name()), ("edge", edge)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
 }
 
 /// The families the identities fall into, one program each.

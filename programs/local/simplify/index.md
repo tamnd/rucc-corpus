@@ -2,7 +2,7 @@
 
 algebraic identities and the local peephole rules. Part of the local phase of the M4 plan.
 
-61 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+69 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -19,14 +19,18 @@ algebraic identities and the local peephole rules. Part of the local phase of th
 | [`simplify.i32.bitwise-constant.c17.b29bfed8`](simplify.i32.bitwise-constant.c17.b29bfed8.c) | type=i32, group=bitwise-constant | c17 | `0 0 -2147483648 ...` and 57 more lines |
 | [`simplify.i32.bitwise-self.c17.1fc40dfd`](simplify.i32.bitwise-self.c17.1fc40dfd.c) | type=i32, group=bitwise-self | c17 | `-2147483648 -2147483648 0 ...` and 15 more lines |
 | [`simplify.i32.canonical.c17.90bd2640`](simplify.i32.canonical.c17.90bd2640.c) | type=i32, group=canonical | c17 | `-2147483645 -2147483645 0 ...` and 51 more lines |
+| [`simplify.i32.greatest.c17.de3741f3`](simplify.i32.greatest.c17.de3741f3.c) | type=i32, edge=greatest | c17 | `0 1 0 ...` and 21 more lines |
 | [`simplify.i32.involution.c17.d3542390`](simplify.i32.involution.c17.d3542390.c) | type=i32, group=involution | c17 | `-2147483648 1 0 ...` and 44 more lines |
+| [`simplify.i32.least.c17.587efa4d`](simplify.i32.least.c17.587efa4d.c) | type=i32, edge=least | c17 | `0 1 1 ...` and 21 more lines |
 | [`simplify.i32.multiplicative.c17.f33a52c9`](simplify.i32.multiplicative.c17.f33a52c9.c) | type=i32, group=multiplicative | c17 | `-2147483648 -2147483648 0 ...` and 33 more lines |
 | [`simplify.i32.shift.c17.87d2e87f`](simplify.i32.shift.c17.87d2e87f.c) | type=i32, group=shift | c17 | `1 1 7 ...` and 5 more lines |
 | [`simplify.i64.additive.c17.d41e2f60`](simplify.i64.additive.c17.d41e2f60.c) | type=i64, group=additive | c17 | `-9223372036854775808 -9223372036854775808 -9223372036854775808 ...` and 21 more lines |
 | [`simplify.i64.bitwise-constant.c17.7ab0e0de`](simplify.i64.bitwise-constant.c17.7ab0e0de.c) | type=i64, group=bitwise-constant | c17 | `0 0 -9223372036854775808 ...` and 57 more lines |
 | [`simplify.i64.bitwise-self.c17.4fae386b`](simplify.i64.bitwise-self.c17.4fae386b.c) | type=i64, group=bitwise-self | c17 | `-9223372036854775808 -9223372036854775808 0 ...` and 15 more lines |
 | [`simplify.i64.canonical.c17.d532acf9`](simplify.i64.canonical.c17.d532acf9.c) | type=i64, group=canonical | c17 | `-9223372036854775805 -9223372036854775805 0 ...` and 51 more lines |
+| [`simplify.i64.greatest.c17.dcd52e23`](simplify.i64.greatest.c17.dcd52e23.c) | type=i64, edge=greatest | c17 | `0 1 0 ...` and 21 more lines |
 | [`simplify.i64.involution.c17.00667165`](simplify.i64.involution.c17.00667165.c) | type=i64, group=involution | c17 | `-9223372036854775808 1 0 ...` and 44 more lines |
+| [`simplify.i64.least.c17.87b63984`](simplify.i64.least.c17.87b63984.c) | type=i64, edge=least | c17 | `0 1 1 ...` and 21 more lines |
 | [`simplify.i64.multiplicative.c17.ff8281fa`](simplify.i64.multiplicative.c17.ff8281fa.c) | type=i64, group=multiplicative | c17 | `-9223372036854775808 -9223372036854775808 0 ...` and 33 more lines |
 | [`simplify.i64.shift.c17.a4969485`](simplify.i64.shift.c17.a4969485.c) | type=i64, group=shift | c17 | `1 1 7 ...` and 5 more lines |
 | [`simplify.i8.additive.c17.024e60f7`](simplify.i8.additive.c17.024e60f7.c) | type=i8, group=additive | c17 | `-128 -128 -128 ...` and 21 more lines |
@@ -49,14 +53,18 @@ algebraic identities and the local peephole rules. Part of the local phase of th
 | [`simplify.u32.bitwise-constant.c17.2db73241`](simplify.u32.bitwise-constant.c17.2db73241.c) | type=u32, group=bitwise-constant | c17 | `0 0 0 ...` and 57 more lines |
 | [`simplify.u32.bitwise-self.c17.525b129d`](simplify.u32.bitwise-self.c17.525b129d.c) | type=u32, group=bitwise-self | c17 | `0 0 0 ...` and 15 more lines |
 | [`simplify.u32.canonical.c17.248d8b57`](simplify.u32.canonical.c17.248d8b57.c) | type=u32, group=canonical | c17 | `3 3 0 ...` and 57 more lines |
+| [`simplify.u32.greatest.c17.9c6c8630`](simplify.u32.greatest.c17.9c6c8630.c) | type=u32, edge=greatest | c17 | `0 1 0 ...` and 21 more lines |
 | [`simplify.u32.involution.c17.9383248e`](simplify.u32.involution.c17.9383248e.c) | type=u32, group=involution | c17 | `0 0 1 ...` and 45 more lines |
+| [`simplify.u32.least.c17.60cb52d1`](simplify.u32.least.c17.60cb52d1.c) | type=u32, edge=least | c17 | `0 1 1 ...` and 21 more lines |
 | [`simplify.u32.multiplicative.c17.fae95a40`](simplify.u32.multiplicative.c17.fae95a40.c) | type=u32, group=multiplicative | c17 | `0 0 0 ...` and 33 more lines |
 | [`simplify.u32.shift.c17.8926185d`](simplify.u32.shift.c17.8926185d.c) | type=u32, group=shift | c17 | `0 0 2 ...` and 9 more lines |
 | [`simplify.u64.additive.c17.a05a7d6f`](simplify.u64.additive.c17.a05a7d6f.c) | type=u64, group=additive | c17 | `0 0 0 ...` and 21 more lines |
 | [`simplify.u64.bitwise-constant.c17.30638273`](simplify.u64.bitwise-constant.c17.30638273.c) | type=u64, group=bitwise-constant | c17 | `0 0 0 ...` and 57 more lines |
 | [`simplify.u64.bitwise-self.c17.673be6b3`](simplify.u64.bitwise-self.c17.673be6b3.c) | type=u64, group=bitwise-self | c17 | `0 0 0 ...` and 15 more lines |
 | [`simplify.u64.canonical.c17.66f586ce`](simplify.u64.canonical.c17.66f586ce.c) | type=u64, group=canonical | c17 | `3 3 0 ...` and 57 more lines |
+| [`simplify.u64.greatest.c17.54b086f5`](simplify.u64.greatest.c17.54b086f5.c) | type=u64, edge=greatest | c17 | `0 1 0 ...` and 21 more lines |
 | [`simplify.u64.involution.c17.7aac3d7e`](simplify.u64.involution.c17.7aac3d7e.c) | type=u64, group=involution | c17 | `0 0 1 ...` and 45 more lines |
+| [`simplify.u64.least.c17.e236c8b1`](simplify.u64.least.c17.e236c8b1.c) | type=u64, edge=least | c17 | `0 1 1 ...` and 21 more lines |
 | [`simplify.u64.multiplicative.c17.7c9152e3`](simplify.u64.multiplicative.c17.7c9152e3.c) | type=u64, group=multiplicative | c17 | `0 0 0 ...` and 33 more lines |
 | [`simplify.u64.shift.c17.afa752f1`](simplify.u64.shift.c17.afa752f1.c) | type=u64, group=shift | c17 | `0 0 2 ...` and 9 more lines |
 | [`simplify.u8.additive.c17.88c93d56`](simplify.u8.additive.c17.88c93d56.c) | type=u8, group=additive | c17 | `0 0 0 ...` and 21 more lines |
