@@ -16,6 +16,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     constant_fold(sink);
     strength(sink);
     narrowing(sink);
+    cast_chain(sink);
     simplify(sink);
     reassociate(sink);
     dead_code(sink);
@@ -294,6 +295,121 @@ fn narrowing(sink: &mut Sink<'_>) {
                 program,
             );
         }
+    }
+}
+
+/// Two casts in a row, which is the whole of the conversion algebra.
+///
+/// A cast chain is the one shape where a rewrite is about two instructions rather than one, and
+/// the pair is always either a single conversion or no conversion at all. C writes these without
+/// being asked, because the integer promotions widen an operand and the store behind it narrows
+/// the answer again, so a compiler meets far more of them than a programmer ever writes. Writing
+/// them on purpose is what gives a rule about a pair a case that reaches it, and the facet exists
+/// because measuring the rewrites against promoted arithmetic alone only ever reached the two
+/// chains that promotion happens to produce.
+///
+/// The six shapes are named for what the pair does. `round-trip` widens and comes straight back,
+/// so both conversions go. `stop-early` comes back to a width still above the source, which is
+/// the same widening stopping sooner. `below-source` comes back past the source, where the
+/// widening never mattered. `narrow-twice` and `widen-twice` are two of a kind in a row. `mixed`
+/// is a widening of a widening where the two disagree about sign, which is the one chain whose
+/// answer depends on which of them happened first.
+///
+/// The middle and final types carry the source's signedness, except in `mixed` where an unsigned
+/// source goes through signed types. That is not an exotic case. Promotion to `int` is signed
+/// whatever the operand was, so it is the chain real C reaches most often.
+///
+/// Narrowing a value that does not fit is implementation defined rather than undefined, and both
+/// compilers under test wrap, which is what [`Ty::convert`] models and what these cases expect.
+fn cast_chain(sink: &mut Sink<'_>) {
+    // Every chain worth writing, as the shape it belongs to and the three widths in order. The
+    // widths are here rather than types because each one is emitted at both signednesses, and a
+    // table of types would say the same thing twice.
+    const CHAINS: &[(&str, u32, u32, u32)] = &[
+        ("round-trip", 8, 16, 8),
+        ("round-trip", 8, 32, 8),
+        ("round-trip", 8, 64, 8),
+        ("round-trip", 16, 32, 16),
+        ("round-trip", 16, 64, 16),
+        ("round-trip", 32, 64, 32),
+        ("stop-early", 8, 32, 16),
+        ("stop-early", 8, 64, 16),
+        ("stop-early", 8, 64, 32),
+        ("stop-early", 16, 64, 32),
+        ("below-source", 16, 32, 8),
+        ("below-source", 16, 64, 8),
+        ("below-source", 32, 64, 8),
+        ("below-source", 32, 64, 16),
+        ("narrow-twice", 64, 32, 16),
+        ("narrow-twice", 64, 32, 8),
+        ("narrow-twice", 64, 16, 8),
+        ("narrow-twice", 32, 16, 8),
+        ("widen-twice", 8, 16, 32),
+        ("widen-twice", 8, 16, 64),
+        ("widen-twice", 8, 32, 64),
+        ("widen-twice", 16, 32, 64),
+    ];
+    const SHAPES: &[&str] =
+        &["round-trip", "stop-early", "below-source", "narrow-twice", "widen-twice", "mixed"];
+    for &shape in SHAPES {
+        // `mixed` is the widening chains again with the signedness pulled apart, so it reads the
+        // same rows and needs an unsigned source to have anything to disagree about.
+        let mixed = shape == "mixed";
+        let wanted = if mixed { "widen-twice" } else { shape };
+        for &ty in Ty::ALL {
+            if !sink.wants(Facet::Narrowing) {
+                return;
+            }
+            if mixed && ty.signed() {
+                continue;
+            }
+            let rows: Vec<&(&str, u32, u32, u32)> = CHAINS
+                .iter()
+                .filter(|&&(kind, from, _, _)| kind == wanted && from == ty.bits())
+                .collect();
+            if rows.is_empty() {
+                continue;
+            }
+            let signed = if mixed { true } else { ty.signed() };
+            let mut program = Program::new(format!("{shape} cast chains from {}", ty.c_name()));
+            for (at, &value) in spread(&interesting(ty), 5).iter().enumerate() {
+                let a = format!("a{at}");
+                program.input(ty, &a, value);
+                for &&(_, _, through, to) in &rows {
+                    let mid = at_width(through, signed);
+                    let dst = at_width(to, signed);
+                    let slot = format!("c{at}_{through}_{to}");
+                    program.line(format!(
+                        "{} {slot} = ({})({}){a};",
+                        dst.c_name(),
+                        dst.c_name(),
+                        mid.c_name()
+                    ));
+                    program.check(dst.promoted(), &slot, dst.convert(mid.convert(value)));
+                }
+                program.blank();
+            }
+            sink.push(
+                Facet::Narrowing,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The integer type of this width and signedness.
+fn at_width(bits: u32, signed: bool) -> Ty {
+    match (bits, signed) {
+        (8, true) => Ty::I8,
+        (8, false) => Ty::U8,
+        (16, true) => Ty::I16,
+        (16, false) => Ty::U16,
+        (32, true) => Ty::I32,
+        (32, false) => Ty::U32,
+        (64, true) => Ty::I64,
+        _ => Ty::U64,
     }
 }
 
