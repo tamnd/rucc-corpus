@@ -2,10 +2,13 @@
 
 rewriting induction variables into a cheaper set. Part of the loops phase of the M4 plan.
 
-32 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+42 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
+| [`induction-variable.counts-down.c17.099af0c6`](induction-variable.counts-down.c17.099af0c6.c) | shape=counts-down | c17 | `4 22` |
+| [`induction-variable.derived-counter.c17.823bad98`](induction-variable.derived-counter.c17.823bad98.c) | shape=derived-counter | c17 | `9 25 117` |
+| [`induction-variable.exit-on-not-equal.c17.e4e901d6`](induction-variable.exit-on-not-equal.c17.e4e901d6.c) | shape=exit-on-not-equal | c17 | `5 20` |
 | [`induction-variable.i32.1.c17.e53c9d8e`](induction-variable.i32.1.c17.e53c9d8e.c) | type=i32, trips=1 | c17 | `0 0 1` |
 | [`induction-variable.i32.100.c17.cc8b9216`](induction-variable.i32.100.c17.cc8b9216.c) | type=i32, trips=100 | c17 | `19800 4950 100` |
 | [`induction-variable.i32.16.c17.695799a0`](induction-variable.i32.16.c17.695799a0.c) | type=i32, trips=16 | c17 | `480 120 16` |
@@ -22,6 +25,10 @@ rewriting induction variables into a cheaper set. Part of the loops phase of the
 | [`induction-variable.i64.4.c17.72bd990b`](induction-variable.i64.4.c17.72bd990b.c) | type=i64, trips=4 | c17 | `24 6 4` |
 | [`induction-variable.i64.7.c17.3e9f7e85`](induction-variable.i64.7.c17.3e9f7e85.c) | type=i64, trips=7 | c17 | `84 21 7` |
 | [`induction-variable.i64.8.c17.2dac0580`](induction-variable.i64.8.c17.2dac0580.c) | type=i64, trips=8 | c17 | `112 28 8` |
+| [`induction-variable.inner-depends-on-outer.c17.7335dd51`](induction-variable.inner-depends-on-outer.c17.7335dd51.c) | shape=inner-depends-on-outer | c17 | `28 56` |
+| [`induction-variable.starts-past-the-limit.c17.89e7dab1`](induction-variable.starts-past-the-limit.c17.89e7dab1.c) | shape=starts-past-the-limit | c17 | `0 0` |
+| [`induction-variable.step-does-not-divide.c17.ac778db9`](induction-variable.step-does-not-divide.c17.ac778db9.c) | shape=step-does-not-divide | c17 | `4 9` |
+| [`induction-variable.two-exits.c17.aee22939`](induction-variable.two-exits.c17.aee22939.c) | shape=two-exits | c17 | `5 1` |
 | [`induction-variable.u32.1.c17.97aa82f0`](induction-variable.u32.1.c17.97aa82f0.c) | type=u32, trips=1 | c17 | `0 0 1` |
 | [`induction-variable.u32.100.c17.833e1a24`](induction-variable.u32.100.c17.833e1a24.c) | type=u32, trips=100 | c17 | `19800 4950 100` |
 | [`induction-variable.u32.16.c17.157bc3d7`](induction-variable.u32.16.c17.157bc3d7.c) | type=u32, trips=16 | c17 | `480 120 16` |
@@ -38,4 +45,7 @@ rewriting induction variables into a cheaper set. Part of the loops phase of the
 | [`induction-variable.u64.4.c17.6a5b4eb6`](induction-variable.u64.4.c17.6a5b4eb6.c) | type=u64, trips=4 | c17 | `24 6 4` |
 | [`induction-variable.u64.7.c17.770c9de3`](induction-variable.u64.7.c17.770c9de3.c) | type=u64, trips=7 | c17 | `84 21 7` |
 | [`induction-variable.u64.8.c17.12eab8b5`](induction-variable.u64.8.c17.12eab8b5.c) | type=u64, trips=8 | c17 | `112 28 8` |
+| [`induction-variable.unknown-limit.c17.2e79552b`](induction-variable.unknown-limit.c17.2e79552b.c) | shape=unknown-limit | c17 | `7 21` |
+| [`induction-variable.unsigned-wraps-round.c17.46a45a75`](induction-variable.unsigned-wraps-round.c17.46a45a75.c) | shape=unsigned-wraps-round | c17 | `12 12` |
+| [`induction-variable.walks-a-pointer.c17.cb78cd71`](induction-variable.walks-a-pointer.c17.cb78cd71.c) | shape=walks-a-pointer | c17 | `4 36` |
 

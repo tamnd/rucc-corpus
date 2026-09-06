@@ -4,7 +4,7 @@ A C corpus for proving that an optimization in [rucc](https://github.com/tamnd/r
 
 Every program here was written for exactly one named transformation. Every program prints an answer that this repository worked out in Rust before any C compiler was involved. Every program prints nothing that depends on the machine it runs on, so one expected answer is right everywhere.
 
-1018 programs across 40 facets, grouped by the phases of the M4 plan.
+1119 programs across 42 facets, grouped by the phases of the M4 plan.
 
 ## Why the answers are computed rather than compared
 
@@ -24,8 +24,8 @@ Every facet here walks named axes. `loop-unroll` walks four integer types by eig
 
 ```
 programs/
-  floor/             baseline and frontend, no optimization target, must be right at every level
-  local/             constant folding, strength reduction, dead code, the peephole rules
+  floor/             baseline, control flow shapes and frontend, which have to be right before anything else means much
+  local/             constant folding, strength reduction, width narrowing, dead code, the peephole rules
   global/            common subexpressions, alias analysis, propagation, scalar replacement
   loops/             invariant motion, induction variables, unrolling, unswitching, idioms
   interprocedural/   inlining, tail calls, purity, specialization, reachability
@@ -81,7 +81,7 @@ The reference is GCC 16, which is the current release. Homebrew installs it as `
 
 ## rucc only has an x86-64 Linux back end
 
-As of today that is the only target rucc generates code for, so the rucc column of the report can only be produced on x86-64 Linux. On any other machine the corpus still runs against GCC 16, which is worth doing on its own, because that is what checks 1018 expected answers against a compiler that has been wrong about very few things since 1987.
+As of today that is the only target rucc generates code for, so the rucc column of the report can only be produced on x86-64 Linux. On any other machine the corpus still runs against GCC 16, which is worth doing on its own, because that is what checks 1119 expected answers against a compiler that has been wrong about very few things since 1987.
 
 CI produces the rucc column. Locally, on anything that is not x86-64 Linux, leave `--toolchain rucc` off.
 

@@ -17,10 +17,18 @@ pub enum Facet {
     /// that exist to catch a compiler that is broken before any optimization runs.
     Baseline,
 
+    /// The control flow shapes the analyses underneath every pass have to get right.
+    ///
+    /// The graph, both dominance relations and the loop forest. Nothing here is about a
+    /// transformation. It is about the shapes that break the analysis a transformation asked.
+    ControlFlow,
+
     /// Folding an operation on constants into a constant.
     ConstantFold,
     /// Rewriting an operation into a cheaper one that computes the same value.
     Strength,
+    /// Taking the width back off arithmetic that C promoted to `int`.
+    Narrowing,
     /// Algebraic identities and the local peephole rules that follow from them.
     Simplify,
     /// Reassociating an associative chain to shorten its dependency height.
@@ -116,8 +124,10 @@ impl Facet {
     /// report expects to see the sections in.
     pub const ALL: &'static [Self] = &[
         Self::Baseline,
+        Self::ControlFlow,
         Self::ConstantFold,
         Self::Strength,
+        Self::Narrowing,
         Self::Simplify,
         Self::Reassociate,
         Self::DeadCode,
@@ -162,8 +172,10 @@ impl Facet {
     pub const fn name(self) -> &'static str {
         match self {
             Self::Baseline => "baseline",
+            Self::ControlFlow => "control-flow",
             Self::ConstantFold => "constant-fold",
             Self::Strength => "strength",
+            Self::Narrowing => "narrowing",
             Self::Simplify => "simplify",
             Self::Reassociate => "reassociate",
             Self::DeadCode => "dead-code",
@@ -211,8 +223,10 @@ impl Facet {
             Self::Baseline => {
                 "programs with no optimization target, which every level must get right"
             }
+            Self::ControlFlow => "the graph shapes the analyses under every pass have to get right",
             Self::ConstantFold => "folding an operation on constants into a constant",
             Self::Strength => "rewriting an operation into a cheaper one with the same value",
+            Self::Narrowing => "taking the width back off arithmetic that C promoted",
             Self::Simplify => "algebraic identities and the local peephole rules",
             Self::Reassociate => "reassociating a chain to shorten its dependency height",
             Self::DeadCode => "removing a computation whose result nothing reads",
@@ -260,9 +274,10 @@ impl Facet {
     #[must_use]
     pub const fn phase(self) -> Phase {
         match self {
-            Self::Baseline | Self::Frontend => Phase::Floor,
+            Self::Baseline | Self::ControlFlow | Self::Frontend => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
+            | Self::Narrowing
             | Self::Simplify
             | Self::Reassociate
             | Self::DeadCode

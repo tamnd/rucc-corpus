@@ -15,6 +15,7 @@ use corpus_model::{Axes, Dialect, Facet};
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     constant_fold(sink);
     strength(sink);
+    narrowing(sink);
     simplify(sink);
     reassociate(sink);
     dead_code(sink);
@@ -115,6 +116,197 @@ fn strength(sink: &mut Sink<'_>) {
                 program,
             );
         }
+    }
+}
+
+/// Arithmetic C widened to `int` and then threw the width away again.
+///
+/// C says that two `unsigned char` operands are added as `int`. If the result is stored back
+/// into an `unsigned char`, the top twenty four bits of that addition were never going to be
+/// read, and a compiler is allowed to do the work at the narrow width instead. That is the
+/// whole of the `narrow` pass in rucc, and it is worth evidence because it is a rewrite that
+/// changes the width of an operation, which is exactly the kind of rewrite that is wrong on
+/// the operands nobody tried.
+///
+/// The shapes are the cases the pass has to tell apart. Two of them, `wide-use` and
+/// `divide`, are the ones where narrowing is not allowed, and they are here so that a pass
+/// which narrows everything fails rather than scores.
+fn narrowing(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] =
+        &["stored-back", "wide-use", "mixed-sign", "round-trip", "divide", "shift", "bit-field"];
+    for &ty in Ty::ALL {
+        if ty.bits() >= 32 {
+            continue;
+        }
+        for &shape in SHAPES {
+            if !sink.wants(Facet::Narrowing) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("{shape} arithmetic on {name}"));
+            let operands = spread(&interesting(ty), 5);
+            match shape {
+                "bit-field" => {
+                    // A bit field is the one place where the width is not a power of two, so
+                    // it is the one place where narrowing has to work out the width rather
+                    // than read it off the type.
+                    program.top(
+                        "struct packed { unsigned three : 3; unsigned five : 5; unsigned thirteen : 13; };"
+                            .to_owned(),
+                    );
+                    program.input(ty, "seed", 7);
+                    program.blank();
+                    program.line("struct packed p;");
+                    program.line("p.three = (unsigned)seed & 7u;");
+                    program.line("p.five = (unsigned)seed & 31u;");
+                    program.line("p.thirteen = (unsigned)seed & 8191u;");
+                    program.blank();
+                    program.check(Ty::U32, "p.three", 7);
+                    program.check(Ty::U32, "p.five", 7);
+                    program.check(Ty::U32, "p.thirteen", 7);
+                    program.check(Ty::U32, "p.three + p.five + p.thirteen", 21);
+                }
+                "mixed-sign" => {
+                    // The operands promote to `int` by different routes, and the result is
+                    // stored at a width neither of them has. A pass that narrows on the
+                    // width alone and forgets which promotion happened gets this wrong.
+                    let other = if ty.signed() { unsigned_twin(ty) } else { signed_twin(ty) };
+                    for (at, &left) in operands.iter().enumerate() {
+                        let right = 3;
+                        if !other.holds(right) {
+                            continue;
+                        }
+                        let a = format!("a{at}");
+                        let b = format!("b{at}");
+                        program.input(ty, &a, left);
+                        program.input(other, &b, right);
+                        let Some(sum) = eval(Op::Add, Ty::I32, left, right) else {
+                            continue;
+                        };
+                        program.line(format!("{name} sum{at} = ({name})({a} + {b});"));
+                        program.check(ty.promoted(), &format!("sum{at}"), ty.convert(sum));
+                    }
+                }
+                "divide" => {
+                    // Division does not narrow the way addition does. The quotient of two
+                    // `int` values is not the quotient of their low bytes, so a pass that
+                    // treats it like the others prints a different number here.
+                    for (at, &left) in operands.iter().enumerate() {
+                        let right = 3;
+                        let Some(quotient) = eval(Op::Div, ty, left, right) else {
+                            continue;
+                        };
+                        let Some(remainder) = eval(Op::Rem, ty, left, right) else {
+                            continue;
+                        };
+                        let a = format!("a{at}");
+                        program.input(ty, &a, left);
+                        program.line(format!("{name} q{at} = ({name})({a} / {});", lit(ty, right)));
+                        program.line(format!("{name} r{at} = ({name})({a} % {});", lit(ty, right)));
+                        program.check(ty.promoted(), &format!("q{at}"), ty.convert(quotient));
+                        program.check(ty.promoted(), &format!("r{at}"), ty.convert(remainder));
+                    }
+                }
+                "shift" => {
+                    // The value narrows and the count does not. A count of three is inside
+                    // the narrow width, and a count of nine is not, which is the case where
+                    // doing the shift at the narrow width would lose every bit.
+                    for (at, &left) in operands.iter().enumerate() {
+                        let a = format!("a{at}");
+                        program.input(ty, &a, left);
+                        for count in [3i128, 9] {
+                            let Some(shifted) = eval(Op::Shl, ty, left, count) else {
+                                continue;
+                            };
+                            let slot = format!("s{at}_{count}");
+                            program.line(format!("{name} {slot} = ({name})({a} << {count});"));
+                            program.check(ty.promoted(), &slot, ty.convert(shifted));
+                        }
+                    }
+                }
+                "round-trip" => {
+                    // Narrowed, widened again and compared. The comparison is at `int`, so
+                    // the sign of the widening is what decides the answer, and a pass that
+                    // narrowed the wrong way round prints zero where the case says one.
+                    for (at, &left) in operands.iter().enumerate() {
+                        let a = format!("a{at}");
+                        program.input(ty, &a, left);
+                        let Some(sum) = eval(Op::Add, ty, left, 1) else {
+                            continue;
+                        };
+                        let narrowed = ty.convert(sum);
+                        program.line(format!("{name} n{at} = ({name})({a} + 1);"));
+                        program.line(format!("int w{at} = (int)n{at};"));
+                        program.check(Ty::I32, &format!("w{at} == {narrowed}"), 1);
+                        program.check(ty.promoted(), &format!("n{at}"), narrowed);
+                    }
+                }
+                "wide-use" => {
+                    // The sum is read at `int` width, so it may not be narrowed at all. The
+                    // operands are the extremes of the type, which is where the wide answer
+                    // and the narrow one differ.
+                    for (at, &left) in operands.iter().enumerate() {
+                        let a = format!("a{at}");
+                        program.input(ty, &a, left);
+                        let Some(sum) = eval(Op::Add, ty, left, ty.max()) else {
+                            continue;
+                        };
+                        program.line(format!("int w{at} = {a} + {};", lit(ty, ty.max())));
+                        program.check(Ty::I32, &format!("w{at}"), sum);
+                    }
+                }
+                _ => {
+                    // The plain case. Every operation, stored back at the width it came from.
+                    for (at, &left) in operands.iter().enumerate() {
+                        let a = format!("a{at}");
+                        program.input(ty, &a, left);
+                        for &op in &[Op::Add, Op::Sub, Op::Mul, Op::And, Op::Or, Op::Xor] {
+                            let right = 5;
+                            if !ty.holds(right) {
+                                continue;
+                            }
+                            let Some(value) = eval(op, ty, left, right) else {
+                                continue;
+                            };
+                            let slot = format!("v{at}_{}", op.name());
+                            program.line(format!(
+                                "{name} {slot} = ({name})({a} {} {});",
+                                op.spelling(),
+                                lit(ty, right)
+                            ));
+                            program.check(ty.promoted(), &slot, ty.convert(value));
+                        }
+                        program.blank();
+                    }
+                }
+            }
+            sink.push(
+                Facet::Narrowing,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The unsigned type of the same width, for the cases about mixed signedness.
+fn unsigned_twin(ty: Ty) -> Ty {
+    match ty {
+        Ty::I8 => Ty::U8,
+        Ty::I16 => Ty::U16,
+        Ty::I32 => Ty::U32,
+        other => other,
+    }
+}
+
+/// The signed type of the same width.
+fn signed_twin(ty: Ty) -> Ty {
+    match ty {
+        Ty::U8 => Ty::I8,
+        Ty::U16 => Ty::I16,
+        Ty::U32 => Ty::I32,
+        other => other,
     }
 }
 
