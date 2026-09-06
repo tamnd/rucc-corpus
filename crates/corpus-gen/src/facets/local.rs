@@ -515,15 +515,35 @@ fn dead_store(sink: &mut Sink<'_>) {
 /// The arm that cannot run is filled with something that would give the wrong answer if it
 /// ever did, so a compiler that picks the wrong side fails loudly rather than by a size
 /// difference nobody notices.
+///
+/// The last three shapes go further and put a call to a function nothing defines in the dead
+/// arm. A compiler that keeps the arm emits a relocation against a name the linker cannot
+/// resolve, so the case does not build at all rather than printing the wrong number. That is
+/// the strongest oracle in the corpus, it needs nothing from the harness beyond a link that
+/// already happens, and it is what `gcc.c-torture/execute/medce-1.c` is for. It is also the
+/// reason a dead arm has to go at every optimization level including `-O0`: a program that
+/// links at `-O2` and not at `-O0` is broken at `-O0`, not unoptimized there.
 fn unreachable_code(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] =
-        &["if-false", "if-true", "while-false", "switch-constant", "early-return"];
+    const SHAPES: &[&str] = &[
+        "if-false",
+        "if-true",
+        "while-false",
+        "switch-constant",
+        "early-return",
+        "dead-call",
+        "dead-call-compare",
+        "dead-call-label",
+    ];
     for &shape in SHAPES {
         if !sink.wants(Facet::UnreachableCode) {
             return;
         }
         let mut program = Program::new(format!("a {shape} whose dead arm must not run"));
         program.input(Ty::I32, "seed", 10);
+        if shape.starts_with("dead-call") {
+            // Declared and never defined, on purpose. The name is the assertion.
+            program.top("void corpus_link_error(void);");
+        }
         program.blank();
         program.line("int answer = 0;");
         match shape {
@@ -554,12 +574,40 @@ fn unreachable_code(sink: &mut Sink<'_>) {
                 program.line_at(1, "default: answer = seed * 200; break;");
                 program.line("}");
             }
-            _ => {
+            "early-return" => {
                 program.top("static int pick(int seed) {");
                 program.top("    return seed + 1;");
                 program.top("    return seed * 100;");
                 program.top("}");
                 program.line("answer = pick(seed);");
+            }
+            "dead-call" => {
+                program.line("if (0) {");
+                program.line_at(1, "corpus_link_error();");
+                program.line_at(1, "answer = seed * 100;");
+                program.line("} else {");
+                program.line_at(1, "answer = seed + 1;");
+                program.line("}");
+            }
+            "dead-call-compare" => {
+                // The condition is a comparison rather than a literal, so a compiler that
+                // only looks for the constant zero keeps the call. Both operands are
+                // constants, which is as far as this case asks anything to go.
+                program.line("answer = seed + 1;");
+                program.line("if (3 > 5) {");
+                program.line_at(1, "corpus_link_error();");
+                program.line_at(1, "answer = seed * 100;");
+                program.line("}");
+            }
+            _ => {
+                // `medce-1.c`. The label is inside the body of the dead `if`, so control does
+                // reach the assignment and never reaches the call. A compiler that deletes
+                // the whole compound statement gets this as wrong as one that keeps all of
+                // it: the first prints zero, the second does not link.
+                program.line("switch (seed - 9) {");
+                program.line_at(1, "case 0:");
+                program.line_at(2, "if (0) { corpus_link_error(); case 1: answer = seed + 1; }");
+                program.line("}");
             }
         }
         program.blank();
@@ -655,9 +703,26 @@ mod tests {
     #[test]
     fn every_unreachable_case_expects_the_live_arm_and_not_the_dead_one() {
         let cases = cases_for(Facet::UnreachableCode);
-        assert_eq!(cases.len(), 5);
+        assert_eq!(cases.len(), 8);
         for case in cases {
             assert_eq!(case.expect, Expect::Output("11\n".to_owned()), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn a_dead_call_case_names_a_function_it_never_defines() {
+        // Which is the whole oracle. If the declaration ever gains a body, the case still
+        // prints eleven and stops proving anything, and nothing else would notice.
+        let cases = cases_for(Facet::UnreachableCode);
+        let dead: Vec<_> = cases
+            .iter()
+            .filter(|c| c.axes.get("shape").is_some_and(|s| s.starts_with("dead-call")))
+            .collect();
+        assert_eq!(dead.len(), 3);
+        for case in dead {
+            assert!(case.source.contains("void corpus_link_error(void);"), "{}", case.id);
+            assert!(case.source.contains("corpus_link_error();"), "{}", case.id);
+            assert!(!case.source.contains("corpus_link_error(void) {"), "{}", case.id);
         }
     }
 }

@@ -1,10 +1,10 @@
 # The corpus
 
-1119 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1122 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `13e5bf2f336cab8fd8aa304b9a144d84d6652b49fa3245dbd346ddc5a29093ce`.
+Corpus digest `31549141a827131586c82c53b768cacbe3bac7d46b539855f493ae66b4fc62a3`.
 
 ## floor (50 programs)
 
@@ -16,7 +16,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`control-flow`](floor/control-flow/index.md) | 10 | the graph shapes the analyses under every pass have to get right |
 | [`frontend`](floor/frontend/index.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (221 programs)
+## local (224 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -29,7 +29,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`reassociate`](local/reassociate/index.md) | 20 | reassociating a chain to shorten its dependency height |
 | [`dead-code`](local/dead-code/index.md) | 12 | removing a computation whose result nothing reads |
 | [`dead-store`](local/dead-store/index.md) | 12 | removing a store a later store makes invisible |
-| [`unreachable-code`](local/unreachable-code/index.md) | 5 | removing a branch with a known condition and its dead arm |
+| [`unreachable-code`](local/unreachable-code/index.md) | 8 | removing a branch with a known condition and its dead arm |
 
 ## global (165 programs)
 

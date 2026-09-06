@@ -1,7 +1,7 @@
 {
   "schema": "1",
-  "corpus_sha256": "13e5bf2f336cab8fd8aa304b9a144d84d6652b49fa3245dbd346ddc5a29093ce",
-  "count": 1119,
+  "corpus_sha256": "31549141a827131586c82c53b768cacbe3bac7d46b539855f493ae66b4fc62a3",
+  "count": 1122,
   "cases": [
     {
       "id": "alias-analysis.i32.char-pointer.c17.2c550cb8",
@@ -15853,6 +15853,45 @@
       "expect": "8\n",
       "tags": [],
       "source_sha256": "9fd93a34e0ccd56aacaeb0dd06d9cfd42718677a55eee505294084dfbc8538b9"
+    },
+    {
+      "id": "unreachable-code.dead-call-compare.c17.1ca73e30",
+      "facet": "unreachable-code",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dead-call-compare"
+      },
+      "expect_kind": "output",
+      "expect": "11\n",
+      "tags": [],
+      "source_sha256": "1ca73e30f743c924ce0a4829ff2192d7cf2410c1a1612109a709df3c7df0621e"
+    },
+    {
+      "id": "unreachable-code.dead-call-label.c17.52147ff7",
+      "facet": "unreachable-code",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dead-call-label"
+      },
+      "expect_kind": "output",
+      "expect": "11\n",
+      "tags": [],
+      "source_sha256": "52147ff70f0ffba0392e2d2152618ac3331d9566020a1448c6b8d6dfd07ceaf6"
+    },
+    {
+      "id": "unreachable-code.dead-call.c17.c5689cb8",
+      "facet": "unreachable-code",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dead-call"
+      },
+      "expect_kind": "output",
+      "expect": "11\n",
+      "tags": [],
+      "source_sha256": "c5689cb811e65ad044950dd03c32617dd970a3174e3bef2e0855350e1ce796d9"
     },
     {
       "id": "unreachable-code.early-return.c17.e088336e",
