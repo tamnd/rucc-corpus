@@ -12,6 +12,8 @@ static volatile signed char x5_in = 127;
 
 int main(void) {
     signed char x0 = x0_in;
+    printf("%lld\n", (long long)(x0 / ((signed char)(-2))));
+    printf("%lld\n", (long long)(x0 / ((signed char)(-1))));
     printf("%lld\n", (long long)(x0 / ((signed char)1)));
     printf("%lld\n", (long long)(x0 / ((signed char)2)));
     printf("%lld\n", (long long)(x0 / ((signed char)3)));
@@ -25,6 +27,8 @@ int main(void) {
     printf("%lld\n", (long long)(x0 / ((signed char)100)));
 
     signed char x1 = x1_in;
+    printf("%lld\n", (long long)(x1 / ((signed char)(-2))));
+    printf("%lld\n", (long long)(x1 / ((signed char)(-1))));
     printf("%lld\n", (long long)(x1 / ((signed char)1)));
     printf("%lld\n", (long long)(x1 / ((signed char)2)));
     printf("%lld\n", (long long)(x1 / ((signed char)3)));
@@ -38,6 +42,8 @@ int main(void) {
     printf("%lld\n", (long long)(x1 / ((signed char)100)));
 
     signed char x2 = x2_in;
+    printf("%lld\n", (long long)(x2 / ((signed char)(-2))));
+    printf("%lld\n", (long long)(x2 / ((signed char)(-1))));
     printf("%lld\n", (long long)(x2 / ((signed char)1)));
     printf("%lld\n", (long long)(x2 / ((signed char)2)));
     printf("%lld\n", (long long)(x2 / ((signed char)3)));
@@ -51,6 +57,8 @@ int main(void) {
     printf("%lld\n", (long long)(x2 / ((signed char)100)));
 
     signed char x3 = x3_in;
+    printf("%lld\n", (long long)(x3 / ((signed char)(-2))));
+    printf("%lld\n", (long long)(x3 / ((signed char)(-1))));
     printf("%lld\n", (long long)(x3 / ((signed char)1)));
     printf("%lld\n", (long long)(x3 / ((signed char)2)));
     printf("%lld\n", (long long)(x3 / ((signed char)3)));
@@ -64,6 +72,8 @@ int main(void) {
     printf("%lld\n", (long long)(x3 / ((signed char)100)));
 
     signed char x4 = x4_in;
+    printf("%lld\n", (long long)(x4 / ((signed char)(-2))));
+    printf("%lld\n", (long long)(x4 / ((signed char)(-1))));
     printf("%lld\n", (long long)(x4 / ((signed char)1)));
     printf("%lld\n", (long long)(x4 / ((signed char)2)));
     printf("%lld\n", (long long)(x4 / ((signed char)3)));
@@ -77,6 +87,8 @@ int main(void) {
     printf("%lld\n", (long long)(x4 / ((signed char)100)));
 
     signed char x5 = x5_in;
+    printf("%lld\n", (long long)(x5 / ((signed char)(-2))));
+    printf("%lld\n", (long long)(x5 / ((signed char)(-1))));
     printf("%lld\n", (long long)(x5 / ((signed char)1)));
     printf("%lld\n", (long long)(x5 / ((signed char)2)));
     printf("%lld\n", (long long)(x5 / ((signed char)3)));

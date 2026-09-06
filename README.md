@@ -4,7 +4,7 @@ A C corpus for proving that an optimization in [rucc](https://github.com/tamnd/r
 
 Every program here was written for exactly one named transformation. Every program prints an answer that this repository worked out in Rust before any C compiler was involved. Every program prints nothing that depends on the machine it runs on, so one expected answer is right everywhere.
 
-1277 programs across 45 facets, grouped by the phases of the M4 plan.
+1285 programs across 45 facets, grouped by the phases of the M4 plan.
 
 ## Why the answers are computed rather than compared
 

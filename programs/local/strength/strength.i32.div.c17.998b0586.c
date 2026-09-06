@@ -12,6 +12,7 @@ static volatile int x5_in = 2147483647;
 
 int main(void) {
     int x0 = x0_in;
+    printf("%lld\n", (long long)(x0 / ((int)(-2))));
     printf("%lld\n", (long long)(x0 / ((int)1)));
     printf("%lld\n", (long long)(x0 / ((int)2)));
     printf("%lld\n", (long long)(x0 / ((int)3)));
@@ -28,6 +29,8 @@ int main(void) {
     printf("%lld\n", (long long)(x0 / ((int)1024)));
 
     int x1 = x1_in;
+    printf("%lld\n", (long long)(x1 / ((int)(-2))));
+    printf("%lld\n", (long long)(x1 / ((int)(-1))));
     printf("%lld\n", (long long)(x1 / ((int)1)));
     printf("%lld\n", (long long)(x1 / ((int)2)));
     printf("%lld\n", (long long)(x1 / ((int)3)));
@@ -44,6 +47,8 @@ int main(void) {
     printf("%lld\n", (long long)(x1 / ((int)1024)));
 
     int x2 = x2_in;
+    printf("%lld\n", (long long)(x2 / ((int)(-2))));
+    printf("%lld\n", (long long)(x2 / ((int)(-1))));
     printf("%lld\n", (long long)(x2 / ((int)1)));
     printf("%lld\n", (long long)(x2 / ((int)2)));
     printf("%lld\n", (long long)(x2 / ((int)3)));
@@ -60,6 +65,8 @@ int main(void) {
     printf("%lld\n", (long long)(x2 / ((int)1024)));
 
     int x3 = x3_in;
+    printf("%lld\n", (long long)(x3 / ((int)(-2))));
+    printf("%lld\n", (long long)(x3 / ((int)(-1))));
     printf("%lld\n", (long long)(x3 / ((int)1)));
     printf("%lld\n", (long long)(x3 / ((int)2)));
     printf("%lld\n", (long long)(x3 / ((int)3)));
@@ -76,6 +83,8 @@ int main(void) {
     printf("%lld\n", (long long)(x3 / ((int)1024)));
 
     int x4 = x4_in;
+    printf("%lld\n", (long long)(x4 / ((int)(-2))));
+    printf("%lld\n", (long long)(x4 / ((int)(-1))));
     printf("%lld\n", (long long)(x4 / ((int)1)));
     printf("%lld\n", (long long)(x4 / ((int)2)));
     printf("%lld\n", (long long)(x4 / ((int)3)));
@@ -92,6 +101,8 @@ int main(void) {
     printf("%lld\n", (long long)(x4 / ((int)1024)));
 
     int x5 = x5_in;
+    printf("%lld\n", (long long)(x5 / ((int)(-2))));
+    printf("%lld\n", (long long)(x5 / ((int)(-1))));
     printf("%lld\n", (long long)(x5 / ((int)1)));
     printf("%lld\n", (long long)(x5 / ((int)2)));
     printf("%lld\n", (long long)(x5 / ((int)3)));
