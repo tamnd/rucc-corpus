@@ -23,6 +23,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     value_range_places(sink);
     alias_analysis(sink);
     alias_layers(sink);
+    memory_ssa(sink);
     scalar_replacement(sink);
 }
 
@@ -904,6 +905,120 @@ fn scalar_replacement(sink: &mut Sink<'_>) {
     }
 }
 
+/// A load, and everything between it and the store that answers it.
+///
+/// Alias analysis answers a question about two references. Memory SSA is the thing that knows
+/// which question to ask, because it walks back from a load through the writes before it and
+/// stops at the first one that could matter. The two halves fail differently. A walk that
+/// stops too early gives up on a load it could have answered, which costs speed. A walk that
+/// walks past a write that did matter reads a stale value, which is a miscompilation, and
+/// every shape below has an answer that changes if that happens.
+fn memory_ssa(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "skip-other-object",
+        "skip-other-index",
+        "stopped-by-call",
+        "stopped-by-may-alias",
+        "merge-at-join",
+        "over-a-loop",
+        "clobbered-in-a-loop",
+    ];
+    for &ty in Ty::WIDE {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::MemorySsa) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("the walk back from a {name} load, {shape}"));
+            program.input(ty, "value", 41);
+            program.input(Ty::I32, "flag", 1);
+            program.blank();
+            let Some(next) = eval(Op::Add, ty, 41, 1) else {
+                continue;
+            };
+            let expected = match shape {
+                "skip-other-object" => {
+                    // Two locals, so no walk that knows what a local is should stop here.
+                    program.line(format!("{name} one[2];"));
+                    program.line(format!("{name} two[2];"));
+                    program.line("one[0] = value;");
+                    program.line(format!("two[0] = value + {};", lit(ty, 1)));
+                    program.line(format!("{name} read = one[0];"));
+                    41
+                }
+                "skip-other-index" => {
+                    program.line(format!("{name} one[2];"));
+                    program.line("one[0] = value;");
+                    program.line(format!("one[1] = value + {};", lit(ty, 1)));
+                    program.line(format!("{name} read = one[0];"));
+                    41
+                }
+                "stopped-by-call" => {
+                    // The callee is given the address, so the walk has to stop at the call
+                    // whatever it knows about the object.
+                    program.top(format!("static void put({name} *at, {name} v) {{"));
+                    program.top("    *at = v;".to_owned());
+                    program.top("}".to_owned());
+                    program.line(format!("{name} one[2];"));
+                    program.line("one[0] = value;");
+                    program.line(format!("put(&one[0], value + {});", lit(ty, 1)));
+                    program.line(format!("{name} read = one[0];"));
+                    next
+                }
+                "stopped-by-may-alias" => {
+                    program.line(format!("{name} one[2];"));
+                    program.line(format!("{name} two[2];"));
+                    program.line("one[0] = value;");
+                    program.line("two[0] = value;");
+                    program.line(format!("{name} *at = flag ? &one[0] : &two[0];"));
+                    program.line(format!("*at = value + {};", lit(ty, 1)));
+                    program.line(format!("{name} read = one[0];"));
+                    next
+                }
+                "merge-at-join" => {
+                    // The load is answered by two stores at once, which is the case a walk
+                    // that only ever follows one predecessor gets wrong.
+                    program.line(format!("{name} one[2];"));
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("one[0] = value + {};", lit(ty, 1)));
+                    program.line("} else {");
+                    program.line_at(1, "one[0] = value;");
+                    program.line("}");
+                    program.line(format!("{name} read = one[0];"));
+                    next
+                }
+                "over-a-loop" => {
+                    program.line(format!("{name} one[2];"));
+                    program.line(format!("{name} two[2];"));
+                    program.line("one[0] = value;");
+                    program.line("for (int i = 0; i < 4; i++) {");
+                    program.line_at(1, format!("two[i & 1] = ({name})i;"));
+                    program.line("}");
+                    program.line(format!("{name} read = one[0];"));
+                    41
+                }
+                _ => {
+                    program.line(format!("{name} one[2];"));
+                    program.line("one[0] = value;");
+                    program.line("for (int i = 0; i < 1; i++) {");
+                    program.line_at(1, format!("one[0] = one[0] + {};", lit(ty, 1)));
+                    program.line("}");
+                    program.line(format!("{name} read = one[0];"));
+                    next
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "read", expected);
+            sink.push(
+                Facet::MemorySsa,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -914,6 +1029,29 @@ mod tests {
         let mut sink = Sink::new(&opts);
         super::generate(&mut sink);
         sink.into_cases()
+    }
+
+    #[test]
+    fn the_walk_back_from_a_load_reads_what_the_last_store_wrote() {
+        let cases = cases_for(Facet::MemorySsa);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
+            assert!(
+                text == "41\n" || text == "42\n",
+                "{} expects {text:?}, which is neither the old value nor the new one",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    fn the_memory_ssa_shapes_that_must_stop_the_walk_are_all_present() {
+        let cases = cases_for(Facet::MemorySsa);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in ["stopped-by-call", "stopped-by-may-alias", "merge-at-join"] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
     }
 
     #[test]

@@ -224,6 +224,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     let mut sink = Sink::new(opts);
     facets::special::baseline(&mut sink);
     facets::special::control_flow(&mut sink);
+    facets::special::branch_probability(&mut sink);
     facets::local::generate(&mut sink);
     facets::global::generate(&mut sink);
     facets::loops::generate(&mut sink);

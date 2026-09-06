@@ -20,6 +20,7 @@ const TYPES: &[Ty] = Ty::WIDE;
 /// Emits every facet in this phase.
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     selection(sink);
+    register_pressure(sink);
     register_alloc(sink);
     scheduling(sink);
     block_layout(sink);
@@ -85,6 +86,101 @@ fn selection(sink: &mut Sink<'_>) {
                 Dialect::C17,
                 program,
             );
+        }
+    }
+}
+
+/// How many values are live at once, and what the compiler does about it.
+///
+/// The allocator facet next door asks whether the answer survives spilling. This one is about
+/// the count itself, because in SSA the number of values live at a point is exactly the number
+/// of registers needed there rather than an estimate of it, and four different decisions are
+/// made from that number. So each shape here is one of those decisions.
+///
+/// `across-a-call` holds values over a call, which means they have to live in callee saved
+/// registers or on the stack, and there are far fewer of the former than of the whole file.
+/// `through-a-loop` holds them across a loop, where a spill is paid once per iteration rather
+/// than once. `both-classes` holds integers and doubles at the same time, which is two banks
+/// of registers and has to be counted as two numbers rather than one. `one-arm-only` holds
+/// them across one arm of a branch, where a count taken over the whole function says the
+/// pressure is high everywhere and a count taken per point says it is high in one place.
+fn register_pressure(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &["across-a-call", "through-a-loop", "both-classes", "one-arm-only"];
+    for &ty in TYPES {
+        for &live in &[6usize, 12, 24] {
+            for &shape in SHAPES {
+                if !sink.wants(Facet::RegisterPressure) {
+                    return;
+                }
+                let name = ty.c_name();
+                let mut program = Program::new(format!(
+                    "{live} live {name} values held {shape}, which is what the pressure model counts"
+                ));
+                if shape == "across-a-call" {
+                    program.top(format!("static {name} opaque({name} v) {{"));
+                    program.top("    return v + 1;".to_owned());
+                    program.top("}".to_owned());
+                }
+                program.input(ty, "seed", 1);
+                program.input(Ty::I32, "flag", 1);
+                program.blank();
+                for at in 0..live {
+                    program.line(format!("{name} v{at} = seed + {};", lit(ty, at as i128)));
+                }
+                program.blank();
+
+                // Every value is defined above and read below, so all of them are live over
+                // whatever goes in between, which is the thing each shape varies.
+                let mut total: i128 = (0..live as i128).map(|at| 1 + at).sum();
+                match shape {
+                    "across-a-call" => {
+                        program.line(format!("{name} kept = opaque(seed);"));
+                        total += 2;
+                    }
+                    "through-a-loop" => {
+                        program.line(format!("{name} kept = 0;"));
+                        program.line("for (int i = 0; i < 4; i++) {");
+                        program.line_at(1, "kept = kept + 1;");
+                        program.line("}");
+                        total += 4;
+                    }
+                    "both-classes" => {
+                        // A double alongside the integers, because they are two register files
+                        // and a model that adds them up gets both numbers wrong.
+                        program.line("double d0 = 1.0, d1 = 2.0, d2 = 3.0, d3 = 4.0;");
+                        program.line("double dsum = d0 + d1 + d2 + d3;");
+                        program.line(format!("{name} kept = ({name})dsum;"));
+                        total += 10;
+                    }
+                    _ => {
+                        program.line(format!("{name} kept = 0;"));
+                        program.line("if (flag) {");
+                        program.line_at(1, format!("kept = ({name})1;"));
+                        program.line("} else {");
+                        program.line_at(1, format!("kept = ({name})2;"));
+                        program.line("}");
+                        total += 1;
+                    }
+                }
+                program.blank();
+
+                // Read back to front, so the value defined first is the one live longest.
+                program.line(format!("{name} total = kept;"));
+                for at in (0..live).rev() {
+                    program.line(format!("total += v{at};"));
+                }
+                if !ty.promoted().holds(total) {
+                    continue;
+                }
+                program.blank();
+                program.check(ty.promoted(), "total", total);
+                sink.push(
+                    Facet::RegisterPressure,
+                    Axes::of([("type", ty.name()), ("live", &live.to_string()), ("shape", shape)]),
+                    Dialect::C17,
+                    program,
+                );
+            }
         }
     }
 }
