@@ -362,10 +362,22 @@ pub(crate) fn control_flow(sink: &mut Sink<'_>) {
                 // are whatever the array holds. This is a GCC extension and it is in the
                 // corpus because compatibility with GCC is the goal, but it is tagged so a
                 // run against a compiler that has not got to it yet can leave it out.
+                //
+                // The array is filled at run time rather than in a static initializer. Both
+                // forms are GCC extensions and both belong here, but a static initializer
+                // holding label addresses is a second thing to implement on top of the jump
+                // itself, and mixing the two into one case means a compiler that has neither
+                // cannot say which one it is missing. rucc reports the jump plainly as not
+                // lowered yet, which is a gap, and reports the static form as an initializer
+                // that is not constant, which is a different bug with its own issue.
                 gnu = true;
                 program.input(Ty::I32, "pick", 2);
                 program.blank();
-                program.line("static void *targets[] = { &&zero, &&one, &&two, &&three };");
+                program.line("void *targets[4];");
+                program.line("targets[0] = &&zero;");
+                program.line("targets[1] = &&one;");
+                program.line("targets[2] = &&two;");
+                program.line("targets[3] = &&three;");
                 program.line("int total = 0;");
                 program.line("goto *targets[pick & 3];");
                 program.line("zero:");

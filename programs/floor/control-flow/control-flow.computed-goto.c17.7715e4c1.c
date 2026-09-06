@@ -8,7 +8,11 @@ static volatile int pick_in = 2;
 int main(void) {
     int pick = pick_in;
 
-    static void *targets[] = { &&zero, &&one, &&two, &&three };
+    void *targets[4];
+    targets[0] = &&zero;
+    targets[1] = &&one;
+    targets[2] = &&two;
+    targets[3] = &&three;
     int total = 0;
     goto *targets[pick & 3];
     zero:

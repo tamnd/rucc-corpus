@@ -6,7 +6,7 @@ the graph shapes the analyses under every pass have to get right. Part of the fl
 
 | program | axes | dialect | must print |
 |---|---|---|---|
-| [`control-flow.computed-goto.c17.e6bdb014`](control-flow.computed-goto.c17.e6bdb014.c) | shape=computed-goto | c17 | `104` |
+| [`control-flow.computed-goto.c17.7715e4c1`](control-flow.computed-goto.c17.7715e4c1.c) | shape=computed-goto | c17 | `104` |
 | [`control-flow.continue-and-break.c17.d30b2e3d`](control-flow.continue-and-break.c17.d30b2e3d.c) | shape=continue-and-break | c17 | `18` |
 | [`control-flow.irreducible.c17.662a0a0f`](control-flow.irreducible.c17.662a0a0f.c) | shape=irreducible | c17 | `21` |
 | [`control-flow.jumped-over-block.c17.f15166df`](control-flow.jumped-over-block.c17.f15166df.c) | shape=jumped-over-block | c17 | `5` |
