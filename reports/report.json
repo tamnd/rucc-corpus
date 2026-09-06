@@ -2,8 +2,8 @@
   "schema": "1",
   "milestone": "M4",
   "tool": "rucc-corpus 0.1.0",
-  "corpus_digest": "52a9c415184c18f786fe28c5983ac7e6b7a831ec8eea637f9ab11e7f3b39ee36",
-  "cases": 1277,
+  "corpus_digest": "67839b19f50d8e943649aab01886d76ac12f2fc4f77a7503dc09982a73a257be",
+  "cases": 1285,
   "reference": "gcc-16",
   "levels": [
     "O0",
@@ -22,7 +22,7 @@
     {
       "id": "rucc",
       "program": "/root/m4/rucc/target/release/rucc",
-      "version": "rucc 0.6.2",
+      "version": "rucc 0.7.1",
       "reference": false
     }
   ],
@@ -30,14 +30,14 @@
     {
       "toolchain": "gcc-16",
       "tally": {
-        "pass": 6353,
+        "pass": 6393,
         "wrong": 0,
         "rejected": 0,
         "unimplemented": 0,
         "accepted": 0,
         "crashed": 0,
         "skipped": 0,
-        "ran": 6353,
+        "ran": 6393,
         "failures": 0,
         "pass_rate": 1
       }
@@ -45,14 +45,14 @@
     {
       "toolchain": "rucc",
       "tally": {
-        "pass": 6333,
+        "pass": 6373,
         "wrong": 0,
         "rejected": 0,
         "unimplemented": 20,
         "accepted": 0,
         "crashed": 0,
         "skipped": 0,
-        "ran": 6353,
+        "ran": 6393,
         "failures": 0,
         "pass_rate": 0.997
       }
@@ -77,7 +77,7 @@
       "name": "compile-throughput:rucc",
       "wanted": "rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00",
       "threshold": 1,
-      "actual": 0.457,
+      "actual": 0.474,
       "met": true
     }
   ],
@@ -126,9 +126,9 @@
             "pass_rate": 1
           },
           "compared": 10,
-          "size_ratio": 1.144,
-          "speed_ratio": 0.957,
-          "compile_ratio": 0.444
+          "size_ratio": 1.143,
+          "speed_ratio": 1.216,
+          "compile_ratio": 0.435
         }
       ]
     },
@@ -177,8 +177,8 @@
           },
           "compared": 9,
           "size_ratio": 1.201,
-          "speed_ratio": 1.159,
-          "compile_ratio": 0.499
+          "speed_ratio": 0.937,
+          "compile_ratio": 0.345
         }
       ]
     },
@@ -227,8 +227,8 @@
           },
           "compared": 34,
           "size_ratio": 1.081,
-          "speed_ratio": 1.008,
-          "compile_ratio": 0.433
+          "speed_ratio": 1.004,
+          "compile_ratio": 0.491
         }
       ]
     },
@@ -277,8 +277,8 @@
           },
           "compared": 112,
           "size_ratio": 1.233,
-          "speed_ratio": 1.021,
-          "compile_ratio": 0.458
+          "speed_ratio": 1.098,
+          "compile_ratio": 0.482
         }
       ]
     },
@@ -326,9 +326,9 @@
             "pass_rate": 1
           },
           "compared": 24,
-          "size_ratio": 1.183,
-          "speed_ratio": 1.231,
-          "compile_ratio": 0.331
+          "size_ratio": 1.182,
+          "speed_ratio": 1.028,
+          "compile_ratio": 0.313
         }
       ]
     },
@@ -377,8 +377,8 @@
           },
           "compared": 28,
           "size_ratio": 1.122,
-          "speed_ratio": 1.085,
-          "compile_ratio": 0.467
+          "speed_ratio": 1.279,
+          "compile_ratio": 0.428
         }
       ]
     },
@@ -386,27 +386,27 @@
       "facet": "simplify",
       "phase": "local",
       "describes": "algebraic identities and the local peephole rules",
-      "cases": 53,
+      "cases": 61,
       "reference_said": {
         "optimized": 0,
-        "missed": 614
+        "missed": 710
       },
       "scores": [
         {
           "toolchain": "gcc-16",
           "tally": {
-            "pass": 265,
+            "pass": 305,
             "wrong": 0,
             "rejected": 0,
             "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
-            "ran": 265,
+            "ran": 305,
             "failures": 0,
             "pass_rate": 1
           },
-          "compared": 53,
+          "compared": 61,
           "size_ratio": 1,
           "speed_ratio": 1,
           "compile_ratio": 1
@@ -414,21 +414,21 @@
         {
           "toolchain": "rucc",
           "tally": {
-            "pass": 265,
+            "pass": 305,
             "wrong": 0,
             "rejected": 0,
             "unimplemented": 0,
             "accepted": 0,
             "crashed": 0,
             "skipped": 0,
-            "ran": 265,
+            "ran": 305,
             "failures": 0,
             "pass_rate": 1
           },
-          "compared": 53,
+          "compared": 61,
           "size_ratio": 1.242,
-          "speed_ratio": 1.088,
-          "compile_ratio": 0.398
+          "speed_ratio": 1.023,
+          "compile_ratio": 0.485
         }
       ]
     },
@@ -477,8 +477,8 @@
           },
           "compared": 20,
           "size_ratio": 1.165,
-          "speed_ratio": 0.901,
-          "compile_ratio": 0.523
+          "speed_ratio": 1.089,
+          "compile_ratio": 0.481
         }
       ]
     },
@@ -527,8 +527,8 @@
           },
           "compared": 12,
           "size_ratio": 0.958,
-          "speed_ratio": 1.06,
-          "compile_ratio": 0.434
+          "speed_ratio": 0.975,
+          "compile_ratio": 0.384
         }
       ]
     },
@@ -577,8 +577,8 @@
           },
           "compared": 12,
           "size_ratio": 1.001,
-          "speed_ratio": 0.815,
-          "compile_ratio": 0.526
+          "speed_ratio": 0.853,
+          "compile_ratio": 0.498
         }
       ]
     },
@@ -627,8 +627,8 @@
           },
           "compared": 8,
           "size_ratio": 0.956,
-          "speed_ratio": 1.23,
-          "compile_ratio": 0.5
+          "speed_ratio": 1.022,
+          "compile_ratio": 0.475
         }
       ]
     },
@@ -677,8 +677,8 @@
           },
           "compared": 16,
           "size_ratio": 1.06,
-          "speed_ratio": 1.037,
-          "compile_ratio": 0.453
+          "speed_ratio": 1.032,
+          "compile_ratio": 0.524
         }
       ]
     },
@@ -727,8 +727,8 @@
           },
           "compared": 40,
           "size_ratio": 1.065,
-          "speed_ratio": 0.955,
-          "compile_ratio": 0.445
+          "speed_ratio": 1.01,
+          "compile_ratio": 0.483
         }
       ]
     },
@@ -777,8 +777,8 @@
           },
           "compared": 12,
           "size_ratio": 1.055,
-          "speed_ratio": 0.996,
-          "compile_ratio": 0.489
+          "speed_ratio": 1.224,
+          "compile_ratio": 0.454
         }
       ]
     },
@@ -827,8 +827,8 @@
           },
           "compared": 12,
           "size_ratio": 0.944,
-          "speed_ratio": 0.906,
-          "compile_ratio": 0.414
+          "speed_ratio": 0.998,
+          "compile_ratio": 0.526
         }
       ]
     },
@@ -877,8 +877,8 @@
           },
           "compared": 16,
           "size_ratio": 0.996,
-          "speed_ratio": 0.986,
-          "compile_ratio": 0.449
+          "speed_ratio": 1.239,
+          "compile_ratio": 0.473
         }
       ]
     },
@@ -927,8 +927,8 @@
           },
           "compared": 13,
           "size_ratio": 1.261,
-          "speed_ratio": 0.943,
-          "compile_ratio": 0.524
+          "speed_ratio": 1.132,
+          "compile_ratio": 0.518
         }
       ]
     },
@@ -977,8 +977,8 @@
           },
           "compared": 36,
           "size_ratio": 1.09,
-          "speed_ratio": 1.04,
-          "compile_ratio": 0.419
+          "speed_ratio": 1.039,
+          "compile_ratio": 0.485
         }
       ]
     },
@@ -1027,8 +1027,8 @@
           },
           "compared": 28,
           "size_ratio": 1.074,
-          "speed_ratio": 0.845,
-          "compile_ratio": 0.508
+          "speed_ratio": 0.96,
+          "compile_ratio": 0.489
         }
       ]
     },
@@ -1077,8 +1077,8 @@
           },
           "compared": 20,
           "size_ratio": 0.999,
-          "speed_ratio": 0.968,
-          "compile_ratio": 0.49
+          "speed_ratio": 1.23,
+          "compile_ratio": 0.497
         }
       ]
     },
@@ -1127,8 +1127,8 @@
           },
           "compared": 32,
           "size_ratio": 1.14,
-          "speed_ratio": 1.161,
-          "compile_ratio": 0.461
+          "speed_ratio": 0.814,
+          "compile_ratio": 0.491
         }
       ]
     },
@@ -1177,8 +1177,8 @@
           },
           "compared": 42,
           "size_ratio": 1.326,
-          "speed_ratio": 0.933,
-          "compile_ratio": 0.429
+          "speed_ratio": 1.052,
+          "compile_ratio": 0.48
         }
       ]
     },
@@ -1226,9 +1226,9 @@
             "pass_rate": 1
           },
           "compared": 64,
-          "size_ratio": 1.07,
-          "speed_ratio": 1.138,
-          "compile_ratio": 0.41
+          "size_ratio": 1.068,
+          "speed_ratio": 1.155,
+          "compile_ratio": 0.432
         }
       ]
     },
@@ -1277,8 +1277,8 @@
           },
           "compared": 64,
           "size_ratio": 1.061,
-          "speed_ratio": 1.097,
-          "compile_ratio": 0.399
+          "speed_ratio": 0.935,
+          "compile_ratio": 0.474
         }
       ]
     },
@@ -1327,8 +1327,8 @@
           },
           "compared": 64,
           "size_ratio": 1.158,
-          "speed_ratio": 1.055,
-          "compile_ratio": 0.414
+          "speed_ratio": 1.014,
+          "compile_ratio": 0.434
         }
       ]
     },
@@ -1377,8 +1377,8 @@
           },
           "compared": 24,
           "size_ratio": 1.14,
-          "speed_ratio": 1.061,
-          "compile_ratio": 0.466
+          "speed_ratio": 1.113,
+          "compile_ratio": 0.46
         }
       ]
     },
@@ -1427,8 +1427,8 @@
           },
           "compared": 64,
           "size_ratio": 1.084,
-          "speed_ratio": 1.209,
-          "compile_ratio": 0.477
+          "speed_ratio": 1.087,
+          "compile_ratio": 0.438
         }
       ]
     },
@@ -1477,8 +1477,8 @@
           },
           "compared": 48,
           "size_ratio": 1.306,
-          "speed_ratio": 0.909,
-          "compile_ratio": 0.431
+          "speed_ratio": 1.01,
+          "compile_ratio": 0.417
         }
       ]
     },
@@ -1527,8 +1527,8 @@
           },
           "compared": 36,
           "size_ratio": 1.179,
-          "speed_ratio": 1.004,
-          "compile_ratio": 0.47
+          "speed_ratio": 0.98,
+          "compile_ratio": 0.474
         }
       ]
     },
@@ -1577,8 +1577,8 @@
           },
           "compared": 36,
           "size_ratio": 1.114,
-          "speed_ratio": 1.118,
-          "compile_ratio": 0.431
+          "speed_ratio": 0.934,
+          "compile_ratio": 0.398
         }
       ]
     },
@@ -1627,8 +1627,8 @@
           },
           "compared": 20,
           "size_ratio": 1.197,
-          "speed_ratio": 1.014,
-          "compile_ratio": 0.515
+          "speed_ratio": 1.036,
+          "compile_ratio": 0.522
         }
       ]
     },
@@ -1677,8 +1677,8 @@
           },
           "compared": 12,
           "size_ratio": 1.12,
-          "speed_ratio": 1.231,
-          "compile_ratio": 0.42
+          "speed_ratio": 0.804,
+          "compile_ratio": 0.489
         }
       ]
     },
@@ -1727,8 +1727,8 @@
           },
           "compared": 9,
           "size_ratio": 0.956,
-          "speed_ratio": 0.811,
-          "compile_ratio": 0.51
+          "speed_ratio": 0.816,
+          "compile_ratio": 0.471
         }
       ]
     },
@@ -1777,8 +1777,8 @@
           },
           "compared": 4,
           "size_ratio": 1.065,
-          "speed_ratio": 0.901,
-          "compile_ratio": 0.498
+          "speed_ratio": 0.78,
+          "compile_ratio": 0.423
         }
       ]
     },
@@ -1827,8 +1827,8 @@
           },
           "compared": 40,
           "size_ratio": 0.98,
-          "speed_ratio": 1.004,
-          "compile_ratio": 0.474
+          "speed_ratio": 1.077,
+          "compile_ratio": 0.462
         }
       ]
     },
@@ -1877,8 +1877,8 @@
           },
           "compared": 45,
           "size_ratio": 1.559,
-          "speed_ratio": 0.994,
-          "compile_ratio": 0.457
+          "speed_ratio": 1.154,
+          "compile_ratio": 0.46
         }
       ]
     },
@@ -1927,8 +1927,8 @@
           },
           "compared": 40,
           "size_ratio": 1.632,
-          "speed_ratio": 0.965,
-          "compile_ratio": 0.449
+          "speed_ratio": 0.871,
+          "compile_ratio": 0.429
         }
       ]
     },
@@ -1977,8 +1977,8 @@
           },
           "compared": 12,
           "size_ratio": 1.599,
-          "speed_ratio": 1.003,
-          "compile_ratio": 0.446
+          "speed_ratio": 0.835,
+          "compile_ratio": 0.411
         }
       ]
     },
@@ -2027,8 +2027,8 @@
           },
           "compared": 4,
           "size_ratio": 1.024,
-          "speed_ratio": 1.228,
-          "compile_ratio": 0.511
+          "speed_ratio": 1.333,
+          "compile_ratio": 0.596
         }
       ]
     },
@@ -2077,8 +2077,8 @@
           },
           "compared": 20,
           "size_ratio": 1.144,
-          "speed_ratio": 1.113,
-          "compile_ratio": 0.448
+          "speed_ratio": 1.145,
+          "compile_ratio": 0.368
         }
       ]
     },
@@ -2127,8 +2127,8 @@
           },
           "compared": 9,
           "size_ratio": 1.3,
-          "speed_ratio": 0.831,
-          "compile_ratio": 0.435
+          "speed_ratio": 0.952,
+          "compile_ratio": 0.527
         }
       ]
     },
@@ -2177,8 +2177,8 @@
           },
           "compared": 10,
           "size_ratio": 1.238,
-          "speed_ratio": 0.998,
-          "compile_ratio": 0.497
+          "speed_ratio": 1.012,
+          "compile_ratio": 0.535
         }
       ]
     },
@@ -2227,8 +2227,8 @@
           },
           "compared": 22,
           "size_ratio": 0.986,
-          "speed_ratio": 1.117,
-          "compile_ratio": 0.469
+          "speed_ratio": 1.182,
+          "compile_ratio": 0.447
         }
       ]
     },
@@ -2277,8 +2277,8 @@
           },
           "compared": 7,
           "size_ratio": 1.037,
-          "speed_ratio": 0.771,
-          "compile_ratio": 0.53
+          "speed_ratio": 0.927,
+          "compile_ratio": 0.656
         }
       ]
     },
@@ -2327,8 +2327,8 @@
           },
           "compared": 22,
           "size_ratio": 1.01,
-          "speed_ratio": 1.016,
-          "compile_ratio": 0.453
+          "speed_ratio": 0.863,
+          "compile_ratio": 0.488
         }
       ]
     }
