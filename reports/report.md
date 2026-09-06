@@ -2,12 +2,12 @@
 
 Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
 
-The corpus holds 1277 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `8bd020ee46b59024`.
+The corpus holds 1277 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `52a9c415184c18f7`.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.6.0 | under test |
+| `rucc` | rucc 0.6.2 | under test |
 
 ## Did it meet the targets
 
@@ -15,7 +15,7 @@ The corpus holds 1277 programs, each written for one named transformation and ea
 |---|---|---|---|
 | `correctness` | 0 failures | 0 failures | yes |
 | `code-quality:rucc` | within 10 percent | 11 percent more | no |
-| `compile-throughput:rucc` | no worse | 57 percent less | yes |
+| `compile-throughput:rucc` | no worse | 54 percent less | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
 - `code-quality:rucc`: the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2.
@@ -47,27 +47,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `register-alloc` | backend | 40 | 63 percent more | 8 percent less | 57 percent less |
-| `scheduling` | backend | 12 | 60 percent more | 3 percent more | 64 percent less |
-| `register-pressure` | backend | 48 | 56 percent more | 4 percent less | 56 percent less |
-| `induction-variable` | loops | 42 | 33 percent more | 3 percent more | 59 percent less |
-| `loop-restructure` | loops | 48 | 31 percent more | 6 percent more | 66 percent less |
-| `switch-lowering` | backend | 9 | 30 percent more | 16 percent less | 65 percent less |
-| `value-range` | global | 13 | 26 percent more | 41 percent more | 61 percent less |
-| `simplify` | local | 53 | 24 percent more | 4 percent less | 51 percent less |
+| `register-alloc` | backend | 40 | 63 percent more | 3 percent less | 55 percent less |
+| `scheduling` | backend | 12 | 60 percent more | level | 55 percent less |
+| `register-pressure` | backend | 48 | 56 percent more | 1 percent less | 54 percent less |
+| `induction-variable` | loops | 42 | 33 percent more | 7 percent less | 57 percent less |
+| `loop-restructure` | loops | 48 | 31 percent more | 9 percent less | 57 percent less |
+| `switch-lowering` | backend | 9 | 30 percent more | 17 percent less | 57 percent less |
+| `value-range` | global | 13 | 26 percent more | 6 percent less | 48 percent less |
+| `simplify` | local | 53 | 24 percent more | 9 percent more | 60 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `copy-propagation` | global | 12 | 6 percent less | 14 percent more | 64 percent less |
-| `unreachable-code` | local | 8 | 4 percent less | 9 percent more | 66 percent less |
-| `reachability` | interprocedural | 9 | 4 percent less | 4 percent more | 48 percent less |
-| `dead-code` | local | 12 | 4 percent less | 53 percent more | 56 percent less |
-| `selection` | backend | 40 | 2 percent less | 11 percent less | 46 percent less |
-| `machine-peephole` | backend | 22 | 1 percent less | 3 percent more | 66 percent less |
-| `constant-propagation` | global | 16 | level | 41 percent more | 57 percent less |
-| `scalar-replacement` | global | 20 | level | 41 percent more | 45 percent less |
+| `copy-propagation` | global | 12 | 6 percent less | 9 percent less | 59 percent less |
+| `unreachable-code` | local | 8 | 4 percent less | 23 percent more | 50 percent less |
+| `reachability` | interprocedural | 9 | 4 percent less | 19 percent less | 49 percent less |
+| `dead-code` | local | 12 | 4 percent less | 6 percent more | 57 percent less |
+| `selection` | backend | 40 | 2 percent less | level | 53 percent less |
+| `machine-peephole` | backend | 22 | 1 percent less | 12 percent more | 53 percent less |
+| `constant-propagation` | global | 16 | level | 1 percent less | 55 percent less |
+| `scalar-replacement` | global | 20 | level | 3 percent less | 51 percent less |
 
 ## By phase of the plan
 
