@@ -1,7 +1,7 @@
 {
   "schema": "1",
-  "corpus_sha256": "67839b19f50d8e943649aab01886d76ac12f2fc4f77a7503dc09982a73a257be",
-  "count": 1285,
+  "corpus_sha256": "b1f554640c2efebb6eee4c6e60c2d2a6ba4a991513d0016e45462d335fbbf9ee",
+  "count": 1429,
   "cases": [
     {
       "id": "alias-analysis.i32.char-pointer.c17.2c550cb8",
@@ -508,6 +508,499 @@
       "source_sha256": "cdff97f02e74f16e6560a0fd2976bf0f0ceefaec692110fd93b992d63bcd8912"
     },
     {
+      "id": "atomics.exchange.i16.c17.b3725d59",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "i16"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "b3725d59fa0a7fb8dacd5c9c9f20a816d8b8f3a625bde150bcdfd7717fae8577"
+    },
+    {
+      "id": "atomics.exchange.i32.c17.56bac4d2",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "i32"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "56bac4d21b7ca5bbca336b29ae17beae509dc11237e2357c24f4d27d3735625d"
+    },
+    {
+      "id": "atomics.exchange.i64.c17.ae722f49",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "i64"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "ae722f497a73fc2b470df961650c40db0eb1e3f8b7ee729535a56bedaf199879"
+    },
+    {
+      "id": "atomics.exchange.i8.c17.718b6040",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "i8"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "718b604035feb2f3f1a7c40f320b50b0a31659cf3d49f036c408b83cb9263381"
+    },
+    {
+      "id": "atomics.exchange.u16.c17.c562a220",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "u16"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "c562a22021643d2305747842cae22fc6839702981b3e1e8c16ee5f55433e32ce"
+    },
+    {
+      "id": "atomics.exchange.u32.c17.6a366331",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "u32"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "6a366331f6f05c95c37d98c7cf0c231b2b8e1b00fd7b62879023ec3351bb438d"
+    },
+    {
+      "id": "atomics.exchange.u64.c17.72009905",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "u64"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "720099050b8767ea5bfa4ac54ff891ec2b17a079c816b332fe84960d7b727bf9"
+    },
+    {
+      "id": "atomics.exchange.u8.c17.07e6e337",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "exchange",
+        "type": "u8"
+      },
+      "expect_kind": "output",
+      "expect": "1\n10\n11\n12\n13\n14\n15\n15\n7\n1\n7\n12\n1\n12\n17\n1\n17\n22\n0\n22\n22\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "07e6e337a4a5c3ce44f2c7caddffd496d5f61da7f948baed520009db62941917"
+    },
+    {
+      "id": "atomics.fence.c17.6b7c6e1f",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fence"
+      },
+      "expect_kind": "output",
+      "expect": "3\n2\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "6b7c6e1f502c50435a17321ecb8a74171855ac0fb58ff1faf0113bb35ad3dc63"
+    },
+    {
+      "id": "atomics.fetch-op.i16.c17.f2fddbd2",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "i16"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n-17\n-17\n1\n2\n3\n4\n5\n6\n-51\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "f2fddbd2e0da73d71f4be01c2d839ffc5616cecfb00bffc72101087f75fa5a1c"
+    },
+    {
+      "id": "atomics.fetch-op.i32.c17.f8f5948f",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "i32"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n-17\n-17\n1\n2\n3\n4\n5\n6\n-51\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "f8f5948f0c67aa73bd031ec6055947d0540ff89d11d74b51d3fc8c56ac827aeb"
+    },
+    {
+      "id": "atomics.fetch-op.i64.c17.39b9037a",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "i64"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n-17\n-17\n1\n2\n3\n4\n5\n6\n-51\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "39b9037a4676e53be1500b95764c4210977e5cb9ffd326a3d8471a22e4ed1788"
+    },
+    {
+      "id": "atomics.fetch-op.i8.c17.641779b5",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "i8"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n-17\n-17\n1\n2\n3\n4\n5\n6\n-51\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "641779b5399364a8fb19b5593eb49b993c28b7b6a3375d11bd216ddb8e3dbd1f"
+    },
+    {
+      "id": "atomics.fetch-op.u16.c17.22d053de",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "u16"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n65519\n65519\n1\n2\n3\n4\n5\n6\n65485\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "22d053de842ea1ce1104c9f3b0dc5ec89c7b5f4b8f742123fc0bc09a4b55793d"
+    },
+    {
+      "id": "atomics.fetch-op.u32.c17.05b38601",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "u32"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n4294967279\n4294967279\n1\n2\n3\n4\n5\n6\n4294967245\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "05b3860190228c59da40f6caf1578ad12fff294a29a81ad6157a36e3ddf11ff8"
+    },
+    {
+      "id": "atomics.fetch-op.u64.c17.18d98da0",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "u64"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n18446744073709551599\n18446744073709551599\n1\n2\n3\n4\n5\n6\n18446744073709551565\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "18d98da06b2cc8ab55bbe47bc9a60def7b4efa403b792d8188baa8685e177984"
+    },
+    {
+      "id": "atomics.fetch-op.u8.c17.43c093fd",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "fetch-op",
+        "type": "u8"
+      },
+      "expect_kind": "output",
+      "expect": "50\n75\n75\n50\n25\n25\n50\n16\n16\n50\n59\n59\n50\n43\n43\n50\n239\n239\n1\n2\n3\n4\n5\n6\n205\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "43c093fd21969d725d66dbc313fdb953b9dade2ea21a94bf02378eb11b1fa6aa"
+    },
+    {
+      "id": "atomics.flag.c17.c1e486c9",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "flag"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "c1e486c97f7d96e931e63d7b6015f6f0d910b4c4ed2e2bdc927f4ef14760026b"
+    },
+    {
+      "id": "atomics.load-store.i16.c17.74a1721f",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "i16"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "74a1721f9c891436d75f21396cf0961625611d88051e3ddd0248cdadc92822c1"
+    },
+    {
+      "id": "atomics.load-store.i32.c17.c60384ba",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "i32"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "c60384bad49c741b71bfb6b4a576535e18c9a84c2cfd6e75604bcb2680c5b461"
+    },
+    {
+      "id": "atomics.load-store.i64.c17.b940f74d",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "i64"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "b940f74d48aaa935a06b1db1117516d15ea487027ff46ce5f2976af913f38227"
+    },
+    {
+      "id": "atomics.load-store.i8.c17.359e146d",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "i8"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "359e146d4dbf5b604cc20decd520bb674a45c302034a8faa69109f6a38c7b21f"
+    },
+    {
+      "id": "atomics.load-store.u16.c17.0408b893",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "u16"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "0408b8932724dce7fa3c261174e32a61d0b730e2e1080c5646ae3596cf9daf27"
+    },
+    {
+      "id": "atomics.load-store.u32.c17.153542fd",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "u32"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "153542fd74343c1b69bd6b9f7cda98c693ad0a09577b5f4254c3e4288a8479c6"
+    },
+    {
+      "id": "atomics.load-store.u64.c17.66142599",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "u64"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "66142599ee6f30ceedd84f6899158dc024cbd465be56d97061f9307140f73cf7"
+    },
+    {
+      "id": "atomics.load-store.u8.c17.36de058a",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "load-store",
+        "type": "u8"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n3\n3\n10\n10\n10\n10\n31\n31\n31\n31\n31\n9\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "36de058a3506682c588072d8b72919e3d7b950f37735af79b6a9f4d5e758a344"
+    },
+    {
+      "id": "atomics.stdatomic-flag.c17.6551714c",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "stdatomic-flag"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n0\n0\n",
+      "tags": [
+        "headers"
+      ],
+      "source_sha256": "6551714c6193ac9005647b937936d610d1d14cc167318a508edc358fad8c71e4"
+    },
+    {
+      "id": "atomics.stdatomic.i32.c17.95fbc2ae",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "stdatomic",
+        "type": "i32"
+      },
+      "expect_kind": "output",
+      "expect": "5\n9\n9\n12\n12\n8\n1\n8\n20\n0\n20\n20\n41\n41\n7\n7\n",
+      "tags": [
+        "headers"
+      ],
+      "source_sha256": "95fbc2ae173defc39aea5eba3ae025e309db0db80b46bbad4e92c2759ba567af"
+    },
+    {
+      "id": "atomics.stdatomic.i64.c17.19020add",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "stdatomic",
+        "type": "i64"
+      },
+      "expect_kind": "output",
+      "expect": "5\n9\n9\n12\n12\n8\n1\n8\n20\n0\n20\n20\n41\n41\n7\n7\n",
+      "tags": [
+        "headers"
+      ],
+      "source_sha256": "19020addaef51eb165332328bd766ccd40ff4596d359508099c8f9a261a38a4f"
+    },
+    {
+      "id": "atomics.stdatomic.u32.c17.efd489a1",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "stdatomic",
+        "type": "u32"
+      },
+      "expect_kind": "output",
+      "expect": "5\n9\n9\n12\n12\n8\n1\n8\n20\n0\n20\n20\n41\n41\n7\n7\n",
+      "tags": [
+        "headers"
+      ],
+      "source_sha256": "efd489a1f76e80892a53376f1fce6fc6b0c57c3ca7f05ff499786c8dbe439e46"
+    },
+    {
+      "id": "atomics.stdatomic.u64.c17.53c8ec77",
+      "facet": "atomics",
+      "phase": "correctness",
+      "dialect": "c17",
+      "axes": {
+        "shape": "stdatomic",
+        "type": "u64"
+      },
+      "expect_kind": "output",
+      "expect": "5\n9\n9\n12\n12\n8\n1\n8\n20\n0\n20\n20\n41\n41\n7\n7\n",
+      "tags": [
+        "headers"
+      ],
+      "source_sha256": "53c8ec77ec497602f8bbf90cbd5d9d84401bbcfc7a6e3ea4b8efc4d670673177"
+    },
+    {
       "id": "barrier.char-aliasing.c17.c3cc419e",
       "facet": "barrier",
       "phase": "correctness",
@@ -727,6 +1220,380 @@
       "expect": "6\n14\n",
       "tags": [],
       "source_sha256": "6ce43b43ff5a91609216bb52c37cbe8070f12f7504ce1f142c29f8dfb94a6b70"
+    },
+    {
+      "id": "bit-builtins.clz.32.constant.c17.28dfb88c",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "clz",
+        "width": "32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "31\n30\n29\n28\n27\n26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14\n13\n12\n11\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n0\n1\n0\n4\n30\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "28dfb88cedc058d75180a6e3b6dad19e20c9c6f31fcf98c24bfec2c29332a0c0"
+    },
+    {
+      "id": "bit-builtins.clz.32.opaque.c17.ae6288bb",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "clz",
+        "width": "32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "31\n30\n29\n28\n27\n26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14\n13\n12\n11\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n0\n1\n0\n4\n30\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "ae6288bbefe963153f8168c35d3978c3051e2fa3fdcf63e1ca2d7f0234b2dd2d"
+    },
+    {
+      "id": "bit-builtins.clz.64.constant.c17.f4df51de",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "clz",
+        "width": "64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "63\n62\n61\n60\n59\n58\n57\n56\n55\n54\n53\n52\n51\n50\n49\n48\n47\n46\n45\n44\n43\n42\n41\n40\n39\n38\n37\n36\n35\n34\n33\n32\n31\n30\n29\n28\n27\n26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14\n13\n12\n11\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n0\n1\n0\n4\n62\n32\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "f4df51de7620d8824533ca821f945dd433df140c62a5a3e35e549c7c01a983b7"
+    },
+    {
+      "id": "bit-builtins.clz.64.opaque.c17.141bb983",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "clz",
+        "width": "64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "63\n62\n61\n60\n59\n58\n57\n56\n55\n54\n53\n52\n51\n50\n49\n48\n47\n46\n45\n44\n43\n42\n41\n40\n39\n38\n37\n36\n35\n34\n33\n32\n31\n30\n29\n28\n27\n26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14\n13\n12\n11\n10\n9\n8\n7\n6\n5\n4\n3\n2\n1\n0\n0\n1\n0\n4\n62\n32\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "141bb983452b79de682b863540ac476abf28e54e4977513bfa750c357983336d"
+    },
+    {
+      "id": "bit-builtins.ctz.32.constant.c17.e6049bf4",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ctz",
+        "width": "32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n0\n0\n1\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "e6049bf4911157222baf0511be4b29c7cd0f8ee94535ccc757826becb625fcae"
+    },
+    {
+      "id": "bit-builtins.ctz.32.opaque.c17.17ff467a",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ctz",
+        "width": "32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n0\n0\n1\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "17ff467a01f2e49ed02b5510e1f135674e530e0fee7db96f3380692a59c4e673"
+    },
+    {
+      "id": "bit-builtins.ctz.64.constant.c17.47733a8a",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ctz",
+        "width": "64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n0\n0\n1\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "47733a8a6d99d676460beb1a409b3a038d6375aa5849623fdd12846485d67ce2"
+    },
+    {
+      "id": "bit-builtins.ctz.64.opaque.c17.7db4c85e",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ctz",
+        "width": "64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n0\n0\n1\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "7db4c85e489452cc5b224cb05cbad9307af33635f3c0c61c5dde8124222363c8"
+    },
+    {
+      "id": "bit-builtins.family.32.zero-argument.c17.e04c2836",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "family",
+        "width": "32",
+        "form": "zero-argument"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n1\n32\n31\n32\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "e04c28364b11d5841426bb332516909b5cb3cb5c407ad691680793c47a17435e"
+    },
+    {
+      "id": "bit-builtins.family.64.zero-argument.c17.2cb5a63a",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "family",
+        "width": "64",
+        "form": "zero-argument"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n1\n64\n63\n64\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "2cb5a63a3bdb3da53e18e01aeb3d9dd1123f08c4fc74817a0189ce733b1fdb45"
+    },
+    {
+      "id": "bit-builtins.ffs.32.constant.c17.87d91dc6",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ffs",
+        "width": "32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n1\n1\n2\n1\n1\n1\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "87d91dc6848cdebca19b6aaec23ca609e94f3d512ede9971e0c13e21b182acbe"
+    },
+    {
+      "id": "bit-builtins.ffs.32.opaque.c17.6a377103",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ffs",
+        "width": "32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n1\n1\n2\n1\n1\n1\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "6a377103c51d11e76e46a33e6b5c4b416cdc0f5dd8ef98f38c2f28e1207e7bdc"
+    },
+    {
+      "id": "bit-builtins.ffs.64.constant.c17.1ba535b8",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ffs",
+        "width": "64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n1\n1\n2\n1\n1\n1\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "1ba535b891e447651c29fc6fa419280a8c17ede71e887c9808aa30178b554fdf"
+    },
+    {
+      "id": "bit-builtins.ffs.64.opaque.c17.f819e4ba",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "ffs",
+        "width": "64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n1\n1\n2\n1\n1\n1\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "f819e4ba8f3dfbafff1f2b11fa63a5a022e1fc908055f1c844a0a5b85463db7c"
+    },
+    {
+      "id": "bit-builtins.parity.32.constant.c17.6c9cd445",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "parity",
+        "width": "32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n0\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "6c9cd4452b7e71a3b0fd5d29320ac13d7bb09eaae67901e4abe1cde2bbc709a7"
+    },
+    {
+      "id": "bit-builtins.parity.32.opaque.c17.3d0509eb",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "parity",
+        "width": "32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n0\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "3d0509ebb5da639b48908f878e4d7dcddfba9052ab36e0deeb2efdf842873399"
+    },
+    {
+      "id": "bit-builtins.parity.64.constant.c17.b55da1a0",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "parity",
+        "width": "64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n0\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "b55da1a0bc82bc850ce09c25c43903a2472c9bd7ea68ccb03864a9fccc368484"
+    },
+    {
+      "id": "bit-builtins.parity.64.opaque.c17.101268bd",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "parity",
+        "width": "64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n0\n0\n0\n0\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "101268bd47c7ec8e85df39087fe247a79e3c1fe7b631b23730f2c27e25f539e7"
+    },
+    {
+      "id": "bit-builtins.popcount.32.constant.c17.57b6685a",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "popcount",
+        "width": "32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n32\n16\n16\n16\n2\n2\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "57b6685a22d3d6f74692e0799daaceaa464423c68dc582f33a1808dc8410d4ee"
+    },
+    {
+      "id": "bit-builtins.popcount.32.opaque.c17.d12f5f5b",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "popcount",
+        "width": "32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n32\n16\n16\n16\n2\n2\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "d12f5f5bf224933b1d15371e1568f54129d34f208e0b2ea713834386709112dc"
+    },
+    {
+      "id": "bit-builtins.popcount.64.constant.c17.ae754876",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "popcount",
+        "width": "64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n64\n32\n32\n32\n2\n2\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "ae754876d37a6d1260f18868cfac038828bcf9e9c7a1be2b4a1a39f1a5433f70"
+    },
+    {
+      "id": "bit-builtins.popcount.64.opaque.c17.570eadf7",
+      "facet": "bit-builtins",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "builtin": "popcount",
+        "width": "64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n64\n32\n32\n32\n2\n2\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "570eadf7d5462c86f30307ee6d42eedf9b93676634b06e079a1abf1ebfa6402e"
     },
     {
       "id": "block-layout.chain-of-tests.c17.b179ceb6",
@@ -1831,6 +2698,406 @@
       "expect": "84\n",
       "tags": [],
       "source_sha256": "b5d96c1e579fedac38d3faf7176bfb65bffd78df72665075ebaf5712c4f9f70d"
+    },
+    {
+      "id": "computed-goto.address-in-variable.16.c17.4419a599",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "address-in-variable",
+        "arms": "16"
+      },
+      "expect_kind": "output",
+      "expect": "16760423199993841385\n48\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "4419a599b34e117eb9ee195466138df221791ef748cc25eff17db0ad92d03834"
+    },
+    {
+      "id": "computed-goto.address-in-variable.2.c17.a33b2e85",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "address-in-variable",
+        "arms": "2"
+      },
+      "expect_kind": "output",
+      "expect": "916162654\n6\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "a33b2e85fe2d46c17f66bb0500be3d1f73b9e2aa68d4687842320432d6694128"
+    },
+    {
+      "id": "computed-goto.address-in-variable.32.c17.e8044aad",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "address-in-variable",
+        "arms": "32"
+      },
+      "expect_kind": "output",
+      "expect": "6972764600594353617\n96\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "e8044aad972932fb237d8441bb307835142eeec0c5bad56c9ec050ce31c6e038"
+    },
+    {
+      "id": "computed-goto.address-in-variable.4.c17.36d288b4",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "address-in-variable",
+        "arms": "4"
+      },
+      "expect_kind": "output",
+      "expect": "865553995015456699\n12\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "36d288b424183079bb560b5416b637a35bcbce19ce5da39769d56f886c9b3203"
+    },
+    {
+      "id": "computed-goto.address-in-variable.8.c17.a131ff8c",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "address-in-variable",
+        "arms": "8"
+      },
+      "expect_kind": "output",
+      "expect": "2766136653552872309\n24\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "a131ff8c563d04def110381356a01665c13210820977603d037ad68de961704f"
+    },
+    {
+      "id": "computed-goto.direct-threading.16.c17.9ef5d477",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "direct-threading",
+        "arms": "16"
+      },
+      "expect_kind": "output",
+      "expect": "16760423199993841385\n48\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "9ef5d47710a15f8220426ea66b1d05f421d58179bf886ac807e984074bc22cc4"
+    },
+    {
+      "id": "computed-goto.direct-threading.2.c17.9d826778",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "direct-threading",
+        "arms": "2"
+      },
+      "expect_kind": "output",
+      "expect": "916162654\n6\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "9d82677805483f5ff5fef9e3616499d094fcaa0c7ace6aac88954413ab2d0fb4"
+    },
+    {
+      "id": "computed-goto.direct-threading.32.c17.959e89b2",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "direct-threading",
+        "arms": "32"
+      },
+      "expect_kind": "output",
+      "expect": "6972764600594353617\n96\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "959e89b24c1592c1106dab51c1d54b429b71c47e141d8c18f61d6da3f4cb3e5a"
+    },
+    {
+      "id": "computed-goto.direct-threading.4.c17.ec700a9b",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "direct-threading",
+        "arms": "4"
+      },
+      "expect_kind": "output",
+      "expect": "865553995015456699\n12\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "ec700a9b74513f4e772cc89727f31a46d53148dd717746978b7482c0e9f8d62a"
+    },
+    {
+      "id": "computed-goto.direct-threading.8.c17.d4e81a50",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "direct-threading",
+        "arms": "8"
+      },
+      "expect_kind": "output",
+      "expect": "2766136653552872309\n24\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "d4e81a50b65b5b90be79aa9e4f2b031aebcfa38941886a8a161720cd22fb5cac"
+    },
+    {
+      "id": "computed-goto.dispatch-block.16.c17.a3ee3259",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-block",
+        "arms": "16"
+      },
+      "expect_kind": "output",
+      "expect": "16760423199993841385\n48\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "a3ee32598c2c86cc499df249d9c823c1875e94045dfa5d999c79daf7fbcc41f1"
+    },
+    {
+      "id": "computed-goto.dispatch-block.2.c17.9d10744b",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-block",
+        "arms": "2"
+      },
+      "expect_kind": "output",
+      "expect": "916162654\n6\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "9d10744bd2cbb1d950a67d3d20c3b04eba8bf38d2961a22d7b042228f331f654"
+    },
+    {
+      "id": "computed-goto.dispatch-block.32.c17.4f6367b3",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-block",
+        "arms": "32"
+      },
+      "expect_kind": "output",
+      "expect": "6972764600594353617\n96\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "4f6367b35e8fa65a61b6824c60ea77539a6948aa6527e91de3f5974c9eb08aa1"
+    },
+    {
+      "id": "computed-goto.dispatch-block.4.c17.a356d0a2",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-block",
+        "arms": "4"
+      },
+      "expect_kind": "output",
+      "expect": "865553995015456699\n12\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "a356d0a23b9ee6101d6dcd35f9f1f0954e1b1b5cb194ed2cb50cb71e3c0a0dcc"
+    },
+    {
+      "id": "computed-goto.dispatch-block.8.c17.ea739930",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-block",
+        "arms": "8"
+      },
+      "expect_kind": "output",
+      "expect": "2766136653552872309\n24\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "ea739930619894612c9647e67252a721f330a2c5eeac7b3f8fddca0648a9ef86"
+    },
+    {
+      "id": "computed-goto.dispatch-in-loop.16.c17.261af709",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-in-loop",
+        "arms": "16"
+      },
+      "expect_kind": "output",
+      "expect": "16760423199993841385\n48\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "261af709bd690978e65ee60fa3707e8919b4e0ebf31f94d1444f675fba97c721"
+    },
+    {
+      "id": "computed-goto.dispatch-in-loop.2.c17.3dc137d7",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-in-loop",
+        "arms": "2"
+      },
+      "expect_kind": "output",
+      "expect": "916162654\n6\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "3dc137d7d12775b4b87bfa607fa70cc492e9194eb082daf2b9e27cbfec81c588"
+    },
+    {
+      "id": "computed-goto.dispatch-in-loop.32.c17.0aa5c5d2",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-in-loop",
+        "arms": "32"
+      },
+      "expect_kind": "output",
+      "expect": "6972764600594353617\n96\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "0aa5c5d22cf1ec33f4d0a9e9501beae9c8f60b9420f5af9719a88fa5a937f4ef"
+    },
+    {
+      "id": "computed-goto.dispatch-in-loop.4.c17.eb694d88",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-in-loop",
+        "arms": "4"
+      },
+      "expect_kind": "output",
+      "expect": "865553995015456699\n12\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "eb694d88d93efb2136b1818b0702d5a1b545517851c08c8ebc23b093de6d5242"
+    },
+    {
+      "id": "computed-goto.dispatch-in-loop.8.c17.2e2b4cf5",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "dispatch-in-loop",
+        "arms": "8"
+      },
+      "expect_kind": "output",
+      "expect": "2766136653552872309\n24\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "2e2b4cf55db25f5dd11ba97cf52d52d9a517cc35d779e4cce35a72e04be9eb9f"
+    },
+    {
+      "id": "computed-goto.static-table.16.c17.7956dc9b",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "static-table",
+        "arms": "16"
+      },
+      "expect_kind": "output",
+      "expect": "16760423199993841385\n48\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "7956dc9bfa70d975568195a7b46516e9cf2dc046eac5c73e4edf1cf829af87cc"
+    },
+    {
+      "id": "computed-goto.static-table.2.c17.10f906d7",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "static-table",
+        "arms": "2"
+      },
+      "expect_kind": "output",
+      "expect": "916162654\n6\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "10f906d7adbdb013f02dc99223257c766d0d250eddd400bfc2864a54759aed93"
+    },
+    {
+      "id": "computed-goto.static-table.32.c17.826c3be4",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "static-table",
+        "arms": "32"
+      },
+      "expect_kind": "output",
+      "expect": "6972764600594353617\n96\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "826c3be4a36c0e7163dbab2042843eec11aedb47668164d438182098a22efe2d"
+    },
+    {
+      "id": "computed-goto.static-table.4.c17.3389200f",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "static-table",
+        "arms": "4"
+      },
+      "expect_kind": "output",
+      "expect": "865553995015456699\n12\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "3389200fff931b1ecea31e61932d8edee56c2075af6f3ff236f8e68cd31d0645"
+    },
+    {
+      "id": "computed-goto.static-table.8.c17.a1556285",
+      "facet": "computed-goto",
+      "phase": "floor",
+      "dialect": "c17",
+      "axes": {
+        "shape": "static-table",
+        "arms": "8"
+      },
+      "expect_kind": "output",
+      "expect": "2766136653552872309\n24\n",
+      "tags": [
+        "gnu"
+      ],
+      "source_sha256": "a15562850467a843d41e67a65d54af645f0cade2f85701f99b4acbaa33a1df5b"
     },
     {
       "id": "constant-args.i32.all-sites-agree.c17.ba3f81da",
@@ -4479,6 +5746,1058 @@
       "expect": "21\n",
       "tags": [],
       "source_sha256": "1b073f50d42b18c1b507b4af681cd4dcf358a7d487e27bc9c53a7123bd84ea71"
+    },
+    {
+      "id": "float-conversion.narrowing.constant.c17.addf11ab",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "narrowing",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "16777216\n16777216\n33554436\n33554436\n33554444\n33554444\n1000000000\n1000000000\n1234567936\n1234567936\n-1234567936\n-1234567936\n4503599627370496\n4503599627370496\n",
+      "tags": [],
+      "source_sha256": "addf11ab0c9cfac46a4d3c717b40b268216c6f1ecb3929c67dba5e0e41a1a1a6"
+    },
+    {
+      "id": "float-conversion.narrowing.opaque.c17.3af8c1da",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "narrowing",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "16777216\n16777216\n33554436\n33554436\n33554444\n33554444\n1000000000\n1000000000\n1234567936\n1234567936\n-1234567936\n-1234567936\n4503599627370496\n4503599627370496\n",
+      "tags": [],
+      "source_sha256": "3af8c1da89f946e4f0e2c17ec7f593b6dde7b46bde0ce495d13a19ed74bcbff2"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i16.constant.c17.c431445e",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-32768\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n256\n16383\n32767\n",
+      "tags": [],
+      "source_sha256": "c431445e2d78c0c9bf88999e100953e24d0373a4ee7b013102007e6144e3d0c8"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i16.opaque.c17.5cff3f77",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-32768\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n256\n16383\n32767\n",
+      "tags": [],
+      "source_sha256": "5cff3f7726fc42ea410598a858d4cd0674bb4af6d09ba2b7ed887012c1a0a8a8"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i32.constant.c17.c11a1357",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n65536\n1073741823\n2147483647\n",
+      "tags": [],
+      "source_sha256": "c11a1357e0aafe4e5c030b7fef813af17d0c264c470968a1c393fe8e33bab629"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i32.opaque.c17.b9134944",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n65536\n1073741823\n2147483647\n",
+      "tags": [],
+      "source_sha256": "b9134944c69abe99d8ad9215d25f19a2b4235602fe146107ee97c20360828750"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i64.constant.c17.58674cfd",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "58674cfd960d2dbbb75a9ee4cd048ce2f5e90addda2ac25175f0c1de58980e78"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i64.opaque.c17.8a046b27",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "8a046b27366e167fcc7bf7f5de72e8c32d0febffa4952ebb077ae39ae9645343"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i8.constant.c17.cc9928ac",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n127\n",
+      "tags": [],
+      "source_sha256": "cc9928ac8654682c5cc57ef2ac5684692c3ce0cb5bd913e65cbe51be9d56fb64"
+    },
+    {
+      "id": "float-conversion.round-trip.double.i8.opaque.c17.d2ce6afb",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "i8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n127\n",
+      "tags": [],
+      "source_sha256": "d2ce6afb7b9db1e126bfbb813cfb793c5021de99c7654e33014709eeb9ea6194"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u16.constant.c17.e87251b7",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n256\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "e87251b73c5a323ed58f5b275311f0a29369d5efe405e3e0cbd4cde2eaee343a"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u16.opaque.c17.3bbc5565",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n256\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "3bbc5565387d6d14226640f81acb8d345e8dbc6e6832c05c5fd75879022e0b52"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u32.constant.c17.ede75966",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n65536\n2147483647\n4294967295\n",
+      "tags": [],
+      "source_sha256": "ede759664d2ccc848b6c74e17532df3fe2ad8bcad6038aba609000b19097a35b"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u32.opaque.c17.f042f1fd",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n65536\n2147483647\n4294967295\n",
+      "tags": [],
+      "source_sha256": "f042f1fd8b18001dfa2c4191d4f0ae818fb5bf2d422d2307feb7c1b1d54120d4"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u64.constant.c17.14955e84",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "14955e84d86722c662844113b7045d4acff354a863cfa3037d14e81b52f19bdc"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u64.opaque.c17.c5126ac1",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "c5126ac1cba48ca560414b5b3fe21f877a88be954aedad41f5e2d2ec850e0797"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u8.constant.c17.f43d21a1",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n",
+      "tags": [],
+      "source_sha256": "f43d21a111c8fde1aea0ac83cca1fba6bef5908e74e2e15bdb51ca470c25eedc"
+    },
+    {
+      "id": "float-conversion.round-trip.double.u8.opaque.c17.1fccb2d7",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "double",
+        "type": "u8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n",
+      "tags": [],
+      "source_sha256": "1fccb2d755735cea6059e75f1177165d234c828b7afad4a3f761bf3f0f30190e"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i16.constant.c17.648a57d4",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-32768\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n256\n16383\n32767\n",
+      "tags": [],
+      "source_sha256": "648a57d4887037dfc46b3d4be0708f4b2c187559cabed91bd00540fa68e08fbf"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i16.opaque.c17.7fac41a8",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-32768\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n256\n16383\n32767\n",
+      "tags": [],
+      "source_sha256": "7fac41a83dc380b10f0283998841545c5958aaed6dd5caf2801785cc4222440f"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i32.constant.c17.0e77a03a",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n65536\n",
+      "tags": [],
+      "source_sha256": "0e77a03a207aef3f896fd1b015d4b4ce87dd152599d6fa27562686ec2b187e29"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i32.opaque.c17.67f2659a",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n65536\n",
+      "tags": [],
+      "source_sha256": "67f2659ac46cd5e26141b30361505a306f75a55e93393daab903e9a5db9fe229"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i64.constant.c17.0ba80b15",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "0ba80b156288892b2175a71d57207b2572315a32a3367b96002e2372b3421c24"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i64.opaque.c17.3b8210c0",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-255\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "3b8210c02f23572541d963d004151dc5d70209b65feb6a298f2dd977c19dbed0"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i8.constant.c17.c728858b",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n127\n",
+      "tags": [],
+      "source_sha256": "c728858be8ece2b2bd9cb1b79c468c14bf8898d35f8d11820daa9b1e7e0ec63c"
+    },
+    {
+      "id": "float-conversion.round-trip.float.i8.opaque.c17.6e91a1f8",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "i8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-8\n-2\n-1\n0\n1\n2\n3\n7\n8\n16\n127\n",
+      "tags": [],
+      "source_sha256": "6e91a1f8dab7d22c10b783f1a7003df64e234e83a1ed54f24653858a6e8aa595"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u16.constant.c17.119d485a",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n256\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "119d485a1e1b51092d9fb452440095e7313ecf039f2da4d3af13e400ce662e13"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u16.opaque.c17.59678cdd",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n256\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "59678cdddbb7bd7b9ff93b88c643f87eb2b8c3c2e62533c2ff4983a43e32f9cf"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u32.constant.c17.a6ea0bae",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n65536\n",
+      "tags": [],
+      "source_sha256": "a6ea0baee0f03cbd1a33fd7eb1d42a820aa357ee74e21414ea5ff8bfadb7ad6d"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u32.opaque.c17.7cddf8a3",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n65536\n",
+      "tags": [],
+      "source_sha256": "7cddf8a3e4e24c512d06eaee30b34e4ae11e4050618705830083ae3342890991"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u64.constant.c17.16e2a877",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "16e2a877d154656f0bd565f2d7998c055f7601503a577b5ad1da891f1b12b424"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u64.opaque.c17.9350d895",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n4294967296\n",
+      "tags": [],
+      "source_sha256": "9350d895cd10eeb8717b5aac91fd28ee42bd32f31891d14c160198e17d40538b"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u8.constant.c17.37f36c3c",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n",
+      "tags": [],
+      "source_sha256": "37f36c3ce899ca7a9887f8e15be4f3d5fed50f4f1e5eeecf26b9ca088666f68c"
+    },
+    {
+      "id": "float-conversion.round-trip.float.u8.opaque.c17.461039e4",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "round-trip",
+        "float": "float",
+        "type": "u8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n1\n2\n3\n7\n8\n16\n255\n",
+      "tags": [],
+      "source_sha256": "461039e4e9cd8556e96a0c1eaf0794f569de270f7d07e82f7302bbf74c0492da"
+    },
+    {
+      "id": "float-conversion.truncate.double.i16.constant.c17.8721b335",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n",
+      "tags": [],
+      "source_sha256": "8721b33566836b2c5d7f4833cdbc4fb03efa1de4c03ed12a36cb35bef93518b0"
+    },
+    {
+      "id": "float-conversion.truncate.double.i16.opaque.c17.30ecd8ce",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n",
+      "tags": [],
+      "source_sha256": "30ecd8ce5c91ef387f9b71d154e28fdbac3a887f4782afb4b882dd2400b6355b"
+    },
+    {
+      "id": "float-conversion.truncate.double.i32.constant.c17.df27c20d",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n2147483647\n-2147483648\n",
+      "tags": [],
+      "source_sha256": "df27c20dc8c4f5f90ed3069a7ba3d272de6e3bc6326c19bd2270aed7af2b2838"
+    },
+    {
+      "id": "float-conversion.truncate.double.i32.opaque.c17.e2b3935c",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n2147483647\n-2147483648\n",
+      "tags": [],
+      "source_sha256": "e2b3935cdd2c15c44ba794af61f494ff7fb4e00e8920ee32693f8fe372e424e2"
+    },
+    {
+      "id": "float-conversion.truncate.double.i64.constant.c17.8948eaf6",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n2147483647\n-2147483648\n4294967295\n9007199254740992\n9223372036854774784\n",
+      "tags": [],
+      "source_sha256": "8948eaf66b49fca0cc1363727ce06943909373169e732ecf7be1d28e69754488"
+    },
+    {
+      "id": "float-conversion.truncate.double.i64.opaque.c17.97c043ba",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n2147483647\n-2147483648\n4294967295\n9007199254740992\n9223372036854774784\n",
+      "tags": [],
+      "source_sha256": "97c043ba3ff80bb5fc5167d71110d1ce8a77948bec5d40f6b08863094af48caa"
+    },
+    {
+      "id": "float-conversion.truncate.double.i8.constant.c17.61e42e17",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n",
+      "tags": [],
+      "source_sha256": "61e42e17b8ead5bb56935e15a74e750be9fa5cf230471e35518f74983d7b6c3c"
+    },
+    {
+      "id": "float-conversion.truncate.double.i8.opaque.c17.4a143afb",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "i8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n",
+      "tags": [],
+      "source_sha256": "4a143afb3dc420300d58c23b3848ab5f6e7feae3b7e26005cad9d82f7d3fa70c"
+    },
+    {
+      "id": "float-conversion.truncate.double.u16.constant.c17.8689db89",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "8689db8945dee7d7dd08cd103c5c2506dafc47bc955052108a4d065558580be9"
+    },
+    {
+      "id": "float-conversion.truncate.double.u16.opaque.c17.a28ccea1",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "a28ccea11c446c09d6afba34c1ecec6c103ca6919da6ba87da4473ab3034823a"
+    },
+    {
+      "id": "float-conversion.truncate.double.u32.constant.c17.a93dddae",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n2147483647\n4294967295\n",
+      "tags": [],
+      "source_sha256": "a93dddae1e4ba41d9a42841e13bd237ec03d01ae60bde6d98512abc432d22f9b"
+    },
+    {
+      "id": "float-conversion.truncate.double.u32.opaque.c17.73c7dce6",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n2147483647\n4294967295\n",
+      "tags": [],
+      "source_sha256": "73c7dce6f33b4a42ce77bdfb7ecb01dd4ad841fc606c6a20af761c1d0cac0f36"
+    },
+    {
+      "id": "float-conversion.truncate.double.u64.constant.c17.00a4ae26",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n2147483647\n4294967295\n9007199254740992\n9223372036854774784\n10000000000000000000\n18446744073709549568\n",
+      "tags": [],
+      "source_sha256": "00a4ae26d8704c2606c94506b5d2d79d6c6f61bb976a137e9a2a8cef2c4567b2"
+    },
+    {
+      "id": "float-conversion.truncate.double.u64.opaque.c17.4c8b0055",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n2147483647\n4294967295\n9007199254740992\n9223372036854774784\n10000000000000000000\n18446744073709549568\n",
+      "tags": [],
+      "source_sha256": "4c8b005508f656c6736a74ffb3436fbfa7d59f71379837f013c8971414551e88"
+    },
+    {
+      "id": "float-conversion.truncate.double.u8.constant.c17.65dbb52f",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n",
+      "tags": [],
+      "source_sha256": "65dbb52ffbdb114d622372918ecf92df0bb84b3834d2cf63cbc79b1a3e0e123b"
+    },
+    {
+      "id": "float-conversion.truncate.double.u8.opaque.c17.2709e46f",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "double",
+        "type": "u8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n",
+      "tags": [],
+      "source_sha256": "2709e46f3db29b6d96893e0dacd12961fa724b18b3ed293cd42c9b8a245f72ea"
+    },
+    {
+      "id": "float-conversion.truncate.float.i16.constant.c17.6cdaf698",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n",
+      "tags": [],
+      "source_sha256": "6cdaf698f2ecd374a302a0f4cde358df3e9a9750b2557396d9b28e0a0625d1cd"
+    },
+    {
+      "id": "float-conversion.truncate.float.i16.opaque.c17.165f08d4",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n",
+      "tags": [],
+      "source_sha256": "165f08d454652c3290eeccc4be5f14fdb53a0553b4cdfed15e1815991a4e65aa"
+    },
+    {
+      "id": "float-conversion.truncate.float.i32.constant.c17.4cf33e39",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n-2147483648\n",
+      "tags": [],
+      "source_sha256": "4cf33e399902fd0649f05d7544af09eccbe7524b566823edfebadc1c0c54b3c5"
+    },
+    {
+      "id": "float-conversion.truncate.float.i32.opaque.c17.ad031a37",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n-2147483648\n",
+      "tags": [],
+      "source_sha256": "ad031a37253d1d3071c778446ab9fd5d7dc67f91eaab90472ab187d69d2636e5"
+    },
+    {
+      "id": "float-conversion.truncate.float.i64.constant.c17.30abf207",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n-2147483648\n9007199254740992\n",
+      "tags": [],
+      "source_sha256": "30abf207b86cf00ba74e1a5c7d57b1465d8db27c90e864f0ba9ce8169ef6fcf9"
+    },
+    {
+      "id": "float-conversion.truncate.float.i64.opaque.c17.b83de5e6",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n255\n32767\n-32768\n65535\n-2147483648\n9007199254740992\n",
+      "tags": [],
+      "source_sha256": "b83de5e67c0b694fb317eda7e3ccfc92df9df866bb3babd0140414918aab8271"
+    },
+    {
+      "id": "float-conversion.truncate.float.i8.constant.c17.e2633304",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n",
+      "tags": [],
+      "source_sha256": "e2633304ee193393ba88ed1281f85f892a2283013e5ce700ac9752cf3077301d"
+    },
+    {
+      "id": "float-conversion.truncate.float.i8.opaque.c17.8b1d115c",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "i8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n-1\n1\n-1\n3\n-3\n127\n-128\n",
+      "tags": [],
+      "source_sha256": "8b1d115ce545d0e29deaa496b9d861d1b54ee44708eee4ac2e418dc55d9079fb"
+    },
+    {
+      "id": "float-conversion.truncate.float.u16.constant.c17.6de67f3b",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u16",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "6de67f3b3839cbe6d9a2709255268ec05130cd125a16c3dd5d83813698544333"
+    },
+    {
+      "id": "float-conversion.truncate.float.u16.opaque.c17.b677b598",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u16",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "b677b5986a3d83efd8b4705082578ae8e06b24c6fed4508cac2f698823b35dc8"
+    },
+    {
+      "id": "float-conversion.truncate.float.u32.constant.c17.cef9ed5d",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u32",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "cef9ed5d479d315b158f7f1945f6fde4c1af3ecb1f2528fd121673be643ab307"
+    },
+    {
+      "id": "float-conversion.truncate.float.u32.opaque.c17.77f3be94",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u32",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n",
+      "tags": [],
+      "source_sha256": "77f3be94034bb113f4bc635c9f2e7fbb7398a363438625f3cfb1a02dd3c41eae"
+    },
+    {
+      "id": "float-conversion.truncate.float.u64.constant.c17.2d868894",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u64",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n9007199254740992\n",
+      "tags": [],
+      "source_sha256": "2d868894dddef21026838341737317c8109abf6fc2609a5510bf4042c44c2364"
+    },
+    {
+      "id": "float-conversion.truncate.float.u64.opaque.c17.af2d8e05",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u64",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n32767\n65535\n9007199254740992\n",
+      "tags": [],
+      "source_sha256": "af2d8e05a7ef252e9748c49a9b4c7e6b51eb1d04fef0cd0fc17157c599a09037"
+    },
+    {
+      "id": "float-conversion.truncate.float.u8.constant.c17.00e5f499",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u8",
+        "form": "constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n",
+      "tags": [],
+      "source_sha256": "00e5f499d5e9182d2f01e2cf9d1e8276874d2a929fc75296b23ea72cbcedd093"
+    },
+    {
+      "id": "float-conversion.truncate.float.u8.opaque.c17.b3091a0b",
+      "facet": "float-conversion",
+      "phase": "backend",
+      "dialect": "c17",
+      "axes": {
+        "shape": "truncate",
+        "float": "float",
+        "type": "u8",
+        "form": "opaque"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n3\n127\n255\n",
+      "tags": [],
+      "source_sha256": "b3091a0bbc545f76184b936d6c0ab677a982e264e853a75d7e0f3deedda46c7f"
     },
     {
       "id": "frontend.anonymous-members.c17.bd368ac8",

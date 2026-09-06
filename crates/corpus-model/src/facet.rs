@@ -30,6 +30,13 @@ pub enum Facet {
     /// facet: the damage shows up later, as a transformation that fired on the cold path.
     BranchProbability,
 
+    /// The address of a label, and the indirect jump that goes through it.
+    ///
+    /// A floor facet and not a back end one, because an indirect jump is the one edge whose
+    /// target the compiler cannot see, and every analysis under every pass has to survive
+    /// that. It is also what every bytecode interpreter is written as.
+    ComputedGoto,
+
     /// Folding an operation on constants into a constant.
     ConstantFold,
     /// Rewriting an operation into a cheaper one that computes the same value.
@@ -114,12 +121,23 @@ pub enum Facet {
     CallingConvention,
     /// The peephole rules that only make sense on machine instructions.
     MachinePeephole,
+    /// The bit counting builtins, which a back end has to have an instruction for.
+    BitBuiltins,
+    /// Conversions between the floating types and the integer ones, in both directions.
+    FloatConversion,
 
     /// Programs whose point is that the compiler must not do something.
     ///
     /// Volatile, atomics, signal handlers, setjmp, inline assembly, and the flags that turn
     /// an optimization off. A pass firing here is a bug, and the case exists to catch it.
     Barrier,
+
+    /// The atomic builtins and the header that wraps them.
+    ///
+    /// A correctness facet for the same reason `barrier` is one. Most of what an atomic asks
+    /// of a compiler is restraint, and a pass that fires across one is a bug even when the
+    /// single threaded answer stays right.
+    Atomics,
 
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
@@ -137,6 +155,7 @@ impl Facet {
         Self::Baseline,
         Self::ControlFlow,
         Self::BranchProbability,
+        Self::ComputedGoto,
         Self::ConstantFold,
         Self::Strength,
         Self::Narrowing,
@@ -177,7 +196,10 @@ impl Facet {
         Self::SwitchLowering,
         Self::CallingConvention,
         Self::MachinePeephole,
+        Self::BitBuiltins,
+        Self::FloatConversion,
         Self::Barrier,
+        Self::Atomics,
         Self::Frontend,
     ];
 
@@ -188,6 +210,7 @@ impl Facet {
             Self::Baseline => "baseline",
             Self::ControlFlow => "control-flow",
             Self::BranchProbability => "branch-probability",
+            Self::ComputedGoto => "computed-goto",
             Self::ConstantFold => "constant-fold",
             Self::Strength => "strength",
             Self::Narrowing => "narrowing",
@@ -228,7 +251,10 @@ impl Facet {
             Self::SwitchLowering => "switch-lowering",
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
+            Self::BitBuiltins => "bit-builtins",
+            Self::FloatConversion => "float-conversion",
             Self::Barrier => "barrier",
+            Self::Atomics => "atomics",
             Self::Frontend => "frontend",
         }
     }
@@ -242,6 +268,7 @@ impl Facet {
             }
             Self::ControlFlow => "the graph shapes the analyses under every pass have to get right",
             Self::BranchProbability => "the odds put on an edge before the program has ever run",
+            Self::ComputedGoto => "the address of a label, and the indirect jump through it",
             Self::ConstantFold => "folding an operation on constants into a constant",
             Self::Strength => "rewriting an operation into a cheaper one with the same value",
             Self::Narrowing => "taking the width back off arithmetic that C promoted",
@@ -282,7 +309,10 @@ impl Facet {
             Self::SwitchLowering => "choosing how to lower a switch",
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
+            Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
+            Self::FloatConversion => "conversions between the floating types and the integer ones",
             Self::Barrier => "programs where the compiler must not act, and a firing is a bug",
+            Self::Atomics => "the atomic builtins at every ordering, and the header over them",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -294,9 +324,11 @@ impl Facet {
     #[must_use]
     pub const fn phase(self) -> Phase {
         match self {
-            Self::Baseline | Self::ControlFlow | Self::BranchProbability | Self::Frontend => {
-                Phase::Floor
-            }
+            Self::Baseline
+            | Self::ControlFlow
+            | Self::BranchProbability
+            | Self::ComputedGoto
+            | Self::Frontend => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
@@ -336,8 +368,10 @@ impl Facet {
             | Self::IfConversion
             | Self::SwitchLowering
             | Self::CallingConvention
-            | Self::MachinePeephole => Phase::Backend,
-            Self::Barrier => Phase::Correctness,
+            | Self::MachinePeephole
+            | Self::BitBuiltins
+            | Self::FloatConversion => Phase::Backend,
+            Self::Barrier | Self::Atomics => Phase::Correctness,
         }
     }
 

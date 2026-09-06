@@ -225,12 +225,16 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::special::baseline(&mut sink);
     facets::special::control_flow(&mut sink);
     facets::special::branch_probability(&mut sink);
+    facets::surface::computed_goto(&mut sink);
     facets::local::generate(&mut sink);
     facets::global::generate(&mut sink);
     facets::loops::generate(&mut sink);
     facets::interproc::generate(&mut sink);
     facets::backend::generate(&mut sink);
+    facets::surface::bit_builtins(&mut sink);
+    facets::surface::float_conversion(&mut sink);
     facets::special::barrier(&mut sink);
+    facets::surface::atomics(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }
