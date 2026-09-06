@@ -2,8 +2,8 @@
   "schema": "1",
   "milestone": "M4",
   "tool": "rucc-corpus 0.1.0",
-  "corpus_digest": "31549141a827131586c82c53b768cacbe3bac7d46b539855f493ae66b4fc62a3",
-  "cases": 1122,
+  "corpus_digest": "6264779bf77d1d57965d62acc272030f9c290e9edf91638d5dbff886bdc5adb6",
+  "cases": 1232,
   "reference": "gcc-16",
   "levels": [
     "O0",
@@ -21,8 +21,8 @@
     },
     {
       "id": "rucc",
-      "program": "/home/runner/work/rucc-corpus/rucc-corpus/rucc/target/release/rucc",
-      "version": "rucc 0.5.0",
+      "program": "/root/rucc-src/target/release/rucc",
+      "version": "rucc 0.5.1",
       "reference": false
     }
   ],
@@ -30,14 +30,14 @@
     {
       "toolchain": "gcc-16",
       "tally": {
-        "pass": 5578,
+        "pass": 6128,
         "wrong": 0,
         "rejected": 0,
         "unimplemented": 0,
         "accepted": 0,
         "crashed": 0,
         "skipped": 0,
-        "ran": 5578,
+        "ran": 6128,
         "failures": 0,
         "pass_rate": 1
       }
@@ -45,16 +45,16 @@
     {
       "toolchain": "rucc",
       "tally": {
-        "pass": 5573,
+        "pass": 6108,
         "wrong": 0,
         "rejected": 0,
-        "unimplemented": 5,
+        "unimplemented": 20,
         "accepted": 0,
         "crashed": 0,
         "skipped": 0,
-        "ran": 5578,
+        "ran": 6128,
         "failures": 0,
-        "pass_rate": 0.999
+        "pass_rate": 0.997
       }
     }
   ],
@@ -70,14 +70,14 @@
       "name": "code-quality:rucc",
       "wanted": "the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2",
       "threshold": 1.1,
-      "actual": 1.118,
+      "actual": 1.114,
       "met": false
     },
     {
       "name": "compile-throughput:rucc",
       "wanted": "rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00",
       "threshold": 1,
-      "actual": 0.495,
+      "actual": 0.457,
       "met": true
     }
   ],
@@ -127,8 +127,8 @@
           },
           "compared": 10,
           "size_ratio": 1.144,
-          "speed_ratio": 0.957,
-          "compile_ratio": 0.486
+          "speed_ratio": 1.068,
+          "compile_ratio": 0.332
         }
       ]
     },
@@ -177,8 +177,58 @@
           },
           "compared": 9,
           "size_ratio": 1.201,
-          "speed_ratio": 1.001,
-          "compile_ratio": 0.444
+          "speed_ratio": 1.155,
+          "compile_ratio": 0.406
+        }
+      ]
+    },
+    {
+      "facet": "branch-probability",
+      "phase": "floor",
+      "describes": "the odds put on an edge before the program has ever run",
+      "cases": 34,
+      "reference_said": {
+        "optimized": 22,
+        "missed": 98
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 170,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 170,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 34,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 170,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 170,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 34,
+          "size_ratio": 1.081,
+          "speed_ratio": 0.663,
+          "compile_ratio": 0.426
         }
       ]
     },
@@ -227,8 +277,8 @@
           },
           "compared": 112,
           "size_ratio": 1.233,
-          "speed_ratio": 0.999,
-          "compile_ratio": 0.466
+          "speed_ratio": 0.967,
+          "compile_ratio": 0.474
         }
       ]
     },
@@ -277,8 +327,8 @@
           },
           "compared": 24,
           "size_ratio": 1.2,
-          "speed_ratio": 0.997,
-          "compile_ratio": 0.335
+          "speed_ratio": 0.836,
+          "compile_ratio": 0.233
         }
       ]
     },
@@ -327,8 +377,8 @@
           },
           "compared": 28,
           "size_ratio": 1.122,
-          "speed_ratio": 1.039,
-          "compile_ratio": 0.468
+          "speed_ratio": 0.916,
+          "compile_ratio": 0.473
         }
       ]
     },
@@ -377,8 +427,8 @@
           },
           "compared": 8,
           "size_ratio": 1.537,
-          "speed_ratio": 0.947,
-          "compile_ratio": 0.442
+          "speed_ratio": 0.979,
+          "compile_ratio": 0.568
         }
       ]
     },
@@ -428,7 +478,7 @@
           "compared": 20,
           "size_ratio": 1.165,
           "speed_ratio": 0.933,
-          "compile_ratio": 0.495
+          "compile_ratio": 0.484
         }
       ]
     },
@@ -477,8 +527,8 @@
           },
           "compared": 12,
           "size_ratio": 0.958,
-          "speed_ratio": 0.94,
-          "compile_ratio": 0.527
+          "speed_ratio": 1.328,
+          "compile_ratio": 0.644
         }
       ]
     },
@@ -527,8 +577,8 @@
           },
           "compared": 12,
           "size_ratio": 1.001,
-          "speed_ratio": 0.922,
-          "compile_ratio": 0.527
+          "speed_ratio": 1.166,
+          "compile_ratio": 0.45
         }
       ]
     },
@@ -577,8 +627,8 @@
           },
           "compared": 8,
           "size_ratio": 0.956,
-          "speed_ratio": 1.043,
-          "compile_ratio": 0.519
+          "speed_ratio": 0.9,
+          "compile_ratio": 0.487
         }
       ]
     },
@@ -627,8 +677,8 @@
           },
           "compared": 16,
           "size_ratio": 1.06,
-          "speed_ratio": 0.982,
-          "compile_ratio": 0.506
+          "speed_ratio": 0.803,
+          "compile_ratio": 0.554
         }
       ]
     },
@@ -677,8 +727,8 @@
           },
           "compared": 40,
           "size_ratio": 1.065,
-          "speed_ratio": 1.041,
-          "compile_ratio": 0.512
+          "speed_ratio": 1.124,
+          "compile_ratio": 0.413
         }
       ]
     },
@@ -728,7 +778,7 @@
           "compared": 12,
           "size_ratio": 1.055,
           "speed_ratio": 0.959,
-          "compile_ratio": 0.507
+          "compile_ratio": 0.382
         }
       ]
     },
@@ -777,8 +827,8 @@
           },
           "compared": 12,
           "size_ratio": 0.944,
-          "speed_ratio": 0.984,
-          "compile_ratio": 0.512
+          "speed_ratio": 0.682,
+          "compile_ratio": 0.631
         }
       ]
     },
@@ -827,8 +877,8 @@
           },
           "compared": 16,
           "size_ratio": 0.996,
-          "speed_ratio": 1.046,
-          "compile_ratio": 0.516
+          "speed_ratio": 1.243,
+          "compile_ratio": 0.465
         }
       ]
     },
@@ -877,8 +927,8 @@
           },
           "compared": 13,
           "size_ratio": 1.261,
-          "speed_ratio": 1.033,
-          "compile_ratio": 0.503
+          "speed_ratio": 1.03,
+          "compile_ratio": 0.485
         }
       ]
     },
@@ -927,8 +977,58 @@
           },
           "compared": 36,
           "size_ratio": 1.09,
-          "speed_ratio": 1.009,
-          "compile_ratio": 0.495
+          "speed_ratio": 1.078,
+          "compile_ratio": 0.435
+        }
+      ]
+    },
+    {
+      "facet": "memory-ssa",
+      "phase": "global",
+      "describes": "walking back from a load to the store that answers it",
+      "cases": 28,
+      "reference_said": {
+        "optimized": 28,
+        "missed": 116
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 140,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 140,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 28,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 140,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 140,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 28,
+          "size_ratio": 1.078,
+          "speed_ratio": 0.99,
+          "compile_ratio": 0.538
         }
       ]
     },
@@ -977,8 +1077,8 @@
           },
           "compared": 20,
           "size_ratio": 0.999,
-          "speed_ratio": 1.001,
-          "compile_ratio": 0.504
+          "speed_ratio": 0.844,
+          "compile_ratio": 0.526
         }
       ]
     },
@@ -1027,8 +1127,8 @@
           },
           "compared": 32,
           "size_ratio": 1.14,
-          "speed_ratio": 1.014,
-          "compile_ratio": 0.502
+          "speed_ratio": 1.064,
+          "compile_ratio": 0.523
         }
       ]
     },
@@ -1077,8 +1177,8 @@
           },
           "compared": 42,
           "size_ratio": 1.326,
-          "speed_ratio": 0.993,
-          "compile_ratio": 0.477
+          "speed_ratio": 1.118,
+          "compile_ratio": 0.4
         }
       ]
     },
@@ -1127,8 +1227,8 @@
           },
           "compared": 64,
           "size_ratio": 1.07,
-          "speed_ratio": 0.994,
-          "compile_ratio": 0.433
+          "speed_ratio": 0.901,
+          "compile_ratio": 0.469
         }
       ]
     },
@@ -1177,8 +1277,8 @@
           },
           "compared": 64,
           "size_ratio": 1.061,
-          "speed_ratio": 1.008,
-          "compile_ratio": 0.46
+          "speed_ratio": 1.018,
+          "compile_ratio": 0.433
         }
       ]
     },
@@ -1227,8 +1327,8 @@
           },
           "compared": 64,
           "size_ratio": 1.158,
-          "speed_ratio": 1.005,
-          "compile_ratio": 0.462
+          "speed_ratio": 0.978,
+          "compile_ratio": 0.434
         }
       ]
     },
@@ -1277,8 +1377,8 @@
           },
           "compared": 24,
           "size_ratio": 1.14,
-          "speed_ratio": 1.033,
-          "compile_ratio": 0.485
+          "speed_ratio": 0.914,
+          "compile_ratio": 0.453
         }
       ]
     },
@@ -1327,8 +1427,8 @@
           },
           "compared": 64,
           "size_ratio": 1.084,
-          "speed_ratio": 1.006,
-          "compile_ratio": 0.519
+          "speed_ratio": 0.92,
+          "compile_ratio": 0.499
         }
       ]
     },
@@ -1377,8 +1477,8 @@
           },
           "compared": 48,
           "size_ratio": 1.306,
-          "speed_ratio": 1.013,
-          "compile_ratio": 0.468
+          "speed_ratio": 1.082,
+          "compile_ratio": 0.354
         }
       ]
     },
@@ -1427,8 +1527,8 @@
           },
           "compared": 36,
           "size_ratio": 1.223,
-          "speed_ratio": 1.043,
-          "compile_ratio": 0.515
+          "speed_ratio": 1.171,
+          "compile_ratio": 0.457
         }
       ]
     },
@@ -1477,8 +1577,8 @@
           },
           "compared": 36,
           "size_ratio": 1.114,
-          "speed_ratio": 1.037,
-          "compile_ratio": 0.467
+          "speed_ratio": 1.498,
+          "compile_ratio": 0.353
         }
       ]
     },
@@ -1527,8 +1627,8 @@
           },
           "compared": 20,
           "size_ratio": 1.197,
-          "speed_ratio": 0.979,
-          "compile_ratio": 0.497
+          "speed_ratio": 1.134,
+          "compile_ratio": 0.453
         }
       ]
     },
@@ -1577,8 +1677,8 @@
           },
           "compared": 12,
           "size_ratio": 1.144,
-          "speed_ratio": 0.975,
-          "compile_ratio": 0.52
+          "speed_ratio": 1.106,
+          "compile_ratio": 0.3
         }
       ]
     },
@@ -1627,8 +1727,8 @@
           },
           "compared": 9,
           "size_ratio": 0.956,
-          "speed_ratio": 1.073,
-          "compile_ratio": 0.519
+          "speed_ratio": 0.89,
+          "compile_ratio": 0.431
         }
       ]
     },
@@ -1677,8 +1777,8 @@
           },
           "compared": 4,
           "size_ratio": 1.065,
-          "speed_ratio": 1.047,
-          "compile_ratio": 0.495
+          "speed_ratio": 1.05,
+          "compile_ratio": 0.529
         }
       ]
     },
@@ -1727,8 +1827,58 @@
           },
           "compared": 40,
           "size_ratio": 0.98,
-          "speed_ratio": 1.006,
-          "compile_ratio": 0.526
+          "speed_ratio": 0.966,
+          "compile_ratio": 0.464
+        }
+      ]
+    },
+    {
+      "facet": "register-pressure",
+      "phase": "backend",
+      "describes": "how many values are live at once, and what that costs",
+      "cases": 48,
+      "reference_said": {
+        "optimized": 75,
+        "missed": 210
+      },
+      "scores": [
+        {
+          "toolchain": "gcc-16",
+          "tally": {
+            "pass": 240,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 0,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 240,
+            "failures": 0,
+            "pass_rate": 1
+          },
+          "compared": 48,
+          "size_ratio": 1,
+          "speed_ratio": 1,
+          "compile_ratio": 1
+        },
+        {
+          "toolchain": "rucc",
+          "tally": {
+            "pass": 225,
+            "wrong": 0,
+            "rejected": 0,
+            "unimplemented": 15,
+            "accepted": 0,
+            "crashed": 0,
+            "skipped": 0,
+            "ran": 240,
+            "failures": 0,
+            "pass_rate": 0.938
+          },
+          "compared": 45,
+          "size_ratio": 1.491,
+          "speed_ratio": 0.933,
+          "compile_ratio": 0.456
         }
       ]
     },
@@ -1777,8 +1927,8 @@
           },
           "compared": 40,
           "size_ratio": 1.609,
-          "speed_ratio": 1.01,
-          "compile_ratio": 0.462
+          "speed_ratio": 0.787,
+          "compile_ratio": 0.421
         }
       ]
     },
@@ -1827,8 +1977,8 @@
           },
           "compared": 12,
           "size_ratio": 1.681,
-          "speed_ratio": 1.03,
-          "compile_ratio": 0.476
+          "speed_ratio": 1.306,
+          "compile_ratio": 0.499
         }
       ]
     },
@@ -1877,8 +2027,8 @@
           },
           "compared": 4,
           "size_ratio": 1.024,
-          "speed_ratio": 1.017,
-          "compile_ratio": 0.448
+          "speed_ratio": 0.706,
+          "compile_ratio": 0.833
         }
       ]
     },
@@ -1927,8 +2077,8 @@
           },
           "compared": 20,
           "size_ratio": 1.144,
-          "speed_ratio": 0.98,
-          "compile_ratio": 0.443
+          "speed_ratio": 0.861,
+          "compile_ratio": 0.454
         }
       ]
     },
@@ -1977,8 +2127,8 @@
           },
           "compared": 9,
           "size_ratio": 1.3,
-          "speed_ratio": 0.987,
-          "compile_ratio": 0.436
+          "speed_ratio": 0.664,
+          "compile_ratio": 0.601
         }
       ]
     },
@@ -2027,8 +2177,8 @@
           },
           "compared": 10,
           "size_ratio": 1.243,
-          "speed_ratio": 1.004,
-          "compile_ratio": 0.512
+          "speed_ratio": 2.018,
+          "compile_ratio": 0.435
         }
       ]
     },
@@ -2077,8 +2227,8 @@
           },
           "compared": 22,
           "size_ratio": 0.986,
-          "speed_ratio": 0.965,
-          "compile_ratio": 0.499
+          "speed_ratio": 1.124,
+          "compile_ratio": 0.538
         }
       ]
     },
@@ -2127,8 +2277,8 @@
           },
           "compared": 7,
           "size_ratio": 1.037,
-          "speed_ratio": 1.025,
-          "compile_ratio": 0.486
+          "speed_ratio": 0.936,
+          "compile_ratio": 0.57
         }
       ]
     },
@@ -2177,8 +2327,8 @@
           },
           "compared": 22,
           "size_ratio": 1.01,
-          "speed_ratio": 1.003,
-          "compile_ratio": 0.519
+          "speed_ratio": 0.839,
+          "compile_ratio": 0.39
         }
       ]
     }
@@ -2233,6 +2383,156 @@
       "summary": "rucc has not built the part of the graph shapes the analyses under every pass have to get right this case needs yet",
       "expected": "the program compiles",
       "actual": "case.c:12:18: error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653]\ncase.c:12:18: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.12.both-classes.c17.37791435",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O0",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.12.both-classes.c17.37791435",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O1",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.12.both-classes.c17.37791435",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O2",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.12.both-classes.c17.37791435",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O3",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.12.both-classes.c17.37791435",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "Os",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.24.both-classes.c17.c9171d96",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O0",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.24.both-classes.c17.c9171d96",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O1",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.24.both-classes.c17.c9171d96",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O2",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.24.both-classes.c17.c9171d96",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O3",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.24.both-classes.c17.c9171d96",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "Os",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.6.both-classes.c17.af33b1d8",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O0",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.6.both-classes.c17.af33b1d8",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O1",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.6.both-classes.c17.af33b1d8",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O2",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.6.both-classes.c17.af33b1d8",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "O3",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
+    },
+    {
+      "case": "register-pressure.u64.6.both-classes.c17.af33b1d8",
+      "facet": "register-pressure",
+      "toolchain": "rucc",
+      "level": "Os",
+      "verdict": "unimplemented",
+      "summary": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet",
+      "expected": "the program compiles",
+      "actual": "case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653]\ncase.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues"
     }
   ]
 }

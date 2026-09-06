@@ -132,6 +132,336 @@
             "toolchain": "rucc",
             "level": "Os"
           }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.12.both-classes.c17.37791435.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O0"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.12.both-classes.c17.37791435.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O1"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.12.both-classes.c17.37791435.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O2"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.12.both-classes.c17.37791435.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O3"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:28:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:28:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.12.both-classes.c17.37791435.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "Os"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.24.both-classes.c17.c9171d96.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O0"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.24.both-classes.c17.c9171d96.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O1"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.24.both-classes.c17.c9171d96.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O2"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.24.both-classes.c17.c9171d96.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O3"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:40:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:40:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.24.both-classes.c17.c9171d96.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "Os"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.6.both-classes.c17.af33b1d8.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O0"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.6.both-classes.c17.af33b1d8.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O1"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.6.both-classes.c17.af33b1d8.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O2"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.6.both-classes.c17.af33b1d8.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "O3"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of how many values are live at once, and what that costs this case needs yet. Expected the program compiles, got case.c:22:31: error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] / case.c:22:31: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/iss...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/backend/register-pressure/register-pressure.u64.6.both-classes.c17.af33b1d8.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "register-pressure",
+            "toolchain": "rucc",
+            "level": "Os"
+          }
         }
       ]
     }
