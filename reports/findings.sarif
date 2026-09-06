@@ -27,22 +27,110 @@
           "ruleId": "unimplemented",
           "level": "error",
           "message": {
-            "text": "rucc has not built the part of language shape rather than optimization, including C23 this case needs yet. Expected the program compiles, got case.c:8:26: error: cannot generate code for 'main': no rule lowers a `trunc` producing a `i12` [E0653] / case.c:8:26: note: this construct is not lowered yet, see https://github.com/tamnd/rucc/issues."
+            "text": "rucc has not built the part of the graph shapes the analyses under every pass have to get right this case needs yet. Expected the program compiles, got case.c:12:18: error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] / case.c:12:18: note: this construct is not lowered yet, see https://github.com/tamnd/rucc...."
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "programs/floor/frontend/frontend.bit-precise.c23.6f93abb7.c",
+                  "uri": "programs/floor/control-flow/control-flow.computed-goto.c17.7715e4c1.c",
                   "uriBaseId": "%SRCROOT%"
                 }
               }
             }
           ],
           "properties": {
-            "facet": "frontend",
+            "facet": "control-flow",
             "toolchain": "rucc",
             "level": "O0"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of the graph shapes the analyses under every pass have to get right this case needs yet. Expected the program compiles, got case.c:12:18: error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] / case.c:12:18: note: this construct is not lowered yet, see https://github.com/tamnd/rucc...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/floor/control-flow/control-flow.computed-goto.c17.7715e4c1.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "control-flow",
+            "toolchain": "rucc",
+            "level": "O1"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of the graph shapes the analyses under every pass have to get right this case needs yet. Expected the program compiles, got case.c:12:18: error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] / case.c:12:18: note: this construct is not lowered yet, see https://github.com/tamnd/rucc...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/floor/control-flow/control-flow.computed-goto.c17.7715e4c1.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "control-flow",
+            "toolchain": "rucc",
+            "level": "O2"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of the graph shapes the analyses under every pass have to get right this case needs yet. Expected the program compiles, got case.c:12:18: error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] / case.c:12:18: note: this construct is not lowered yet, see https://github.com/tamnd/rucc...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/floor/control-flow/control-flow.computed-goto.c17.7715e4c1.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "control-flow",
+            "toolchain": "rucc",
+            "level": "O3"
+          }
+        },
+        {
+          "ruleId": "unimplemented",
+          "level": "error",
+          "message": {
+            "text": "rucc has not built the part of the graph shapes the analyses under every pass have to get right this case needs yet. Expected the program compiles, got case.c:12:18: error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] / case.c:12:18: note: this construct is not lowered yet, see https://github.com/tamnd/rucc...."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "programs/floor/control-flow/control-flow.computed-goto.c17.7715e4c1.c",
+                  "uriBaseId": "%SRCROOT%"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "facet": "control-flow",
+            "toolchain": "rucc",
+            "level": "Os"
           }
         }
       ]

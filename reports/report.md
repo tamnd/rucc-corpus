@@ -2,20 +2,20 @@
 
 Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
 
-The corpus holds 1018 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `1363ad19c0d25d3d`.
+The corpus holds 1119 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `13e5bf2f336cab8f`.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.4.1 | under test |
+| `rucc` | rucc 0.4.2 | under test |
 
 ## Did it meet the targets
 
 | target | wanted | got | met |
 |---|---|---|---|
 | `correctness` | 0 failures | 0 failures | yes |
-| `code-quality:rucc` | within 10 percent | 10 percent more | yes |
-| `compile-throughput:rucc` | no worse | 55 percent less | yes |
+| `code-quality:rucc` | within 10 percent | 12 percent more | no |
+| `compile-throughput:rucc` | no worse | 57 percent less | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
 - `code-quality:rucc`: the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2.
@@ -25,8 +25,8 @@ The corpus holds 1018 programs, each written for one named transformation and ea
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 5058 | 5058 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `rucc` | 5058 | 5057 | 0 | 0 | 1 | 0 | 0 | 0 |
+| `gcc-16` | 5563 | 5563 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `rucc` | 5563 | 5558 | 0 | 0 | 5 | 0 | 0 | 0 |
 
 ## What is not built yet
 
@@ -34,7 +34,7 @@ These are cases a compiler refused while saying itself that the construct is not
 
 ### `rucc`
 
-- error: cannot generate code for 'main': no rule lowers a `trunc` producing a `i12` [E0653] (1 case, first is `frontend.bit-precise.c23.6f93abb7`)
+- error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] (5 cases, first is `control-flow.computed-goto.c17.7715e4c1`)
 
 ## How big the code is
 
@@ -46,27 +46,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `scheduling` | backend | 12 | 68 percent more | 38 percent less | 59 percent less |
-| `register-alloc` | backend | 40 | 61 percent more | 20 percent more | 47 percent less |
-| `simplify` | local | 8 | 55 percent more | 2 percent more | 52 percent less |
-| `induction-variable` | loops | 32 | 34 percent more | 26 percent more | 46 percent less |
-| `value-range` | global | 4 | 33 percent more | 33 percent more | 50 percent less |
-| `loop-restructure` | loops | 48 | 31 percent more | 13 percent less | 60 percent less |
-| `switch-lowering` | backend | 9 | 30 percent more | 13 percent less | 74 percent less |
-| `calling-convention` | backend | 10 | 24 percent more | 23 percent more | 54 percent less |
+| `scheduling` | backend | 12 | 68 percent more | 5 percent less | 58 percent less |
+| `register-alloc` | backend | 40 | 61 percent more | 18 percent less | 52 percent less |
+| `simplify` | local | 8 | 54 percent more | 1 percent less | 61 percent less |
+| `induction-variable` | loops | 42 | 33 percent more | 2 percent more | 58 percent less |
+| `loop-restructure` | loops | 48 | 31 percent more | 5 percent less | 54 percent less |
+| `switch-lowering` | backend | 9 | 30 percent more | 26 percent more | 62 percent less |
+| `value-range` | global | 13 | 26 percent more | 15 percent more | 41 percent less |
+| `calling-convention` | backend | 10 | 24 percent more | 5 percent more | 57 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `copy-propagation` | global | 12 | 6 percent less | 37 percent more | 56 percent less |
-| `reachability` | interprocedural | 9 | 4 percent less | 12 percent more | 64 percent less |
-| `dead-code` | local | 12 | 4 percent less | level | 38 percent less |
-| `selection` | backend | 40 | 2 percent less | 2 percent less | 46 percent less |
-| `machine-peephole` | backend | 22 | 1 percent less | 15 percent less | 52 percent less |
-| `constant-propagation` | global | 16 | level | 11 percent less | 59 percent less |
-| `scalar-replacement` | global | 20 | level | 2 percent less | 43 percent less |
-| `dead-store` | local | 12 | level | 19 percent less | 48 percent less |
+| `copy-propagation` | global | 12 | 6 percent less | 13 percent more | 38 percent less |
+| `reachability` | interprocedural | 9 | 4 percent less | 17 percent more | 51 percent less |
+| `dead-code` | local | 12 | 4 percent less | 21 percent more | 57 percent less |
+| `selection` | backend | 40 | 2 percent less | 2 percent less | 53 percent less |
+| `machine-peephole` | backend | 22 | 1 percent less | 12 percent less | 58 percent less |
+| `constant-propagation` | global | 16 | level | 6 percent less | 48 percent less |
+| `scalar-replacement` | global | 20 | level | 20 percent less | 52 percent less |
+| `dead-store` | local | 12 | level | 1 percent more | 58 percent less |
 
 ## By phase of the plan
 
@@ -74,10 +74,10 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|
-| floor | 2 | 40 | 167 of 168 | 8 percent more |
-| local | 7 | 193 | 965 of 965 | 16 percent more |
-| global | 8 | 112 | 560 of 560 | 3 percent more |
-| loops | 8 | 392 | 1960 of 1960 | 14 percent more |
+| floor | 3 | 50 | 213 of 218 | 14 percent more |
+| local | 8 | 221 | 1105 of 1105 | 14 percent more |
+| global | 8 | 165 | 825 of 825 | 6 percent more |
+| loops | 8 | 402 | 2010 of 2010 | 14 percent more |
 | interprocedural | 6 | 117 | 585 of 585 | 13 percent more |
 | backend | 8 | 157 | 785 of 785 | 19 percent more |
 | correctness | 1 | 7 | 35 of 35 | 4 percent more |
@@ -95,19 +95,19 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `loop-unroll` | loops | 196 | 128 |
 | `loop-restructure` | loops | 262 | 60 |
 | `strength` | local | 0 | 288 |
+| `narrowing` | local | 0 | 288 |
+| `load-forwarding` | global | 60 | 184 |
 | `selection` | backend | 0 | 244 |
 | `loop-rotate` | loops | 224 | 0 |
+| `alias-analysis` | global | 66 | 136 |
 | `loop-invariant` | loops | 60 | 128 |
 | `reassociate` | local | 0 | 160 |
+| `induction-variable` | loops | 131 | 24 |
 | `switch-lowering` | backend | 52 | 100 |
 | `function-purity` | interprocedural | 80 | 64 |
 | `if-conversion` | backend | 17 | 126 |
 | `baseline` | floor | 34 | 99 |
 | `constant-args` | interprocedural | 84 | 44 |
-| `loop-deletion` | loops | 76 | 48 |
-| `register-alloc` | backend | 20 | 104 |
-| `common-subexpr` | global | 12 | 100 |
-| `induction-variable` | loops | 99 | 0 |
 
 ## Running this yourself
 
@@ -118,4 +118,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1018 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1119 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
