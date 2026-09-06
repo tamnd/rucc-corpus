@@ -12,6 +12,8 @@ static volatile short x5_in = 32767;
 
 int main(void) {
     short x0 = x0_in;
+    printf("%lld\n", (long long)(x0 % ((short)(-2))));
+    printf("%lld\n", (long long)(x0 % ((short)(-1))));
     printf("%lld\n", (long long)(x0 % ((short)1)));
     printf("%lld\n", (long long)(x0 % ((short)2)));
     printf("%lld\n", (long long)(x0 % ((short)3)));
@@ -28,6 +30,8 @@ int main(void) {
     printf("%lld\n", (long long)(x0 % ((short)1024)));
 
     short x1 = x1_in;
+    printf("%lld\n", (long long)(x1 % ((short)(-2))));
+    printf("%lld\n", (long long)(x1 % ((short)(-1))));
     printf("%lld\n", (long long)(x1 % ((short)1)));
     printf("%lld\n", (long long)(x1 % ((short)2)));
     printf("%lld\n", (long long)(x1 % ((short)3)));
@@ -44,6 +48,8 @@ int main(void) {
     printf("%lld\n", (long long)(x1 % ((short)1024)));
 
     short x2 = x2_in;
+    printf("%lld\n", (long long)(x2 % ((short)(-2))));
+    printf("%lld\n", (long long)(x2 % ((short)(-1))));
     printf("%lld\n", (long long)(x2 % ((short)1)));
     printf("%lld\n", (long long)(x2 % ((short)2)));
     printf("%lld\n", (long long)(x2 % ((short)3)));
@@ -60,6 +66,8 @@ int main(void) {
     printf("%lld\n", (long long)(x2 % ((short)1024)));
 
     short x3 = x3_in;
+    printf("%lld\n", (long long)(x3 % ((short)(-2))));
+    printf("%lld\n", (long long)(x3 % ((short)(-1))));
     printf("%lld\n", (long long)(x3 % ((short)1)));
     printf("%lld\n", (long long)(x3 % ((short)2)));
     printf("%lld\n", (long long)(x3 % ((short)3)));
@@ -76,6 +84,8 @@ int main(void) {
     printf("%lld\n", (long long)(x3 % ((short)1024)));
 
     short x4 = x4_in;
+    printf("%lld\n", (long long)(x4 % ((short)(-2))));
+    printf("%lld\n", (long long)(x4 % ((short)(-1))));
     printf("%lld\n", (long long)(x4 % ((short)1)));
     printf("%lld\n", (long long)(x4 % ((short)2)));
     printf("%lld\n", (long long)(x4 % ((short)3)));
@@ -92,6 +102,8 @@ int main(void) {
     printf("%lld\n", (long long)(x4 % ((short)1024)));
 
     short x5 = x5_in;
+    printf("%lld\n", (long long)(x5 % ((short)(-2))));
+    printf("%lld\n", (long long)(x5 % ((short)(-1))));
     printf("%lld\n", (long long)(x5 % ((short)1)));
     printf("%lld\n", (long long)(x5 % ((short)2)));
     printf("%lld\n", (long long)(x5 % ((short)3)));

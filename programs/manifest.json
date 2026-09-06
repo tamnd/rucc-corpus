@@ -1,7 +1,7 @@
 {
   "schema": "1",
-  "corpus_sha256": "52a9c415184c18f786fe28c5983ac7e6b7a831ec8eea637f9ab11e7f3b39ee36",
-  "count": 1277,
+  "corpus_sha256": "67839b19f50d8e943649aab01886d76ac12f2fc4f77a7503dc09982a73a257be",
+  "count": 1285,
   "cases": [
     {
       "id": "alias-analysis.i32.char-pointer.c17.2c550cb8",
@@ -16411,6 +16411,20 @@
       "source_sha256": "260d272e56ff583268609281c667441e5ede67a532b33efaeeaad276de3b2c52"
     },
     {
+      "id": "simplify.i16.canonical.c17.5d43116b",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i16",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "-32765\n-32765\n-163840\n-163840\n0\n0\n-32759\n-32759\n-32762\n-32762\n1\n1\n-10\n-10\n12\n12\n-1\n-1\n-8\n-8\n4\n4\n5\n5\n0\n0\n9\n9\n7\n7\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n258\n258\n1275\n1275\n12\n12\n255\n255\n249\n249\n32770\n32770\n163835\n163835\n12\n12\n32767\n32767\n32761\n32761\n",
+      "tags": [],
+      "source_sha256": "5d43116bcb21db17ba2f81ee2022f474ffd3ca37989f0ae52dbfb62925b20c8f"
+    },
+    {
       "id": "simplify.i16.involution.c17.922f2816",
       "facet": "simplify",
       "phase": "local",
@@ -16509,6 +16523,20 @@
       "source_sha256": "1fc40dfd806b22ae095d11d4c8bccd0aeb4f99537090f842d027c4cba48299de"
     },
     {
+      "id": "simplify.i32.canonical.c17.90bd2640",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483645\n-2147483645\n0\n0\n-2147483639\n-2147483639\n-2147483642\n-2147483642\n1\n1\n-10\n-10\n12\n12\n-1\n-1\n-8\n-8\n4\n4\n5\n5\n0\n0\n9\n9\n7\n7\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n258\n258\n1275\n1275\n12\n12\n255\n255\n249\n249\n12\n12\n2147483647\n2147483647\n2147483641\n2147483641\n",
+      "tags": [],
+      "source_sha256": "90bd26406b5469913426efc5b4a98f4355718966addc7b23c180c5f2bce20082"
+    },
+    {
       "id": "simplify.i32.involution.c17.d3542390",
       "facet": "simplify",
       "phase": "local",
@@ -16593,6 +16621,20 @@
       "source_sha256": "4fae386b29968745d7b7b292a7482e00355d5dbb61b1f5a3809d6d40a2c2e42b"
     },
     {
+      "id": "simplify.i64.canonical.c17.d532acf9",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775805\n-9223372036854775805\n0\n0\n-9223372036854775799\n-9223372036854775799\n-9223372036854775802\n-9223372036854775802\n1\n1\n-10\n-10\n12\n12\n-1\n-1\n-8\n-8\n4\n4\n5\n5\n0\n0\n9\n9\n7\n7\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n258\n258\n1275\n1275\n12\n12\n255\n255\n249\n249\n12\n12\n9223372036854775807\n9223372036854775807\n9223372036854775801\n9223372036854775801\n",
+      "tags": [],
+      "source_sha256": "d532acf9b075b2ce477567bf83b7ca74a9e369d02d3d118b8da4ede38102cd12"
+    },
+    {
       "id": "simplify.i64.involution.c17.00667165",
       "facet": "simplify",
       "phase": "local",
@@ -16675,6 +16717,20 @@
       "expect": "-128\n-128\n0\n-2\n-2\n0\n0\n0\n0\n2\n2\n0\n7\n7\n0\n127\n127\n0\n",
       "tags": [],
       "source_sha256": "bf297a5a76fb4c9b1af74aed9a0db430205437b23fadb17cbe10a1734e8025e8"
+    },
+    {
+      "id": "simplify.i8.canonical.c17.56d9e284",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "-125\n-125\n-640\n-640\n0\n0\n-119\n-119\n-122\n-122\n1\n1\n-10\n-10\n12\n12\n-1\n-1\n-8\n-8\n3\n3\n0\n0\n0\n0\n9\n9\n6\n6\n5\n5\n10\n10\n0\n0\n11\n11\n4\n4\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n130\n130\n635\n635\n12\n12\n127\n127\n121\n121\n",
+      "tags": [],
+      "source_sha256": "56d9e284f7ee7979efd69725b80f2f4f63c402d7c24480d304f0d0c2634b4f33"
     },
     {
       "id": "simplify.i8.involution.c17.444afe1d",
@@ -16775,6 +16831,20 @@
       "source_sha256": "6ee62fa284f91f31b461f1a02eaf6aa060136392719e113d18ae8ca4990390c1"
     },
     {
+      "id": "simplify.u16.canonical.c17.6ef5d08f",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n0\n0\n0\n0\n9\n9\n6\n6\n5\n5\n10\n10\n0\n0\n11\n11\n4\n4\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n19\n19\n80\n80\n0\n0\n25\n25\n22\n22\n259\n259\n1280\n1280\n0\n0\n265\n265\n262\n262\n65538\n65538\n327675\n327675\n12\n12\n65535\n65535\n65529\n65529\n",
+      "tags": [],
+      "source_sha256": "6ef5d08f9784f4d4f6587a310ea34ca4e4571159471a4833d8dc90c8237bc11f"
+    },
+    {
       "id": "simplify.u16.involution.c17.69f4f927",
       "facet": "simplify",
       "phase": "local",
@@ -16873,6 +16943,20 @@
       "source_sha256": "525b129dbd6acac1a04e8d40848a8caacda7f2a2c8317cfbbbc0e6717f3f7c1d"
     },
     {
+      "id": "simplify.u32.canonical.c17.248d8b57",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n0\n0\n0\n0\n9\n9\n6\n6\n5\n5\n10\n10\n0\n0\n11\n11\n4\n4\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n19\n19\n80\n80\n0\n0\n25\n25\n22\n22\n65539\n65539\n327680\n327680\n0\n0\n65545\n65545\n65542\n65542\n2\n2\n4294967291\n4294967291\n12\n12\n4294967295\n4294967295\n4294967289\n4294967289\n",
+      "tags": [],
+      "source_sha256": "248d8b578af636b53ee5b6eb4cb9e44944eec6a33c643cce8977295653ad7cc4"
+    },
+    {
       "id": "simplify.u32.involution.c17.9383248e",
       "facet": "simplify",
       "phase": "local",
@@ -16955,6 +17039,20 @@
       "expect": "0\n0\n0\n2\n2\n0\n7\n7\n0\n16\n16\n0\n4294967296\n4294967296\n0\n18446744073709551615\n18446744073709551615\n0\n",
       "tags": [],
       "source_sha256": "673be6b3048496a30a0dc008b93eb94bdc69d3e17aca26eb53d6325409844005"
+    },
+    {
+      "id": "simplify.u64.canonical.c17.66f586ce",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n0\n0\n0\n0\n9\n9\n6\n6\n5\n5\n10\n10\n0\n0\n11\n11\n4\n4\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n19\n19\n80\n80\n0\n0\n25\n25\n22\n22\n4294967299\n4294967299\n21474836480\n21474836480\n0\n0\n4294967305\n4294967305\n4294967302\n4294967302\n2\n2\n18446744073709551611\n18446744073709551611\n12\n12\n18446744073709551615\n18446744073709551615\n18446744073709551609\n18446744073709551609\n",
+      "tags": [],
+      "source_sha256": "66f586ce9aa537621dcd02e03ed1a192e3aeb6bc2193c3d70484d6f88bee2f27"
     },
     {
       "id": "simplify.u64.involution.c17.7aac3d7e",
@@ -17041,6 +17139,20 @@
       "source_sha256": "43bae4741c85a7ff563508d4ee67d08887daec1dc8e37c7be2ac514c46f19ac4"
     },
     {
+      "id": "simplify.u8.canonical.c17.2245de2e",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "canonical"
+      },
+      "expect_kind": "output",
+      "expect": "3\n3\n0\n0\n0\n0\n9\n9\n6\n6\n4\n4\n5\n5\n0\n0\n9\n9\n7\n7\n5\n5\n10\n10\n0\n0\n11\n11\n4\n4\n10\n10\n35\n35\n4\n4\n15\n15\n1\n1\n11\n11\n40\n40\n8\n8\n9\n9\n14\n14\n258\n258\n1275\n1275\n12\n12\n255\n255\n249\n249\n",
+      "tags": [],
+      "source_sha256": "2245de2e44323589732dfc5304735f7f50291c064ab2f311ea8a426ef862c4b8"
+    },
+    {
       "id": "simplify.u8.involution.c17.0c94b030",
       "facet": "simplify",
       "phase": "local",
@@ -17097,7 +17209,7 @@
       "source_sha256": "9ff42073ed3120ea98380a367c82354dd91251ca5a1848908f1b6a9400a68c59"
     },
     {
-      "id": "strength.i16.div.c17.e1a1fd43",
+      "id": "strength.i16.div.c17.5a5d4d5e",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17106,12 +17218,12 @@
         "op": "div"
       },
       "expect_kind": "output",
-      "expect": "-32768\n-16384\n-10922\n-8192\n-6553\n-4681\n-4096\n-3276\n-2048\n-512\n-327\n-128\n-32\n-32\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n255\n127\n85\n63\n51\n36\n31\n25\n15\n3\n2\n1\n0\n0\n32767\n16383\n10922\n8191\n6553\n4681\n4095\n3276\n2047\n511\n327\n128\n32\n31\n",
+      "expect": "16384\n32768\n-32768\n-16384\n-10922\n-8192\n-6553\n-4681\n-4096\n-3276\n-2048\n-512\n-327\n-128\n-32\n-32\n1\n2\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-3\n-7\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n-127\n-255\n255\n127\n85\n63\n51\n36\n31\n25\n15\n3\n2\n1\n0\n0\n-16383\n-32767\n32767\n16383\n10922\n8191\n6553\n4681\n4095\n3276\n2047\n511\n327\n128\n32\n31\n",
       "tags": [],
-      "source_sha256": "e1a1fd4365bac3ab8e4f5b7435999093705fe73047d4b9cd261852ac38e9228e"
+      "source_sha256": "5a5d4d5e3581a4860404d2d0f8a8ba7ce80eb05599f819831611632a88b8d026"
     },
     {
-      "id": "strength.i16.mul.c17.37ff079b",
+      "id": "strength.i16.mul.c17.f1b6f1c8",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17120,12 +17232,12 @@
         "op": "mul"
       },
       "expect_kind": "output",
-      "expect": "-32768\n-65536\n-98304\n-131072\n-163840\n-229376\n-262144\n-327680\n-524288\n-2097152\n-3276800\n-8355840\n-32768000\n-33554432\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n-510\n-2000\n-2048\n1\n2\n3\n4\n5\n7\n8\n10\n16\n64\n100\n255\n1000\n1024\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n1785\n7000\n7168\n255\n510\n765\n1020\n1275\n1785\n2040\n2550\n4080\n16320\n25500\n65025\n255000\n261120\n32767\n65534\n98301\n131068\n163835\n229369\n262136\n327670\n524272\n2097088\n3276700\n8355585\n32767000\n33553408\n",
+      "expect": "65536\n32768\n-32768\n-65536\n-98304\n-131072\n-163840\n-229376\n-262144\n-327680\n-524288\n-2097152\n-3276800\n-8355840\n-32768000\n-33554432\n4\n2\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n-510\n-2000\n-2048\n-2\n-1\n1\n2\n3\n4\n5\n7\n8\n10\n16\n64\n100\n255\n1000\n1024\n-14\n-7\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n1785\n7000\n7168\n-510\n-255\n255\n510\n765\n1020\n1275\n1785\n2040\n2550\n4080\n16320\n25500\n65025\n255000\n261120\n-65534\n-32767\n32767\n65534\n98301\n131068\n163835\n229369\n262136\n327670\n524272\n2097088\n3276700\n8355585\n32767000\n33553408\n",
       "tags": [],
-      "source_sha256": "37ff079b88ce43b17082ab3b7c19722bb84c73872adbe5dfd9d605d636c50a90"
+      "source_sha256": "f1b6f1c895b1aa5a789aead5b6bb9e4f34dc91355280596a92d8111e56c1b6e5"
     },
     {
-      "id": "strength.i16.rem.c17.fcae141c",
+      "id": "strength.i16.rem.c17.c27e6ef5",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17134,12 +17246,12 @@
         "op": "rem"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n-2\n0\n-3\n-1\n0\n-8\n0\n0\n-68\n-128\n-768\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n7\n7\n7\n0\n1\n0\n3\n0\n3\n7\n5\n15\n63\n55\n0\n255\n255\n0\n1\n1\n3\n2\n0\n7\n7\n15\n63\n67\n127\n767\n1023\n",
+      "expect": "0\n0\n0\n0\n-2\n0\n-3\n-1\n0\n-8\n0\n0\n-68\n-128\n-768\n0\n0\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n1\n0\n0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n7\n7\n7\n1\n0\n0\n1\n0\n3\n0\n3\n7\n5\n15\n63\n55\n0\n255\n255\n1\n0\n0\n1\n1\n3\n2\n0\n7\n7\n15\n63\n67\n127\n767\n1023\n",
       "tags": [],
-      "source_sha256": "fcae141c2e31d375b219e18ca89c22d7e11ae49704ed3bc9edeab5a4446fffe3"
+      "source_sha256": "c27e6ef5cbc08df519f482da9c5b56b423ae4e17e3f2bcb089b2df21d29882ca"
     },
     {
-      "id": "strength.i32.div.c17.dc96948a",
+      "id": "strength.i32.div.c17.998b0586",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17148,12 +17260,12 @@
         "op": "div"
       },
       "expect_kind": "output",
-      "expect": "-2147483648\n-1073741824\n-715827882\n-536870912\n-429496729\n-306783378\n-268435456\n-214748364\n-134217728\n-33554432\n-21474836\n-8421504\n-2147483\n-2097152\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n255\n127\n85\n63\n51\n36\n31\n25\n15\n3\n2\n1\n0\n0\n2147483647\n1073741823\n715827882\n536870911\n429496729\n306783378\n268435455\n214748364\n134217727\n33554431\n21474836\n8421504\n2147483\n2097151\n",
+      "expect": "1073741824\n-2147483648\n-1073741824\n-715827882\n-536870912\n-429496729\n-306783378\n-268435456\n-214748364\n-134217728\n-33554432\n-21474836\n-8421504\n-2147483\n-2097152\n1\n2\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-3\n-7\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n-127\n-255\n255\n127\n85\n63\n51\n36\n31\n25\n15\n3\n2\n1\n0\n0\n-1073741823\n-2147483647\n2147483647\n1073741823\n715827882\n536870911\n429496729\n306783378\n268435455\n214748364\n134217727\n33554431\n21474836\n8421504\n2147483\n2097151\n",
       "tags": [],
-      "source_sha256": "dc96948a2df0eb204df54adaef995442fa84389fe399c8838b59467ca92f0ed4"
+      "source_sha256": "998b05861f2f22d4acc653ec7c4c6586321ffcc28dab5ff17025895ccae532d3"
     },
     {
-      "id": "strength.i32.mul.c17.dfc2bf9b",
+      "id": "strength.i32.mul.c17.e339765a",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17162,12 +17274,12 @@
         "op": "mul"
       },
       "expect_kind": "output",
-      "expect": "-2147483648\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n-510\n-2000\n-2048\n1\n2\n3\n4\n5\n7\n8\n10\n16\n64\n100\n255\n1000\n1024\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n1785\n7000\n7168\n255\n510\n765\n1020\n1275\n1785\n2040\n2550\n4080\n16320\n25500\n65025\n255000\n261120\n2147483647\n",
+      "expect": "-2147483648\n4\n2\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n-510\n-2000\n-2048\n-2\n-1\n1\n2\n3\n4\n5\n7\n8\n10\n16\n64\n100\n255\n1000\n1024\n-14\n-7\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n1785\n7000\n7168\n-510\n-255\n255\n510\n765\n1020\n1275\n1785\n2040\n2550\n4080\n16320\n25500\n65025\n255000\n261120\n-2147483647\n2147483647\n",
       "tags": [],
-      "source_sha256": "dfc2bf9b91bfa1fb674be9876f2d10bd8df65aed7e3e501d3ce48846ac14518c"
+      "source_sha256": "e339765ad477946575eb9c308eea10bd8bdd5a21de101686bb40f9a8d408f5bd"
     },
     {
-      "id": "strength.i32.rem.c17.60100504",
+      "id": "strength.i32.rem.c17.52243025",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17176,12 +17288,12 @@
         "op": "rem"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n-2\n0\n-3\n-2\n0\n-8\n0\n0\n-48\n-128\n-648\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n7\n7\n7\n0\n1\n0\n3\n0\n3\n7\n5\n15\n63\n55\n0\n255\n255\n0\n1\n1\n3\n2\n1\n7\n7\n15\n63\n47\n127\n647\n1023\n",
+      "expect": "0\n0\n0\n-2\n0\n-3\n-2\n0\n-8\n0\n0\n-48\n-128\n-648\n0\n0\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n1\n0\n0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n7\n7\n7\n1\n0\n0\n1\n0\n3\n0\n3\n7\n5\n15\n63\n55\n0\n255\n255\n1\n0\n0\n1\n1\n3\n2\n1\n7\n7\n15\n63\n47\n127\n647\n1023\n",
       "tags": [],
-      "source_sha256": "60100504989ce852389744b35cc6063b4dcf38823419b333e64edbe8b3a80edf"
+      "source_sha256": "52243025f8e7d22a0d07937dc2b45009fa36840a0b725922986f1de665087664"
     },
     {
-      "id": "strength.i64.div.c17.40a54e30",
+      "id": "strength.i64.div.c17.95805b26",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17190,12 +17302,12 @@
         "op": "div"
       },
       "expect_kind": "output",
-      "expect": "-9223372036854775808\n-4611686018427387904\n-3074457345618258602\n-2305843009213693952\n-1844674407370955161\n-1317624576693539401\n-1152921504606846976\n-922337203685477580\n-576460752303423488\n-144115188075855872\n-92233720368547758\n-36170086419038336\n-9223372036854775\n-9007199254740992\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n255\n127\n85\n63\n51\n36\n31\n25\n15\n3\n2\n1\n0\n0\n9223372036854775807\n4611686018427387903\n3074457345618258602\n2305843009213693951\n1844674407370955161\n1317624576693539401\n1152921504606846975\n922337203685477580\n576460752303423487\n144115188075855871\n92233720368547758\n36170086419038336\n9223372036854775\n9007199254740991\n",
+      "expect": "4611686018427387904\n-9223372036854775808\n-4611686018427387904\n-3074457345618258602\n-2305843009213693952\n-1844674407370955161\n-1317624576693539401\n-1152921504606846976\n-922337203685477580\n-576460752303423488\n-144115188075855872\n-92233720368547758\n-36170086419038336\n-9223372036854775\n-9007199254740992\n1\n2\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-3\n-7\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n-127\n-255\n255\n127\n85\n63\n51\n36\n31\n25\n15\n3\n2\n1\n0\n0\n-4611686018427387903\n-9223372036854775807\n9223372036854775807\n4611686018427387903\n3074457345618258602\n2305843009213693951\n1844674407370955161\n1317624576693539401\n1152921504606846975\n922337203685477580\n576460752303423487\n144115188075855871\n92233720368547758\n36170086419038336\n9223372036854775\n9007199254740991\n",
       "tags": [],
-      "source_sha256": "40a54e30bbbed7f0d924d7e23be34b98a5fece7dfa16c87e4273922b818ed714"
+      "source_sha256": "95805b26af756db03874d4c079cbfcd516ca227a970d8b1b3e3f28728fb30258"
     },
     {
-      "id": "strength.i64.mul.c17.e3803e20",
+      "id": "strength.i64.mul.c17.2fca5e79",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17204,12 +17316,12 @@
         "op": "mul"
       },
       "expect_kind": "output",
-      "expect": "-9223372036854775808\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n-510\n-2000\n-2048\n1\n2\n3\n4\n5\n7\n8\n10\n16\n64\n100\n255\n1000\n1024\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n1785\n7000\n7168\n255\n510\n765\n1020\n1275\n1785\n2040\n2550\n4080\n16320\n25500\n65025\n255000\n261120\n9223372036854775807\n",
+      "expect": "-9223372036854775808\n4\n2\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n-510\n-2000\n-2048\n-2\n-1\n1\n2\n3\n4\n5\n7\n8\n10\n16\n64\n100\n255\n1000\n1024\n-14\n-7\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n1785\n7000\n7168\n-510\n-255\n255\n510\n765\n1020\n1275\n1785\n2040\n2550\n4080\n16320\n25500\n65025\n255000\n261120\n-9223372036854775807\n9223372036854775807\n",
       "tags": [],
-      "source_sha256": "e3803e20f0c9fa7fc46efc11bb760489084f5afa50224292d402b233642603f7"
+      "source_sha256": "2fca5e794f27227472abe5b356927bfbfe7995ad7d5422bbe35d21a8faf3ae4e"
     },
     {
-      "id": "strength.i64.rem.c17.fed2e9e0",
+      "id": "strength.i64.rem.c17.df8cf22f",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17218,12 +17330,12 @@
         "op": "rem"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n-2\n0\n-3\n-1\n0\n-8\n0\n0\n-8\n-128\n-808\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n7\n7\n7\n0\n1\n0\n3\n0\n3\n7\n5\n15\n63\n55\n0\n255\n255\n0\n1\n1\n3\n2\n0\n7\n7\n15\n63\n7\n127\n807\n1023\n",
+      "expect": "0\n0\n0\n-2\n0\n-3\n-1\n0\n-8\n0\n0\n-8\n-128\n-808\n0\n0\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n1\n0\n0\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n7\n7\n7\n1\n0\n0\n1\n0\n3\n0\n3\n7\n5\n15\n63\n55\n0\n255\n255\n1\n0\n0\n1\n1\n3\n2\n0\n7\n7\n15\n63\n7\n127\n807\n1023\n",
       "tags": [],
-      "source_sha256": "fed2e9e033ebb787b93c1626e8d4f6f84cd225f98f61442aa0f53fc8351cbd08"
+      "source_sha256": "df8cf22f7ec119e2b478b37be04595275a78c53fee7fa98eb4954a9fbee6101c"
     },
     {
-      "id": "strength.i8.div.c17.89da150e",
+      "id": "strength.i8.div.c17.b895ba90",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17232,12 +17344,12 @@
         "op": "div"
       },
       "expect_kind": "output",
-      "expect": "-128\n-64\n-42\n-32\n-25\n-18\n-16\n-12\n-8\n-2\n-1\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n127\n63\n42\n31\n25\n18\n15\n12\n7\n1\n1\n",
+      "expect": "64\n128\n-128\n-64\n-42\n-32\n-25\n-18\n-16\n-12\n-8\n-2\n-1\n1\n2\n-2\n-1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-1\n-2\n2\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-3\n-7\n7\n3\n2\n1\n1\n1\n0\n0\n0\n0\n0\n-63\n-127\n127\n63\n42\n31\n25\n18\n15\n12\n7\n1\n1\n",
       "tags": [],
-      "source_sha256": "89da150e1b8499c69f18766713698dfed932dd3d6bd57417e5be9c33aecf2ae2"
+      "source_sha256": "b895ba905cd6b1c29cfc67fe3be709b767e667e44e239a5895fbcdadd667f8de"
     },
     {
-      "id": "strength.i8.mul.c17.e8aac7dd",
+      "id": "strength.i8.mul.c17.bfa42411",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17246,12 +17358,12 @@
         "op": "mul"
       },
       "expect_kind": "output",
-      "expect": "-128\n-256\n-384\n-512\n-640\n-896\n-1024\n-1280\n-2048\n-8192\n-12800\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2\n4\n6\n8\n10\n14\n16\n20\n32\n128\n200\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n127\n254\n381\n508\n635\n889\n1016\n1270\n2032\n8128\n12700\n",
+      "expect": "256\n128\n-128\n-256\n-384\n-512\n-640\n-896\n-1024\n-1280\n-2048\n-8192\n-12800\n4\n2\n-2\n-4\n-6\n-8\n-10\n-14\n-16\n-20\n-32\n-128\n-200\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-4\n-2\n2\n4\n6\n8\n10\n14\n16\n20\n32\n128\n200\n-14\n-7\n7\n14\n21\n28\n35\n49\n56\n70\n112\n448\n700\n-254\n-127\n127\n254\n381\n508\n635\n889\n1016\n1270\n2032\n8128\n12700\n",
       "tags": [],
-      "source_sha256": "e8aac7dd7ba3a4b7132819d6ee96b828953eeb887b3c2a5883cf28c9037f7568"
+      "source_sha256": "bfa4241187c42d899e606dcdb8031246b46f4a21756f30e92d10ad713ca7f8b1"
     },
     {
-      "id": "strength.i8.rem.c17.683d0b2c",
+      "id": "strength.i8.rem.c17.89932a9d",
       "facet": "strength",
       "phase": "local",
       "dialect": "c17",
@@ -17260,9 +17372,9 @@
         "op": "rem"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n-2\n0\n-3\n-2\n0\n-8\n0\n0\n-28\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2\n2\n2\n2\n2\n2\n2\n2\n2\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n0\n1\n1\n3\n2\n1\n7\n7\n15\n63\n27\n",
+      "expect": "0\n0\n0\n0\n-2\n0\n-3\n-2\n0\n-8\n0\n0\n-28\n0\n0\n0\n0\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n-2\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n2\n2\n2\n2\n2\n2\n2\n2\n2\n1\n0\n0\n1\n1\n3\n2\n0\n7\n7\n7\n7\n7\n1\n0\n0\n1\n1\n3\n2\n1\n7\n7\n15\n63\n27\n",
       "tags": [],
-      "source_sha256": "683d0b2cfc6fbf2758c21b0c824cbac5912b0b1fd8cffc30045102ef6132367c"
+      "source_sha256": "89932a9dfc0dac4205e7c3e320f572e14d076f63e37fbf8a00867bfbc7bd6d9f"
     },
     {
       "id": "strength.u16.div.c17.fbbe6202",

@@ -74,8 +74,15 @@ fn constant_fold(sink: &mut Sink<'_>) {
 /// division by seven with a multiply and a shift gives the same answer as the division, for
 /// every operand including the negative ones and the extremes where the usual derivation of
 /// the magic number is easiest to get wrong.
+///
+/// The negative constants are here for the rewrites that are not about magic numbers at all.
+/// Multiplying or dividing by minus one is a subtraction from nothing and the remainder of minus
+/// one is nothing, and the pair that makes those worth a case is the most negative value of the
+/// type over minus one. The quotient there is not representable, so C leaves it undefined and the
+/// generator refuses the case rather than asserting an answer, which is the whole reason the
+/// refusal is written where the quotient is computed rather than where the result is checked.
 fn strength(sink: &mut Sink<'_>) {
-    const CONSTANTS: &[i128] = &[1, 2, 3, 4, 5, 7, 8, 10, 16, 64, 100, 255, 1000, 1024];
+    const CONSTANTS: &[i128] = &[-2, -1, 1, 2, 3, 4, 5, 7, 8, 10, 16, 64, 100, 255, 1000, 1024];
     for &ty in Ty::ALL {
         for &op in &[Op::Mul, Op::Div, Op::Rem] {
             if !sink.wants(Facet::Strength) {
@@ -370,6 +377,7 @@ const GROUPS: &[&str] = &[
     "shift",
     "involution",
     "narrowed",
+    "canonical",
 ];
 
 /// Every identity in a group that has a defined answer for this operand.
@@ -499,6 +507,43 @@ fn identities(group: &str, ty: Ty, x: &str, operand: i128) -> Vec<(String, i128,
             // byte, so no pass produces a narrow divide at all. Between them that is fourteen
             // rules that are proved and unreachable, which is a fact about the language and the
             // pass order rather than a gap here.
+            out
+        }
+        // A constant on the wrong side of a commutative operation, where the constant is not an
+        // identity and the operation therefore survives.
+        //
+        // This is tier three of the rule set, the canonicalisations, and it is the one group here
+        // that is not about an operation going away. `3 + x` and `x + 3` compute the same thing
+        // and neither is cheaper than the other in the IR, so nothing above measures whether a
+        // compiler puts them into one shape. What it costs to skip is paid twice over: every rule
+        // about a constant has to be written on both sides, and a machine whose add takes an
+        // immediate on the right only has to load the constant into a register first.
+        //
+        // The constants are chosen so that no earlier tier fires. Zero, one and every bit set are
+        // identities and are covered by the groups above, and a rewrite that takes the operation
+        // away leaves nothing for this one to be about. Three, five, twelve, nine and six are
+        // none of those, at every width they are written at.
+        //
+        // Both sides again, and here the second side is the control rather than a second rule.
+        // The already canonical form is what the swapped form is supposed to turn into, so a
+        // compiler that gets one of them wrong and the other right is a compiler whose
+        // canonicalisation changed the answer.
+        "canonical" => {
+            let mut out = Vec::new();
+            for (op, sign, right) in [
+                (Op::Add, "+", 3),
+                (Op::Mul, "*", 5),
+                (Op::And, "&", 12),
+                (Op::Or, "|", 9),
+                (Op::Xor, "^", 6),
+            ] {
+                if !wide.holds(right) {
+                    continue;
+                }
+                let k = lit(wide, right);
+                out.push((format!("{k} {sign} {x}"), eval(op, wide, right, operand), wide));
+                out.push((format!("{x} {sign} {k}"), eval(op, wide, operand, right), wide));
+            }
             out
         }
         // Two of a thing that undoes itself, and a comparison of a value with itself. Neither
@@ -882,8 +927,14 @@ mod tests {
     fn every_identity_group_is_generated_at_every_type() {
         let cases = cases_for(Facet::Simplify);
         for ty in ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"] {
-            for group in ["additive", "multiplicative", "bitwise-self", "bitwise-constant", "shift"]
-            {
+            for group in [
+                "additive",
+                "multiplicative",
+                "bitwise-self",
+                "bitwise-constant",
+                "shift",
+                "canonical",
+            ] {
                 assert!(
                     cases.iter().any(|c| {
                         c.axes.get("type") == Some(ty) && c.axes.get("group") == Some(group)
@@ -906,6 +957,78 @@ mod tests {
             .expect("the signed int additive program");
         assert!(case.source.contains("x0 + (int)0"), "{}", case.source);
         assert!(case.source.contains("(int)0 + x0"), "{}", case.source);
+    }
+
+    #[test]
+    fn a_canonicalisation_case_writes_a_constant_no_earlier_rule_takes_away() {
+        // The group is about the constant being on the wrong side, so the operation has to still
+        // be there when the compiler gets to it. Zero, one and every bit set are identities, and
+        // a rewrite that removes the operation leaves nothing for this group to be about.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("type") == Some("i32") && c.axes.get("group") == Some("canonical"))
+            .expect("the signed int canonical program");
+        for both in ["(int)3 + x0", "x0 + (int)3", "(int)5 * x1", "x1 * (int)5"] {
+            assert!(case.source.contains(both), "{both} is missing from {}", case.source);
+        }
+        for identity in ["(int)0 +", "(int)1 *", "(int)0 |", "(int)(-1) &"] {
+            assert!(!case.source.contains(identity), "{identity} is an identity, {}", case.source);
+        }
+    }
+
+    #[test]
+    fn a_canonicalisation_case_reaches_the_width_a_long_operation_happens_at() {
+        // The narrow types promote to `int` before anything happens to them, so an `i8` program
+        // says nothing about an `i8` rule. A `long` does not promote, which makes this the one
+        // type in the facet that can put a constant on the left of a sixty four bit operation.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("type") == Some("i64") && c.axes.get("group") == Some("canonical"))
+            .expect("the signed long canonical program");
+        assert!(case.source.contains("(long long)3ll + x0"), "{}", case.source);
+        assert!(case.source.contains("(long long)6ll ^ x0"), "{}", case.source);
+    }
+
+    #[test]
+    fn the_strength_cases_include_the_constants_that_are_not_magic_numbers() {
+        // Minus one is the one multiplier and the one divisor whose cheaper form is a
+        // subtraction rather than a multiply and a shift, and the remainder of it is nothing at
+        // all. Without a case there is no evidence that the rewrite is right on any operand.
+        let cases = cases_for(Facet::Strength);
+        for op in ["mul", "div", "rem"] {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("type") == Some("i32") && c.axes.get("op") == Some(op))
+                .unwrap_or_else(|| panic!("the signed int {op} program"));
+            assert!(case.source.contains("((int)(-1))"), "{}", case.source);
+        }
+    }
+
+    #[test]
+    fn the_pair_with_no_answer_is_left_out_of_the_strength_cases() {
+        // The most negative value over minus one. The quotient is not representable, so C17
+        // 6.5.5p6 leaves both the quotient and the remainder undefined, and a case that asserted
+        // either would report a compiler that emits the divide as broken when it raises.
+        let cases = cases_for(Facet::Strength);
+        for (op, sign) in [("div", '/'), ("rem", '%')] {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("type") == Some("i32") && c.axes.get("op") == Some(op))
+                .unwrap_or_else(|| panic!("the signed int {op} program"));
+            // `x0` is the most negative value of the type, which the program writes as
+            // `(-2147483647 - 1)` because the literal on its own is not one.
+            assert!(case.source.contains("(-2147483647 - 1)"), "{}", case.source);
+            let refused = format!("x0 {sign} ((int)(-1))");
+            assert!(!case.source.contains(&refused), "{refused} has no answer, {}", case.source);
+            // And the operand next to it does have one, so the omission above is this pair and
+            // not the constant being dropped everywhere.
+            let kept = format!("x0 {sign} ((int)(-2))");
+            assert!(case.source.contains(&kept), "{kept} is missing, {}", case.source);
+            let also = format!("x1 {sign} ((int)(-1))");
+            assert!(case.source.contains(&also), "{also} is missing, {}", case.source);
+        }
     }
 
     #[test]
