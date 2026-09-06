@@ -1,7 +1,7 @@
 {
   "schema": "1",
-  "corpus_sha256": "6264779bf77d1d57965d62acc272030f9c290e9edf91638d5dbff886bdc5adb6",
-  "count": 1232,
+  "corpus_sha256": "8bd020ee46b59024fe7dab125e417a8e6d2ef5f83dae2d8c9c95b4dc6743cde7",
+  "count": 1277,
   "cases": [
     {
       "id": "alias-analysis.i32.char-pointer.c17.2c550cb8",
@@ -16355,108 +16355,746 @@
       "source_sha256": "77c3482dd5bb8ead3be64ef1d035aadb3e2dd5f8d28d5ef8c70fee3f8332116e"
     },
     {
-      "id": "simplify.i16.c17.a6ed7fcc",
+      "id": "simplify.bool.one-bit.c17.4257870d",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "i16"
+        "type": "bool",
+        "group": "one-bit"
       },
       "expect_kind": "output",
-      "expect": "-32768\n-32768\n-32768\n0\n-32768\n0\n-32768\n-32768\n0\n0\n0\n-1\n-32768\n-32768\n-32768\n1\n0\n-2\n-2\n-2\n0\n-2\n0\n-2\n-2\n0\n0\n0\n-1\n-2\n-2\n-2\n1\n0\n1\n1\n1\n0\n1\n0\n1\n1\n0\n0\n0\n-1\n1\n1\n1\n1\n1\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n-1\n7\n7\n7\n7\n7\n1\n0\n255\n255\n255\n0\n255\n0\n255\n255\n0\n0\n0\n-1\n255\n255\n255\n255\n255\n1\n0\n32767\n32767\n32767\n0\n32767\n0\n32767\n32767\n0\n0\n0\n-1\n32767\n32767\n32767\n32767\n32767\n1\n0\n",
+      "expect": "1\n1\n0\n0\n0\n1\n1\n1\n1\n1\n1\n1\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n1\n1\n0\n0\n1\n1\n0\n0\n0\n1\n1\n1\n1\n1\n1\n1\n1\n",
       "tags": [],
-      "source_sha256": "a6ed7fcc02622f6368c59a9d017c2a05e94a54ddfdc602e0c65d8fe403443dcd"
+      "source_sha256": "4257870da0aa24ac120216cd311f1f1105116790efcda1367e6f35db6796171b"
     },
     {
-      "id": "simplify.i32.c17.bc94da60",
+      "id": "simplify.i16.additive.c17.470faaa8",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "i32"
+        "type": "i16",
+        "group": "additive"
       },
       "expect_kind": "output",
-      "expect": "-2147483648\n-2147483648\n-2147483648\n0\n-2147483648\n0\n-2147483648\n-2147483648\n0\n0\n0\n-1\n-2147483648\n-2147483648\n-2147483648\n1\n0\n-2\n-2\n-2\n0\n-2\n0\n-2\n-2\n0\n0\n0\n-1\n-2\n-2\n-2\n1\n0\n1\n1\n1\n0\n1\n0\n1\n1\n0\n0\n0\n-1\n1\n1\n1\n1\n1\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n-1\n7\n7\n7\n7\n7\n1\n0\n255\n255\n255\n0\n255\n0\n255\n255\n0\n0\n0\n-1\n255\n255\n255\n255\n255\n1\n0\n2147483647\n2147483647\n2147483647\n0\n2147483647\n0\n2147483647\n2147483647\n0\n0\n0\n-1\n2147483647\n2147483647\n2147483647\n2147483647\n2147483647\n1\n0\n",
+      "expect": "-32768\n-32768\n-32768\n0\n-2\n-2\n-2\n0\n1\n1\n1\n0\n7\n7\n7\n0\n255\n255\n255\n0\n32767\n32767\n32767\n0\n",
       "tags": [],
-      "source_sha256": "bc94da60a37518b597d7bfe11db65f2e9010da91b4cd842f0e9aa52cfa28171d"
+      "source_sha256": "470faaa81a8de467d69beaffffb1896b422a02477ccb4719dafe68d09d9bd251"
     },
     {
-      "id": "simplify.i64.c17.e9732cf0",
+      "id": "simplify.i16.bitwise-constant.c17.32d3064b",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "i64"
+        "type": "i16",
+        "group": "bitwise-constant"
       },
       "expect_kind": "output",
-      "expect": "-9223372036854775808\n-9223372036854775808\n-9223372036854775808\n0\n-9223372036854775808\n0\n-9223372036854775808\n-9223372036854775808\n0\n0\n0\n-1\n-9223372036854775808\n-9223372036854775808\n-9223372036854775808\n1\n0\n-2\n-2\n-2\n0\n-2\n0\n-2\n-2\n0\n0\n0\n-1\n-2\n-2\n-2\n1\n0\n1\n1\n1\n0\n1\n0\n1\n1\n0\n0\n0\n-1\n1\n1\n1\n1\n1\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n-1\n7\n7\n7\n7\n7\n1\n0\n255\n255\n255\n0\n255\n0\n255\n255\n0\n0\n0\n-1\n255\n255\n255\n255\n255\n1\n0\n9223372036854775807\n9223372036854775807\n9223372036854775807\n0\n9223372036854775807\n0\n9223372036854775807\n9223372036854775807\n0\n0\n0\n-1\n9223372036854775807\n9223372036854775807\n9223372036854775807\n9223372036854775807\n9223372036854775807\n1\n0\n",
+      "expect": "0\n0\n-32768\n-32768\n-32768\n-32768\n-1\n-1\n-32768\n-32768\n0\n0\n-2\n-2\n-2\n-2\n-1\n-1\n-2\n-2\n0\n0\n1\n1\n1\n1\n-1\n-1\n1\n1\n0\n0\n7\n7\n7\n7\n-1\n-1\n7\n7\n0\n0\n255\n255\n255\n255\n-1\n-1\n255\n255\n0\n0\n32767\n32767\n32767\n32767\n-1\n-1\n32767\n32767\n",
       "tags": [],
-      "source_sha256": "e9732cf095da41a96746f03c5d345c9a72d42948a6465f42f5d37d70780961b5"
+      "source_sha256": "32d3064b3158f93287e92ad1b74fa3e0d934b1ae8dd2befc42d2b392a83e822a"
     },
     {
-      "id": "simplify.i8.c17.fa664622",
+      "id": "simplify.i16.bitwise-self.c17.260d272e",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "i8"
+        "type": "i16",
+        "group": "bitwise-self"
       },
       "expect_kind": "output",
-      "expect": "-128\n-128\n-128\n0\n-128\n0\n-128\n-128\n0\n0\n0\n-1\n-128\n-128\n-128\n1\n0\n-2\n-2\n-2\n0\n-2\n0\n-2\n-2\n0\n0\n0\n-1\n-2\n-2\n-2\n1\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n-1\n0\n0\n0\n0\n0\n1\n0\n2\n2\n2\n0\n2\n0\n2\n2\n0\n0\n0\n-1\n2\n2\n2\n2\n2\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n-1\n7\n7\n7\n7\n7\n1\n0\n127\n127\n127\n0\n127\n0\n127\n127\n0\n0\n0\n-1\n127\n127\n127\n127\n127\n1\n0\n",
+      "expect": "-32768\n-32768\n0\n-2\n-2\n0\n1\n1\n0\n7\n7\n0\n255\n255\n0\n32767\n32767\n0\n",
       "tags": [],
-      "source_sha256": "fa664622a31a7c420d6326ff20ee2304868e15b8a41eda0d7df4732349263287"
+      "source_sha256": "260d272e56ff583268609281c667441e5ede67a532b33efaeeaad276de3b2c52"
     },
     {
-      "id": "simplify.u16.c17.4049fe2e",
+      "id": "simplify.i16.involution.c17.922f2816",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "u16"
+        "type": "i16",
+        "group": "involution"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n65535\n0\n0\n0\n0\n0\n1\n0\n2\n2\n2\n0\n2\n0\n2\n2\n0\n0\n0\n65535\n2\n2\n2\n2\n2\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n65535\n7\n7\n7\n7\n7\n1\n0\n16\n16\n16\n0\n16\n0\n16\n16\n0\n0\n0\n65535\n16\n16\n16\n16\n16\n1\n0\n256\n256\n256\n0\n256\n0\n256\n256\n0\n0\n0\n65535\n256\n256\n256\n256\n256\n1\n0\n65535\n65535\n65535\n0\n65535\n0\n65535\n65535\n0\n0\n0\n65535\n65535\n65535\n65535\n65535\n65535\n1\n0\n",
+      "expect": "-32768\n-32768\n1\n0\n0\n0\n1\n1\n-2\n-2\n1\n0\n0\n0\n1\n1\n1\n1\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n255\n255\n1\n0\n0\n0\n1\n1\n32767\n32767\n1\n0\n0\n0\n1\n1\n",
       "tags": [],
-      "source_sha256": "4049fe2efa5bd69c194b73eb7d1a64094472725d1572084ccb589afb610f7916"
+      "source_sha256": "922f2816e74ab5dca2350599def6f3a6e717990d6d803463e76f0ebb615fdf5c"
     },
     {
-      "id": "simplify.u32.c17.1252e39c",
+      "id": "simplify.i16.multiplicative.c17.98634f21",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "u32"
+        "type": "i16",
+        "group": "multiplicative"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n4294967295\n0\n0\n0\n0\n0\n1\n0\n2\n2\n2\n0\n2\n0\n2\n2\n0\n0\n0\n4294967295\n2\n2\n2\n2\n2\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n4294967295\n7\n7\n7\n7\n7\n1\n0\n16\n16\n16\n0\n16\n0\n16\n16\n0\n0\n0\n4294967295\n16\n16\n16\n16\n16\n1\n0\n65536\n65536\n65536\n0\n65536\n0\n65536\n65536\n0\n0\n0\n4294967295\n65536\n65536\n65536\n65536\n65536\n1\n0\n4294967295\n4294967295\n4294967295\n0\n4294967295\n0\n4294967295\n4294967295\n0\n0\n0\n4294967295\n4294967295\n4294967295\n4294967295\n4294967295\n4294967295\n1\n0\n",
+      "expect": "-32768\n-32768\n0\n0\n-32768\n0\n-2\n-2\n0\n0\n-2\n0\n1\n1\n0\n0\n1\n0\n7\n7\n0\n0\n7\n0\n255\n255\n0\n0\n255\n0\n32767\n32767\n0\n0\n32767\n0\n",
       "tags": [],
-      "source_sha256": "1252e39c3cee04d46d142fbc178f02e76fc00d781ea9beb1104aa6444b22ec06"
+      "source_sha256": "98634f21447adb0c25a983321bcac87e9d3321ef060e6f2389841316ecc3047c"
     },
     {
-      "id": "simplify.u64.c17.44597f21",
+      "id": "simplify.i16.narrowed.c17.019953e8",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "u64"
+        "type": "i16",
+        "group": "narrowed"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n18446744073709551615\n0\n0\n0\n0\n0\n1\n0\n2\n2\n2\n0\n2\n0\n2\n2\n0\n0\n0\n18446744073709551615\n2\n2\n2\n2\n2\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n18446744073709551615\n7\n7\n7\n7\n7\n1\n0\n16\n16\n16\n0\n16\n0\n16\n16\n0\n0\n0\n18446744073709551615\n16\n16\n16\n16\n16\n1\n0\n4294967296\n4294967296\n4294967296\n0\n4294967296\n0\n4294967296\n4294967296\n0\n0\n0\n18446744073709551615\n4294967296\n4294967296\n4294967296\n4294967296\n4294967296\n1\n0\n18446744073709551615\n18446744073709551615\n18446744073709551615\n0\n18446744073709551615\n0\n18446744073709551615\n18446744073709551615\n0\n0\n0\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n1\n0\n",
+      "expect": "-32768\n-32768\n-32768\n-1\n0\n-32768\n-32768\n-2\n-2\n-2\n-2\n-1\n0\n-2\n-2\n1\n1\n1\n1\n-1\n0\n1\n1\n7\n7\n7\n7\n-1\n0\n7\n7\n255\n255\n255\n255\n-1\n0\n255\n255\n32767\n32767\n32767\n32767\n-1\n0\n32767\n32767\n",
       "tags": [],
-      "source_sha256": "44597f21091e5420bd7f82ae63f32aa1eb998e964914745221e904a659d1453b"
+      "source_sha256": "019953e88635d3a9813d7a996215c54aabd53039a855182fdc41cb54e7b53627"
     },
     {
-      "id": "simplify.u8.c17.5c173b0c",
+      "id": "simplify.i16.shift.c17.10b729aa",
       "facet": "simplify",
       "phase": "local",
       "dialect": "c17",
       "axes": {
-        "type": "u8"
+        "type": "i16",
+        "group": "shift"
       },
       "expect_kind": "output",
-      "expect": "0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n0\n255\n0\n0\n0\n0\n0\n1\n0\n1\n1\n1\n0\n1\n0\n1\n1\n0\n0\n0\n255\n1\n1\n1\n1\n1\n1\n0\n2\n2\n2\n0\n2\n0\n2\n2\n0\n0\n0\n255\n2\n2\n2\n2\n2\n1\n0\n7\n7\n7\n0\n7\n0\n7\n7\n0\n0\n0\n255\n7\n7\n7\n7\n7\n1\n0\n8\n8\n8\n0\n8\n0\n8\n8\n0\n0\n0\n255\n8\n8\n8\n8\n8\n1\n0\n255\n255\n255\n0\n255\n0\n255\n255\n0\n0\n0\n255\n255\n255\n255\n255\n255\n1\n0\n",
+      "expect": "1\n1\n7\n7\n255\n255\n32767\n32767\n",
       "tags": [],
-      "source_sha256": "5c173b0ce738020245507af06b1c7fedf13c5f287b670608837629111ba5b5e7"
+      "source_sha256": "10b729aa27e21325528c155127687db5eed2658b34c7f6b97b06bddbc47cf96c"
+    },
+    {
+      "id": "simplify.i32.additive.c17.7209983c",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-2147483648\n-2147483648\n0\n-2\n-2\n-2\n0\n1\n1\n1\n0\n7\n7\n7\n0\n255\n255\n255\n0\n2147483647\n2147483647\n2147483647\n0\n",
+      "tags": [],
+      "source_sha256": "7209983c3c8dc950a2f5bcfa7e4fb0966e3fd05f53ea04443d4570cbc9b0537d"
+    },
+    {
+      "id": "simplify.i32.bitwise-constant.c17.b29bfed8",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n-2147483648\n-2147483648\n-2147483648\n-2147483648\n-1\n-1\n-2147483648\n-2147483648\n0\n0\n-2\n-2\n-2\n-2\n-1\n-1\n-2\n-2\n0\n0\n1\n1\n1\n1\n-1\n-1\n1\n1\n0\n0\n7\n7\n7\n7\n-1\n-1\n7\n7\n0\n0\n255\n255\n255\n255\n-1\n-1\n255\n255\n0\n0\n2147483647\n2147483647\n2147483647\n2147483647\n-1\n-1\n2147483647\n2147483647\n",
+      "tags": [],
+      "source_sha256": "b29bfed8a42410777a3edea69ebecd4a193446cdf0915e652a9dc27fa7339d97"
+    },
+    {
+      "id": "simplify.i32.bitwise-self.c17.1fc40dfd",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-2147483648\n0\n-2\n-2\n0\n1\n1\n0\n7\n7\n0\n255\n255\n0\n2147483647\n2147483647\n0\n",
+      "tags": [],
+      "source_sha256": "1fc40dfd806b22ae095d11d4c8bccd0aeb4f99537090f842d027c4cba48299de"
+    },
+    {
+      "id": "simplify.i32.involution.c17.d3542390",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n1\n0\n0\n0\n1\n1\n-2\n-2\n1\n0\n0\n0\n1\n1\n1\n1\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n255\n255\n1\n0\n0\n0\n1\n1\n2147483647\n2147483647\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "d35423908628274e30db6ece78205d901fca4abaab11f9b85d8a4f301cfa3b1f"
+    },
+    {
+      "id": "simplify.i32.multiplicative.c17.f33a52c9",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "-2147483648\n-2147483648\n0\n0\n-2147483648\n0\n-2\n-2\n0\n0\n-2\n0\n1\n1\n0\n0\n1\n0\n7\n7\n0\n0\n7\n0\n255\n255\n0\n0\n255\n0\n2147483647\n2147483647\n0\n0\n2147483647\n0\n",
+      "tags": [],
+      "source_sha256": "f33a52c9f3de8776db1aca590b85e13dc4cac984b8b380d9c1600757ce2ffa17"
+    },
+    {
+      "id": "simplify.i32.shift.c17.87d2e87f",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i32",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n7\n7\n255\n255\n2147483647\n2147483647\n",
+      "tags": [],
+      "source_sha256": "87d2e87fd72d9cbe768a99a6a112f261d27ab9af447aada91d39e9b839cc2b71"
+    },
+    {
+      "id": "simplify.i64.additive.c17.d41e2f60",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-9223372036854775808\n-9223372036854775808\n0\n-2\n-2\n-2\n0\n1\n1\n1\n0\n7\n7\n7\n0\n255\n255\n255\n0\n9223372036854775807\n9223372036854775807\n9223372036854775807\n0\n",
+      "tags": [],
+      "source_sha256": "d41e2f605e0a2f2118e75a6bbda60e654cc0f94adfd3f621b08786763d658bce"
+    },
+    {
+      "id": "simplify.i64.bitwise-constant.c17.7ab0e0de",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n-9223372036854775808\n-9223372036854775808\n-9223372036854775808\n-9223372036854775808\n-1\n-1\n-9223372036854775808\n-9223372036854775808\n0\n0\n-2\n-2\n-2\n-2\n-1\n-1\n-2\n-2\n0\n0\n1\n1\n1\n1\n-1\n-1\n1\n1\n0\n0\n7\n7\n7\n7\n-1\n-1\n7\n7\n0\n0\n255\n255\n255\n255\n-1\n-1\n255\n255\n0\n0\n9223372036854775807\n9223372036854775807\n9223372036854775807\n9223372036854775807\n-1\n-1\n9223372036854775807\n9223372036854775807\n",
+      "tags": [],
+      "source_sha256": "7ab0e0de8f255499d572eb9ab662b3513009f1fe919e19da6f5406b223c4a326"
+    },
+    {
+      "id": "simplify.i64.bitwise-self.c17.4fae386b",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-9223372036854775808\n0\n-2\n-2\n0\n1\n1\n0\n7\n7\n0\n255\n255\n0\n9223372036854775807\n9223372036854775807\n0\n",
+      "tags": [],
+      "source_sha256": "4fae386b29968745d7b7b292a7482e00355d5dbb61b1f5a3809d6d40a2c2e42b"
+    },
+    {
+      "id": "simplify.i64.involution.c17.00667165",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n1\n0\n0\n0\n1\n1\n-2\n-2\n1\n0\n0\n0\n1\n1\n1\n1\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n255\n255\n1\n0\n0\n0\n1\n1\n9223372036854775807\n9223372036854775807\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "0066716523a0e6245d005b93c390fca0c282c36befccc0b7fc8e07973d6d0400"
+    },
+    {
+      "id": "simplify.i64.multiplicative.c17.ff8281fa",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "-9223372036854775808\n-9223372036854775808\n0\n0\n-9223372036854775808\n0\n-2\n-2\n0\n0\n-2\n0\n1\n1\n0\n0\n1\n0\n7\n7\n0\n0\n7\n0\n255\n255\n0\n0\n255\n0\n9223372036854775807\n9223372036854775807\n0\n0\n9223372036854775807\n0\n",
+      "tags": [],
+      "source_sha256": "ff8281fa6cee8a802f0c4dc8c9dbf1931b82ee955fa45031e204da092a36d66d"
+    },
+    {
+      "id": "simplify.i64.shift.c17.a4969485",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i64",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "1\n1\n7\n7\n255\n255\n9223372036854775807\n9223372036854775807\n",
+      "tags": [],
+      "source_sha256": "a4969485b96dcd4e0025b3638c9ef43bf16c032f7b24eb7490cfc9c51a904fe6"
+    },
+    {
+      "id": "simplify.i8.additive.c17.024e60f7",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-128\n-128\n0\n-2\n-2\n-2\n0\n0\n0\n0\n0\n2\n2\n2\n0\n7\n7\n7\n0\n127\n127\n127\n0\n",
+      "tags": [],
+      "source_sha256": "024e60f76090b05073d1bb2c1c54c4a5a391751d0af51f4853772d2cde3b06a3"
+    },
+    {
+      "id": "simplify.i8.bitwise-constant.c17.ff88f848",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n-128\n-128\n-128\n-128\n-1\n-1\n-128\n-128\n0\n0\n-2\n-2\n-2\n-2\n-1\n-1\n-2\n-2\n0\n0\n0\n0\n0\n0\n-1\n-1\n0\n0\n0\n0\n2\n2\n2\n2\n-1\n-1\n2\n2\n0\n0\n7\n7\n7\n7\n-1\n-1\n7\n7\n0\n0\n127\n127\n127\n127\n-1\n-1\n127\n127\n",
+      "tags": [],
+      "source_sha256": "ff88f848253edb2e434eef4b9d76ce1311f6a573cef6b7d7879b90f3b23ace3f"
+    },
+    {
+      "id": "simplify.i8.bitwise-self.c17.bf297a5a",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-128\n0\n-2\n-2\n0\n0\n0\n0\n2\n2\n0\n7\n7\n0\n127\n127\n0\n",
+      "tags": [],
+      "source_sha256": "bf297a5a76fb4c9b1af74aed9a0db430205437b23fadb17cbe10a1734e8025e8"
+    },
+    {
+      "id": "simplify.i8.involution.c17.444afe1d",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-128\n1\n0\n0\n0\n1\n1\n-2\n-2\n1\n0\n0\n0\n1\n1\n0\n0\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n127\n127\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "444afe1dc633bd494d89e6f1a5840427c4612ea7592f5d993b736dd693be1e47"
+    },
+    {
+      "id": "simplify.i8.multiplicative.c17.1f3c2659",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-128\n0\n0\n-128\n0\n-2\n-2\n0\n0\n-2\n0\n0\n0\n0\n0\n0\n0\n2\n2\n0\n0\n2\n0\n7\n7\n0\n0\n7\n0\n127\n127\n0\n0\n127\n0\n",
+      "tags": [],
+      "source_sha256": "1f3c26599f49636876ae39aba4532fdedd2bf8caa6187048521cd486e04f4e1f"
+    },
+    {
+      "id": "simplify.i8.narrowed.c17.936736f0",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "narrowed"
+      },
+      "expect_kind": "output",
+      "expect": "-128\n-128\n-128\n-128\n-1\n0\n-128\n-128\n-2\n-2\n-2\n-2\n-1\n0\n-2\n-2\n0\n0\n0\n0\n-1\n0\n0\n0\n2\n2\n2\n2\n-1\n0\n2\n2\n7\n7\n7\n7\n-1\n0\n7\n7\n127\n127\n127\n127\n-1\n0\n127\n127\n",
+      "tags": [],
+      "source_sha256": "936736f0e4a6d1b1ee434fd1b250fce48406965221e466e2c6d03592b79328c3"
+    },
+    {
+      "id": "simplify.i8.shift.c17.f0619d0f",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "i8",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n2\n2\n7\n7\n127\n127\n",
+      "tags": [],
+      "source_sha256": "f0619d0f98a269d66def3b75a761e62487bf3367bbe75a28317518ca50b4a373"
+    },
+    {
+      "id": "simplify.u16.additive.c17.d5e616db",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n2\n2\n2\n0\n7\n7\n7\n0\n16\n16\n16\n0\n256\n256\n256\n0\n65535\n65535\n65535\n0\n",
+      "tags": [],
+      "source_sha256": "d5e616dba4a68c308905e298f6d759f53609114328a859f806fef455c739b2e8"
+    },
+    {
+      "id": "simplify.u16.bitwise-constant.c17.2ddfa508",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n-1\n-1\n0\n0\n0\n0\n2\n2\n2\n2\n-1\n-1\n2\n2\n0\n0\n7\n7\n7\n7\n-1\n-1\n7\n7\n0\n0\n16\n16\n16\n16\n-1\n-1\n16\n16\n0\n0\n256\n256\n256\n256\n-1\n-1\n256\n256\n0\n0\n65535\n65535\n65535\n65535\n-1\n-1\n65535\n65535\n",
+      "tags": [],
+      "source_sha256": "2ddfa50808a62c4871321e1e7234bef4c19c75daa63e1c079f001fe518867c1f"
+    },
+    {
+      "id": "simplify.u16.bitwise-self.c17.6ee62fa2",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n2\n2\n0\n7\n7\n0\n16\n16\n0\n256\n256\n0\n65535\n65535\n0\n",
+      "tags": [],
+      "source_sha256": "6ee62fa284f91f31b461f1a02eaf6aa060136392719e113d18ae8ca4990390c1"
+    },
+    {
+      "id": "simplify.u16.involution.c17.69f4f927",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n16\n16\n1\n0\n0\n0\n1\n1\n256\n256\n1\n0\n0\n0\n1\n1\n65535\n65535\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "69f4f92793f60c26d924ef8a7f8a8c852f6ee86ee187853241bd210d4a2cc936"
+    },
+    {
+      "id": "simplify.u16.multiplicative.c17.24d34d8c",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n2\n2\n0\n0\n2\n0\n7\n7\n0\n0\n7\n0\n16\n16\n0\n0\n16\n0\n256\n256\n0\n0\n256\n0\n65535\n65535\n0\n0\n65535\n0\n",
+      "tags": [],
+      "source_sha256": "24d34d8c5cb1f5784960c3df73cbe48c4a5b39b5e3d2516e3126162f79d80319"
+    },
+    {
+      "id": "simplify.u16.narrowed.c17.d50d8f9b",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "narrowed"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n65535\n0\n0\n0\n2\n2\n2\n2\n65535\n0\n2\n2\n7\n7\n7\n7\n65535\n0\n7\n7\n16\n16\n16\n16\n65535\n0\n16\n16\n256\n256\n256\n256\n65535\n0\n256\n256\n65535\n65535\n65535\n65535\n0\n65535\n65535\n",
+      "tags": [],
+      "source_sha256": "d50d8f9be377ec2c8d556511300077b076ec60fb094024d20d8ef0ea785afff2"
+    },
+    {
+      "id": "simplify.u16.shift.c17.ad9ec013",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u16",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n2\n2\n7\n7\n16\n16\n256\n256\n65535\n65535\n",
+      "tags": [],
+      "source_sha256": "ad9ec0138a9c03f4b71771accc7dc7153ede7f10f9a2ada0acd42a71d283d4e1"
+    },
+    {
+      "id": "simplify.u32.additive.c17.c90b534b",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n2\n2\n2\n0\n7\n7\n7\n0\n16\n16\n16\n0\n65536\n65536\n65536\n0\n4294967295\n4294967295\n4294967295\n0\n",
+      "tags": [],
+      "source_sha256": "c90b534be88cd432d0dd289b5014ad06495734d489215407d37cef8e18fcc92e"
+    },
+    {
+      "id": "simplify.u32.bitwise-constant.c17.2db73241",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n4294967295\n4294967295\n0\n0\n0\n0\n2\n2\n2\n2\n4294967295\n4294967295\n2\n2\n0\n0\n7\n7\n7\n7\n4294967295\n4294967295\n7\n7\n0\n0\n16\n16\n16\n16\n4294967295\n4294967295\n16\n16\n0\n0\n65536\n65536\n65536\n65536\n4294967295\n4294967295\n65536\n65536\n0\n0\n4294967295\n4294967295\n4294967295\n4294967295\n4294967295\n4294967295\n4294967295\n4294967295\n",
+      "tags": [],
+      "source_sha256": "2db73241431edeebbcb138edf3fcbc4395391cce755da5ceced3ccde04571985"
+    },
+    {
+      "id": "simplify.u32.bitwise-self.c17.525b129d",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n2\n2\n0\n7\n7\n0\n16\n16\n0\n65536\n65536\n0\n4294967295\n4294967295\n0\n",
+      "tags": [],
+      "source_sha256": "525b129dbd6acac1a04e8d40848a8caacda7f2a2c8317cfbbbc0e6717f3f7c1d"
+    },
+    {
+      "id": "simplify.u32.involution.c17.9383248e",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n16\n16\n1\n0\n0\n0\n1\n1\n65536\n65536\n1\n0\n0\n0\n1\n1\n4294967295\n4294967295\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "9383248ed82c73d8c26952a5c2af1d660a18ade5ee4402a36ee5446a485f000a"
+    },
+    {
+      "id": "simplify.u32.multiplicative.c17.fae95a40",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n2\n2\n0\n0\n2\n0\n7\n7\n0\n0\n7\n0\n16\n16\n0\n0\n16\n0\n65536\n65536\n0\n0\n65536\n0\n4294967295\n4294967295\n0\n0\n4294967295\n0\n",
+      "tags": [],
+      "source_sha256": "fae95a4054121bd89e081a0fec6d9bbb333b72c54f31158e78c00dfd3f81d7da"
+    },
+    {
+      "id": "simplify.u32.shift.c17.8926185d",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u32",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n2\n2\n7\n7\n16\n16\n65536\n65536\n4294967295\n4294967295\n",
+      "tags": [],
+      "source_sha256": "8926185dd8690137c0b1da83e282b1ed7d29b2d89ed71639dd496a629b6c6800"
+    },
+    {
+      "id": "simplify.u64.additive.c17.a05a7d6f",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n2\n2\n2\n0\n7\n7\n7\n0\n16\n16\n16\n0\n4294967296\n4294967296\n4294967296\n0\n18446744073709551615\n18446744073709551615\n18446744073709551615\n0\n",
+      "tags": [],
+      "source_sha256": "a05a7d6fdac2cfcea3fe2286d9b77f41e6cfd5eb0427b87917e25f108d6fc754"
+    },
+    {
+      "id": "simplify.u64.bitwise-constant.c17.30638273",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n18446744073709551615\n18446744073709551615\n0\n0\n0\n0\n2\n2\n2\n2\n18446744073709551615\n18446744073709551615\n2\n2\n0\n0\n7\n7\n7\n7\n18446744073709551615\n18446744073709551615\n7\n7\n0\n0\n16\n16\n16\n16\n18446744073709551615\n18446744073709551615\n16\n16\n0\n0\n4294967296\n4294967296\n4294967296\n4294967296\n18446744073709551615\n18446744073709551615\n4294967296\n4294967296\n0\n0\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n18446744073709551615\n",
+      "tags": [],
+      "source_sha256": "306382737fd0d546b20d1fc04f671e0889eb851757523608124fa91e120df02d"
+    },
+    {
+      "id": "simplify.u64.bitwise-self.c17.673be6b3",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n2\n2\n0\n7\n7\n0\n16\n16\n0\n4294967296\n4294967296\n0\n18446744073709551615\n18446744073709551615\n0\n",
+      "tags": [],
+      "source_sha256": "673be6b3048496a30a0dc008b93eb94bdc69d3e17aca26eb53d6325409844005"
+    },
+    {
+      "id": "simplify.u64.involution.c17.7aac3d7e",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n16\n16\n1\n0\n0\n0\n1\n1\n4294967296\n4294967296\n1\n0\n0\n0\n1\n1\n18446744073709551615\n18446744073709551615\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "7aac3d7ed376a5847d1dc21ec056290b4203316f9c1530d8a3023fa1f48d8608"
+    },
+    {
+      "id": "simplify.u64.multiplicative.c17.7c9152e3",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n2\n2\n0\n0\n2\n0\n7\n7\n0\n0\n7\n0\n16\n16\n0\n0\n16\n0\n4294967296\n4294967296\n0\n0\n4294967296\n0\n18446744073709551615\n18446744073709551615\n0\n0\n18446744073709551615\n0\n",
+      "tags": [],
+      "source_sha256": "7c9152e33289ca3877ef9253b82ef98a70fb39e9b318d8eeaee5d37c55fb8592"
+    },
+    {
+      "id": "simplify.u64.shift.c17.afa752f1",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u64",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n2\n2\n7\n7\n16\n16\n4294967296\n4294967296\n18446744073709551615\n18446744073709551615\n",
+      "tags": [],
+      "source_sha256": "afa752f1f25ac6af57c8868c56a76978fcd9cd8642b7c7974b72cfbfefa7d5e7"
+    },
+    {
+      "id": "simplify.u8.additive.c17.88c93d56",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "additive"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n1\n1\n1\n0\n2\n2\n2\n0\n7\n7\n7\n0\n8\n8\n8\n0\n255\n255\n255\n0\n",
+      "tags": [],
+      "source_sha256": "88c93d560c9519af7b839960bacb535057568ef2789efeacd706f0e80852fa5a"
+    },
+    {
+      "id": "simplify.u8.bitwise-constant.c17.35a4c3ab",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "bitwise-constant"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n-1\n-1\n0\n0\n0\n0\n1\n1\n1\n1\n-1\n-1\n1\n1\n0\n0\n2\n2\n2\n2\n-1\n-1\n2\n2\n0\n0\n7\n7\n7\n7\n-1\n-1\n7\n7\n0\n0\n8\n8\n8\n8\n-1\n-1\n8\n8\n0\n0\n255\n255\n255\n255\n-1\n-1\n255\n255\n",
+      "tags": [],
+      "source_sha256": "35a4c3ab189e9bf57b8f059188bb3c509adb502440cefbdf5b9b8d49bb03ffe2"
+    },
+    {
+      "id": "simplify.u8.bitwise-self.c17.43bae474",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "bitwise-self"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n1\n1\n0\n2\n2\n0\n7\n7\n0\n8\n8\n0\n255\n255\n0\n",
+      "tags": [],
+      "source_sha256": "43bae4741c85a7ff563508d4ee67d08887daec1dc8e37c7be2ac514c46f19ac4"
+    },
+    {
+      "id": "simplify.u8.involution.c17.0c94b030",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "involution"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n1\n0\n0\n0\n1\n1\n1\n1\n1\n0\n0\n0\n1\n1\n2\n2\n1\n0\n0\n0\n1\n1\n7\n7\n1\n0\n0\n0\n1\n1\n8\n8\n1\n0\n0\n0\n1\n1\n255\n255\n1\n0\n0\n0\n1\n1\n",
+      "tags": [],
+      "source_sha256": "0c94b030f5f92222b93df65a6d1ca1c6c9f535d3a5401024ada3494006aaaf4b"
+    },
+    {
+      "id": "simplify.u8.multiplicative.c17.166f5f93",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "multiplicative"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n0\n0\n1\n1\n0\n0\n1\n0\n2\n2\n0\n0\n2\n0\n7\n7\n0\n0\n7\n0\n8\n8\n0\n0\n8\n0\n255\n255\n0\n0\n255\n0\n",
+      "tags": [],
+      "source_sha256": "166f5f9378eb0d5cf29ba98f21c96ec44b26f49ba20d30cd5dbae2e9e11a3afd"
+    },
+    {
+      "id": "simplify.u8.narrowed.c17.ab57e320",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "narrowed"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n0\n0\n255\n0\n0\n0\n1\n1\n1\n1\n255\n0\n1\n1\n2\n2\n2\n2\n255\n0\n2\n2\n7\n7\n7\n7\n255\n0\n7\n7\n8\n8\n8\n8\n255\n0\n8\n8\n255\n255\n255\n255\n255\n0\n255\n255\n",
+      "tags": [],
+      "source_sha256": "ab57e3203b9bc72ca5b6331275fc0c8b3fbc06d391da754bca5c74a157e94e9a"
+    },
+    {
+      "id": "simplify.u8.shift.c17.9ff42073",
+      "facet": "simplify",
+      "phase": "local",
+      "dialect": "c17",
+      "axes": {
+        "type": "u8",
+        "group": "shift"
+      },
+      "expect_kind": "output",
+      "expect": "0\n0\n1\n1\n2\n2\n7\n7\n8\n8\n255\n255\n",
+      "tags": [],
+      "source_sha256": "9ff42073ed3120ea98380a367c82354dd91251ca5a1848908f1b6a9400a68c59"
     },
     {
       "id": "strength.i16.div.c17.e1a1fd43",
