@@ -445,22 +445,61 @@ fn identities(group: &str, ty: Ty, x: &str, operand: i128) -> Vec<(String, i128,
             let step = 1i128 << ty.bits();
             let mask = step - 1;
             let name = ty.c_name();
-            let narrowed =
-                |op: Op, right: i128| eval(op, wide, operand, right).map(|value| ty.convert(value));
-            vec![
-                (format!("({name})({x} + {})", lit(wide, step)), narrowed(Op::Add, step), wide),
-                (format!("({name})({x} - {})", lit(wide, step)), narrowed(Op::Sub, step), wide),
-                (
-                    format!("({name})({x} * {})", lit(wide, step + 1)),
-                    narrowed(Op::Mul, step + 1),
+            let narrowed = |op: Op, left: i128, right: i128| {
+                eval(op, wide, left, right).map(|value| ty.convert(value))
+            };
+            let mut out = Vec::new();
+            // Both orders wherever the operator commutes, the same as every other group, and
+            // here it matters more rather than less. The narrow half of a rule table is the half
+            // nothing could reach until the compiler learned to look again after it puts the
+            // width back, so it is the half most likely to have been written on one side only
+            // and never noticed.
+            for (op, sign, right, commutes) in [
+                (Op::Add, "+", step, true),
+                (Op::Sub, "-", step, false),
+                (Op::Mul, "*", step + 1, true),
+                (Op::Mul, "*", step, true),
+                (Op::And, "&", mask, true),
+                (Op::Or, "|", mask, true),
+                (Op::And, "&", step, true),
+                (Op::Or, "|", step, true),
+                (Op::Xor, "^", step, true),
+            ] {
+                let k = lit(wide, right);
+                out.push((format!("({name})({x} {sign} {k})"), narrowed(op, operand, right), wide));
+                if commutes {
+                    out.push((
+                        format!("({name})({k} {sign} {x})"),
+                        narrowed(op, right, operand),
+                        wide,
+                    ));
+                }
+            }
+            // The identities that need no constant, narrowed the same way. A value against itself
+            // and a shift by nothing are rules at every width like the rest, and the promotion
+            // hides them at the narrow ones just as thoroughly, so they belong in this group
+            // rather than being left to the groups that are about the promoted width.
+            for (op, sign) in [(Op::And, "&"), (Op::Or, "|"), (Op::Xor, "^"), (Op::Sub, "-")] {
+                out.push((
+                    format!("({name})({x} {sign} {x})"),
+                    narrowed(op, operand, operand),
                     wide,
-                ),
-                (format!("({name})({x} & {})", lit(wide, mask)), narrowed(Op::And, mask), wide),
-                (format!("({name})({x} | {})", lit(wide, mask)), narrowed(Op::Or, mask), wide),
-                (format!("({name})({x} & {})", lit(wide, step)), narrowed(Op::And, step), wide),
-                (format!("({name})({x} | {})", lit(wide, step)), narrowed(Op::Or, step), wide),
-                (format!("({name})({x} ^ {})", lit(wide, step)), narrowed(Op::Xor, step), wide),
-            ]
+                ));
+            }
+            // Nothing here shifts, and nothing here divides, and both are worth saying because
+            // they look like omissions and are not. A rule at a narrow width is reachable from C
+            // only when the same expression is not already a rewrite at `int`. The peephole runs
+            // before the narrowing as well as after it, so an expression that is an identity at
+            // both widths is taken at the promoted one and there is nothing left to narrow: `x <<
+            // 0` is written the same way at every width, so the compiler can never be shown a
+            // one byte shift by nothing. The masks and the mirrors above work precisely because
+            // they are not identities at `int`, which is what leaves them standing long enough to
+            // have their width put back. Division is out for a different reason: narrowing it is
+            // unsound without a range, since `-128 / -1` is defined at `int` and traps at one
+            // byte, so no pass produces a narrow divide at all. Between them that is fourteen
+            // rules that are proved and unreachable, which is a fact about the language and the
+            // pass order rather than a gap here.
+            out
         }
         // Two of a thing that undoes itself, and a comparison of a value with itself. Neither
         // needs a constant, and both need the compiler to look through one instruction to the
@@ -918,6 +957,56 @@ mod tests {
             .expect("the unsigned char narrowed program");
         assert!(case.source.contains("(unsigned char)(x0 & (int)255)"), "{}", case.source);
         assert!(case.source.contains("(unsigned char)(x0 * (int)257)"), "{}", case.source);
+    }
+
+    #[test]
+    fn a_narrowed_identity_is_written_with_the_constant_on_both_sides_too() {
+        // The rules at the narrow widths went unreachable for as long as nothing looked again
+        // after the width came back off, so they are the ones most likely to exist on one side
+        // only. Subtracting is the exception and is written once, because it does not commute.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("type") == Some("u8") && c.axes.get("group") == Some("narrowed"))
+            .expect("the unsigned char narrowed program");
+        for both in ["& (int)255", "| (int)255", "* (int)257", "+ (int)256", "^ (int)256"] {
+            let (sign, k) = both.split_once(' ').expect("an operator and a constant");
+            assert!(
+                case.source.contains(&format!("(x0 {sign} {k})")),
+                "no `x0 {sign} {k}`\n{}",
+                case.source
+            );
+            assert!(
+                case.source.contains(&format!("({k} {sign} x0)")),
+                "no `{k} {sign} x0`\n{}",
+                case.source
+            );
+        }
+        assert!(case.source.contains("(x0 - (int)256)"), "{}", case.source);
+        assert!(!case.source.contains("((int)256 - x0)"), "{}", case.source);
+    }
+
+    #[test]
+    fn the_narrowed_group_covers_the_identities_that_need_no_constant() {
+        // A value against itself and a shift by nothing are rules at the narrow widths like any
+        // other, and the promotion hides them there exactly as well, so they are generated here
+        // rather than being left to the groups that only ever reach `int`.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("type") == Some("u8") && c.axes.get("group") == Some("narrowed"))
+            .expect("the unsigned char narrowed program");
+        for shape in ["(x0 & x0)", "(x0 | x0)", "(x0 ^ x0)", "(x0 - x0)"] {
+            assert!(case.source.contains(shape), "no `{shape}`\n{}", case.source);
+        }
+        // Shifting and dividing are absent on purpose, and a program that added them back would
+        // be adding source that cannot reach anything. A shift by nothing is an identity at
+        // `int` too, so the peephole takes it before the narrowing runs, and narrowing a divide
+        // is unsound without a range because `-128 / -1` is defined at `int` and traps at one
+        // byte.
+        for absent in ["(x0 << ", "(x0 >> ", "(x0 / ", "(x0 % "] {
+            assert!(!case.source.contains(absent), "`{absent}` cannot fire\n{}", case.source);
+        }
     }
 
     #[test]
