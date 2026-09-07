@@ -50,6 +50,14 @@ The C is generated. Editing a file under `programs/` changes nothing, because th
 
 `report.md` says what the compiler got wrong, how its code size compares to GCC 16 per facet, and which facets it is furthest behind on. Losses come before wins in that report on purpose.
 
+## What `-Os` does
+
+Every program is built at `-Os` alongside the other four levels, and the nightly report has a section saying what that bought. It is the one measurement in the report that compares a compiler against itself rather than against the reference, because `-Os` is a different cost function rather than a cheaper `-O2`, so it picks different rewrites and the question worth asking is whether it picks any. The number is a compiler's own code size at `-Os` over its own code size at `-O2`, as a median, alongside a count of the cases that came out at exactly the same number of bytes.
+
+That count is the point. A compiler whose `-Os` output is byte for byte its `-O2` output has accepted the flag and ignored it, and a median of one on its own does not tell those two apart from a compiler that genuinely had nothing left to save. The `size-model:<compiler>` target fails on either, and GCC 16's own row is printed beside it as the control, since it is a compiler with a size cost model that works.
+
+The per-commit job builds `-O0` and `-O2` only, so it does not produce this section or that target. Nightly builds all five levels and does.
+
 ## What GCC says about these programs
 
 Every reference build is run with `-fopt-info-all`, and what GCC said is parsed and kept. It is not a pass or fail signal. GCC missing something is not a bug in GCC and GCC taking something is not a requirement on rucc.

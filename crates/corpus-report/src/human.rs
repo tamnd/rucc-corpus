@@ -31,6 +31,7 @@ pub fn report_md(run: &Run, summary: &Summary) -> String {
     findings(&mut out, run);
     gaps(&mut out, run);
     code_quality(&mut out, summary);
+    size_model(&mut out, summary);
     by_phase(&mut out, summary);
     reference_opinion(&mut out, summary);
     reproducing(&mut out, summary);
@@ -237,6 +238,77 @@ fn code_quality(out: &mut String, summary: &Summary) {
         out.push_str("\nFurthest ahead:\n\n");
         ratio_table(out, id, &best);
         out.push('\n');
+    }
+}
+
+/// What `-Os` bought, per compiler.
+///
+/// Left out entirely when the run did not build `-Os`, which is what per-commit CI does. The
+/// alternative is a section of empty cells, and a report with a part people learn to skip is a
+/// report they skip other parts of too.
+fn size_model(out: &mut String, summary: &Summary) {
+    if !summary.measured_size_model() {
+        return;
+    }
+    out.push_str("## What `-Os` does\n\n");
+    out.push_str(
+        "Every other number in this report is one compiler against another at the same level. These are one compiler against itself at two, because `-Os` is a different cost function rather than a cheaper `-O2`, so it picks different rewrites, and the question worth asking is whether it picks any. Each figure is that compiler's own code size at `-Os` over its own code size at `-O2`, as a median over the cases that built at both.\n\n",
+    );
+    out.push_str(
+        "| compiler | cases compared | code size at `-Os` | came out the same size |\n|---|---|---|---|\n",
+    );
+    for model in &summary.size_model {
+        out.push_str(&format!(
+            "| `{}` | {} | {} | {} |\n",
+            model.toolchain,
+            model.compared,
+            model.against_o2.map_or_else(|| "not measured".to_owned(), as_change),
+            model.unmoved
+        ));
+    }
+    out.push_str(&format!(
+        "\nThe row for `{}` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.\n\n",
+        summary.reference
+    ));
+
+    for id in summary.under_test() {
+        let Some(model) = summary.size_model_of(id) else {
+            continue;
+        };
+        size_model_of(out, id, model, summary.ignoring_size(id));
+    }
+}
+
+/// The `-Os` detail for one compiler under test.
+fn size_model_of(out: &mut String, id: &str, model: &crate::summary::SizeModel, ignoring: bool) {
+    if model.compared == 0 {
+        return;
+    }
+    out.push_str(&format!("### `{id}` at `-Os`\n\n"));
+    if model.ignored() {
+        out.push_str(&format!(
+            "`{id}` produced exactly the same code at `-Os` as it did at `-O2` on all {} cases that built at both. {}\n\n",
+            model.compared,
+            if ignoring {
+                "The reference found something to trade away on some of the same cases, so the flag is being accepted and then ignored. There is nothing below to rank."
+            } else {
+                "So did the reference, so this is a run whose cases have no size against speed tradeoff in them rather than a compiler ignoring the flag. There is nothing below to rank."
+            }
+        ));
+        return;
+    }
+    out.push_str("Where `-Os` saves the most:\n\n");
+    size_facet_table(out, &model.best());
+    out.push_str("\nWhere it saves the least, which is where it is spending size and getting nothing for it when the number is above level:\n\n");
+    size_facet_table(out, &model.worst());
+    out.push('\n');
+}
+
+/// A table of facets and what `-Os` did to each.
+fn size_facet_table(out: &mut String, ranked: &[(corpus_model::Facet, f64, usize)]) {
+    out.push_str("| facet | cases | code size at `-Os` |\n|---|---|---|\n");
+    for (facet, ratio, cases) in ranked {
+        out.push_str(&format!("| `{}` | {cases} | {} |\n", facet.name(), as_change(*ratio)));
     }
 }
 
@@ -540,9 +612,75 @@ mod tests {
         assert!(text.contains("None of it is a pass or fail signal"));
     }
 
+    /// The same run again with `-Os` builds in it, which is what nightly produces.
+    fn rendered_with_os(os_text: u64) -> String {
+        let (mut run, cases) = sample(Vec::new());
+        for case in &cases {
+            for (id, text) in [("gcc-16", 80u64), ("rucc", os_text)] {
+                let mut record = record_for(case, id, text);
+                record.level = Level::Os;
+                run.verdicts.insert(record.key(), Verdict::Pass);
+                run.records.push(record);
+            }
+        }
+        let summary = summarise(&run, "abc123def456abc123", cases.len());
+        report_md(&run, &summary)
+    }
+
+    #[test]
+    fn what_os_bought_is_reported_with_the_reference_beside_it_as_the_control() {
+        let text = rendered_with_os(90);
+        let section = text.find("## What `-Os` does").expect("no size model section");
+        let next = text[section..].find("## By phase").expect("no section after it");
+        let body = &text[section..section + next];
+        assert!(body.contains("| `gcc-16` |"), "the control has to be in the table");
+        assert!(body.contains("| `rucc` |"));
+        assert!(body.contains("### `rucc` at `-Os`"));
+        assert!(body.contains("Where `-Os` saves the most"));
+        assert!(body.contains("`loop-unroll`"), "the facets have to be named: {body}");
+        // gcc came down from 100 to 80 and rucc from its own 95 and 250 to 90, so both rows are
+        // saying something and neither is quoting the other compiler's number.
+        assert!(body.contains("20 percent less"), "gcc's own saving: {body}");
+    }
+
+    #[test]
+    fn a_compiler_that_ignores_os_is_told_it_did_rather_than_ranked_on_nothing() {
+        // rucc gets the same sizes at `-Os` as at `-O2`, which is 95 and 250 from the sample. The
+        // reference comes down from 100 to 80, so the run has cases with something to trade in it
+        // and rucc traded none of them.
+        let (mut run, cases) = sample(Vec::new());
+        for case in &cases {
+            for (id, text) in [
+                ("gcc-16", 80u64),
+                ("rucc", if case.facet == Facet::LoopUnroll { 250 } else { 95 }),
+            ] {
+                let mut record = record_for(case, id, text);
+                record.level = Level::Os;
+                run.verdicts.insert(record.key(), Verdict::Pass);
+                run.records.push(record);
+            }
+        }
+        let summary = summarise(&run, "abc", cases.len());
+        let text = report_md(&run, &summary);
+        assert!(text.contains("accepted and then ignored"), "{text}");
+        assert!(!text.contains("Where `-Os` saves the most"), "there is nothing to rank");
+    }
+
+    #[test]
+    fn a_run_without_os_leaves_the_section_out_rather_than_printing_empty_cells() {
+        let text = rendered(Vec::new());
+        assert!(
+            !text.contains("## What `-Os` does"),
+            "the per-commit job builds two levels and should not grow a section of blanks"
+        );
+    }
+
     #[test]
     fn the_prose_holds_to_the_house_style() {
         let text = rendered(Vec::new());
+        let with_os = rendered_with_os(90);
+        assert!(!with_os.contains('\u{2014}'), "the -Os section contains an em dash");
+        assert!(!with_os.contains('\u{2013}'), "the -Os section contains an en dash");
         assert!(!text.contains('\u{2014}'), "the report contains an em dash");
         assert!(!text.contains('\u{2013}'), "the report contains an en dash");
         for line in text.lines() {

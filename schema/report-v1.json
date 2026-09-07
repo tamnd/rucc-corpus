@@ -16,6 +16,7 @@
     "totals",
     "targets",
     "facets",
+    "size_model",
     "findings"
   ],
   "additionalProperties": false,
@@ -69,6 +70,11 @@
     "facets": {
       "type": "array",
       "items": { "$ref": "#/$defs/facet" }
+    },
+    "size_model": {
+      "description": "One entry per toolchain, saying what -Os did to that toolchain's own output. Empty when the run did not build -Os, which is what the per-commit job does.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/size_model" }
     },
     "findings": {
       "description": "Every result that was not what the generator said it would be. Empty is the good case.",
@@ -161,6 +167,31 @@
           }
         },
         "scores": { "type": "array", "items": { "$ref": "#/$defs/score_line" } }
+      }
+    },
+    "size_model": {
+      "description": "What -Os did to one toolchain's own output. Every other ratio in this report is one compiler against the reference at the same level. This one is a compiler against itself at two levels, which is a different question and the only way to ask it, because -Os is a different cost function rather than a cheaper -O2. A toolchain whose -Os output is the same size as its -O2 output has accepted the flag and ignored it.",
+      "type": "object",
+      "required": ["toolchain", "compared", "unmoved", "ignoring", "against_o2"],
+      "properties": {
+        "toolchain": { "type": "string" },
+        "compared": { "description": "How many cases produced a size at both -Os and -O2 for this toolchain.", "type": "integer", "minimum": 0 },
+        "unmoved": { "description": "How many of those came out at exactly the same number of bytes.", "type": "integer", "minimum": 0 },
+        "ignoring": { "description": "Whether this toolchain is taking the flag and doing nothing with it. Every compared case came out the same size and the reference did move some of them. Not the same as unmoved equalling compared on its own: whole facets have no size against speed tradeoff in them, and on a run filtered down to one of those every toolchain comes out unmoved and none of them has done anything wrong.", "type": "boolean" },
+        "against_o2": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's executable section bytes at -Os over its own at -O2. Less than one is smaller code." },
+        "by_facet": {
+          "description": "The same ratio per facet, smallest first, so the facets -Os saves the most on come at the top.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["facet", "cases", "against_o2"],
+            "properties": {
+              "facet": { "type": "string" },
+              "cases": { "type": "integer", "minimum": 0 },
+              "against_o2": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        }
       }
     },
     "finding": {
