@@ -1,32 +1,538 @@
 # rucc corpus report
 
-Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
+75 case results did not come out as expected. They are listed below, worst first.
 
-The corpus holds 1285 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `67839b19f50d8e94`.
+The corpus holds 1461 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `dbfc0cafbb185c10`.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.7.1 | under test |
+| `rucc` | rucc 0.7.6 | under test |
 
 ## Did it meet the targets
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 0 failures | yes |
-| `code-quality:rucc` | within 10 percent | 11 percent more | no |
-| `compile-throughput:rucc` | no worse | 53 percent less | yes |
+| `correctness` | 0 failures | 75 failures | no |
+| `code-quality:rucc` | within 10 percent | 8 percent more | yes |
+| `compile-throughput:rucc` | no worse | 51 percent less | yes |
+| `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
 - `code-quality:rucc`: the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2.
 - `compile-throughput:rucc`: rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00.
+- `size-model:rucc`: the code rucc produces at -Os is no larger than the code it produces at -O2, and where gcc-16 found something to trade away rucc found something too, since -Os is a different cost function and not a cheaper -O2.
 
 ## What happened
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 6393 | 6393 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `rucc` | 6393 | 6373 | 0 | 0 | 20 | 0 | 0 | 0 |
+| `gcc-16` | 7273 | 7273 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `rucc` | 7273 | 6988 | 0 | 75 | 210 | 0 | 0 | 0 |
+
+## What went wrong
+
+### `atomics.stdatomic-flag.c17.6551714c`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `gate` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic-flag.c17.6551714c.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic-flag.c17.6551714c`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `gate` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic-flag.c17.6551714c.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic-flag.c17.6551714c`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `gate` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic-flag.c17.6551714c.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic-flag.c17.6551714c`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `gate` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic-flag.c17.6551714c.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic-flag.c17.6551714c`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `gate` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic-flag.c17.6551714c.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i32.c17.95fbc2ae`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:18: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i32.c17.95fbc2ae.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i32.c17.95fbc2ae`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:18: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i32.c17.95fbc2ae.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i32.c17.95fbc2ae`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:18: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i32.c17.95fbc2ae.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i32.c17.95fbc2ae`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:18: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i32.c17.95fbc2ae.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i32.c17.95fbc2ae`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:18: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i32.c17.95fbc2ae.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i64.c17.19020add`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:20: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i64.c17.19020add.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i64.c17.19020add`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:20: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i64.c17.19020add.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i64.c17.19020add`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:20: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i64.c17.19020add.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i64.c17.19020add`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:20: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i64.c17.19020add.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.i64.c17.19020add`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:20: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.i64.c17.19020add.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u32.c17.efd489a1`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u32.c17.efd489a1.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u32.c17.efd489a1`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u32.c17.efd489a1.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u32.c17.efd489a1`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u32.c17.efd489a1.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u32.c17.efd489a1`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u32.c17.efd489a1.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u32.c17.efd489a1`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:19: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u32.c17.efd489a1.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u64.c17.53c8ec77`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:21: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u64.c17.53c8ec77`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:21: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u64.c17.53c8ec77`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:21: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u64.c17.53c8ec77`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:21: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
+
+### `atomics.stdatomic.u64.c17.53c8ec77`
+
+rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+case.c:4:1: error: `stdatomic.h` file not found [E0341]
+case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
+case.c:8:21: error: expected `;`, found `counter` [E0400]
+```
+
+The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
+
+And 50 more, which are all in `findings.sarif` and in `report.json`.
 
 ## What is not built yet
 
@@ -34,8 +540,12 @@ These are cases a compiler refused while saying itself that the construct is not
 
 ### `rucc`
 
-- error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] (5 cases, first is `control-flow.computed-goto.c17.7715e4c1`)
-- error: cannot generate code for 'main': no rule lowers a `fptoui` producing a `i64` [E0653] (15 cases, first is `register-pressure.u64.12.both-classes.c17.37791435`)
+- error: `__atomic_exchange_n` is not implemented yet [E0686] (40 cases, first is `atomics.exchange.i16.c17.b3725d59`)
+- error: `__atomic_fetch_add` is not implemented yet [E0686] (40 cases, first is `atomics.fetch-op.i16.c17.f2fddbd2`)
+- error: `__atomic_load` is not implemented yet [E0686] (40 cases, first is `atomics.load-store.i16.c17.74a1721f`)
+- error: `__atomic_signal_fence` is not implemented yet [E0686] (5 cases, first is `atomics.fence.c17.6b7c6e1f`)
+- error: `__atomic_test_and_set` is not implemented yet [E0686] (5 cases, first is `atomics.flag.c17.c1e486c9`)
+- error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] (80 cases, first is `computed-goto.address-in-variable.16.c17.4419a599`)
 
 ## How big the code is
 
@@ -47,27 +557,62 @@ Furthest behind:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `register-alloc` | backend | 40 | 63 percent more | 13 percent less | 57 percent less |
-| `scheduling` | backend | 12 | 60 percent more | 17 percent less | 59 percent less |
-| `register-pressure` | backend | 48 | 56 percent more | 15 percent more | 54 percent less |
-| `induction-variable` | loops | 42 | 33 percent more | 5 percent more | 52 percent less |
-| `loop-restructure` | loops | 48 | 31 percent more | 1 percent more | 58 percent less |
-| `switch-lowering` | backend | 9 | 30 percent more | 5 percent less | 47 percent less |
-| `value-range` | global | 13 | 26 percent more | 13 percent more | 48 percent less |
-| `simplify` | local | 61 | 24 percent more | 2 percent more | 52 percent less |
+| `bit-builtins` | backend | 22 | 296 percent more | 2 percent less | 47 percent less |
+| `register-alloc` | backend | 40 | 59 percent more | level | 53 percent less |
+| `scheduling` | backend | 12 | 58 percent more | level | 51 percent less |
+| `register-pressure` | backend | 48 | 54 percent more | 2 percent less | 51 percent less |
+| `float-conversion` | backend | 66 | 30 percent more | 2 percent less | 52 percent less |
+| `loop-restructure` | loops | 48 | 29 percent more | 3 percent more | 53 percent less |
+| `calling-convention` | backend | 10 | 23 percent more | 2 percent more | 52 percent less |
+| `switch-lowering` | backend | 9 | 22 percent more | 1 percent less | 58 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `copy-propagation` | global | 12 | 6 percent less | level | 47 percent less |
-| `unreachable-code` | local | 8 | 4 percent less | 2 percent more | 52 percent less |
-| `reachability` | interprocedural | 9 | 4 percent less | 18 percent less | 53 percent less |
-| `dead-code` | local | 12 | 4 percent less | 3 percent less | 62 percent less |
-| `selection` | backend | 40 | 2 percent less | 8 percent more | 54 percent less |
-| `machine-peephole` | backend | 22 | 1 percent less | 18 percent more | 55 percent less |
-| `constant-propagation` | global | 16 | level | 24 percent more | 53 percent less |
-| `scalar-replacement` | global | 20 | level | 23 percent more | 50 percent less |
+| `copy-propagation` | global | 12 | 6 percent less | 5 percent less | 51 percent less |
+| `unreachable-code` | local | 8 | 5 percent less | 5 percent more | 50 percent less |
+| `reachability` | interprocedural | 9 | 5 percent less | 6 percent more | 47 percent less |
+| `dead-code` | local | 12 | 5 percent less | 2 percent more | 47 percent less |
+| `constant-propagation` | global | 16 | 4 percent less | 3 percent more | 46 percent less |
+| `selection` | backend | 40 | 2 percent less | 1 percent less | 48 percent less |
+| `machine-peephole` | backend | 22 | 2 percent less | 2 percent more | 49 percent less |
+| `block-layout` | backend | 4 | 1 percent less | 1 percent more | 53 percent less |
+
+## What `-Os` does
+
+Every other number in this report is one compiler against another at the same level. These are one compiler against itself at two, because `-Os` is a different cost function rather than a cheaper `-O2`, so it picks different rewrites, and the question worth asking is whether it picks any. Each figure is that compiler's own code size at `-Os` over its own code size at `-O2`, as a median over the cases that built at both.
+
+| compiler | cases compared | code size at `-Os` | came out the same size |
+|---|---|---|---|
+| `gcc-16` | 1453 | level | 718 |
+| `rucc` | 1396 | level | 1388 |
+
+The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
+
+### `rucc` at `-Os`
+
+Where `-Os` saves the most:
+
+| facet | cases | code size at `-Os` |
+|---|---|---|
+| `baseline` | 10 | level |
+| `control-flow` | 9 | level |
+| `branch-probability` | 34 | level |
+| `constant-fold` | 112 | level |
+| `strength` | 24 | level |
+| `narrowing` | 52 | level |
+
+Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
+
+| facet | cases | code size at `-Os` |
+|---|---|---|
+| `machine-peephole` | 22 | level |
+| `bit-builtins` | 22 | level |
+| `float-conversion` | 66 | level |
+| `barrier` | 7 | level |
+| `frontend` | 22 | level |
+| `value-range` | 13 | 1 percent more |
 
 ## By phase of the plan
 
@@ -75,13 +620,13 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|
-| floor | 4 | 84 | 383 of 388 | 11 percent more |
-| local | 8 | 277 | 1385 of 1385 | 14 percent more |
-| global | 9 | 193 | 965 of 965 | 6 percent more |
-| loops | 8 | 402 | 2010 of 2010 | 14 percent more |
-| interprocedural | 6 | 117 | 585 of 585 | 12 percent more |
-| backend | 9 | 205 | 1010 of 1025 | 24 percent more |
-| correctness | 1 | 7 | 35 of 35 | 4 percent more |
+| floor | 5 | 109 | 383 of 513 | 9 percent more |
+| local | 8 | 309 | 1545 of 1545 | 10 percent more |
+| global | 9 | 193 | 965 of 965 | 4 percent more |
+| loops | 8 | 402 | 2010 of 2010 | 9 percent more |
+| interprocedural | 6 | 117 | 585 of 585 | 11 percent more |
+| backend | 11 | 293 | 1465 of 1465 | 23 percent more |
+| correctness | 2 | 38 | 35 of 190 | 3 percent more |
 
 ## What gcc-16 said about these programs
 
@@ -89,15 +634,19 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 
 | facet | phase | it optimized | it says it missed |
 |---|---|---|---|
+| `atomics` | correctness | 0 | 4026 |
+| `bit-builtins` | backend | 0 | 3352 |
 | `inline` | interprocedural | 900 | 372 |
+| `float-conversion` | backend | 0 | 850 |
+| `simplify` | local | 0 | 806 |
 | `tail-call` | interprocedural | 300 | 480 |
-| `simplify` | local | 0 | 710 |
+| `computed-goto` | floor | 32 | 600 |
+| `narrowing` | local | 0 | 528 |
 | `loop-idiom` | loops | 395 | 76 |
 | `loop-unswitch` | loops | 134 | 212 |
 | `loop-unroll` | loops | 196 | 128 |
 | `loop-restructure` | loops | 262 | 60 |
 | `strength` | local | 0 | 288 |
-| `narrowing` | local | 0 | 288 |
 | `register-pressure` | backend | 75 | 210 |
 | `load-forwarding` | global | 60 | 184 |
 | `selection` | backend | 0 | 244 |
@@ -105,10 +654,6 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `alias-analysis` | global | 66 | 136 |
 | `loop-invariant` | loops | 60 | 128 |
 | `reassociate` | local | 0 | 160 |
-| `induction-variable` | loops | 131 | 24 |
-| `switch-lowering` | backend | 52 | 100 |
-| `memory-ssa` | global | 28 | 116 |
-| `function-purity` | interprocedural | 80 | 64 |
 
 ## Running this yourself
 
@@ -119,4 +664,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1285 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1461 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
