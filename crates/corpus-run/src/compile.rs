@@ -98,14 +98,17 @@ pub fn build_and_run(
     let outcome = exec::run(&spec.program, &args, Some(dir), COMPILE_TIMEOUT)
         .map_err(|error| format!("could not run {}: {error}", spec.program))?;
     let produced = outcome.ok && binary.is_file();
-    let (bytes, text_bytes) = measure(&binary, produced);
+    let (bytes, sizes) = measure(&binary, produced);
     let compile = Compile {
         ok: produced,
         status: if outcome.timed_out { -1 } else { outcome.status },
         micros: outcome.micros,
         diagnostics: trim_diagnostics(&outcome.stderr),
         bytes,
-        text_bytes,
+        text_bytes: sizes.text,
+        data_bytes: sizes.data,
+        bss_bytes: sizes.bss,
+        peak_bytes: outcome.peak_bytes,
     };
 
     let insights = if wants_opinions {
@@ -131,6 +134,7 @@ pub fn build_and_run(
             status: if ran.timed_out { -1 } else { ran.status },
             micros: ran.micros,
             repeats: repeats.max(1),
+            peak_bytes: ran.peak_bytes,
             output: ran.stdout,
         }
     } else {
@@ -174,15 +178,18 @@ pub fn work_dir(root: &Path, case: &Case, toolchain: &str, level: Level) -> Path
 }
 
 /// Sizes what was produced, when anything was.
-fn measure(binary: &Path, produced: bool) -> (u64, u64) {
+///
+/// The file size and the image sizes are two different measurements and both are kept. The
+/// file is what a build costs on disk, padding and symbol table and all. The image is what the
+/// optimizer decided, which is the number a code quality claim can rest on.
+fn measure(binary: &Path, produced: bool) -> (u64, object::Sizes) {
     if !produced {
-        return (0, 0);
+        return (0, object::Sizes::default());
     }
     let Ok(bytes) = std::fs::read(binary) else {
-        return (0, 0);
+        return (0, object::Sizes::default());
     };
-    let total = bytes.len() as u64;
-    (total, object::text_size(&bytes).unwrap_or(0))
+    (bytes.len() as u64, object::sizes(&bytes).unwrap_or_default())
 }
 
 /// Keeps diagnostics down to something a report can hold.

@@ -129,6 +129,10 @@ fn facet_json(facet: &FacetSummary) -> Json {
                     ("size_ratio", score.size_ratio.map_or(Json::Null, Json::Number)),
                     ("speed_ratio", score.speed_ratio.map_or(Json::Null, Json::Number)),
                     ("compile_ratio", score.compile_ratio.map_or(Json::Null, Json::Number)),
+                    ("memory_ratio", score.memory_ratio.map_or(Json::Null, Json::Number)),
+                    ("disk_ratio", score.disk_ratio.map_or(Json::Null, Json::Number)),
+                    ("data_ratio", score.data_ratio.map_or(Json::Null, Json::Number)),
+                    ("memory_compared", Json::int(score.memory_compared as i64)),
                 ])
             })),
         ),
@@ -414,9 +418,16 @@ mod tests {
                 diagnostics: String::new(),
                 bytes: text * 4,
                 text_bytes: text,
+                ..Compile::skipped()
             };
-            record.execute =
-                Execute { ok: true, status: 0, micros: 40, repeats: 5, output: "42\n".to_owned() };
+            record.execute = Execute {
+                ok: true,
+                status: 0,
+                micros: 40,
+                repeats: 5,
+                output: "42\n".to_owned(),
+                ..Execute::skipped()
+            };
             records.push(record);
         }
         let verdicts: BTreeMap<String, Verdict> =

@@ -209,6 +209,32 @@ pub fn compile_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
     ratio(mine.compile.micros, reference.compile.micros)
 }
 
+/// How much more memory the compiler needed than the reference needed.
+///
+/// `None` when either side was not measured, which is the whole run on any platform that
+/// cannot look, per `crate::memory`.
+#[must_use]
+pub fn memory_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
+    ratio(mine.compile.peak_bytes?, reference.compile.peak_bytes?)
+}
+
+/// How much larger the executable on disk is than the reference's.
+///
+/// The whole file, padding and symbol table and all, which is deliberately not the number
+/// `size_ratio` reports. Disk is what a build costs somebody, and code is what the optimizer
+/// decided, and a report that publishes one of those as the other has answered the wrong
+/// question.
+#[must_use]
+pub fn disk_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
+    ratio(mine.compile.bytes, reference.compile.bytes)
+}
+
+/// How much more initialized data the compiler put in the image than the reference did.
+#[must_use]
+pub fn data_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
+    ratio(mine.compile.data_bytes, reference.compile.data_bytes)
+}
+
 fn ratio(mine: u64, reference: u64) -> Option<f64> {
     if mine == 0 || reference == 0 {
         return None;
@@ -274,11 +300,19 @@ mod tests {
             diagnostics: String::new(),
             bytes: text_bytes * 4,
             text_bytes,
+            ..Compile::skipped()
         }
     }
 
     fn ran(output: &str, micros: u64) -> Execute {
-        Execute { ok: true, status: 0, micros, repeats: 5, output: output.to_owned() }
+        Execute {
+            ok: true,
+            status: 0,
+            micros,
+            repeats: 5,
+            output: output.to_owned(),
+            ..Execute::skipped()
+        }
     }
 
     #[test]
@@ -306,6 +340,7 @@ mod tests {
             diagnostics: "error: something".to_owned(),
             bytes: 0,
             text_bytes: 0,
+            ..Compile::skipped()
         };
         assert_eq!(
             judge(&case, &record_for(&case, diagnosed, Execute::skipped())),
@@ -319,6 +354,7 @@ mod tests {
             diagnostics: String::new(),
             bytes: 0,
             text_bytes: 0,
+            ..Compile::skipped()
         };
         assert_eq!(judge(&case, &record_for(&case, killed, Execute::skipped())), Verdict::Crashed);
     }
@@ -334,6 +370,7 @@ mod tests {
             diagnostics: "f.c:8:26: error: cannot generate code for 'main': no rule lowers a `trunc` producing a `i12` [E0653]\nf.c:8:26: note: this construct is not lowered yet".to_owned(),
             bytes: 0,
             text_bytes: 0,
+            ..Compile::skipped()
         };
         let record = record_for(&case, admitted, Execute::skipped());
         let verdict = judge(&case, &record);
@@ -358,6 +395,7 @@ mod tests {
             diagnostics: "f.c:3:1: error: expected a declaration".to_owned(),
             bytes: 0,
             text_bytes: 0,
+            ..Compile::skipped()
         };
         assert_eq!(
             judge(&case, &record_for(&case, refused, Execute::skipped())),
@@ -379,7 +417,14 @@ mod tests {
     #[test]
     fn a_program_that_compiles_and_then_dies_is_a_crash_and_not_a_wrong_answer() {
         let case = running_case();
-        let died = Execute { ok: false, status: -1, micros: 0, repeats: 5, output: String::new() };
+        let died = Execute {
+            ok: false,
+            status: -1,
+            micros: 0,
+            repeats: 5,
+            output: String::new(),
+            ..Execute::skipped()
+        };
         let record = record_for(&case, built(100), died);
         assert_eq!(judge(&case, &record), Verdict::Crashed);
         let found = finding(&case, &record, Verdict::Crashed).unwrap();
@@ -397,6 +442,7 @@ mod tests {
             diagnostics: "case.c:5:5: error: duplicate case value".to_owned(),
             bytes: 0,
             text_bytes: 0,
+            ..Compile::skipped()
         };
         assert_eq!(judge(&case, &record_for(&case, caught, Execute::skipped())), Verdict::Pass);
 
@@ -407,6 +453,7 @@ mod tests {
             diagnostics: "case.c:1:1: error: internal compiler error".to_owned(),
             bytes: 0,
             text_bytes: 0,
+            ..Compile::skipped()
         };
         assert_eq!(
             judge(&case, &record_for(&case, wrong_reason, Execute::skipped())),

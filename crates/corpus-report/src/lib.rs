@@ -18,6 +18,7 @@
 
 pub mod human;
 pub mod machine;
+pub mod pages;
 pub mod summary;
 pub mod terminal;
 
@@ -56,6 +57,46 @@ pub fn write_all(
     Ok(summary)
 }
 
+/// Writes the tree of linked pages, and splices the front page's generated block.
+///
+/// `root` is the root of the repository, since every page path is relative to it. Returns how
+/// many files were written, counting the front page only when it actually had the markers in
+/// it, so a caller can say something honest about what happened.
+///
+/// The pages are markdown and they are what gets committed. The four files [`write_all`]
+/// produces are the raw material and they are workflow artifacts, per the note at the top of
+/// [`pages`].
+///
+/// # Errors
+///
+/// When a directory cannot be created or a file cannot be written.
+pub fn write_pages(root: &Path, run: &Run, summary: &summary::Summary) -> Result<usize, String> {
+    let mut written = 0;
+    for page in pages::generate(run, summary) {
+        let path = root.join(&page.path);
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| format!("{}: {error}", parent.display()))?;
+        }
+        std::fs::write(&path, &page.text)
+            .map_err(|error| format!("{}: {error}", path.display()))?;
+        written += 1;
+    }
+
+    // The front page is spliced rather than written. A repository with no README, or one whose
+    // README has had the markers taken out of it, is left exactly as it was found.
+    let front = root.join("README.md");
+    if let Ok(existing) = std::fs::read_to_string(&front) {
+        let spliced = pages::splice(&existing, &pages::headline(run, summary));
+        if spliced != existing {
+            std::fs::write(&front, spliced)
+                .map_err(|error| format!("{}: {error}", front.display()))?;
+            written += 1;
+        }
+    }
+    Ok(written)
+}
+
 fn write(dir: &Path, name: &str, text: &str) -> Result<(), String> {
     let path = dir.join(name);
     std::fs::write(&path, text).map_err(|error| format!("{}: {error}", path.display()))
@@ -89,9 +130,16 @@ mod tests {
                 diagnostics: String::new(),
                 bytes: text * 4,
                 text_bytes: text,
+                ..Compile::skipped()
             };
-            record.execute =
-                Execute { ok: true, status: 0, micros: 70, repeats: 5, output: "1\n".to_owned() };
+            record.execute = Execute {
+                ok: true,
+                status: 0,
+                micros: 70,
+                repeats: 5,
+                output: "1\n".to_owned(),
+                ..Execute::skipped()
+            };
             records.push(record);
         }
         let verdicts: BTreeMap<String, Verdict> =

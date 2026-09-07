@@ -498,9 +498,16 @@ mod tests {
             diagnostics: String::new(),
             bytes: text * 4,
             text_bytes: text,
+            ..Compile::skipped()
         };
-        record.execute =
-            Execute { ok: true, status: 0, micros: 90, repeats: 5, output: "1\n".to_owned() };
+        record.execute = Execute {
+            ok: true,
+            status: 0,
+            micros: 90,
+            repeats: 5,
+            output: "1\n".to_owned(),
+            ..Execute::skipped()
+        };
         record
     }
 

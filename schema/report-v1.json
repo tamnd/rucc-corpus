@@ -128,7 +128,15 @@
         },
         "size_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's executable section bytes over the reference's, at -O2. One is level with the reference and more than one is bigger." },
         "speed_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's run time over the reference's. Less than one is faster." },
-        "compile_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's compile time over the reference's. Less than one is faster to compile." }
+        "compile_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's compile time over the reference's. Less than one is faster to compile." },
+        "memory_ratio": { "$ref": "#/$defs/ratio", "description": "Median of the largest high water mark in this toolchain's process tree over the reference's, while building. Null on any platform where the harness cannot read a process tree, which is everything that is not Linux." },
+        "disk_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's whole executable file size over the reference's. Not the same measurement as size_ratio, which is the code alone. This one includes the runtime, the symbol table and the linker's padding, so it is what a build costs on disk rather than what the optimizer decided." },
+        "data_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's initialized data in the image over the reference's. Moves the opposite way from size_ratio when a compiler trades code for a table." },
+        "memory_compared": {
+          "description": "How many cases had a memory figure on both sides. Its own count rather than sharing compared, because memory is the one number here that can be missing for a reason that has nothing to do with the compiler.",
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "ratio": {

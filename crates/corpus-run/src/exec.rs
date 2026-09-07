@@ -9,7 +9,12 @@
 //! The output pipes are drained by their own threads. That is the part people get wrong: if
 //! the parent polls for exit while the child fills a pipe buffer, the child blocks on the
 //! write, the parent never sees an exit, and the timeout fires on a program that was working.
+//!
+//! The poll that enforces the timeout is also where the memory number comes from, since the
+//! loop is running anyway and the alternative is an unsafe call this crate forbids. What that
+//! number means and what it misses is in [`crate::memory`].
 
+use crate::memory;
 use std::ffi::OsStr;
 use std::io::{self, Read};
 use std::path::Path;
@@ -31,6 +36,12 @@ pub struct Outcome {
     pub stderr: String,
     /// Wall time in microseconds.
     pub micros: u64,
+    /// The largest high water mark reached by any process in the tree, in bytes.
+    ///
+    /// `None` on a platform that cannot say, which is every platform that is not Linux, and
+    /// `None` when the whole tree came and went between two polls. Never nought: a program
+    /// that ran used memory, and a nought here would be a measurement nobody took.
+    pub peak_bytes: Option<u64>,
 }
 
 impl Outcome {
@@ -44,6 +55,7 @@ impl Outcome {
             stdout: String::new(),
             stderr: format!("could not start the program: {error}"),
             micros: 0,
+            peak_bytes: None,
         }
     }
 }
@@ -84,8 +96,11 @@ pub fn run<S: AsRef<OsStr>>(
     let out_reader = std::thread::spawn(move || drain(out_pipe.as_mut()));
     let err_reader = std::thread::spawn(move || drain(err_pipe.as_mut()));
 
+    let group = child.id();
     let mut timed_out = false;
     let mut status = None;
+    let mut peak_bytes = None;
+    let mut sample_due = Instant::now();
     // Poll rather than block, so the timeout can be enforced. The wait starts short because
     // most cases finish in well under a millisecond, and backs off so that a slow case does
     // not spin a core for its whole run.
@@ -95,11 +110,19 @@ pub fn run<S: AsRef<OsStr>>(
             status = Some(exit);
             break;
         }
-        if started.elapsed() >= timeout {
+        let now = Instant::now();
+        if now.duration_since(started) >= timeout {
             timed_out = true;
             let _ = child.kill();
             let _ = child.wait();
             break;
+        }
+        // Behind its own clock rather than on every poll, because the poll backs off from two
+        // hundred microseconds and walking the tree that often would cost more time than the
+        // compile it is measuring.
+        if now >= sample_due {
+            peak_bytes = peak_bytes.max(memory::high_water(group));
+            sample_due = now + memory::INTERVAL;
         }
         std::thread::sleep(wait);
         wait = (wait * 2).min(Duration::from_millis(5));
@@ -109,7 +132,15 @@ pub fn run<S: AsRef<OsStr>>(
     let stdout = out_reader.join().unwrap_or_default();
     let stderr = err_reader.join().unwrap_or_default();
     let code = status.and_then(|exit| exit.code()).unwrap_or(-1);
-    Ok(Outcome { ok: !timed_out && code == 0, status: code, timed_out, stdout, stderr, micros })
+    Ok(Outcome {
+        ok: !timed_out && code == 0,
+        status: code,
+        timed_out,
+        stdout,
+        stderr,
+        micros,
+        peak_bytes,
+    })
 }
 
 /// Runs a program several times and keeps the fastest.
@@ -141,6 +172,10 @@ pub fn run_repeatedly<S: AsRef<OsStr>>(
             return Ok(again);
         }
         best.micros = best.micros.min(again.micros);
+        // The largest across the repetitions rather than the one that went with the fastest,
+        // because the repetitions run the same program on the same input and a difference
+        // between them is the sampler having missed something, not the program having changed.
+        best.peak_bytes = best.peak_bytes.max(again.peak_bytes);
     }
     Ok(best)
 }
@@ -160,6 +195,7 @@ fn drain(pipe: Option<&mut impl Read>) -> String {
 #[cfg(test)]
 mod tests {
     use super::run;
+    use crate::memory;
     use std::time::Duration;
 
     const PATIENT: Duration = Duration::from_secs(10);
@@ -204,6 +240,26 @@ mod tests {
         .unwrap();
         assert!(out.ok);
         assert_eq!(out.stdout.lines().count(), 20_000);
+    }
+
+    #[test]
+    fn a_program_that_lives_long_enough_to_be_looked_at_reports_its_memory() {
+        // Half a second is fifty polls at the sampling interval, so on a platform that can
+        // answer at all there is no version of this that misses the process.
+        let out = run("/bin/sh", &["-c", "sleep 0.5"], None, PATIENT).unwrap();
+        assert!(out.ok);
+        if memory::is_available() {
+            let bytes = out.peak_bytes.expect("half a second is fifty chances to look");
+            assert!(bytes > 0, "a shell that ran cannot have peaked at nothing");
+        } else {
+            assert_eq!(out.peak_bytes, None, "a platform that cannot measure must not invent");
+        }
+    }
+
+    #[test]
+    fn a_program_that_could_not_be_started_has_no_memory_number() {
+        let failed = super::Outcome::failed_to_start(&std::io::Error::other("no"));
+        assert_eq!(failed.peak_bytes, None);
     }
 
     #[test]
