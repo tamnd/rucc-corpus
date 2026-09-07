@@ -1,0 +1,106 @@
+# The corpus
+
+1461 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+
+These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
+
+Corpus digest `dbfc0cafbb185c10824de5adefb2a61b10e2acd67716f0e095c91abbc4c2bdf2`.
+
+## floor (109 programs)
+
+The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`baseline`](floor/baseline/README.md) | 10 | programs with no optimization target, which every level must get right |
+| [`control-flow`](floor/control-flow/README.md) | 10 | the graph shapes the analyses under every pass have to get right |
+| [`branch-probability`](floor/branch-probability/README.md) | 34 | the odds put on an edge before the program has ever run |
+| [`computed-goto`](floor/computed-goto/README.md) | 25 | the address of a label, and the indirect jump through it |
+| [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
+
+## local (309 programs)
+
+Transformations that need to see no further than one basic block, which is where the cheapest wins are.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`constant-fold`](local/constant-fold/README.md) | 112 | folding an operation on constants into a constant |
+| [`strength`](local/strength/README.md) | 24 | rewriting an operation into a cheaper one with the same value |
+| [`narrowing`](local/narrowing/README.md) | 52 | taking the width back off arithmetic that C promoted |
+| [`simplify`](local/simplify/README.md) | 69 | algebraic identities and the local peephole rules |
+| [`reassociate`](local/reassociate/README.md) | 20 | reassociating a chain to shorten its dependency height |
+| [`dead-code`](local/dead-code/README.md) | 12 | removing a computation whose result nothing reads |
+| [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |
+| [`unreachable-code`](local/unreachable-code/README.md) | 8 | removing a branch with a known condition and its dead arm |
+
+## global (193 programs)
+
+Transformations across the blocks of one function, which need dataflow rather than a peephole.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`common-subexpr`](global/common-subexpr/README.md) | 16 | reusing an earlier computation instead of repeating it |
+| [`load-forwarding`](global/load-forwarding/README.md) | 40 | replacing a load with the value already in that place |
+| [`code-motion`](global/code-motion/README.md) | 12 | moving a computation to where it runs no more often |
+| [`copy-propagation`](global/copy-propagation/README.md) | 12 | propagating a copy so the copy becomes dead |
+| [`constant-propagation`](global/constant-propagation/README.md) | 16 | propagating a value constant on every reaching path |
+| [`value-range`](global/value-range/README.md) | 13 | narrowing an integer to the range it can hold |
+| [`alias-analysis`](global/alias-analysis/README.md) | 36 | proving two references cannot name the same object |
+| [`memory-ssa`](global/memory-ssa/README.md) | 28 | walking back from a load to the store that answers it |
+| [`scalar-replacement`](global/scalar-replacement/README.md) | 20 | turning a non-escaping local back into a value |
+
+## loops (402 programs)
+
+Transformations that need loop structure, which is where most of the remaining time in real programs goes.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`loop-invariant`](loops/loop-invariant/README.md) | 32 | hoisting an invariant computation out of a loop |
+| [`induction-variable`](loops/induction-variable/README.md) | 42 | rewriting induction variables into a cheaper set |
+| [`loop-unswitch`](loops/loop-unswitch/README.md) | 64 | removing a test the loop guard already decided |
+| [`loop-unroll`](loops/loop-unroll/README.md) | 64 | unrolling a loop body, known trip count or not |
+| [`loop-idiom`](loops/loop-idiom/README.md) | 64 | recognizing a loop the runtime already implements |
+| [`loop-deletion`](loops/loop-deletion/README.md) | 24 | deleting a loop whose body nobody reads |
+| [`loop-rotate`](loops/loop-rotate/README.md) | 64 | rotating a loop so the test lands at the bottom |
+| [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
+
+## interprocedural (117 programs)
+
+Transformations that need to look at more than one function at a time.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`inline`](interprocedural/inline/README.md) | 36 | replacing a call with the body of what it called |
+| [`tail-call`](interprocedural/tail-call/README.md) | 36 | turning a call in tail position into a jump |
+| [`function-purity`](interprocedural/function-purity/README.md) | 20 | proving purity and using it at the call sites |
+| [`constant-args`](interprocedural/constant-args/README.md) | 12 | specializing a function to a constant argument |
+| [`reachability`](interprocedural/reachability/README.md) | 9 | removing what nothing references |
+| [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
+
+## backend (293 programs)
+
+Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`selection`](backend/selection/README.md) | 40 | choosing the machine instruction for an operation |
+| [`register-pressure`](backend/register-pressure/README.md) | 48 | how many values are live at once, and what that costs |
+| [`register-alloc`](backend/register-alloc/README.md) | 40 | assigning registers and deciding what to spill |
+| [`scheduling`](backend/scheduling/README.md) | 12 | ordering instructions within a block |
+| [`block-layout`](backend/block-layout/README.md) | 4 | laying out blocks so the common path falls through |
+| [`if-conversion`](backend/if-conversion/README.md) | 20 | turning a short branch into branchless code |
+| [`switch-lowering`](backend/switch-lowering/README.md) | 9 | choosing how to lower a switch |
+| [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
+| [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
+| [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
+| [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
+
+## correctness (38 programs)
+
+The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
+
+| facet | programs | what it is about |
+|---|---|---|
+| [`barrier`](correctness/barrier/README.md) | 7 | programs where the compiler must not act, and a firing is a bug |
+| [`atomics`](correctness/atomics/README.md) | 31 | the atomic builtins at every ordering, and the header over them |
+

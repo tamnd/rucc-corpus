@@ -9,11 +9,17 @@
 *.profraw
 *.profdata
 
-# The raw record of every build in a run, one JSON object per line. Kept out of the history
-# because it is a few megabytes a night and everything worth reading from it is already
-# summarised in report.json. CI uploads it as a build artifact, so when a number in the
-# summary needs chasing back to the build that produced it, the record is there.
+# Everything a run generates that is not markdown. The raw record of every build, the JSON
+# summary the tools read, the SARIF the code scanning upload reads, and the machine readable
+# copy of the program list. All four are regenerated on every night whether or not anything
+# about the compiler moved, so committing them makes the history churn and makes the diff
+# something nobody reads. What gets committed is the markdown, which is a page a person opens
+# and a diff a person can follow. CI uploads all of these as build artifacts, so when a number
+# in a report needs chasing back to the build that produced it, the record is there.
 /reports/runs.jsonl
+/reports/report.json
+/reports/findings.sarif
+/programs/manifest.json
 
 .DS_Store
 .idea/

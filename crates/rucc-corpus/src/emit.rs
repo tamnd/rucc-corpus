@@ -44,12 +44,12 @@ pub(crate) fn write_programs(root: &Path, corpus: &Manifest) -> Result<usize, St
                 .map_err(|error| format!("{}: {error}", path.display()))?;
             written += 1;
         }
-        let index = dir.join("index.md");
+        let index = dir.join("README.md");
         std::fs::write(&index, facet_index(*facet, cases))
             .map_err(|error| format!("{}: {error}", index.display()))?;
     }
 
-    let index = root.join("index.md");
+    let index = root.join("README.md");
     std::fs::write(&index, top_index(corpus))
         .map_err(|error| format!("{}: {error}", index.display()))?;
     Ok(written)
@@ -95,7 +95,7 @@ fn top_index(corpus: &Manifest) -> String {
         out.push_str("| facet | programs | what it is about |\n|---|---|---|\n");
         for (facet, count) in facets {
             out.push_str(&format!(
-                "| [`{0}`]({1}/{0}/index.md) | {count} | {2} |\n",
+                "| [`{0}`]({1}/{0}/README.md) | {count} | {2} |\n",
                 facet.name(),
                 phase.name(),
                 facet.describe()
@@ -217,12 +217,12 @@ mod tests {
         let corpus = Manifest::new(vec![case_for(Facet::ConstantFold, "one", "42\n")]).unwrap();
         write_programs(&dir, &corpus).unwrap();
 
-        let top = std::fs::read_to_string(dir.join("index.md")).unwrap();
+        let top = std::fs::read_to_string(dir.join("README.md")).unwrap();
         assert!(top.contains("# The corpus"));
         assert!(top.contains("constant-fold"));
         assert!(top.contains(&corpus.digest()));
 
-        let inner = std::fs::read_to_string(dir.join("local/constant-fold/index.md")).unwrap();
+        let inner = std::fs::read_to_string(dir.join("local/constant-fold/README.md")).unwrap();
         assert!(inner.contains("`42`"), "{inner}");
         assert!(inner.contains("must print"));
         let _ = std::fs::remove_dir_all(&dir);

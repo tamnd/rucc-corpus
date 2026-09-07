@@ -33,22 +33,24 @@ programs/
   correctness/       programs where the compiler must not act, and acting is the bug
 ```
 
-Each directory has an `index.md` listing every program in it, the axis point it was generated for, and the output it must produce. Read that first. The expected answer is the interesting half and it is deliberately not in the C file, because the file that is compiled has to be the file that is in the repository, byte for byte, and a comment carrying the answer would be a second copy that could drift.
+Each directory has a `README.md` listing every program in it, the axis point it was generated for, and the output it must produce. Read that first. The expected answer is the interesting half and it is deliberately not in the C file, because the file that is compiled has to be the file that is in the repository, byte for byte, and a comment carrying the answer would be a second copy that could drift.
 
 The C is generated. Editing a file under `programs/` changes nothing, because the next `gen` writes it back and CI checks that nothing was hand-edited. The thing to edit is `crates/corpus-gen`. The output is kept in the repository anyway, so that a change to the generator shows up as a diff of the thousand programs it altered, which is the only practical way to review one.
 
 ## The reports
 
-`reports/` is regenerated nightly and committed, so `git log reports/report.md` is the history of the compiler getting better or worse.
+`reports/` is regenerated nightly, so `git log reports/report.md` is the history of the compiler getting better or worse.
 
-| file | who reads it |
-|---|---|
-| `report.md` | a person |
-| `report.json` | a tool, and `rucc-corpus diff` |
-| `runs.jsonl` | one line per build, for when the summary is not enough |
-| `findings.sarif` | GitHub code scanning, so a failure lands on the line |
+| file | who reads it | committed |
+|---|---|---|
+| `report.md` | a person | yes |
+| `report.json` | a tool, and `rucc-corpus diff` | no, a workflow artifact |
+| `runs.jsonl` | one line per build, for when the summary is not enough | no, a workflow artifact |
+| `findings.sarif` | GitHub code scanning, so a failure lands on the line | no, a workflow artifact |
 
 `report.md` says what the compiler got wrong, how its code size compares to GCC 16 per facet, and which facets it is furthest behind on. Losses come before wins in that report on purpose.
+
+**Only the markdown is committed.** The other three are regenerated on every run whether or not anything about the compiler moved, so committing them makes the history churn and makes the diff something nobody reads. They go up as artifacts on the nightly instead, kept for the default retention, and `rucc-corpus diff` on the nightly reads yesterday's from there rather than from the tree. The same rule covers `programs/manifest.json`, which is the machine readable copy of a program list that the `README.md` files already state in a form a person can read.
 
 ## What `-Os` does
 

@@ -30,6 +30,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -67,8 +68,23 @@ jobs:
       - name: regenerate the corpus
         run: cargo run --release -p rucc-corpus -- gen --clean
 
-      - name: keep yesterday's report to compare against
-        run: cp reports/report.json /tmp/yesterday.json || true
+      # The comparison needs the previous night's numbers, and those are no longer in the
+      # repository, because report.json is regenerated whether or not anything moved and
+      # committing it makes the history churn. So it comes from where it does live, which is
+      # the artifact the last run of this workflow uploaded. A first run, or a run after the
+      # ninety day retention has expired, finds nothing and the diff step skips itself.
+      - name: yesterday's report to compare against
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh run list --workflow nightly --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -z "$last" ]; then
+            echo "no previous run to compare against"
+            exit 0
+          fi
+          gh run download "$last" --name nightly-reports --dir /tmp/yesterday
+          cp /tmp/yesterday/report.json /tmp/yesterday.json
 
       # Five repeats, because this is where the timing numbers come from and nothing else
       # here is in a hurry. Failures are not fatal to the step, because the report is the
