@@ -18,7 +18,7 @@
 //! runs that found the same thing produce byte identical files and a diff shows what changed
 //! rather than where the whitespace moved.
 
-use crate::summary::{FacetSummary, Summary, Tally, Target};
+use crate::summary::{FacetSummary, SizeModel, Summary, Tally, Target};
 use corpus_model::{Finding, Json, RunRecord, SCHEMA_VERSION};
 use corpus_run::Run;
 
@@ -65,6 +65,15 @@ pub fn report_json(run: &Run, summary: &Summary) -> String {
         ),
         ("targets", Json::array(summary.targets.iter().map(target_json))),
         ("facets", Json::array(summary.facets.iter().map(facet_json))),
+        (
+            "size_model",
+            Json::array(
+                summary
+                    .size_model
+                    .iter()
+                    .map(|model| size_model_json(model, summary.ignoring_size(&model.toolchain))),
+            ),
+        ),
         ("findings", Json::array(run.findings.iter().map(Finding::to_json))),
     ]);
     let mut text = document.to_pretty();
@@ -120,6 +129,32 @@ fn facet_json(facet: &FacetSummary) -> Json {
                     ("size_ratio", score.size_ratio.map_or(Json::Null, Json::Number)),
                     ("speed_ratio", score.speed_ratio.map_or(Json::Null, Json::Number)),
                     ("compile_ratio", score.compile_ratio.map_or(Json::Null, Json::Number)),
+                ])
+            })),
+        ),
+    ])
+}
+
+/// What `-Os` did to one compiler's own output.
+///
+/// `unmoved` is written out rather than left to be worked out from the ratio, because a median of
+/// exactly one is not the same fact as every case coming out the same size, and the second one is
+/// what the ignoring question is asked of. `ignoring` is the answer to that question and it needs
+/// the reference to answer it, so it is passed in rather than read off the model.
+fn size_model_json(model: &SizeModel, ignoring: bool) -> Json {
+    Json::object([
+        ("toolchain", Json::string(model.toolchain.clone())),
+        ("compared", Json::int(model.compared as i64)),
+        ("unmoved", Json::int(model.unmoved as i64)),
+        ("ignoring", Json::Bool(ignoring)),
+        ("against_o2", model.against_o2.map_or(Json::Null, Json::Number)),
+        (
+            "by_facet",
+            Json::array(model.by_facet.iter().map(|(facet, ratio, cases)| {
+                Json::object([
+                    ("facet", Json::string(facet.name())),
+                    ("cases", Json::int(*cases as i64)),
+                    ("against_o2", Json::Number(*ratio)),
                 ])
             })),
         ),
@@ -336,6 +371,12 @@ mod tests {
             &["$defs", "finding"],
             &report.get("findings").unwrap().as_array().unwrap()[0],
             "finding",
+        );
+        keys_agree(
+            &schema,
+            &["$defs", "size_model"],
+            &report.get("size_model").unwrap().as_array().unwrap()[0],
+            "size model",
         );
 
         let facet = &report.get("facets").unwrap().as_array().unwrap()[0];
