@@ -157,6 +157,8 @@ pub fn record(case: &Case, toolchain: &str, level: Level, built: Built) -> RunRe
         compile: built.compile,
         execute: built.execute,
         insights: built.insights,
+        // This one was built here, just now. Only the cache sets the flag, on the way out.
+        reused: false,
     }
 }
 

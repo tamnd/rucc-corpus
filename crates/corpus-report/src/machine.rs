@@ -75,10 +75,24 @@ pub fn report_json(run: &Run, summary: &Summary) -> String {
             ),
         ),
         ("findings", Json::array(run.findings.iter().map(Finding::to_json))),
+        ("measured", measured_json(run)),
     ]);
     let mut text = document.to_pretty();
     text.push('\n');
     text
+}
+
+/// How many of the results in this report were built in this run and how many were read back.
+///
+/// A tool comparing two reports for a timing regression needs this before it says anything. Two
+/// numbers rather than one, so a reader never has to know the total to work out the other half.
+fn measured_json(run: &Run) -> Json {
+    let reused = run.records.iter().filter(|record| record.reused).count();
+    Json::object([
+        ("results", Json::int(run.records.len() as i64)),
+        ("built", Json::int((run.records.len() - reused) as i64)),
+        ("reused", Json::int(reused as i64)),
+    ])
 }
 
 fn tally_json(tally: &Tally) -> Json {
@@ -490,6 +504,24 @@ mod tests {
         assert_eq!(parsed.get("reference").unwrap().as_str(), Some("gcc-16"));
         assert!(parsed.get("tool").unwrap().as_str().unwrap().starts_with("rucc-corpus "));
         assert_eq!(parsed.get("cases").unwrap().as_f64(), Some(1.0));
+    }
+
+    #[test]
+    fn the_summary_says_how_much_of_itself_was_measured_in_this_run() {
+        let mut run = sample_run(false);
+        let summary = summarise(&run, "deadbeef", 1);
+        let parsed = json::parse(&report_json(&run, &summary)).unwrap();
+        let measured = parsed.get("measured").unwrap();
+        let total = run.records.len() as f64;
+        assert_eq!(measured.get("results").unwrap().as_f64(), Some(total));
+        assert_eq!(measured.get("built").unwrap().as_f64(), Some(total));
+        assert_eq!(measured.get("reused").unwrap().as_f64(), Some(0.0));
+
+        run.records[0].reused = true;
+        let parsed = json::parse(&report_json(&run, &summary)).unwrap();
+        let measured = parsed.get("measured").unwrap();
+        assert_eq!(measured.get("built").unwrap().as_f64(), Some(total - 1.0));
+        assert_eq!(measured.get("reused").unwrap().as_f64(), Some(1.0));
     }
 
     #[test]

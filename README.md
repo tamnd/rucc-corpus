@@ -116,6 +116,27 @@ cargo run --release -p rucc-corpus -- run --facet loop-unroll --level O2 --keep
 
 The reference is GCC 16, which is the current release. Homebrew installs it as `gcc-16` and the Ubuntu toolchain archive installs it under the same name.
 
+## A case that has not changed is not built again
+
+A result whose every input hashes to what it hashed last time is read out of a cache instead of being built. The key covers the source, the expected answer, the dialect, the level, the compiler as bytes and as a version string, the extra flags, the repeat count, the operating system, the architecture and the version of the harness. Change any one of them and the entry misses.
+
+That is worth having because the reference column almost never moves. GCC 16 built these programs yesterday and will build them the same way tomorrow, so on a normal day the only new work in a run is the compiler under test. A narrow run that took eighteen seconds cold takes under a second warm.
+
+```sh
+cargo run --release -p rucc-corpus -- run --refresh    # build everything, keep the results
+cargo run --release -p rucc-corpus -- run --no-cache   # neither read nor write
+```
+
+Three things are true of it and all three matter.
+
+Nothing partial is ever reused. A result is either built from nothing or handed back whole. There is no third case where a build starts from something an earlier run left behind, because that is the case whose numbers belong to neither run.
+
+A reused record says it was reused. Every record carries the flag, `report.json` carries a `measured` block with the two counts in it, and every page that quotes a time says how many of its numbers were not taken today. An outcome keeps. A timing does not.
+
+The nightly runs `--refresh`, so its numbers were all measured on one machine in one hour, and it still leaves the cache warm for whoever runs next.
+
+The cache lives in `$CORPUS_CACHE`, or under `~/.cache/rucc-corpus` when that is not set. Deleting it loses nothing that cannot be measured again.
+
 ## rucc only has an x86-64 Linux back end
 
 As of today that is the only target rucc generates code for, so the rucc column of the report can only be produced on x86-64 Linux. On any other machine the corpus still runs against GCC 16, which is worth doing on its own, because that is what checks 1421 expected answers against a compiler that has been wrong about very few things since 1987.

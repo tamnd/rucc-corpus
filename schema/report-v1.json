@@ -80,6 +80,17 @@
       "description": "Every result that was not what the generator said it would be. Empty is the good case.",
       "type": "array",
       "items": { "$ref": "#/$defs/finding" }
+    },
+    "measured": {
+      "description": "How much of this report was measured in this run. A result whose inputs all hashed to what they hashed before is read out of the record cache rather than built again, which keeps the verdict and keeps a timing that was taken on an earlier day. A tool comparing two reports for a timing regression should look here first.",
+      "type": "object",
+      "required": ["results", "built", "reused"],
+      "additionalProperties": false,
+      "properties": {
+        "results": { "description": "How many case, toolchain and level results the run produced.", "type": "integer", "minimum": 0 },
+        "built": { "description": "How many of them were compiled and run in this sitting.", "type": "integer", "minimum": 0 },
+        "reused": { "description": "How many of them came out of the cache. Zero after a run with --refresh or --no-cache.", "type": "integer", "minimum": 0 }
+      }
     }
   },
   "$defs": {

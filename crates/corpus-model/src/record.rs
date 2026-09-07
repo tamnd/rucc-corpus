@@ -117,6 +117,33 @@ fn maybe(value: Option<u64>) -> Json {
     value.map_or(Json::Null, |bytes| Json::int(bytes as i64))
 }
 
+/// A whole number read back out of a record.
+///
+/// Anything that is not a number reads as nought rather than failing the whole record. A field
+/// that a newer harness added is missing from an older line, and refusing to read that line at
+/// all would throw away evidence over a field nobody was asking about.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn number(value: &Json, key: &str) -> u64 {
+    value.get(key).and_then(Json::as_f64).map_or(0, |n| if n < 0.0 { 0 } else { n as u64 })
+}
+
+/// A signed status read back out of a record.
+#[allow(clippy::cast_possible_truncation)]
+fn status(value: &Json, key: &str) -> i32 {
+    value.get(key).and_then(Json::as_f64).map_or(-1, |n| n as i32)
+}
+
+/// A measurement read back out of a record, keeping null and nought apart.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn measured(value: &Json, key: &str) -> Option<u64> {
+    value.get(key).and_then(Json::as_f64).map(|n| if n < 0.0 { 0 } else { n as u64 })
+}
+
+/// A string read back out of a record.
+fn text(value: &Json, key: &str) -> String {
+    value.get(key).and_then(Json::as_str).unwrap_or_default().to_owned()
+}
+
 /// What happened when the compiler was asked to build a case.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Compile {
@@ -186,6 +213,22 @@ impl Compile {
             ("diagnostics", Json::string(self.diagnostics.clone())),
         ])
     }
+
+    /// The compile read back from JSON.
+    #[must_use]
+    pub fn from_json(value: &Json) -> Self {
+        Self {
+            ok: value.get("ok").and_then(Json::as_bool).unwrap_or(false),
+            status: status(value, "status"),
+            micros: number(value, "micros"),
+            diagnostics: text(value, "diagnostics"),
+            bytes: number(value, "bytes"),
+            text_bytes: number(value, "text_bytes"),
+            data_bytes: number(value, "data_bytes"),
+            bss_bytes: number(value, "bss_bytes"),
+            peak_bytes: measured(value, "peak_bytes"),
+        }
+    }
 }
 
 /// What happened when the executable was run.
@@ -237,6 +280,20 @@ impl Execute {
             ("output", Json::string(self.output.clone())),
         ])
     }
+
+    /// The run read back from JSON.
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn from_json(value: &Json) -> Self {
+        Self {
+            ok: value.get("ok").and_then(Json::as_bool).unwrap_or(false),
+            status: status(value, "status"),
+            micros: number(value, "micros"),
+            repeats: number(value, "repeats") as u32,
+            peak_bytes: measured(value, "peak_bytes"),
+            output: text(value, "output"),
+        }
+    }
 }
 
 /// One thing the reference compiler said about a case.
@@ -268,6 +325,18 @@ impl Insight {
             ("message", Json::string(self.message.clone())),
         ])
     }
+
+    /// The insight read back from JSON.
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn from_json(value: &Json) -> Self {
+        Self {
+            kind: text(value, "kind"),
+            pass: text(value, "pass"),
+            line: number(value, "line") as u32,
+            message: text(value, "message"),
+        }
+    }
 }
 
 /// One case, one toolchain, one level.
@@ -291,6 +360,13 @@ pub struct RunRecord {
     pub execute: Execute,
     /// What the compiler said about its own optimization decisions, when it was asked.
     pub insights: Vec<Insight>,
+    /// Whether this record was read out of the cache rather than measured today.
+    ///
+    /// An outcome keeps. A timing does not. A record that says the program printed the wrong
+    /// answer means the same thing a fortnight later, but the microseconds next to it were
+    /// measured on a machine that was doing something else at the time, so a report that quotes
+    /// seconds has to say how many of them came out of a file.
+    pub reused: bool,
 }
 
 impl RunRecord {
@@ -307,6 +383,7 @@ impl RunRecord {
             compile: Compile::skipped(),
             execute: Execute::skipped(),
             insights: Vec::new(),
+            reused: false,
         }
     }
 
@@ -317,19 +394,54 @@ impl RunRecord {
     }
 
     /// The record as JSON, which is one line of the JSON Lines file.
+    ///
+    /// The `reused` field is written only when it is true. A run where nothing came out of the
+    /// cache produces the same line it produced before the cache existed, which keeps the
+    /// diff between two runs about the compiler rather than about the harness.
     #[must_use]
     pub fn to_json(&self) -> Json {
-        Json::object([
-            ("case", Json::string(self.case.clone())),
-            ("facet", Json::string(self.facet.name())),
-            ("phase", Json::string(self.phase.name())),
-            ("dialect", Json::string(self.dialect.name())),
-            ("toolchain", Json::string(self.toolchain.clone())),
-            ("level", Json::string(self.level.name())),
-            ("compile", self.compile.to_json()),
-            ("execute", self.execute.to_json()),
-            ("insights", Json::array(self.insights.iter().map(Insight::to_json))),
-        ])
+        let mut fields = vec![
+            ("case".to_owned(), Json::string(self.case.clone())),
+            ("facet".to_owned(), Json::string(self.facet.name())),
+            ("phase".to_owned(), Json::string(self.phase.name())),
+            ("dialect".to_owned(), Json::string(self.dialect.name())),
+            ("toolchain".to_owned(), Json::string(self.toolchain.clone())),
+            ("level".to_owned(), Json::string(self.level.name())),
+            ("compile".to_owned(), self.compile.to_json()),
+            ("execute".to_owned(), self.execute.to_json()),
+            ("insights".to_owned(), Json::array(self.insights.iter().map(Insight::to_json))),
+        ];
+        if self.reused {
+            fields.push(("reused".to_owned(), Json::Bool(true)));
+        }
+        Json::Object(fields)
+    }
+
+    /// The record read back from one line of a JSON Lines file.
+    ///
+    /// `None` when a name in it is one this build does not know, which is what a record written
+    /// by a newer harness looks like. That is a record to ignore rather than to guess at, since
+    /// a facet nobody here has heard of cannot be reported on.
+    #[must_use]
+    pub fn from_json(value: &Json) -> Option<Self> {
+        Some(Self {
+            case: text(value, "case"),
+            facet: Facet::parse(value.get("facet")?.as_str()?)?,
+            phase: Phase::parse(value.get("phase")?.as_str()?)?,
+            dialect: Dialect::parse(value.get("dialect")?.as_str()?)?,
+            toolchain: text(value, "toolchain"),
+            level: Level::parse(value.get("level")?.as_str()?)?,
+            compile: Compile::from_json(value.get("compile")?),
+            execute: Execute::from_json(value.get("execute")?),
+            insights: value
+                .get("insights")
+                .and_then(Json::as_array)
+                .unwrap_or_default()
+                .iter()
+                .map(Insight::from_json)
+                .collect(),
+            reused: value.get("reused").and_then(Json::as_bool).unwrap_or(false),
+        })
     }
 }
 
@@ -543,6 +655,93 @@ mod tests {
         let line = json.to_line();
         assert_eq!(crate::json::parse(&line).unwrap(), json);
         assert!(!line.contains('\n'), "a JSON Lines record must be one line");
+        assert_eq!(RunRecord::from_json(&json), Some(record));
+    }
+
+    #[test]
+    fn a_record_read_back_out_of_a_file_is_the_record_that_went_in() {
+        let case = Case::new(
+            Facet::LoopUnroll,
+            Axes::of([("count", "8")]),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            Expect::Output("done\n".to_owned()),
+        );
+        let mut record = RunRecord::skipped(&case, "rucc", Level::Os);
+        record.compile = Compile {
+            ok: true,
+            status: 0,
+            micros: 44_100,
+            diagnostics: "warning: something\n".to_owned(),
+            bytes: 33_112,
+            text_bytes: 2_048,
+            data_bytes: 512,
+            bss_bytes: 64,
+            peak_bytes: Some(91_000_000),
+        };
+        record.execute = Execute {
+            ok: true,
+            status: 0,
+            micros: 1_200,
+            repeats: 3,
+            peak_bytes: Some(1_800_000),
+            output: "done\n".to_owned(),
+        };
+        record.insights = vec![Insight {
+            kind: "missed".to_owned(),
+            pass: "vect".to_owned(),
+            line: 9,
+            message: "not vectorized".to_owned(),
+        }];
+        let read = RunRecord::from_json(&crate::json::parse(&record.to_json().to_line()).unwrap());
+        assert_eq!(read, Some(record));
+    }
+
+    #[test]
+    fn a_measurement_nobody_could_take_stays_missing_when_it_is_read_back() {
+        // Null and nought are different answers and the round trip has to keep them apart,
+        // because nought bytes of peak memory would be a claim about the compiler and null is
+        // an admission that this platform cannot look.
+        let json = Compile { peak_bytes: None, ..Compile::skipped() }.to_json();
+        assert_eq!(Compile::from_json(&json).peak_bytes, None);
+        let json = Compile { peak_bytes: Some(0), ..Compile::skipped() }.to_json();
+        assert_eq!(Compile::from_json(&json).peak_bytes, Some(0));
+    }
+
+    #[test]
+    fn a_record_only_says_it_was_reused_when_it_was() {
+        let case = Case::new(
+            Facet::Baseline,
+            Axes::default(),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            Expect::Output(String::new()),
+        );
+        let fresh = RunRecord::skipped(&case, "rucc", Level::O2);
+        assert!(fresh.to_json().get("reused").is_none());
+        let reused = RunRecord { reused: true, ..fresh };
+        assert_eq!(reused.to_json().get("reused"), Some(&crate::Json::Bool(true)));
+        assert_eq!(RunRecord::from_json(&reused.to_json()), Some(reused));
+    }
+
+    #[test]
+    fn a_record_naming_something_this_build_never_heard_of_is_ignored_rather_than_guessed_at() {
+        let case = Case::new(
+            Facet::Baseline,
+            Axes::default(),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            Expect::Output(String::new()),
+        );
+        let good = RunRecord::skipped(&case, "rucc", Level::O2).to_json();
+        assert!(RunRecord::from_json(&good).is_some());
+        let mut fields = good.as_object().unwrap().to_vec();
+        for field in &mut fields {
+            if field.0 == "facet" {
+                field.1 = crate::Json::string("a-facet-from-the-future");
+            }
+        }
+        assert_eq!(RunRecord::from_json(&crate::Json::Object(fields)), None);
     }
 
     #[test]
