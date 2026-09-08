@@ -153,6 +153,28 @@ impl Expect {
     }
 }
 
+/// One more translation unit that a case is linked with.
+///
+/// Almost every case is a single file and that is the right default, because a failure in a
+/// program the compiler saw all of at once is a failure about code generation rather than about
+/// linking. The exception is the whole class of optimizations that only exist across a file
+/// boundary, and a case about one of those has to hand the compiler the boundary to work on.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unit {
+    /// A short word naming the unit, which is what its file is named after.
+    pub name: String,
+    /// The complete translation unit. It has no `main` in it, since the case already has one.
+    pub source: String,
+}
+
+impl Unit {
+    /// A named unit.
+    #[must_use]
+    pub fn new(name: impl Into<String>, source: impl Into<String>) -> Self {
+        Self { name: name.into(), source: source.into() }
+    }
+}
+
 /// One program in the corpus.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Case {
@@ -168,8 +190,19 @@ pub struct Case {
     pub axes: Axes,
     /// Which C it is written in.
     pub dialect: Dialect,
-    /// The complete translation unit.
+    /// The translation unit with `main` in it.
     pub source: String,
+    /// The other translation units, linked with it, in the order they go on the command line.
+    ///
+    /// Empty for almost every case in the corpus.
+    pub units: Vec<Unit>,
+    /// Flags this case has to be built with, over and above the optimization level.
+    ///
+    /// A level is something every case is built at, so it is a dimension of the run. A flag like
+    /// `-flto` is not: it only means anything for a program written to be linked, and asking
+    /// every case in the corpus for it would multiply the whole run to learn one facet's answer.
+    /// So it belongs to the case, and the case that carries it says so in its axes.
+    pub flags: Vec<String>,
     /// What it is supposed to do.
     pub expect: Expect,
     /// Free labels, sorted, for selecting subsets that no axis captures.
@@ -189,9 +222,74 @@ impl Case {
         source: impl Into<String>,
         expect: Expect,
     ) -> Self {
-        let source = source.into();
-        let id = Self::make_id(facet, &axes, dialect, &source);
-        Self { id, facet, axes, dialect, source, expect, tags: Vec::new() }
+        Self::build(facet, axes, dialect, source.into(), Vec::new(), Vec::new(), expect)
+    }
+
+    /// The same, spanning more than one translation unit and with flags of its own.
+    #[must_use]
+    pub fn linked(
+        facet: Facet,
+        axes: Axes,
+        dialect: Dialect,
+        source: impl Into<String>,
+        units: Vec<Unit>,
+        flags: Vec<String>,
+        expect: Expect,
+    ) -> Self {
+        Self::build(facet, axes, dialect, source.into(), units, flags, expect)
+    }
+
+    /// Assembles a case and gives it its id.
+    fn build(
+        facet: Facet,
+        axes: Axes,
+        dialect: Dialect,
+        source: String,
+        units: Vec<Unit>,
+        flags: Vec<String>,
+        expect: Expect,
+    ) -> Self {
+        let mut case = Self {
+            id: String::new(),
+            facet,
+            axes,
+            dialect,
+            source,
+            units,
+            flags,
+            expect,
+            tags: Vec::new(),
+        };
+        let slug = case.axes.slug();
+        let digest = sha256::short(case.fingerprint().as_bytes());
+        case.id = if slug.is_empty() {
+            format!("{}.{}.{}", facet.name(), dialect.name(), &digest[..8])
+        } else {
+            format!("{}.{slug}.{}.{}", facet.name(), dialect.name(), &digest[..8])
+        };
+        case
+    }
+
+    /// Everything about the case that decides what a compiler is asked to do.
+    ///
+    /// The sources, the names they are compiled under, and the flags. Not the facet and not the
+    /// axes, which are how the corpus talks about the case rather than anything the compiler
+    /// sees. A case with one unit and no flags of its own fingerprints as exactly its source, so
+    /// adding the two fields left every id and every cache key in the corpus where it was.
+    fn fingerprint(&self) -> String {
+        let mut feed = String::with_capacity(self.source.len() + 64);
+        feed.push_str(&self.source);
+        for unit in &self.units {
+            feed.push('\0');
+            feed.push_str(&unit.name);
+            feed.push('\0');
+            feed.push_str(&unit.source);
+        }
+        for flag in &self.flags {
+            feed.push('\0');
+            feed.push_str(flag);
+        }
+        feed
     }
 
     /// The same, with tags.
@@ -201,18 +299,6 @@ impl Case {
         self.tags.sort_unstable();
         self.tags.dedup();
         self
-    }
-
-    /// The id a case with these parts would have.
-    #[must_use]
-    pub fn make_id(facet: Facet, axes: &Axes, dialect: Dialect, source: &str) -> String {
-        let slug = axes.slug();
-        let digest = sha256::short(source.as_bytes());
-        if slug.is_empty() {
-            format!("{}.{}.{}", facet.name(), dialect.name(), &digest[..8])
-        } else {
-            format!("{}.{}.{}.{}", facet.name(), slug, dialect.name(), &digest[..8])
-        }
     }
 
     /// The phase this case is evidence for.
@@ -225,6 +311,23 @@ impl Case {
     #[must_use]
     pub fn file_name(&self) -> String {
         format!("{}.c", self.id)
+    }
+
+    /// The file name one of the other units is written to.
+    ///
+    /// Named after the case rather than after the unit alone, so that two cases in one directory
+    /// that both have a unit called `helper` do not write to the same file.
+    #[must_use]
+    pub fn unit_file_name(&self, unit: &Unit) -> String {
+        format!("{}.{}.c", self.id, unit.name)
+    }
+
+    /// How much C the whole case is, counting every unit it is linked from.
+    #[must_use]
+    pub fn size(&self) -> crate::Source {
+        self.units.iter().fold(crate::Source::of(&self.source), |sum, unit| {
+            sum.plus(crate::Source::of(&unit.source))
+        })
     }
 
     /// Where the source is written, under the programs directory.
@@ -249,10 +352,10 @@ impl Case {
         matches!(self.expect, Expect::Rejected(_))
     }
 
-    /// The digest of the source, which is what a report cites.
+    /// The digest of everything the compiler is handed, which is what a report cites.
     #[must_use]
     pub fn digest(&self) -> String {
-        sha256::hex(self.source.as_bytes())
+        sha256::hex(self.fingerprint().as_bytes())
     }
 
     /// The case as JSON, which is what the manifest holds.
@@ -267,6 +370,8 @@ impl Case {
             ("expect_kind", Json::string(self.expect.kind())),
             ("expect", Json::string(self.expect.text().to_owned())),
             ("tags", Json::array(self.tags.iter().map(|t| Json::string(t.clone())))),
+            ("units", Json::array(self.units.iter().map(|u| Json::string(u.name.clone())))),
+            ("flags", Json::array(self.flags.iter().map(|f| Json::string(f.clone())))),
             ("source_sha256", Json::string(self.digest())),
         ])
     }
@@ -317,7 +422,7 @@ impl Manifest {
         for case in &self.cases {
             hasher.update(case.id.as_bytes());
             hasher.update(b"\0");
-            hasher.update(case.source.as_bytes());
+            hasher.update(case.fingerprint().as_bytes());
             hasher.update(b"\0");
         }
         let bytes = hasher.finish();
@@ -353,7 +458,7 @@ impl Manifest {
 
 #[cfg(test)]
 mod tests {
-    use super::{Axes, Case, Dialect, Expect, Manifest};
+    use super::{Axes, Case, Dialect, Expect, Manifest, Unit};
     use crate::facet::Facet;
 
     fn case(source: &str) -> Case {
@@ -397,6 +502,60 @@ mod tests {
         assert_eq!(tagged.tags, ["slow", "ub-clean"]);
         assert!(tagged.has_tag("slow"));
         assert!(!tagged.has_tag("large"));
+    }
+
+    #[test]
+    fn a_case_with_one_unit_and_no_flags_digests_to_exactly_its_source() {
+        // The whole reason the fingerprint is spelled the way it is. Adding the two fields had to
+        // leave every id and every cached record in the corpus where they were, and a test is the
+        // only thing that keeps that true the next time somebody adds a third field.
+        let plain = case("int main(void) { return 0; }");
+        assert_eq!(plain.digest(), crate::sha256::hex(plain.source.as_bytes()));
+    }
+
+    #[test]
+    fn a_unit_and_a_flag_each_change_what_a_case_is() {
+        let plain = case("int main(void) { return 0; }");
+        let linked = Case::linked(
+            Facet::ConstantFold,
+            Axes::of([("type", "int32"), ("op", "add")]),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            vec![Unit::new("helper", "int helper(void) { return 1; }\n")],
+            Vec::new(),
+            Expect::Output("7\n".to_owned()),
+        );
+        let flagged = Case::linked(
+            Facet::ConstantFold,
+            Axes::of([("type", "int32"), ("op", "add")]),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            Vec::new(),
+            vec!["-flto".to_owned()],
+            Expect::Output("7\n".to_owned()),
+        );
+        assert_ne!(plain.digest(), linked.digest());
+        assert_ne!(plain.digest(), flagged.digest());
+        assert_ne!(linked.digest(), flagged.digest());
+        assert_ne!(plain.id, linked.id);
+        assert_eq!(linked.unit_file_name(&linked.units[0]), format!("{}.helper.c", linked.id));
+    }
+
+    #[test]
+    fn the_size_of_a_case_is_every_file_it_is_linked_from() {
+        let linked = Case::linked(
+            Facet::ConstantFold,
+            Axes::default(),
+            Dialect::C17,
+            "one\ntwo\n",
+            vec![Unit::new("helper", "three\n"), Unit::new("other", "four\nfive\n")],
+            Vec::new(),
+            Expect::Output("1\n".to_owned()),
+        );
+        let size = linked.size();
+        assert_eq!(size.lines, 5);
+        assert_eq!(size.files, 3);
+        assert_eq!(size.bytes, 8 + 6 + 10);
     }
 
     #[test]

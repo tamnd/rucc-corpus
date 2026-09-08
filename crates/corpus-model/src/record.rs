@@ -351,10 +351,17 @@ impl Insight {
 /// every compiler, which is what lets a report take it off whichever record it meets first.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Source {
-    /// How many lines the translation unit has.
+    /// How many lines of C there are, over every translation unit.
     pub lines: u32,
-    /// How many bytes it is.
+    /// How many bytes they are.
     pub bytes: u64,
+    /// How many translation units there are.
+    ///
+    /// One for almost every case, and more for the few that exist to be linked together. It is
+    /// worth counting rather than assuming, because a report that says how many lines a facet is
+    /// without saying how many files they arrived in cannot be read by somebody looking at the
+    /// facet whose whole subject is the file boundary.
+    pub files: u32,
 }
 
 impl Source {
@@ -370,7 +377,17 @@ impl Source {
         }
         let newlines = text.bytes().filter(|byte| *byte == b'\n').count();
         let lines = if text.ends_with('\n') { newlines } else { newlines + 1 };
-        Self { lines: lines as u32, bytes: text.len() as u64 }
+        Self { lines: lines as u32, bytes: text.len() as u64, files: 1 }
+    }
+
+    /// Two sizes added together, saturating rather than wrapping.
+    #[must_use]
+    pub const fn plus(self, other: Self) -> Self {
+        Self {
+            lines: self.lines.saturating_add(other.lines),
+            bytes: self.bytes.saturating_add(other.bytes),
+            files: self.files.saturating_add(other.files),
+        }
     }
 
     /// Whether there is a measurement here at all.
@@ -389,14 +406,23 @@ impl Source {
         Json::object([
             ("lines", Json::int(i64::from(self.lines))),
             ("bytes", Json::int(self.bytes as i64)),
+            ("files", Json::int(i64::from(self.files))),
         ])
     }
 
     /// The size read back from JSON.
+    ///
+    /// A record written before anybody counted files has lines and no file count, and the only
+    /// number of files a case with lines in it can have is at least one. So a missing count reads
+    /// as one rather than as nought, which keeps an old record out of a total that would otherwise
+    /// claim the corpus arrived in no files at all.
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub fn from_json(value: &Json) -> Self {
-        Self { lines: number(value, "lines") as u32, bytes: number(value, "bytes") }
+        let lines = number(value, "lines") as u32;
+        let files = number(value, "files") as u32;
+        let files = if files == 0 && lines > 0 { 1 } else { files };
+        Self { lines, bytes: number(value, "bytes"), files }
     }
 }
 
@@ -443,7 +469,7 @@ impl RunRecord {
             dialect: case.dialect,
             toolchain: toolchain.to_owned(),
             level,
-            source: Source::of(&case.source),
+            source: case.size(),
             compile: Compile::skipped(),
             execute: Execute::skipped(),
             insights: Vec::new(),

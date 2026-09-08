@@ -231,6 +231,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::global::generate(&mut sink);
     facets::loops::generate(&mut sink);
     facets::interproc::generate(&mut sink);
+    facets::link::generate(&mut sink);
     facets::backend::generate(&mut sink);
     facets::surface::bit_builtins(&mut sink);
     facets::surface::float_conversion(&mut sink);
@@ -281,11 +282,20 @@ mod tests {
     }
 
     #[test]
-    fn every_case_is_a_whole_translation_unit_with_a_main() {
+    fn every_case_is_a_whole_program_with_exactly_one_main() {
         let corpus = generate(&Options::all()).unwrap();
         for case in &corpus.cases {
             assert!(case.source.contains("main"), "{} has no main", case.id);
             assert!(case.source.ends_with('\n'), "{} has no final newline", case.id);
+            for unit in &case.units {
+                assert!(!unit.source.contains("main("), "{} has a second main", case.id);
+                assert!(
+                    unit.source.ends_with('\n'),
+                    "{} has no final newline in {}",
+                    case.id,
+                    unit.name
+                );
+            }
         }
     }
 
@@ -294,12 +304,34 @@ mod tests {
         let corpus = generate(&Options::all()).unwrap();
         for case in &corpus.cases {
             for banned in ["%p", "sizeof", "__FILE__", "__LINE__", "__TIME__", "__DATE__"] {
-                assert!(
-                    !case.source.contains(banned),
-                    "{} uses {banned}, which makes its output depend on the build",
-                    case.id
-                );
+                // Every file the compiler is handed, not only the one with main in it. A helper
+                // unit is C that gets compiled like any other, so a rule about what the corpus may
+                // contain that only looked at one of the files would have a hole in it.
+                for (name, text) in std::iter::once((case.id.as_str(), &case.source))
+                    .chain(case.units.iter().map(|unit| (unit.name.as_str(), &unit.source)))
+                {
+                    assert!(
+                        !text.contains(banned),
+                        "{} uses {banned} in {name}, which makes its output depend on the build",
+                        case.id
+                    );
+                }
             }
+        }
+    }
+
+    #[test]
+    fn a_case_that_asks_for_a_flag_says_so_in_its_axes() {
+        // Otherwise two rows of the report would be the same program built two different ways
+        // with nothing on either row saying which was which.
+        let corpus = generate(&Options::all()).unwrap();
+        for case in corpus.cases.iter().filter(|case| !case.flags.is_empty()) {
+            assert!(
+                !case.axes.points.is_empty(),
+                "{} is built with {:?} and has no axis saying so",
+                case.id,
+                case.flags
+            );
         }
     }
 

@@ -274,14 +274,14 @@ fn against(run: &Run, summary: &Summary) -> String {
 /// is both the honest answer and a better one than a sentence reading as a corpus that has lost
 /// its programs.
 fn how_big(summary: &Summary) -> String {
-    if summary.source.measured() {
-        format!(
-            ", one translation unit each and {} of C in all",
-            size::lines_of(summary.source.lines)
-        )
-    } else {
-        String::new()
+    if !summary.source.measured() {
+        return String::new();
     }
+    let lines = size::lines_of(summary.source.lines);
+    if size::one_file_each(summary.source, summary.cases) {
+        return format!(", one translation unit each and {lines} of C in all");
+    }
+    format!(", {} between them and {lines} of C in all", size::files_of(summary.source.files))
 }
 
 /// The levels written out the way a person would say them.
@@ -382,7 +382,7 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
                 facet.facet.name(),
                 facet_link(facet.facet, "../"),
                 facet.cases,
-                size::cell(facet.source),
+                size::cell(facet.source, facet.cases),
                 ratio(score.size_ratio),
                 ratio(score.disk_ratio),
                 ratio(score.data_ratio),
@@ -532,7 +532,7 @@ fn phase_index(summary: &Summary) -> String {
             "| [{0}]({0}.md) | {1} | {cases} | {2} |",
             phase.name(),
             facets.len(),
-            size::cell(size)
+            size::cell(size, cases)
         );
         for id in summary.under_test() {
             let (tally, size) = rolled_up(&facets, id);
@@ -573,7 +573,7 @@ fn phase_page(phase: Phase, summary: &Summary) -> String {
             facet.facet.name(),
             facet_link(facet.facet, "../../"),
             facet.cases,
-            size::cell(facet.source)
+            size::cell(facet.source, facet.cases)
         );
         for id in summary.under_test() {
             let Some(score) = facet.score(id) else {

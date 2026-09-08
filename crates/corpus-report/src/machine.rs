@@ -131,6 +131,7 @@ fn source_json(source: corpus_model::Source) -> Json {
     Json::object([
         ("lines", Json::int(i64::from(source.lines))),
         ("bytes", Json::int(source.bytes as i64)),
+        ("files", Json::int(i64::from(source.files))),
     ])
 }
 
