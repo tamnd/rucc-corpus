@@ -29,7 +29,9 @@ pub mod sha256;
 pub use case::{Axes, Case, Dialect, Expect, Manifest, program_path};
 pub use facet::{Facet, Phase};
 pub use json::Json;
-pub use record::{Compile, Execute, Finding, Insight, Level, RunRecord, Toolchain, Verdict};
+pub use record::{
+    Compile, Execute, Finding, Insight, Level, RunRecord, Source, Toolchain, Verdict,
+};
 
 /// The version stamped into every file this workspace writes.
 ///

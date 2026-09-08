@@ -4,6 +4,8 @@ Every case in the corpus produced the answer the generator computed, on every co
 
 The corpus holds 1461 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `dbfc0cafbb185c10`.
 
+That is 47,898 lines of C, 1.8 MiB, one translation unit per program, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Homebrew GCC 16.2.0) 16.2.0 | reference |
@@ -36,15 +38,15 @@ The row for `gcc-16` is the control. It is a compiler with a size cost model tha
 
 The phases are the ones in the M4 plan, so this table is the one to read when deciding what to implement next.
 
-| phase | facets | cases |
-|---|---|---|
-| floor | 5 | 109 |
-| local | 8 | 309 |
-| global | 9 | 193 |
-| loops | 8 | 402 |
-| interprocedural | 6 | 117 |
-| backend | 11 | 293 |
-| correctness | 2 | 38 |
+| phase | facets | cases | lines |
+|---|---|---|---|
+| floor | 5 | 109 | 3,222 |
+| local | 8 | 309 | 16,979 |
+| global | 9 | 193 | 4,374 |
+| loops | 8 | 402 | 7,827 |
+| interprocedural | 6 | 117 | 3,087 |
+| backend | 11 | 293 | 10,951 |
+| correctness | 2 | 38 | 1,458 |
 
 ## What gcc-16 said about these programs
 

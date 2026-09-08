@@ -339,6 +339,67 @@ impl Insight {
     }
 }
 
+/// How much C a case is.
+///
+/// Every other number on a record is a cost, and a cost with nothing next to it cannot be read.
+/// Forty milliseconds is quick for a thousand lines and slow for ten, and a reader who does not
+/// know which one they are looking at has been given a number and no way to use it. The corpus is
+/// generated, so nobody has the feel for its size that they would have for a project they had
+/// checked out, and this is the field that gives them one.
+///
+/// It is a property of the case and not of the run, so it is the same at every level and for
+/// every compiler, which is what lets a report take it off whichever record it meets first.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Source {
+    /// How many lines the translation unit has.
+    pub lines: u32,
+    /// How many bytes it is.
+    pub bytes: u64,
+}
+
+impl Source {
+    /// Measures a translation unit.
+    ///
+    /// A last line with no newline after it is still a line, which is the one place a naive
+    /// count of newline characters gets a different answer from every editor a person uses.
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn of(text: &str) -> Self {
+        if text.is_empty() {
+            return Self::default();
+        }
+        let newlines = text.bytes().filter(|byte| *byte == b'\n').count();
+        let lines = if text.ends_with('\n') { newlines } else { newlines + 1 };
+        Self { lines: lines as u32, bytes: text.len() as u64 }
+    }
+
+    /// Whether there is a measurement here at all.
+    ///
+    /// A record written before this field existed reads back as nought, and nought lines is not
+    /// a program any generator produced, so the two cases are one case. A report treats both as
+    /// nothing to say rather than as a corpus of empty programs.
+    #[must_use]
+    pub const fn measured(self) -> bool {
+        self.lines > 0
+    }
+
+    /// The size as JSON.
+    #[must_use]
+    pub fn to_json(&self) -> Json {
+        Json::object([
+            ("lines", Json::int(i64::from(self.lines))),
+            ("bytes", Json::int(self.bytes as i64)),
+        ])
+    }
+
+    /// The size read back from JSON.
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn from_json(value: &Json) -> Self {
+        Self { lines: number(value, "lines") as u32, bytes: number(value, "bytes") }
+    }
+}
+
 /// One case, one toolchain, one level.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunRecord {
@@ -354,6 +415,8 @@ pub struct RunRecord {
     pub toolchain: String,
     /// Which level.
     pub level: Level,
+    /// How much C the case is, copied so a record stands alone.
+    pub source: Source,
     /// The compile.
     pub compile: Compile,
     /// The run.
@@ -380,6 +443,7 @@ impl RunRecord {
             dialect: case.dialect,
             toolchain: toolchain.to_owned(),
             level,
+            source: Source::of(&case.source),
             compile: Compile::skipped(),
             execute: Execute::skipped(),
             insights: Vec::new(),
@@ -407,6 +471,7 @@ impl RunRecord {
             ("dialect".to_owned(), Json::string(self.dialect.name())),
             ("toolchain".to_owned(), Json::string(self.toolchain.clone())),
             ("level".to_owned(), Json::string(self.level.name())),
+            ("source".to_owned(), self.source.to_json()),
             ("compile".to_owned(), self.compile.to_json()),
             ("execute".to_owned(), self.execute.to_json()),
             ("insights".to_owned(), Json::array(self.insights.iter().map(Insight::to_json))),
@@ -431,6 +496,10 @@ impl RunRecord {
             dialect: Dialect::parse(value.get("dialect")?.as_str()?)?,
             toolchain: text(value, "toolchain"),
             level: Level::parse(value.get("level")?.as_str()?)?,
+            // Absent rather than missing on a line written before this field existed. That is a
+            // record to read and report as unmeasured, not a record to throw away, because the
+            // outcome in it is still the outcome and it is the only copy anybody has.
+            source: value.get("source").map_or_else(Source::default, Source::from_json),
             compile: Compile::from_json(value.get("compile")?),
             execute: Execute::from_json(value.get("execute")?),
             insights: value
@@ -558,7 +627,7 @@ impl Finding {
 
 #[cfg(test)]
 mod tests {
-    use super::{Compile, Execute, Insight, Level, RunRecord, Toolchain, Verdict};
+    use super::{Compile, Execute, Insight, Level, RunRecord, Source, Toolchain, Verdict};
     use crate::case::{Axes, Case, Dialect, Expect};
     use crate::facet::{Facet, Phase};
 
@@ -742,6 +811,54 @@ mod tests {
             }
         }
         assert_eq!(RunRecord::from_json(&crate::Json::Object(fields)), None);
+    }
+
+    #[test]
+    fn a_file_with_no_trailing_newline_still_has_its_last_line_counted() {
+        assert_eq!(Source::of(""), Source::default());
+        assert_eq!(Source::of("int main(void) { return 0; }").lines, 1);
+        assert_eq!(Source::of("one\ntwo\n").lines, 2);
+        assert_eq!(Source::of("one\ntwo").lines, 2);
+        assert_eq!(Source::of("one\n\nthree\n").lines, 3);
+        assert_eq!(Source::of("abc\n").bytes, 4);
+    }
+
+    #[test]
+    fn a_record_carries_the_size_of_the_program_it_is_about() {
+        let case = Case::new(
+            Facet::Baseline,
+            Axes::default(),
+            Dialect::C17,
+            "int main(void) {\n    return 0;\n}\n",
+            Expect::Output(String::new()),
+        );
+        let record = RunRecord::skipped(&case, "rucc", Level::O2);
+        assert_eq!(record.source.lines, 3);
+        assert!(record.source.measured());
+        assert_eq!(RunRecord::from_json(&record.to_json()), Some(record));
+    }
+
+    #[test]
+    fn a_record_from_before_the_size_was_kept_reads_back_as_unmeasured_rather_than_empty() {
+        let case = Case::new(
+            Facet::Baseline,
+            Axes::default(),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            Expect::Output(String::new()),
+        );
+        let written = RunRecord::skipped(&case, "rucc", Level::O2).to_json();
+        let older: Vec<_> = written
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|field| field.0 != "source")
+            .cloned()
+            .collect();
+        let read = RunRecord::from_json(&crate::Json::Object(older)).unwrap();
+        assert_eq!(read.source, Source::default());
+        assert!(!read.source.measured());
+        assert_eq!(read.toolchain, "rucc");
     }
 
     #[test]

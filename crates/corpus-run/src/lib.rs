@@ -21,7 +21,7 @@ pub mod memory;
 pub mod object;
 pub mod toolchain;
 
-use corpus_model::{Case, Finding, Level, Manifest, RunRecord, Toolchain, Verdict};
+use corpus_model::{Case, Finding, Level, Manifest, RunRecord, Source, Toolchain, Verdict};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -319,6 +319,11 @@ fn run_one(
     if plan.reuse.reads()
         && let Some(found) = key.as_deref().and_then(|key| keys.records.get(key))
     {
+        // How big the case is comes off the source in hand rather than out of the file. It is a
+        // property of the case, so it cannot have changed under a key that covers the source,
+        // and taking it here means a record cached by a build from before the field existed
+        // comes back complete instead of claiming the program has no lines in it.
+        let found = RunRecord { source: Source::of(&case.source), ..found };
         let verdict = compare::judge(case, &found);
         return (found, verdict);
     }

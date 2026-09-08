@@ -74,6 +74,12 @@ fn heading(out: &mut String, summary: &Summary, run: &Run) {
         summary.cases,
         short(&summary.corpus_digest)
     ));
+    if summary.source.measured() {
+        out.push_str(&format!(
+            "That is {}, one translation unit per program, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.\n\n",
+            crate::size::line(summary.source)
+        ));
+    }
 
     out.push_str("| compiler | version | role |\n|---|---|---|\n");
     for toolchain in &run.toolchains {
@@ -355,11 +361,11 @@ fn by_phase(out: &mut String, summary: &Summary) {
     out.push_str(
         "The phases are the ones in the M4 plan, so this table is the one to read when deciding what to implement next.\n\n",
     );
-    out.push_str("| phase | facets | cases |");
+    out.push_str("| phase | facets | cases | lines |");
     for id in summary.under_test() {
         out.push_str(&format!(" `{id}` passed | `{id}` code size |"));
     }
-    out.push_str("\n|---|---|---|");
+    out.push_str("\n|---|---|---|---|");
     for _ in summary.under_test() {
         out.push_str("---|---|");
     }
@@ -372,7 +378,13 @@ fn by_phase(out: &mut String, summary: &Summary) {
             continue;
         }
         let cases: usize = in_phase.iter().map(|facet| facet.cases).sum();
-        out.push_str(&format!("| {} | {} | {cases} |", phase.name(), in_phase.len()));
+        let size = crate::summary::add_up(in_phase.iter().map(|facet| facet.source));
+        out.push_str(&format!(
+            "| {} | {} | {cases} | {} |",
+            phase.name(),
+            in_phase.len(),
+            crate::size::cell(size)
+        ));
         for id in summary.under_test() {
             let mut tally = Tally::default();
             let mut sizes = Vec::new();

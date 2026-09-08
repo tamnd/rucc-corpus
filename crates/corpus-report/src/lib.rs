@@ -19,6 +19,7 @@
 pub mod human;
 pub mod machine;
 pub mod pages;
+pub mod size;
 pub mod summary;
 pub mod terminal;
 

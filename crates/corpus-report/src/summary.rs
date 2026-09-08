@@ -12,7 +12,7 @@
 //! corpus. The median says what a typical case looks like, which is the thing the ten percent
 //! target in spec 16 was actually about.
 
-use corpus_model::{Facet, Level, Phase, RunRecord, Verdict};
+use corpus_model::{Facet, Level, Phase, RunRecord, Source, Verdict};
 use corpus_run::{Run, compare};
 use std::collections::BTreeMap;
 
@@ -119,6 +119,8 @@ pub struct FacetSummary {
     pub phase: Phase,
     /// How many cases the corpus has for it.
     pub cases: usize,
+    /// How much C those cases add up to.
+    pub source: Source,
     /// One score per compiler, in the order the compilers were given.
     pub scores: Vec<FacetScore>,
     /// What the reference compiler said it optimized here.
@@ -216,6 +218,12 @@ pub struct Summary {
     pub corpus_digest: String,
     /// How many cases there were.
     pub cases: usize,
+    /// How much C the whole corpus is, counting each case once.
+    ///
+    /// The denominator for everything else on the page. A compile time, a code size and a peak
+    /// memory figure are all answers to a question that starts with how much source there was,
+    /// and until this existed the report asked the reader to supply that themselves.
+    pub source: Source,
     /// The compiler the others are measured against.
     pub reference: String,
     /// The compilers under test, reference first.
@@ -335,6 +343,7 @@ pub fn summarise(run: &Run, corpus_digest: &str, cases: usize) -> Summary {
     Summary {
         corpus_digest: corpus_digest.to_owned(),
         cases,
+        source: source_of(run.records.iter()),
         reference,
         toolchains,
         levels,
@@ -343,6 +352,33 @@ pub fn summarise(run: &Run, corpus_digest: &str, cases: usize) -> Summary {
         size_model,
         targets,
     }
+}
+
+/// How much C a set of records is, counting each case once.
+///
+/// The dedup is the whole function. A record is one case built by one compiler at one level, so a
+/// corpus of a thousand programs run two ways at five levels leaves ten thousand of them behind,
+/// and a sum over records would report the corpus at ten times its size. The wrong number would
+/// look perfectly plausible sitting in a table, which is what makes it worth a function of its own
+/// and a test underneath it.
+fn source_of<'a>(records: impl Iterator<Item = &'a RunRecord>) -> Source {
+    let mut seen: BTreeMap<&str, Source> = BTreeMap::new();
+    for record in records {
+        seen.entry(record.case.as_str()).or_insert(record.source);
+    }
+    add_up(seen.values().copied())
+}
+
+/// Adds sizes together, saturating rather than wrapping.
+///
+/// Safe to use on facets, since a case belongs to exactly one of them, and never safe to use on
+/// records. [`source_of`] is the one for records and it says why.
+#[must_use]
+pub fn add_up(sizes: impl Iterator<Item = Source>) -> Source {
+    sizes.fold(Source::default(), |sum, one| Source {
+        lines: sum.lines.saturating_add(one.lines),
+        bytes: sum.bytes.saturating_add(one.bytes),
+    })
 }
 
 /// The level `-Os` is judged against.
@@ -419,6 +455,7 @@ fn summarise_facets(run: &Run, toolchains: &[String], reference: &str) -> Vec<Fa
 
     let mut out = Vec::new();
     for (facet, records) in by_facet {
+        let size = source_of(records.iter().copied());
         let mut cases: Vec<&str> = records.iter().map(|record| record.case.as_str()).collect();
         cases.sort_unstable();
         cases.dedup();
@@ -445,6 +482,7 @@ fn summarise_facets(run: &Run, toolchains: &[String], reference: &str) -> Vec<Fa
             facet,
             phase: facet.phase(),
             cases: cases.len(),
+            source: size,
             scores,
             optimized,
             missed,
@@ -714,6 +752,44 @@ mod tests {
         let score = summary.facets[0].score("rucc").unwrap();
         assert_eq!(score.size_ratio, Some(1.0));
         assert_eq!(score.compared, 5);
+    }
+
+    #[test]
+    fn the_corpus_size_counts_each_case_once_however_many_records_it_left_behind() {
+        let cases: Vec<Case> =
+            (0..5).map(|n| case_for(Facet::ConstantFold, &n.to_string())).collect();
+        let mut records = Vec::new();
+        for case in &cases {
+            for level in [Level::O0, Level::O2] {
+                records.push(record_for(case, "gcc-16", level, 100, 100));
+                records.push(record_for(case, "rucc", level, 100, 100));
+            }
+        }
+        assert_eq!(records.len(), 20, "five cases, two compilers, two levels");
+        let manifest = Manifest::new(cases).unwrap();
+        let run = run_of(records);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        // One line per case. A sum over records would say twenty, which is a number that would
+        // sit in the table looking perfectly reasonable.
+        assert_eq!(summary.source.lines, 5);
+        assert_eq!(summary.facets[0].source.lines, 5);
+        assert!(summary.source.bytes > 0);
+    }
+
+    #[test]
+    fn a_run_whose_records_never_recorded_a_size_reports_none_rather_than_nought() {
+        let case = case_for(Facet::Simplify, "one");
+        let records: Vec<RunRecord> = [Level::O2]
+            .iter()
+            .map(|level| RunRecord {
+                source: corpus_model::Source::default(),
+                ..record_for(&case, "gcc-16", *level, 100, 100)
+            })
+            .collect();
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(records);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        assert!(!summary.source.measured());
     }
 
     #[test]
