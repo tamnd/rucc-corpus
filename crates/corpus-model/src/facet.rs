@@ -37,6 +37,14 @@ pub enum Facet {
     /// that. It is also what every bytecode interpreter is written as.
     ComputedGoto,
 
+    /// An object whose size is not known until the program runs.
+    ///
+    /// A floor facet for the same reason `computed-goto` is one. A variable length array is
+    /// the one object whose size the compiler cannot see, so the frame it lives in has to be
+    /// laid out at run time and every analysis above that has to survive not knowing how big
+    /// it is. `alloca` is here too, because it asks the same question in a rougher way.
+    VlaAndAlloca,
+
     /// Folding an operation on constants into a constant.
     ConstantFold,
     /// Rewriting an operation into a cheaper one that computes the same value.
@@ -128,10 +136,19 @@ pub enum Facet {
     /// Conversions between the floating types and the integer ones, in both directions.
     FloatConversion,
 
+    /// The widest floating type, which is the one whose shape the target decides.
+    ///
+    /// A back end facet, because almost everything that is hard about `long double` is below
+    /// the machine independent IR. It is eighty bits on x86, a hundred and twenty eight on
+    /// aarch64 and the same as `double` on some targets, so where it is passed, what it is
+    /// padded to and how it comes back out of a call are all things the back end decides.
+    LongDouble,
+
     /// Programs whose point is that the compiler must not do something.
     ///
-    /// Volatile, atomics, signal handlers, setjmp, inline assembly, and the flags that turn
-    /// an optimization off. A pass firing here is a bug, and the case exists to catch it.
+    /// Volatile, type punning, escaping pointers, and the flags that turn an optimization
+    /// off. A pass firing here is a bug, and the case exists to catch it. The two barriers
+    /// big enough to have grown their own facets, atomics and `setjmp`, are not here.
     Barrier,
 
     /// The atomic builtins and the header that wraps them.
@@ -140,6 +157,15 @@ pub enum Facet {
     /// of a compiler is restraint, and a pass that fires across one is a bug even when the
     /// single threaded answer stays right.
     Atomics,
+
+    /// The jump that leaves a function without returning from it.
+    ///
+    /// A correctness facet, because most of what `setjmp` asks of a compiler is restraint. It
+    /// puts an edge into the graph that the source does not show, so a store the optimizer
+    /// wanted to sink past the call, or a local it wanted to keep in a register that the jump
+    /// will not restore, is a wrong answer rather than a slow one. Every interpreter on the
+    /// ladder unwinds its errors this way, so it is the frame rule those projects lean on.
+    SetjmpLongjmp,
 
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
@@ -158,6 +184,7 @@ impl Facet {
         Self::ControlFlow,
         Self::BranchProbability,
         Self::ComputedGoto,
+        Self::VlaAndAlloca,
         Self::ConstantFold,
         Self::Strength,
         Self::Narrowing,
@@ -201,8 +228,10 @@ impl Facet {
         Self::MachinePeephole,
         Self::BitBuiltins,
         Self::FloatConversion,
+        Self::LongDouble,
         Self::Barrier,
         Self::Atomics,
+        Self::SetjmpLongjmp,
         Self::Frontend,
     ];
 
@@ -214,6 +243,7 @@ impl Facet {
             Self::ControlFlow => "control-flow",
             Self::BranchProbability => "branch-probability",
             Self::ComputedGoto => "computed-goto",
+            Self::VlaAndAlloca => "vla-and-alloca",
             Self::ConstantFold => "constant-fold",
             Self::Strength => "strength",
             Self::Narrowing => "narrowing",
@@ -257,8 +287,10 @@ impl Facet {
             Self::MachinePeephole => "machine-peephole",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
+            Self::LongDouble => "long-double",
             Self::Barrier => "barrier",
             Self::Atomics => "atomics",
+            Self::SetjmpLongjmp => "setjmp-longjmp",
             Self::Frontend => "frontend",
         }
     }
@@ -273,6 +305,7 @@ impl Facet {
             Self::ControlFlow => "the graph shapes the analyses under every pass have to get right",
             Self::BranchProbability => "the odds put on an edge before the program has ever run",
             Self::ComputedGoto => "the address of a label, and the indirect jump through it",
+            Self::VlaAndAlloca => "an object whose size is not known until the program runs",
             Self::ConstantFold => "folding an operation on constants into a constant",
             Self::Strength => "rewriting an operation into a cheaper one with the same value",
             Self::Narrowing => "taking the width back off arithmetic that C promoted",
@@ -316,8 +349,12 @@ impl Facet {
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
+            Self::LongDouble => {
+                "the widest floating type, whose shape the target rather than C decides"
+            }
             Self::Barrier => "programs where the compiler must not act, and a firing is a bug",
             Self::Atomics => "the atomic builtins at every ordering, and the header over them",
+            Self::SetjmpLongjmp => "the jump that leaves a function without returning from it",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -333,6 +370,7 @@ impl Facet {
             | Self::ControlFlow
             | Self::BranchProbability
             | Self::ComputedGoto
+            | Self::VlaAndAlloca
             | Self::Frontend => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
@@ -376,8 +414,9 @@ impl Facet {
             | Self::CallingConvention
             | Self::MachinePeephole
             | Self::BitBuiltins
-            | Self::FloatConversion => Phase::Backend,
-            Self::Barrier | Self::Atomics => Phase::Correctness,
+            | Self::FloatConversion
+            | Self::LongDouble => Phase::Backend,
+            Self::Barrier | Self::Atomics | Self::SetjmpLongjmp => Phase::Correctness,
         }
     }
 
