@@ -83,6 +83,8 @@ pub enum Facet {
 
     /// Hoisting a loop invariant computation out of the loop.
     LoopInvariant,
+    /// The shapes that decide whether an invariant computation is allowed out of its loop.
+    LoopHoist,
     /// Rewriting the induction variables of a loop into a cheaper set.
     InductionVariable,
     /// Removing a bound check or a branch that the loop guard already decided.
@@ -214,6 +216,7 @@ impl Facet {
         Self::MemorySsa,
         Self::ScalarReplacement,
         Self::LoopInvariant,
+        Self::LoopHoist,
         Self::InductionVariable,
         Self::LoopUnswitch,
         Self::LoopUnroll,
@@ -274,6 +277,7 @@ impl Facet {
             Self::MemorySsa => "memory-ssa",
             Self::ScalarReplacement => "scalar-replacement",
             Self::LoopInvariant => "loop-invariant",
+            Self::LoopHoist => "loop-hoist",
             Self::InductionVariable => "induction-variable",
             Self::LoopUnswitch => "loop-unswitch",
             Self::LoopUnroll => "loop-unroll",
@@ -337,6 +341,7 @@ impl Facet {
             Self::MemorySsa => "walking back from a load to the store that answers it",
             Self::ScalarReplacement => "turning a non-escaping local back into a value",
             Self::LoopInvariant => "hoisting an invariant computation out of a loop",
+            Self::LoopHoist => "whether an invariant computation is allowed out of its loop",
             Self::InductionVariable => "rewriting induction variables into a cheaper set",
             Self::LoopUnswitch => "removing a test the loop guard already decided",
             Self::LoopUnroll => "unrolling a loop body, known trip count or not",
@@ -411,6 +416,7 @@ impl Facet {
             | Self::LoopDeletion
             | Self::LoopRotate
             | Self::LoopShape
+            | Self::LoopHoist
             | Self::LoopRestructure => Phase::Loops,
             Self::Inline
             | Self::TailCall

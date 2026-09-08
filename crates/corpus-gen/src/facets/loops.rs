@@ -29,6 +29,7 @@ const TYPES: &[Ty] = Ty::WIDE;
 /// Emits every facet in this phase.
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     loop_invariant(sink);
+    loop_hoist(sink);
     induction_variable(sink);
     trip_counts(sink);
     loop_unswitch(sink);
@@ -83,6 +84,317 @@ fn loop_invariant(sink: &mut Sink<'_>) {
             );
         }
     }
+}
+
+/// The shapes that decide whether an invariant computation is allowed out of its loop.
+///
+/// `loop-invariant` above asks whether the hoist happens. These ask whether it is allowed to,
+/// which is a different question and the one that has the miscompilations in it. Half of these
+/// cases fault rather than print the wrong answer if a compiler gets them wrong: a division
+/// hoisted out of a loop that never runs divides by zero, and a load hoisted out of a loop that
+/// never runs reads through a null pointer. That is deliberate. A case that can only print the
+/// wrong answer is a case that a compiler can pass by accident.
+///
+/// The other half are the ones where the output cannot tell you anything and the remark can. A
+/// volatile read has to happen every iteration and no amount of printing will say whether it
+/// did, so what the case is for is the `-fopt-info` line saying the compiler declined it. Those
+/// are marked as such in the purpose line of the generated file.
+fn loop_hoist(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "global-load",
+        "global-load-written",
+        "load-that-may-not-run",
+        "load-that-always-runs",
+        "divide-at-the-bottom",
+        "divide-that-may-not-run",
+        "divide-under-a-test",
+        "volatile-load",
+        "a-chain-of-three",
+        "out-of-a-nest",
+        "under-pressure",
+        "an-array-element",
+        "a-call-with-nothing-in-it",
+        "a-store-of-something-invariant",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::LoopHoist) {
+                return;
+            }
+            let Some(program) = hoisted(ty, shape) else { continue };
+            sink.push(
+                Facet::LoopHoist,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// One shape of the hoisting question, or `None` where the accumulator cannot hold the answer.
+///
+/// Every operand a compiler is not allowed to know comes out of a `volatile` global, including
+/// the ones whose value is zero. That matters more here than anywhere else in this file: a
+/// divisor that is written as a literal zero is a program with undefined behaviour in it that
+/// the compiler is entitled to do anything with, and a divisor that is read at run time and
+/// happens to be zero on a path nothing takes is an ordinary program that has to work.
+#[expect(clippy::too_many_lines, reason = "fourteen shapes, each one a short block")]
+fn hoisted(ty: Ty, shape: &str) -> Option<Program> {
+    let name = ty.c_name();
+    let mut program = Program::new(match shape {
+        "global-load" => format!("a {name} loop reading a global nothing in it writes"),
+        "global-load-written" => format!("a {name} loop reading a global the body writes"),
+        "load-that-may-not-run" => {
+            format!("a {name} loop that never runs, over a pointer that is null")
+        }
+        "load-that-always-runs" => format!("a {name} loop that always runs, over a valid pointer"),
+        "divide-at-the-bottom" => format!("an invariant divide in a {name} loop that always runs"),
+        "divide-that-may-not-run" => {
+            format!("an invariant divide by zero in a {name} loop that never runs")
+        }
+        "divide-under-a-test" => format!("an invariant divide by zero under a false test, {name}"),
+        "volatile-load" => format!("a volatile read a {name} loop must do every iteration"),
+        "a-chain-of-three" => format!("three invariant computations feeding each other, {name}"),
+        "out-of-a-nest" => format!("an invariant in the inner loop of a {name} nest"),
+        "under-pressure" => format!("a cheap invariant in a {name} loop with no registers spare"),
+        "an-array-element" => format!("an invariant index into a global array, {name}"),
+        "a-call-with-nothing-in-it" => format!("an invariant call to a pure function, {name}"),
+        _ => format!("an invariant value a {name} loop stores every iteration"),
+    });
+
+    let total: i128 = match shape {
+        "global-load" => {
+            // A global rather than a local, because a local the loop does not write is
+            // invariant by looking at the definition and a global is only invariant once
+            // something has decided the loop cannot have written it.
+            program.top("static int seed;");
+            program.input(Ty::I32, "start", 3);
+            program.blank();
+            program.line("seed = start;");
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("total += ({name})(seed + i);"));
+            program.line("}");
+            (0..8i128).map(|at| 3 + at).sum()
+        }
+        "global-load-written" => {
+            // The same read, and the answer is no. The call writes what the read reads, so
+            // every iteration sees a different value, and a compiler that hoists the read
+            // prints eight times the first one.
+            program.top("static int seed;");
+            program.top("");
+            program.top("static void bump(void) {");
+            program.top("    seed++;");
+            program.top("}");
+            program.input(Ty::I32, "start", 3);
+            program.blank();
+            program.line("seed = start;");
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("total += ({name})seed;"));
+            program.line_at(1, "bump();");
+            program.line("}");
+            (0..8i128).map(|at| 3 + at).sum()
+        }
+        "load-that-may-not-run" => {
+            // The bound and the pointer are both settled at run time and both say nothing
+            // happens. A compiler that moves the read in front of the loop reads through a
+            // null pointer, so this case does not print the wrong answer, it stops.
+            program.input(Ty::I32, "bound", 0);
+            program.blank();
+            program.line("static int cell = 41;");
+            program.line("int *at = bound ? &cell : (int *)0;");
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < bound; i++) {");
+            program.line_at(1, format!("total += ({name})*at;"));
+            program.line("}");
+            0
+        }
+        "load-that-always-runs" => {
+            // The same shape with the answer the other way. The body runs before the test, so
+            // the read was going to happen whatever else is true, and moving it in front of
+            // the loop cannot fault where the loop did not.
+            program.input(Ty::I32, "bound", 8);
+            program.blank();
+            program.line("static int cell = 41;");
+            program.line("int *at = bound ? &cell : (int *)0;");
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("do {");
+            program.line_at(1, format!("total += ({name})(*at + i);"));
+            program.line_at(1, "i++;");
+            program.line("} while (i < bound);");
+            (0..8i128).map(|at| 41 + at).sum()
+        }
+        "divide-at-the-bottom" => {
+            // Section 27.1's middle answer. The divisor is not known to be non zero, so the
+            // divide may not go just anywhere, and the body of a loop that tests at the
+            // bottom is not just anywhere: it runs on every entry to the loop.
+            program.input(ty, "top", 84);
+            program.input(ty, "bottom", 4);
+            program.input(Ty::I32, "bound", 8);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("do {");
+            program.line_at(1, format!("total += top / bottom + ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("} while (i < bound);");
+            (0..8i128).map(|at| 21 + at).sum()
+        }
+        "divide-that-may-not-run" => {
+            // The same divide where the loop does not run and the divisor is zero. Nothing
+            // in the program divides by zero. A compiler that hoists it makes one that does.
+            program.input(ty, "top", 84);
+            program.input(ty, "bottom", 0);
+            program.input(Ty::I32, "bound", 0);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < bound; i++) {");
+            program.line_at(1, "total += top / bottom;");
+            program.line("}");
+            0
+        }
+        "divide-under-a-test" => {
+            // And once more with the loop running every iteration and the divide under a test
+            // that is false every time. This is the one a pass gets wrong by treating the
+            // loop body as one region instead of asking which parts of it always run.
+            program.input(ty, "top", 84);
+            program.input(ty, "bottom", 0);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, "if (bottom) {");
+            program.line_at(2, "total += top / bottom;");
+            program.line_at(1, "} else {");
+            program.line_at(2, format!("total += ({name})i;"));
+            program.line_at(1, "}");
+            program.line("}");
+            (0..8i128).sum()
+        }
+        "volatile-load" => {
+            // Invariant by every test a pass applies and it still may not move, because the
+            // reads are what the program is for. The output cannot tell you whether it moved.
+            // The remark can, and that is what this case is read with.
+            program.top("static volatile int watched = 5;");
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("total += ({name})(watched + i);"));
+            program.line("}");
+            (0..8i128).map(|at| 5 + at).sum()
+        }
+        "a-chain-of-three" => {
+            // Each one is invariant only once the one before it has been found to be, so a
+            // pass that walks the body in order gets all three in one go and a pass that
+            // walks it in the wrong order gets none of them.
+            program.input(ty, "a", 3);
+            program.input(ty, "b", 5);
+            program.input(ty, "c", 2);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("total += (a * b + c) * (a + b) + ({name})i;"));
+            program.line("}");
+            let invariant = (3 * 5 + 2) * (3 + 5);
+            (0..8i128).map(|at| invariant + at).sum()
+        }
+        "out-of-a-nest" => {
+            // Invariant with respect to both loops, so it belongs in front of the outer one.
+            // A pass that only lifts it one level leaves three quarters of the work behind.
+            program.input(ty, "a", 3);
+            program.input(ty, "b", 5);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int o = 0; o < 4; o++) {");
+            program.line_at(1, "for (int i = 0; i < 4; i++) {");
+            program.line_at(2, format!("total += a * b + ({name})(o + i);"));
+            program.line_at(1, "}");
+            program.line("}");
+            (0..4i128).flat_map(|o| (0..4i128).map(move |i| 15 + o + i)).sum()
+        }
+        "under-pressure" => {
+            // Eight accumulators and eight inputs, all live across the loop, and one cheap
+            // invariant on top. Hoisting the invariant here buys one add and costs a spill
+            // and a reload every iteration, which is the trade section 27.2 exists to refuse.
+            let inputs = ["a", "b", "c", "d", "e", "f", "g", "h"];
+            for (at, input) in inputs.iter().enumerate() {
+                program.input(ty, input, at as i128 + 1);
+            }
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            for at in 0..inputs.len() {
+                program.line(format!("{name} v{at} = 0;"));
+            }
+            program.line("for (int i = 0; i < 8; i++) {");
+            for (at, input) in inputs.iter().enumerate() {
+                program.line_at(1, format!("v{at} += {input} + ({name})i;"));
+            }
+            program.line_at(1, "total += a + b;");
+            program.line("}");
+            program.blank();
+            program.line(format!(
+                "total += {};",
+                (0..inputs.len()).map(|at| format!("v{at}")).collect::<Vec<_>>().join(" + ")
+            ));
+            let held: i128 =
+                (1..=8i128).map(|start| (0..8i128).map(|at| start + at).sum::<i128>()).sum();
+            held + 8 * (1 + 2)
+        }
+        "an-array-element" => {
+            // Two invariant values and only one of them worth moving. The address of the
+            // array is worked out again wherever it is wanted, so on its own it is not worth
+            // a register, and it still has to travel because the read of it is.
+            program.top("static int table[8] = {0, 1, 4, 9, 16, 25, 36, 49};");
+            program.input(Ty::I32, "which", 3);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("total += ({name})(table[which & 7] + i);"));
+            program.line("}");
+            (0..8i128).map(|at| 9 + at).sum()
+        }
+        "a-call-with-nothing-in-it" => {
+            // A call to a function that reads nothing and writes nothing, on an argument the
+            // loop does not change. rucc will not move this yet, because a pass is handed a
+            // function and the purity of another one is not in it. The case is here to say
+            // what the gap costs and to have something to measure the day it closes.
+            program.top("static int square(int of) {");
+            program.top("    return of * of;");
+            program.top("}");
+            program.input(Ty::I32, "a", 3);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("total += ({name})(square(a) + i);"));
+            program.line("}");
+            (0..8i128).map(|at| 9 + at).sum()
+        }
+        _ => {
+            // Section 27.3, store motion, which is the other half of the same question and
+            // the half rucc has not built. The store is unconditional and its value does not
+            // change, so it belongs after the loop rather than inside it.
+            program.top("static int written;");
+            program.input(ty, "a", 3);
+            program.input(ty, "b", 5);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, "written = (int)(a + b);");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "written", 8);
+            (0..8i128).sum()
+        }
+    };
+    if !fits(ty, total) {
+        return None;
+    }
+    program.blank();
+    program.check(ty.promoted(), "total", total);
+    Some(program)
 }
 
 /// Several induction variables that a compiler is expected to reduce to one.
@@ -1102,6 +1414,53 @@ mod tests {
             .unwrap();
         // Four iterations of fifteen plus the loop counter: 15+16+17+18.
         assert_eq!(output(case), "66\n");
+    }
+
+    #[test]
+    fn every_hoisting_shape_is_generated_for_every_type() {
+        let cases = cases_for(Facet::LoopHoist);
+        for ty in ["i32", "u32", "i64", "u64"] {
+            let shapes: Vec<&str> = cases
+                .iter()
+                .filter(|c| c.axes.get("type") == Some(ty))
+                .filter_map(|c| c.axes.get("shape"))
+                .collect();
+            assert_eq!(shapes.len(), 14, "{ty}");
+            assert!(shapes.contains(&"divide-under-a-test"), "{ty}");
+            assert!(shapes.contains(&"volatile-load"), "{ty}");
+        }
+    }
+
+    #[test]
+    fn the_two_shapes_that_fault_when_hoisted_expect_nothing_to_happen() {
+        // Both loops run zero times, so both print zero. That is the whole answer and it is
+        // the wrong thing to look at: what these two are for is that a compiler which moves
+        // the work in front of the loop divides by zero or reads through a null pointer, and
+        // a program that stops has not printed anything either way.
+        let cases = cases_for(Facet::LoopHoist);
+        for shape in ["divide-that-may-not-run", "load-that-may-not-run"] {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("type") == Some("i64") && c.axes.get("shape") == Some(shape))
+                .unwrap();
+            assert_eq!(output(case), "0\n", "{shape}");
+        }
+    }
+
+    #[test]
+    fn the_same_divide_expects_the_same_answer_whichever_end_the_loop_tests_at() {
+        // The bottom tested loop runs eight times and adds the counter, the guarded one runs
+        // eight times and adds the counter instead of dividing. The difference between them
+        // is the twenty one the divide contributes each time, and nothing else.
+        let cases = cases_for(Facet::LoopHoist);
+        let answer = |shape: &str| {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("type") == Some("i32") && c.axes.get("shape") == Some(shape))
+                .unwrap();
+            output(case).trim().parse::<i64>().unwrap()
+        };
+        assert_eq!(answer("divide-at-the-bottom") - answer("divide-under-a-test"), 8 * 21);
     }
 
     #[test]
