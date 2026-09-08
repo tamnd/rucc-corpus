@@ -1,10 +1,10 @@
 # The corpus
 
-1461 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1525 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `dbfc0cafbb185c10824de5adefb2a61b10e2acd67716f0e095c91abbc4c2bdf2`.
+Corpus digest `690da57bab01fe093447e9e5400e2f81c8ca75894f1863cf675115650ca84275`.
 
 ## floor (109 programs)
 
@@ -49,7 +49,7 @@ Transformations across the blocks of one function, which need dataflow rather th
 | [`memory-ssa`](global/memory-ssa/README.md) | 28 | walking back from a load to the store that answers it |
 | [`scalar-replacement`](global/scalar-replacement/README.md) | 20 | turning a non-escaping local back into a value |
 
-## loops (402 programs)
+## loops (466 programs)
 
 Transformations that need loop structure, which is where most of the remaining time in real programs goes.
 
@@ -62,6 +62,7 @@ Transformations that need loop structure, which is where most of the remaining t
 | [`loop-idiom`](loops/loop-idiom/README.md) | 64 | recognizing a loop the runtime already implements |
 | [`loop-deletion`](loops/loop-deletion/README.md) | 24 | deleting a loop whose body nobody reads |
 | [`loop-rotate`](loops/loop-rotate/README.md) | 64 | rotating a loop so the test lands at the bottom |
+| [`loop-shape`](loops/loop-shape/README.md) | 64 | the shape a loop is left in, before any pass reads it |
 | [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
 
 ## interprocedural (117 programs)
