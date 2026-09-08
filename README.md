@@ -4,7 +4,7 @@ A C corpus for proving that an optimization in [rucc](https://github.com/tamnd/r
 
 Every program here was written for exactly one named transformation. Every program prints an answer that this repository worked out in Rust before any C compiler was involved. Every program prints nothing that depends on the machine it runs on, so one expected answer is right everywhere.
 
-1525 programs across 50 facets, grouped by the phases of the M4 plan.
+1552 programs across 53 facets, grouped by the phases of the M4 plan.
 
 ## Where it stands
 
@@ -40,13 +40,13 @@ Every facet here walks named axes. `loop-unroll` walks four integer types by eig
 
 ```
 programs/
-  floor/             baseline, control flow shapes, branch probability and frontend, which have to be right before anything else means much
+  floor/             baseline, control flow shapes, branch probability, computed goto, run time sized objects and frontend, which have to be right before anything else means much
   local/             constant folding, strength reduction, width narrowing, dead code, the peephole rules
   global/            common subexpressions, alias analysis, memory SSA, propagation, scalar replacement
   loops/             loop shape, invariant motion, induction variables, unrolling, unswitching, idioms
   interprocedural/   inlining, tail calls, purity, specialization, reachability
-  backend/           selection, register pressure and allocation, scheduling, layout, switch lowering
-  correctness/       programs where the compiler must not act, and acting is the bug
+  backend/           selection, register pressure and allocation, scheduling, layout, switch lowering, the widest floating type
+  correctness/       programs where the compiler must not act, and acting is the bug, including atomics and the jump out of a frame
 ```
 
 Each directory has a `README.md` listing every program in it, the axis point it was generated for, and the output it must produce. Read that first. The expected answer is the interesting half and it is deliberately not in the C file, because the file that is compiled has to be the file that is in the repository, byte for byte, and a comment carrying the answer would be a second copy that could drift.

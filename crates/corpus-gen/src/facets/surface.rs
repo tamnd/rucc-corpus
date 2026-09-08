@@ -208,11 +208,18 @@ fn bit_answer(builtin: &str, width: u32, value: u64) -> i128 {
     }
 }
 
-/// The two floating types whose answers this corpus can state.
+/// The two floating types this facet converts between.
 ///
-/// `long double` is not here. Its width, its precision and its exponent range are all target
-/// specific, so an answer computed for the 80 bit format on x86 is the wrong answer on
-/// aarch64, and a facet whose expected output depends on the machine is worse than no facet.
+/// `long double` is not here, because this facet sweeps a conversion across a range of values
+/// and the answer at the ends of that range depends on how wide the type is. Its width, its
+/// precision and its exponent range are all target specific, so a value that converts exactly
+/// on the 80 bit format on x86 does not on aarch64.
+///
+/// It does have a facet of its own now, in `runtime`. What made that possible was giving up
+/// the sweep. Every case there is written against something C promises everywhere, on values
+/// a `double` also holds exactly, so the answers hold even on a target where the two types
+/// are the same type. What is left to test is where the value travels rather than what it can
+/// hold, and that is the part that is actually wrong in practice.
 const FLOATS: &[(&str, bool)] = &[("float", true), ("double", false)];
 
 /// Every conversion between an integer type and a floating one, in both directions.
