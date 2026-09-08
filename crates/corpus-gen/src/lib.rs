@@ -226,6 +226,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::special::control_flow(&mut sink);
     facets::special::branch_probability(&mut sink);
     facets::surface::computed_goto(&mut sink);
+    facets::runtime::generate(&mut sink);
     facets::local::generate(&mut sink);
     facets::global::generate(&mut sink);
     facets::loops::generate(&mut sink);

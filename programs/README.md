@@ -1,12 +1,12 @@
 # The corpus
 
-1525 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1552 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `690da57bab01fe093447e9e5400e2f81c8ca75894f1863cf675115650ca84275`.
+Corpus digest `1db4ab0af4dc4aa9dc7e8d392521189256acc8227f44518b7379ccfac4495341`.
 
-## floor (109 programs)
+## floor (118 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
@@ -16,6 +16,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`control-flow`](floor/control-flow/README.md) | 10 | the graph shapes the analyses under every pass have to get right |
 | [`branch-probability`](floor/branch-probability/README.md) | 34 | the odds put on an edge before the program has ever run |
 | [`computed-goto`](floor/computed-goto/README.md) | 25 | the address of a label, and the indirect jump through it |
+| [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
 
 ## local (309 programs)
@@ -78,7 +79,7 @@ Transformations that need to look at more than one function at a time.
 | [`reachability`](interprocedural/reachability/README.md) | 9 | removing what nothing references |
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 
-## backend (293 programs)
+## backend (303 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -95,8 +96,9 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
+| [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (38 programs)
+## correctness (46 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -104,4 +106,5 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 |---|---|---|
 | [`barrier`](correctness/barrier/README.md) | 7 | programs where the compiler must not act, and a firing is a bug |
 | [`atomics`](correctness/atomics/README.md) | 31 | the atomic builtins at every ordering, and the header over them |
+| [`setjmp-longjmp`](correctness/setjmp-longjmp/README.md) | 8 | the jump that leaves a function without returning from it |
 
