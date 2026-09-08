@@ -34,8 +34,26 @@ pub fn report_md(run: &Run, summary: &Summary) -> String {
     size_model(&mut out, summary);
     by_phase(&mut out, summary);
     reference_opinion(&mut out, summary);
+    reused(&mut out, run);
     reproducing(&mut out, summary);
     out
+}
+
+/// How much of this report is made of numbers that were not taken today.
+///
+/// Two of the columns above are times, and a time keeps a great deal worse than an outcome
+/// does. Nothing is said when nothing was reused, since a note that appears on every report is
+/// a note nobody reads.
+fn reused(out: &mut String, run: &Run) {
+    let count = run.records.iter().filter(|record| record.reused).count();
+    if count == 0 {
+        return;
+    }
+    out.push_str("## How much of this was measured today\n\n");
+    out.push_str(&format!(
+        "{count} of the {} results in this report were read out of the record cache rather than built in this run. The verdicts hold, since a program that printed the wrong answer prints it again. The timings and the memory figures were taken on an earlier run of this machine, so any comparison of seconds that spans them is a comparison across sittings. Run with `--refresh` for a set of numbers that were all measured at once.\n\n",
+        run.records.len()
+    ));
 }
 
 /// The answer, before anything else.

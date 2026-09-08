@@ -18,7 +18,7 @@ use args::Args;
 use corpus_gen::Options;
 use corpus_model::{Facet, Level};
 use corpus_report::terminal::Watcher;
-use corpus_run::{Plan, toolchain::Spec};
+use corpus_run::{Plan, cache::Reuse, toolchain::Spec};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -78,6 +78,8 @@ Options for run:
   --keep               keep the working directory of cases that passed
   --quiet              say nothing while it runs
   --no-pages           do not write the linked report pages or touch the front page
+  --refresh            build every case, then keep the results for next time
+  --no-cache           neither read nor write the record cache
 ";
 
 /// Writes the corpus out as C.
@@ -103,6 +105,29 @@ fn generate(args: &Args) -> Result<ExitCode, String> {
     Ok(ExitCode::SUCCESS)
 }
 
+/// One line saying how much of this run was measured today.
+///
+/// Printed on every run rather than only when something came out of the cache, because the
+/// interesting case is the one where somebody expected a fresh set of numbers and did not get
+/// one, and a line that only appears sometimes is a line nobody learns to look for.
+fn reuse_line(outcome: &corpus_run::Run, reuse: Reuse) -> String {
+    let reused = outcome.records.iter().filter(|record| record.reused).count();
+    let built = outcome.records.len() - reused;
+    match reuse {
+        Reuse::Off => format!("{} built, nothing read from the cache", cases(built)),
+        Reuse::Refresh if built > 0 => {
+            format!("{} built and kept for next time", cases(built))
+        }
+        _ if reused == 0 => format!("{} built, none of them read from the cache", cases(built)),
+        _ => format!("{} read from the cache and {} built", cases(reused), cases(built)),
+    }
+}
+
+/// A count of results with the word after it in the right number.
+fn cases(how_many: usize) -> String {
+    format!("{how_many} result{}", if how_many == 1 { "" } else { "s" })
+}
+
 /// Builds and runs the corpus, and writes the reports.
 fn run(args: &Args) -> Result<ExitCode, String> {
     args.only(&[
@@ -119,6 +144,8 @@ fn run(args: &Args) -> Result<ExitCode, String> {
         "keep",
         "quiet",
         "no-pages",
+        "refresh",
+        "no-cache",
     ])?;
 
     let corpus = corpus_gen::generate(&options(args)?)?;
@@ -128,6 +155,14 @@ fn run(args: &Args) -> Result<ExitCode, String> {
     plan.levels = levels(args)?;
     plan.keep_passes = args.flag("keep");
     plan.exclude_tags = args.values("exclude-tag").to_vec();
+    // Both at once is a contradiction rather than a preference, so it is an error instead of
+    // one of them quietly winning.
+    plan.reuse = match (args.flag("refresh"), args.flag("no-cache")) {
+        (true, true) => return Err("--refresh and --no-cache ask for opposite things".to_owned()),
+        (true, false) => Reuse::Refresh,
+        (false, true) => Reuse::Off,
+        (false, false) => Reuse::Allow,
+    };
     if let Some(jobs) = args.number("jobs")? {
         plan.jobs = jobs.max(1);
     }
@@ -175,6 +210,7 @@ fn run(args: &Args) -> Result<ExitCode, String> {
             root.display()
         );
     }
+    println!("{}", reuse_line(&outcome, plan.reuse));
     for target in &summary.targets {
         println!("  {:<28} {}", target.name, if target.met { "met" } else { "not met" });
     }

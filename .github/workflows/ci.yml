@@ -114,6 +114,18 @@ jobs:
           gcc-16 --version | head -1
       - uses: actions/checkout@v7.0.1
       - uses: Swatinem/rust-cache@v2.9.2
+      # The reference column is the part of a run that almost never changes. GCC 16 built these
+      # programs yesterday and will build them the same way tomorrow, so restoring the records
+      # means this job only compiles the cases whose source actually moved in the pull request.
+      # A key that misses costs one full run and nothing else, which is what the job used to do
+      # every time.
+      - name: the record cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/rucc-corpus
+          key: corpus-records-reference-${{ github.run_id }}
+          restore-keys: |
+            corpus-records-reference-
       - name: run the corpus
         run: |
           cargo run --release -p rucc-corpus -- run \
@@ -154,6 +166,17 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
       - name: build the compiler
         run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      # A separate key from the reference job, because two jobs writing one entry is a race.
+      # Only the gcc-16 half of this run hits, since rucc is rebuilt from the tip of its own
+      # repository every time and the key covers the compiler's bytes. Half a run is still half
+      # a run, and the day rucc has not moved this job is nearly free.
+      - name: the record cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/rucc-corpus
+          key: corpus-records-compiler-${{ github.run_id }}
+          restore-keys: |
+            corpus-records-compiler-
       - name: run the corpus
         run: |
           cargo run --release -p rucc-corpus -- run \

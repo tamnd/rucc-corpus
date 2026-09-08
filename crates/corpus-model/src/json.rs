@@ -77,6 +77,19 @@ impl Json {
         }
     }
 
+    /// This value as a boolean, if it is one.
+    ///
+    /// Null is not false and nought is not false. A field that is missing and a field that is
+    /// there and says no are different answers, and a reader that folded them together would
+    /// turn a record written by an older harness into a claim nobody made.
+    #[must_use]
+    pub const fn as_bool(&self) -> Option<bool> {
+        match self {
+            Self::Bool(value) => Some(*value),
+            _ => None,
+        }
+    }
+
     /// This value as a number, if it is one.
     #[must_use]
     pub fn as_f64(&self) -> Option<f64> {

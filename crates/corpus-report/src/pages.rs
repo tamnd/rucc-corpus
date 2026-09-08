@@ -63,7 +63,7 @@ pub struct Page {
 pub fn generate(run: &Run, summary: &Summary) -> Vec<Page> {
     let mut pages = vec![
         Page { path: "reports/README.md".to_owned(), text: hub(run, summary) },
-        Page { path: "reports/cost.md".to_owned(), text: cost_page(summary) },
+        Page { path: "reports/cost.md".to_owned(), text: cost_page(run, summary) },
         Page { path: "reports/failures.md".to_owned(), text: failures_page(run) },
         Page { path: "reports/phases/README.md".to_owned(), text: phase_index(summary) },
     ];
@@ -204,8 +204,26 @@ fn hub(run: &Run, summary: &Summary) -> String {
         out.push('\n');
     }
 
+    out.push_str(&reused_note(run));
     out.push_str(&reproducing(summary));
     out
+}
+
+/// Says how many of the numbers on the pages below were measured in this sitting.
+///
+/// An outcome keeps and a timing does not. A run assembled partly from this morning and partly
+/// from a fortnight ago is a different claim from one gathered in one go, and a reader chasing a
+/// timing regression has to be able to tell which one they are holding. Nothing is said when
+/// nothing was reused, since the note would be noise on every page it appeared on.
+fn reused_note(run: &Run) -> String {
+    let reused = run.records.iter().filter(|record| record.reused).count();
+    if reused == 0 {
+        return String::new();
+    }
+    format!(
+        "## How much of this was measured today\n\n{reused} of the {} results on these pages were read out of the record cache rather than built in this run. Their verdicts are as good as any other, since a program that printed the wrong answer prints it again. Their timings and their memory figures were measured on an earlier run of the same machine, so a comparison of seconds that spans them is a comparison across sittings. Run with `--refresh` for a set of numbers that were all taken at once.\n\n",
+        run.records.len()
+    )
 }
 
 /// What the failures page has on it, in the words the counts call for.
@@ -300,7 +318,7 @@ const fn meaning(verdict: Verdict) -> &'static str {
 }
 
 /// Everything the run cost, per facet, against the reference.
-fn cost_page(summary: &Summary) -> String {
+fn cost_page(run: &Run, summary: &Summary) -> String {
     let mut out = String::new();
     out.push_str("# What it cost\n\n");
     out.push_str(
@@ -351,6 +369,10 @@ fn cost_page(summary: &Summary) -> String {
         out.push('\n');
         out.push_str(&measured_note(summary, id));
     }
+    // Three of the six columns on this page are times or memory, so this is the page where a
+    // reused record matters most. A ratio is no safer than a raw number here, since the two
+    // compilers are cached separately and one half of it can be a fortnight older than the other.
+    out.push_str(&reused_note(run));
     out
 }
 
@@ -801,5 +823,25 @@ mod tests {
         // somewhere between the record and the page.
         assert!(cost.text.contains("40% more"), "{}", cost.text);
         assert!(cost.text.contains("80% more"), "{}", cost.text);
+    }
+
+    #[test]
+    fn a_run_that_measured_everything_itself_says_nothing_about_a_cache() {
+        let (run, summary) = a_run();
+        for page in generate(&run, &summary) {
+            assert!(!page.text.contains("record cache"), "{} talks about a cache", page.path);
+        }
+    }
+
+    #[test]
+    fn a_page_that_quotes_a_cached_timing_says_where_it_came_from() {
+        let (mut run, summary) = a_run();
+        run.records[0].reused = true;
+        let pages = generate(&run, &summary);
+        for path in ["reports/README.md", "reports/cost.md"] {
+            let page = pages.iter().find(|page| page.path == path).unwrap();
+            assert!(page.text.contains("1 of the 2 results"), "{path}: {}", page.text);
+            assert!(page.text.contains("--refresh"), "{path} does not say how to get fresh ones");
+        }
     }
 }

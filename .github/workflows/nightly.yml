@@ -86,6 +86,19 @@ jobs:
           gh run download "$last" --name nightly-reports --dir /tmp/yesterday
           cp /tmp/yesterday/report.json /tmp/yesterday.json
 
+      # The cache is restored so the run leaves a warm one behind, and the run itself is
+      # `--refresh`, which writes and never reads. This is the one run of the day whose numbers
+      # were all measured on one machine in one hour, and that is most of what makes it worth
+      # committing. Reading the cache here would quietly turn it into a report about several
+      # different nights.
+      - name: the record cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/rucc-corpus
+          key: corpus-records-nightly-${{ github.run_id }}
+          restore-keys: |
+            corpus-records-nightly-
+
       # Five repeats, because this is where the timing numbers come from and nothing else
       # here is in a hurry. Failures are not fatal to the step, because the report is the
       # output and a run that stopped early has nothing to say.
@@ -95,7 +108,7 @@ jobs:
         run: |
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
-            --reference gcc-16 --repeats 5 \
+            --reference gcc-16 --repeats 5 --refresh \
             --out reports
 
       - name: what changed since yesterday

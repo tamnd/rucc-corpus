@@ -12,6 +12,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod cache;
 pub mod compare;
 pub mod compile;
 pub mod exec;
@@ -47,6 +48,8 @@ pub struct Plan {
     pub keep_passes: bool,
     /// Cases carrying any of these tags are recorded as skipped rather than run.
     pub exclude_tags: Vec<String>,
+    /// Whether a job whose inputs have not changed is read out of the cache instead of built.
+    pub reuse: cache::Reuse,
 }
 
 impl Plan {
@@ -61,6 +64,7 @@ impl Plan {
             root: root.into(),
             keep_passes: false,
             exclude_tags: Vec::new(),
+            reuse: cache::Reuse::default(),
         }
     }
 
@@ -162,6 +166,21 @@ pub fn execute(
         plan.specs.iter().map(Spec::describe).collect::<Result<_, _>>()?;
     let jobs = schedule(manifest, plan);
     let total = jobs.len();
+    // Once per compiler rather than once per job. A rucc binary is tens of megabytes and a run
+    // is fifteen thousand jobs, so hashing it in the worker would be reading gigabytes for an
+    // answer that cannot change while the run is going on.
+    let keys = Keys {
+        compilers: toolchains
+            .iter()
+            .map(|found| cache::Compiler::of(&found.program, &found.version))
+            .collect(),
+        host: cache::host(),
+        records: if plan.reuse == cache::Reuse::Off {
+            cache::Cache::off()
+        } else {
+            cache::Cache::from_env()
+        },
+    };
 
     let next = AtomicUsize::new(0);
     let done = AtomicUsize::new(0);
@@ -178,7 +197,7 @@ pub fn execute(
                     };
                     let case = &manifest.cases[job.case];
                     let spec = &plan.specs[job.spec];
-                    let (record, verdict) = run_one(case, spec, job.level, plan);
+                    let (record, verdict) = run_one(case, spec, job.level, plan, &keys, job.spec);
                     let finished = done.fetch_add(1, Ordering::Relaxed) + 1;
                     progress(Progress { done: finished, total }, &record, verdict);
                     if let Ok(mut held) = collected.lock() {
@@ -188,6 +207,8 @@ pub fn execute(
             });
         }
     });
+
+    keys.records.save();
 
     let mut collected =
         collected.into_inner().map_err(|_| "a worker thread panicked".to_owned())?;
@@ -233,18 +254,90 @@ fn schedule(manifest: &Manifest, plan: &Plan) -> Vec<Job> {
     jobs
 }
 
-fn run_one(case: &Case, spec: &Spec, level: Level, plan: &Plan) -> (RunRecord, Verdict) {
+/// What a run needs in order to ask the cache a question.
+///
+/// Built once, before the first worker starts, and shared by all of them. The compiler hashes
+/// are the expensive part and they are the part that cannot change while a run is going on.
+struct Keys {
+    /// One per toolchain, in the same order as the plan lists them.
+    compilers: Vec<cache::Compiler>,
+    /// The operating system and architecture these records were measured on.
+    host: String,
+    /// The records that were measured earlier.
+    records: cache::Cache,
+}
+
+impl Keys {
+    /// The key for one job, or `None` when this run is not using the cache at all.
+    fn key(
+        &self,
+        case: &Case,
+        spec: &Spec,
+        level: Level,
+        plan: &Plan,
+        at: usize,
+    ) -> Option<String> {
+        let compiler = self.compilers.get(at)?;
+        Some(
+            cache::Ingredients {
+                case: &case.id,
+                source: &case.digest(),
+                expect: &format!("{}:{}", case.expect.kind(), case.expect.text()),
+                dialect: case.dialect.name(),
+                level,
+                toolchain: &spec.id,
+                compiler,
+                flags: &spec.extra,
+                repeats: plan.repeats,
+                opinions: spec.understands_opt_info(),
+                harness: env!("CARGO_PKG_VERSION"),
+                host: &self.host,
+            }
+            .key(),
+        )
+    }
+}
+
+/// Runs one job and judges it.
+///
+/// The verdict is worked out from the record every time, including for a record that came out
+/// of the cache. Judging is arithmetic over what was already measured, so redoing it costs
+/// nothing and it means a change to what counts as a pass takes effect on the next run rather
+/// than waiting for every cached record to age out.
+fn run_one(
+    case: &Case,
+    spec: &Spec,
+    level: Level,
+    plan: &Plan,
+    keys: &Keys,
+    at: usize,
+) -> (RunRecord, Verdict) {
     if plan.excludes(case) {
         return (RunRecord::skipped(case, &spec.id, level), Verdict::Skipped);
+    }
+    let key = keys.records.is_on().then(|| keys.key(case, spec, level, plan, at)).flatten();
+    if plan.reuse.reads()
+        && let Some(found) = key.as_deref().and_then(|key| keys.records.get(key))
+    {
+        let verdict = compare::judge(case, &found);
+        return (found, verdict);
     }
     let dir = compile::work_dir(&plan.root, case, &spec.id, level);
     match compile::build_and_run(case, spec, level, &dir, plan.repeats) {
         Ok(built) => {
             let record = compile::record(case, &spec.id, level, built);
             let verdict = compare::judge(case, &record);
+            if plan.reuse.writes()
+                && let Some(key) = key.as_deref()
+            {
+                keys.records.put(key, &record);
+            }
             tidy(&dir, verdict, plan);
             (record, verdict)
         }
+        // Nothing below here is cached. A harness that could not do its job says nothing about
+        // the compiler, so keeping that answer would mean a machine that ran out of file
+        // handles once reports a crash for a fortnight.
         Err(message) => {
             // The harness itself could not do its job. That is not the compiler's fault, so
             // it is recorded as a crash with the reason in the diagnostics rather than
