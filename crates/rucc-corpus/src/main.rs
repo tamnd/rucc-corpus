@@ -77,6 +77,7 @@ Options for run:
   --repeats N          how many times each program is timed, default five
   --keep               keep the working directory of cases that passed
   --quiet              say nothing while it runs
+  --no-pages           do not write the linked report pages or touch the front page
 ";
 
 /// Writes the corpus out as C.
@@ -117,6 +118,7 @@ fn run(args: &Args) -> Result<ExitCode, String> {
         "repeats",
         "keep",
         "quiet",
+        "no-pages",
     ])?;
 
     let corpus = corpus_gen::generate(&options(args)?)?;
@@ -152,7 +154,27 @@ fn run(args: &Args) -> Result<ExitCode, String> {
     let summary =
         corpus_report::write_all(&reports, &outcome, &corpus.digest(), corpus.cases.len())?;
 
-    println!("wrote the reports to {}", reports.display());
+    // The page tree lives beside the reports directory rather than inside it, because the
+    // front page it splices is at the root of the repository.
+    //
+    // On by default, because the pages are the version of the report anybody actually reads
+    // and a flag people have to know about is a flag nobody turns on. Off for the jobs that
+    // run the corpus to check something and then throw the output away, since those would
+    // otherwise rewrite a tree they were never asked to touch.
+    if args.flag("no-pages") {
+        println!("wrote the reports to {}", reports.display());
+    } else {
+        let root = reports
+            .parent()
+            .filter(|path| !path.as_os_str().is_empty())
+            .map_or_else(|| PathBuf::from("."), std::path::Path::to_path_buf);
+        let pages = corpus_report::write_pages(&root, &outcome, &summary)?;
+        println!(
+            "wrote the reports to {} and {pages} pages under {}",
+            reports.display(),
+            root.display()
+        );
+    }
     for target in &summary.targets {
         println!("  {:<28} {}", target.name, if target.met { "met" } else { "not met" });
     }

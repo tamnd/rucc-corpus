@@ -16,6 +16,7 @@ pub mod compare;
 pub mod compile;
 pub mod exec;
 pub mod insight;
+pub mod memory;
 pub mod object;
 pub mod toolchain;
 
@@ -232,7 +233,6 @@ fn schedule(manifest: &Manifest, plan: &Plan) -> Vec<Job> {
     jobs
 }
 
-/// Runs one job and judges it.
 fn run_one(case: &Case, spec: &Spec, level: Level, plan: &Plan) -> (RunRecord, Verdict) {
     if plan.excludes(case) {
         return (RunRecord::skipped(case, &spec.id, level), Verdict::Skipped);

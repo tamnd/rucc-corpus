@@ -108,6 +108,15 @@ impl Toolchain {
     }
 }
 
+/// A number that was measured, or null when nobody was able to measure it.
+///
+/// Nought and null are different answers and the schema keeps them apart. A build that used no
+/// memory did not happen, so writing nought for a platform that cannot look would turn a gap in
+/// the instrument into a claim about the compiler.
+fn maybe(value: Option<u64>) -> Json {
+    value.map_or(Json::Null, |bytes| Json::int(bytes as i64))
+}
+
 /// What happened when the compiler was asked to build a case.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Compile {
@@ -127,6 +136,22 @@ pub struct Compile {
     /// table and the padding the linker chose, none of which the optimizer decided, so a
     /// comparison on file size measures the linker as much as the compiler.
     pub text_bytes: u64,
+    /// The size of the initialized data in the running image, read only and writable together.
+    ///
+    /// Kept apart from the code because it answers a different question. A compiler that
+    /// unrolls a loop by materializing a lookup table and one that folds the loop away have
+    /// the same effect on the text column and the opposite effect here.
+    pub data_bytes: u64,
+    /// The size of the zero filled data in the running image.
+    ///
+    /// It costs nothing in the file and costs pages when the program runs, which is why it is
+    /// neither of the other two.
+    pub bss_bytes: u64,
+    /// The largest high water mark of any process in the compiler's tree, in bytes.
+    ///
+    /// `None` rather than nought when nobody could look, which is every platform that is not
+    /// Linux. What the number covers and what it can miss is in `corpus_run::memory`.
+    pub peak_bytes: Option<u64>,
 }
 
 impl Compile {
@@ -140,6 +165,9 @@ impl Compile {
             diagnostics: String::new(),
             bytes: 0,
             text_bytes: 0,
+            data_bytes: 0,
+            bss_bytes: 0,
+            peak_bytes: None,
         }
     }
 
@@ -152,6 +180,9 @@ impl Compile {
             ("micros", Json::int(self.micros as i64)),
             ("bytes", Json::int(self.bytes as i64)),
             ("text_bytes", Json::int(self.text_bytes as i64)),
+            ("data_bytes", Json::int(self.data_bytes as i64)),
+            ("bss_bytes", Json::int(self.bss_bytes as i64)),
+            ("peak_bytes", maybe(self.peak_bytes)),
             ("diagnostics", Json::string(self.diagnostics.clone())),
         ])
     }
@@ -172,6 +203,10 @@ pub struct Execute {
     pub micros: u64,
     /// How many times it was run to get that number.
     pub repeats: u32,
+    /// The largest high water mark the program reached, in bytes, across the repetitions.
+    ///
+    /// `None` on the same terms as the compile's, and for the same reasons.
+    pub peak_bytes: Option<u64>,
     /// Everything it printed on standard output.
     pub output: String,
 }
@@ -180,7 +215,14 @@ impl Execute {
     /// A run that never happened, because the compile failed.
     #[must_use]
     pub fn skipped() -> Self {
-        Self { ok: false, status: -1, micros: 0, repeats: 0, output: String::new() }
+        Self {
+            ok: false,
+            status: -1,
+            micros: 0,
+            repeats: 0,
+            peak_bytes: None,
+            output: String::new(),
+        }
     }
 
     /// The run as JSON.
@@ -191,6 +233,7 @@ impl Execute {
             ("status", Json::int(i64::from(self.status))),
             ("micros", Json::int(self.micros as i64)),
             ("repeats", Json::int(i64::from(self.repeats))),
+            ("peak_bytes", maybe(self.peak_bytes)),
             ("output", Json::string(self.output.clone())),
         ])
     }
@@ -480,9 +523,16 @@ mod tests {
             diagnostics: String::new(),
             bytes: 16_384,
             text_bytes: 1_234,
+            ..Compile::skipped()
         };
-        record.execute =
-            Execute { ok: true, status: 0, micros: 900, repeats: 5, output: "0\n".to_owned() };
+        record.execute = Execute {
+            ok: true,
+            status: 0,
+            micros: 900,
+            repeats: 5,
+            output: "0\n".to_owned(),
+            ..Execute::skipped()
+        };
         record.insights = vec![Insight {
             kind: "optimized".to_owned(),
             pass: "inline".to_owned(),

@@ -88,8 +88,26 @@ pub struct FacetScore {
     pub speed_ratio: Option<f64>,
     /// Median compile time against the reference, at the headline level.
     pub compile_ratio: Option<f64>,
+    /// Median compiler memory against the reference, at the headline level.
+    ///
+    /// `None` on a platform that cannot measure memory at all, which is every platform that is
+    /// not Linux, rather than nought. See `corpus_run::memory`.
+    pub memory_ratio: Option<f64>,
+    /// Median executable size on disk against the reference, at the headline level.
+    ///
+    /// Separate from `size_ratio`, which is the code alone. This one includes the runtime, the
+    /// symbol table and whatever the linker padded with, so it is what a build costs on disk
+    /// rather than what the optimizer decided.
+    pub disk_ratio: Option<f64>,
+    /// Median initialized data in the image against the reference, at the headline level.
+    pub data_ratio: Option<f64>,
     /// How many cases had a measurable size ratio, which is how much the median is worth.
     pub compared: usize,
+    /// How many cases had a measurable memory ratio, which is how much that median is worth.
+    ///
+    /// Its own count rather than sharing `compared`, because memory is the one number here
+    /// that can be missing for a reason that has nothing to do with the compiler.
+    pub memory_compared: usize,
 }
 
 /// What every compiler did with one facet.
@@ -441,6 +459,9 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
     let mut sizes = Vec::new();
     let mut speeds = Vec::new();
     let mut compiles = Vec::new();
+    let mut memories = Vec::new();
+    let mut disks = Vec::new();
+    let mut datas = Vec::new();
 
     for record in records {
         if record.toolchain != toolchain {
@@ -465,15 +486,28 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
         if let Some(value) = compare::compile_ratio(record, against) {
             compiles.push(value);
         }
+        if let Some(value) = compare::memory_ratio(record, against) {
+            memories.push(value);
+        }
+        if let Some(value) = compare::disk_ratio(record, against) {
+            disks.push(value);
+        }
+        if let Some(value) = compare::data_ratio(record, against) {
+            datas.push(value);
+        }
     }
 
     FacetScore {
         toolchain: toolchain.to_owned(),
         tally,
         compared: sizes.len(),
+        memory_compared: memories.len(),
         size_ratio: median(&mut sizes),
         speed_ratio: median(&mut speeds),
         compile_ratio: median(&mut compiles),
+        memory_ratio: median(&mut memories),
+        disk_ratio: median(&mut disks),
+        data_ratio: median(&mut datas),
     }
 }
 
@@ -597,9 +631,16 @@ mod tests {
             diagnostics: String::new(),
             bytes: text * 4,
             text_bytes: text,
+            ..Compile::skipped()
         };
-        record.execute =
-            Execute { ok: true, status: 0, micros, repeats: 5, output: "1\n".to_owned() };
+        record.execute = Execute {
+            ok: true,
+            status: 0,
+            micros,
+            repeats: 5,
+            output: "1\n".to_owned(),
+            ..Execute::skipped()
+        };
         record
     }
 

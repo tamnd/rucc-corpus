@@ -72,6 +72,30 @@ jobs:
             exit 1
           fi
 
+      # The report pages cannot be regenerated here, because they come from a run against a
+      # compiler this job does not have. What can be checked is the thing a reader actually
+      # hits, which is a link that goes nowhere, and that needs no records at all. A facet
+      # renamed in the generator without the pages being regenerated fails right here.
+      - name: every link in the report tree lands somewhere
+        run: |
+          broken=0
+          for page in README.md $(find reports programs -name '*.md'); do
+            dir=$(dirname "$page")
+            for link in $(grep -o '](\([^)#][^)]*\))' "$page" | sed 's/^](//; s/)$//'); do
+              case "$link" in http*|mailto:*) continue ;; esac
+              target="${link%%#*}"
+              if [ -n "$target" ] && [ ! -e "$dir/$target" ]; then
+                echo "$page links to $target and that is not there"
+                broken=$((broken + 1))
+              fi
+            done
+          done
+          if [ "$broken" -gt 0 ]; then
+            echo "$broken links go nowhere. A full run regenerates the report tree."
+            exit 1
+          fi
+          echo "every link resolves"
+
   # GCC 16 as the oracle check. Ubuntu 24.04 ships GCC 13, so 16 comes from the toolchain
   # archive, the same recipe the compiler repository uses for its differential job.
   #
@@ -95,7 +119,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --reference gcc-16 \
             --level O0 --level O2 --repeats 1 \
-            --out reports-ci
+            --out reports-ci --no-pages
       - name: keep the reports
         if: always()
         uses: actions/upload-artifact@v4.6.2
@@ -135,7 +159,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
             --reference gcc-16 --level O0 --level O2 --repeats 3 \
-            --out reports-ci
+            --out reports-ci --no-pages
       - name: what it said
         if: always()
         run: cat reports-ci/report.md >> "$GITHUB_STEP_SUMMARY"
