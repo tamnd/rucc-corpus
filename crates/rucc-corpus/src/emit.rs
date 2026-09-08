@@ -43,6 +43,12 @@ pub(crate) fn write_programs(root: &Path, corpus: &Manifest) -> Result<usize, St
             std::fs::write(&path, &case.source)
                 .map_err(|error| format!("{}: {error}", path.display()))?;
             written += 1;
+            for unit in &case.units {
+                let path = dir.join(case.unit_file_name(unit));
+                std::fs::write(&path, &unit.source)
+                    .map_err(|error| format!("{}: {error}", path.display()))?;
+                written += 1;
+            }
         }
         let index = dir.join("README.md");
         std::fs::write(&index, facet_index(*facet, cases))
@@ -119,7 +125,34 @@ fn facet_index(facet: Facet, cases: &[&Case]) -> String {
         "{} programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.\n\n",
         cases.len()
     ));
-    out.push_str("| program | axes | dialect | must print |\n|---|---|---|---|\n");
+
+    // Two columns almost no facet needs. Every case in the corpus but the linked ones is a single
+    // file built with nothing but a level, so carrying the columns everywhere would put two cells
+    // reading none on a thousand rows and hide the rows where they say something.
+    let linked = cases.iter().any(|case| !case.units.is_empty());
+    let flagged = cases.iter().any(|case| !case.flags.is_empty());
+    if linked {
+        out.push_str(
+            "These programs are more than one translation unit each. The other units are listed beside the one that has `main` in it, and they are all handed to the compiler on one command line, in that order.\n\n",
+        );
+    }
+
+    out.push_str("| program |");
+    if linked {
+        out.push_str(" linked with |");
+    }
+    if flagged {
+        out.push_str(" also built with |");
+    }
+    out.push_str(" axes | dialect | must print |\n|---|");
+    if linked {
+        out.push_str("---|");
+    }
+    if flagged {
+        out.push_str("---|");
+    }
+    out.push_str("---|---|---|\n");
+
     for case in cases {
         let axes = case
             .axes
@@ -128,10 +161,15 @@ fn facet_index(facet: Facet, cases: &[&Case]) -> String {
             .map(|(name, value)| format!("{name}={value}"))
             .collect::<Vec<String>>()
             .join(", ");
+        out.push_str(&format!("| [`{}`]({}) |", case.id, case.file_name()));
+        if linked {
+            out.push_str(&format!(" {} |", units_of(case)));
+        }
+        if flagged {
+            out.push_str(&format!(" {} |", flags_of(case)));
+        }
         out.push_str(&format!(
-            "| [`{}`]({}) | {} | {} | {} |\n",
-            case.id,
-            case.file_name(),
+            " {} | {} | {} |\n",
             if axes.is_empty() { "none".to_owned() } else { axes },
             case.dialect.name(),
             expectation(case)
@@ -139,6 +177,26 @@ fn facet_index(facet: Facet, cases: &[&Case]) -> String {
     }
     out.push('\n');
     out
+}
+
+/// The other translation units a case is linked from, as links.
+fn units_of(case: &Case) -> String {
+    if case.units.is_empty() {
+        return "nothing, it is one file".to_owned();
+    }
+    case.units
+        .iter()
+        .map(|unit| format!("[`{}`]({})", unit.name, case.unit_file_name(unit)))
+        .collect::<Vec<String>>()
+        .join(", ")
+}
+
+/// The flags a case asks for on top of the level.
+fn flags_of(case: &Case) -> String {
+    if case.flags.is_empty() {
+        return "nothing extra".to_owned();
+    }
+    case.flags.iter().map(|flag| format!("`{flag}`")).collect::<Vec<String>>().join(" ")
 }
 
 /// What a case must produce, written to fit in a table cell.
@@ -226,6 +284,45 @@ mod tests {
         assert!(inner.contains("`42`"), "{inner}");
         assert!(inner.contains("must print"));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_linked_case_writes_every_unit_and_the_index_says_where_they_are() {
+        let dir = scratch("linked");
+        let case = Case::linked(
+            Facet::LinkTimeOptimization,
+            Axes::of([("shape", "a-call-crosses")]),
+            Dialect::C17,
+            "int main(void) { return 0; }\n",
+            vec![corpus_model::Unit::new("helper", "int helper(void) { return 1; }\n")],
+            vec!["-flto".to_owned()],
+            Expect::Output("1\n".to_owned()),
+        );
+        let corpus = Manifest::new(vec![case.clone()]).unwrap();
+        // Two files for one program, which is why the count is of files and not of cases.
+        assert_eq!(write_programs(&dir, &corpus).unwrap(), 2);
+
+        let unit = dir
+            .join("interprocedural/link-time-optimization")
+            .join(case.unit_file_name(&case.units[0]));
+        assert_eq!(std::fs::read_to_string(&unit).unwrap(), case.units[0].source);
+
+        let index =
+            std::fs::read_to_string(dir.join("interprocedural/link-time-optimization/README.md"))
+                .unwrap();
+        assert!(index.contains("| linked with |"), "{index}");
+        assert!(index.contains("| also built with |"), "{index}");
+        assert!(index.contains("`-flto`"), "{index}");
+        assert!(index.contains(&case.unit_file_name(&case.units[0])), "{index}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_facet_of_ordinary_cases_carries_neither_of_the_two_extra_columns() {
+        let cases = [case_for(Facet::ConstantFold, "one", "1\n")];
+        let text = facet_index(Facet::ConstantFold, &cases.iter().collect::<Vec<&Case>>());
+        assert!(!text.contains("linked with"));
+        assert!(!text.contains("also built with"));
     }
 
     #[test]

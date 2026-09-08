@@ -9,7 +9,7 @@ use crate::exec;
 use crate::insight;
 use crate::object;
 use crate::toolchain::Spec;
-use corpus_model::{Case, Compile, Execute, Expect, Insight, Level, RunRecord, Source};
+use corpus_model::{Case, Compile, Execute, Expect, Insight, Level, RunRecord};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -32,6 +32,13 @@ pub const REPEATS: u32 = 5;
 
 /// What the case is written to inside its own directory.
 pub const SOURCE: &str = "case.c";
+
+/// What one of the other translation units is written to, before its own name.
+///
+/// Named after the unit rather than after the case, unlike the copy under `programs/`, because
+/// each case has a working directory to itself and a short name is a shorter command line for
+/// somebody to paste. Every case in the corpus but a handful has none of these.
+pub const UNIT_PREFIX: &str = "unit-";
 
 /// What the compiler is asked to produce.
 pub const BINARY: &str = "case.bin";
@@ -77,6 +84,14 @@ pub fn build_and_run(
     let opinions = dir.join(OPINIONS);
     std::fs::write(&source, &case.source)
         .map_err(|error| format!("{}: {error}", source.display()))?;
+    let mut units: Vec<String> = Vec::with_capacity(case.units.len());
+    for unit in &case.units {
+        let name = format!("{UNIT_PREFIX}{}.c", unit.name);
+        let path = dir.join(&name);
+        std::fs::write(&path, &unit.source)
+            .map_err(|error| format!("{}: {error}", path.display()))?;
+        units.push(name);
+    }
 
     // Everything on the command line is named relative to the directory the compiler is run
     // in, so the command in the report is one somebody can paste after a cd into that
@@ -88,12 +103,18 @@ pub fn build_and_run(
         "-o".to_owned(),
         BINARY.to_owned(),
     ];
+    // The flags the case asks for come before the ones the run asks for, so that a person who
+    // adds a flag on the command line can still override what a case wanted.
+    args.extend(case.flags.iter().cloned());
     let wants_opinions = spec.understands_opt_info();
     if wants_opinions {
         args.extend(insight::flags(OPINIONS));
     }
     args.extend(spec.extra.iter().cloned());
+    // The unit with `main` in it goes first, which is the order somebody reading the command
+    // would expect and the order the sources are listed in everywhere else.
     args.push(SOURCE.to_owned());
+    args.extend(units);
 
     let outcome = exec::run(&spec.program, &args, Some(dir), COMPILE_TIMEOUT)
         .map_err(|error| format!("could not run {}: {error}", spec.program))?;
@@ -154,7 +175,7 @@ pub fn record(case: &Case, toolchain: &str, level: Level, built: Built) -> RunRe
         dialect: case.dialect,
         toolchain: toolchain.to_owned(),
         level,
-        source: Source::of(&case.source),
+        source: case.size(),
         compile: built.compile,
         execute: built.execute,
         insights: built.insights,

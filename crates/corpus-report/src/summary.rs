@@ -375,10 +375,7 @@ fn source_of<'a>(records: impl Iterator<Item = &'a RunRecord>) -> Source {
 /// records. [`source_of`] is the one for records and it says why.
 #[must_use]
 pub fn add_up(sizes: impl Iterator<Item = Source>) -> Source {
-    sizes.fold(Source::default(), |sum, one| Source {
-        lines: sum.lines.saturating_add(one.lines),
-        bytes: sum.bytes.saturating_add(one.bytes),
-    })
+    sizes.fold(Source::default(), Source::plus)
 }
 
 /// The level `-Os` is judged against.

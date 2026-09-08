@@ -1,10 +1,10 @@
 # The corpus
 
-1552 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1572 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `1db4ab0af4dc4aa9dc7e8d392521189256acc8227f44518b7379ccfac4495341`.
+Corpus digest `21f308a6b30f55ce5a136078160ba876bf1bc3ef6c1f61de1594ae66a3597df8`.
 
 ## floor (118 programs)
 
@@ -66,7 +66,7 @@ Transformations that need loop structure, which is where most of the remaining t
 | [`loop-shape`](loops/loop-shape/README.md) | 64 | the shape a loop is left in, before any pass reads it |
 | [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
 
-## interprocedural (117 programs)
+## interprocedural (137 programs)
 
 Transformations that need to look at more than one function at a time.
 
@@ -78,6 +78,7 @@ Transformations that need to look at more than one function at a time.
 | [`constant-args`](interprocedural/constant-args/README.md) | 12 | specializing a function to a constant argument |
 | [`reachability`](interprocedural/reachability/README.md) | 9 | removing what nothing references |
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
+| [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
 ## backend (303 programs)
 

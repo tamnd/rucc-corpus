@@ -112,6 +112,17 @@ pub enum Facet {
     Reachability,
     /// Turning an indirect call into a direct one.
     Devirtualize,
+    /// An optimization that cannot happen until the compiler has seen more than one file.
+    ///
+    /// Every other facet is one translation unit, and that is the right default, because a
+    /// failure in a single file is a failure about code generation rather than about linking.
+    /// This one is the exception on purpose. Inlining across a file boundary, propagating a
+    /// constant across one, and throwing away a function nothing calls across one are all
+    /// things a compiler can only do when it has been handed the other file, so a case about
+    /// them has to be more than one file. Each shape is generated twice, once compiled and
+    /// linked the ordinary way and once with `-flto`, and the pair has to print the same
+    /// answer. That is what makes the second half evidence rather than an assertion.
+    LinkTimeOptimization,
 
     /// Choosing the machine instruction for an operation.
     Selection,
@@ -217,6 +228,7 @@ impl Facet {
         Self::ConstantArgs,
         Self::Reachability,
         Self::Devirtualize,
+        Self::LinkTimeOptimization,
         Self::Selection,
         Self::RegisterPressure,
         Self::RegisterAlloc,
@@ -276,6 +288,7 @@ impl Facet {
             Self::ConstantArgs => "constant-args",
             Self::Reachability => "reachability",
             Self::Devirtualize => "devirtualize",
+            Self::LinkTimeOptimization => "link-time-optimization",
             Self::Selection => "selection",
             Self::RegisterPressure => "register-pressure",
             Self::RegisterAlloc => "register-alloc",
@@ -338,6 +351,7 @@ impl Facet {
             Self::ConstantArgs => "specializing a function to a constant argument",
             Self::Reachability => "removing what nothing references",
             Self::Devirtualize => "turning an indirect call into a direct one",
+            Self::LinkTimeOptimization => "optimizing across a translation unit boundary",
             Self::Selection => "choosing the machine instruction for an operation",
             Self::RegisterPressure => "how many values are live at once, and what that costs",
             Self::RegisterAlloc => "assigning registers and deciding what to spill",
@@ -403,7 +417,8 @@ impl Facet {
             | Self::FunctionPurity
             | Self::ConstantArgs
             | Self::Reachability
-            | Self::Devirtualize => Phase::Interprocedural,
+            | Self::Devirtualize
+            | Self::LinkTimeOptimization => Phase::Interprocedural,
             Self::Selection
             | Self::RegisterPressure
             | Self::RegisterAlloc

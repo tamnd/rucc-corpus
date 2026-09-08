@@ -75,8 +75,13 @@ fn heading(out: &mut String, summary: &Summary, run: &Run) {
         short(&summary.corpus_digest)
     ));
     if summary.source.measured() {
+        let spread = if crate::size::one_file_each(summary.source, summary.cases) {
+            "one translation unit per program".to_owned()
+        } else {
+            format!("in {}", crate::size::files_of(summary.source.files))
+        };
         out.push_str(&format!(
-            "That is {}, one translation unit per program, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.\n\n",
+            "That is {}, {spread}, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.\n\n",
             crate::size::line(summary.source)
         ));
     }
@@ -383,7 +388,7 @@ fn by_phase(out: &mut String, summary: &Summary) {
             "| {} | {} | {cases} | {} |",
             phase.name(),
             in_phase.len(),
-            crate::size::cell(size)
+            crate::size::cell(size, cases)
         ));
         for id in summary.under_test() {
             let mut tally = Tally::default();

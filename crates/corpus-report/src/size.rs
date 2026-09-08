@@ -40,9 +40,35 @@ pub fn lines_of(lines: u32) -> String {
 /// The two are told apart rather than both printed as nought, because a column of noughts reads
 /// as a corpus that has lost its programs and that is a different thing from a run whose records
 /// were written before anybody counted.
+///
+/// The file count is only mentioned when it is not the case count, which is to say only for the
+/// facet whose whole subject is what happens at a file boundary. Printing it everywhere would put
+/// a column of the same number twice on every page.
 #[must_use]
-pub fn cell(source: Source) -> String {
-    if source.measured() { thousands(u64::from(source.lines)) } else { "not measured".to_owned() }
+pub fn cell(source: Source, cases: usize) -> String {
+    if !source.measured() {
+        return "not measured".to_owned();
+    }
+    let lines = thousands(u64::from(source.lines));
+    if one_file_each(source, cases) {
+        return lines;
+    }
+    format!("{lines} in {}", files_of(source.files))
+}
+
+/// Whether every program counted here was a single translation unit.
+///
+/// Almost always true, which is why the report says it once rather than carrying a column for it.
+#[must_use]
+pub fn one_file_each(source: Source, cases: usize) -> bool {
+    u64::from(source.files) == cases as u64
+}
+
+/// A count of translation units, with separators and the noun agreeing with it.
+#[must_use]
+pub fn files_of(files: u32) -> String {
+    let noun = if files == 1 { "file" } else { "files" };
+    format!("{} {noun}", thousands(u64::from(files)))
 }
 
 /// A count with separators in it.
@@ -76,7 +102,7 @@ pub fn bytes(value: u64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{bytes, line, lines_of, thousands};
+    use super::{bytes, cell, files_of, line, lines_of, thousands};
     use corpus_model::Source;
 
     #[test]
@@ -97,7 +123,7 @@ mod tests {
 
     #[test]
     fn a_size_reads_as_a_phrase_rather_than_as_a_pair_of_figures() {
-        let source = Source { lines: 30_212, bytes: 1_153_434 };
+        let source = Source { lines: 30_212, bytes: 1_153_434, files: 900 };
         assert_eq!(line(source), "30,212 lines of C, 1.1 MiB");
     }
 
@@ -106,6 +132,21 @@ mod tests {
         assert_eq!(lines_of(1), "1 line");
         assert_eq!(lines_of(0), "0 lines");
         assert_eq!(lines_of(2), "2 lines");
-        assert_eq!(line(Source { lines: 1, bytes: 28 }), "1 line of C, 28 B");
+        assert_eq!(line(Source { lines: 1, bytes: 28, files: 1 }), "1 line of C, 28 B");
+    }
+
+    #[test]
+    fn a_cell_only_mentions_files_when_there_are_more_of_them_than_there_are_programs() {
+        let plain = Source { lines: 1_200, bytes: 40_000, files: 40 };
+        assert_eq!(cell(plain, 40), "1,200");
+        let linked = Source { lines: 900, bytes: 30_000, files: 60 };
+        assert_eq!(cell(linked, 20), "900 in 60 files");
+        assert_eq!(cell(Source::default(), 0), "not measured");
+    }
+
+    #[test]
+    fn a_facet_of_one_file_is_not_described_as_one_files() {
+        assert_eq!(files_of(1), "1 file");
+        assert_eq!(files_of(1_200), "1,200 files");
     }
 }

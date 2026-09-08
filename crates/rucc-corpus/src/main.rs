@@ -97,7 +97,8 @@ fn generate(args: &Args) -> Result<ExitCode, String> {
     emit::write_manifest(&manifest_path, &corpus)?;
 
     println!(
-        "wrote {written} programs across {} facets to {}",
+        "wrote {} programs in {written} files across {} facets to {}",
+        corpus.cases.len(),
         corpus.by_facet().len(),
         out.display()
     );
