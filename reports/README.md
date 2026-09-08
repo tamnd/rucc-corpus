@@ -1,12 +1,13 @@
 # The corpus report
 
-Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
+75 case results did not come out as expected. They are on the failures page, worst first.
 
-1461 programs, one translation unit each and 47,898 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Homebrew GCC 16.2.0) 16.2.0. Corpus digest `dbfc0cafbb185c10`.
+1525 programs, one translation unit each and 49,314 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `690da57bab01fe09`.
 
 | compiler | version | role |
 |---|---|---|
-| `gcc-16` | gcc-16 (Homebrew GCC 16.2.0) 16.2.0 | reference |
+| `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
+| `rucc` | rucc 0.8.2 | under test |
 
 ## How the cases came out
 
@@ -14,7 +15,8 @@ Every count is per case per level, so a corpus of a thousand programs built at f
 
 | compiler | pass | wrong | rejected | unimplemented | accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|
-| `gcc-16` | 7273 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `gcc-16` | 7593 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `rucc` | 7308 | 0 | 75 | 210 | 0 | 0 | 0 |
 
 | verdict | what it means |
 |---|---|
@@ -31,21 +33,25 @@ Every count is per case per level, so a corpus of a thousand programs built at f
 | page | what is on it |
 |---|---|
 | [What it cost](cost.md) | Code size, size on disk, initialized data, compile time, run time and compiler memory, per facet, each against the reference build of the same program |
-| [What went wrong](failures.md) | Nothing this time. Both lists on that page are empty. |
+| [What went wrong](failures.md) | 75 failures in full, and 210 cases a compiler said it has not built yet, grouped so that twenty cases blocked on one missing thing read as one missing thing |
 | [By phase of the plan](phases/README.md) | One page per phase, its facets, how they came out, and links to the programs themselves |
 
 ## The claims this run checks
 
 | target | wanted | this run | met |
 |---|---|---|---|
-| `correctness` | every case prints the answer the generator computed, on every compiler, at every level | 0.000 | yes |
+| `correctness` | every case prints the answer the generator computed, on every compiler, at every level | 75.000 | no |
+| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2 | 1.103 | no |
+| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.486 | yes |
+| `size-model:rucc` | the code rucc produces at -Os is no larger than the code it produces at -O2, and where gcc-16 found something to trade away rucc found something too, since -Os is a different cost function and not a cheaper -O2 | 1.000 | yes |
 
 ## Running this yourself
 
 ```sh
 cargo run --release -p rucc-corpus -- run \
     --toolchain gcc-16 \
+    --toolchain rucc \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1461 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1525 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
