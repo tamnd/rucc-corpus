@@ -51,6 +51,7 @@ pub fn report_json(run: &Run, summary: &Summary) -> String {
         ("tool", Json::string(TOOL)),
         ("corpus_digest", Json::string(summary.corpus_digest.clone())),
         ("cases", Json::int(summary.cases as i64)),
+        ("source", source_json(summary.source)),
         ("reference", Json::string(summary.reference.clone())),
         ("levels", Json::array(summary.levels.iter().map(|l| Json::string(l.name())))),
         ("toolchains", Json::array(run.toolchains.iter().map(corpus_model::Toolchain::to_json))),
@@ -120,12 +121,26 @@ fn target_json(target: &Target) -> Json {
     ])
 }
 
+/// How much C something is, counted once per case.
+///
+/// Written next to the counts rather than derived from them, because a reader of this file has no
+/// way to work it out. Every cost in the report is against this, and a tool comparing two runs
+/// wants to know whether a compile time moved because the compiler changed or because the corpus
+/// grew, which is a question only this field can answer.
+fn source_json(source: corpus_model::Source) -> Json {
+    Json::object([
+        ("lines", Json::int(i64::from(source.lines))),
+        ("bytes", Json::int(source.bytes as i64)),
+    ])
+}
+
 fn facet_json(facet: &FacetSummary) -> Json {
     Json::object([
         ("facet", Json::string(facet.facet.name())),
         ("phase", Json::string(facet.phase.name())),
         ("describes", Json::string(facet.facet.describe())),
         ("cases", Json::int(facet.cases as i64)),
+        ("source", source_json(facet.source)),
         (
             "reference_said",
             Json::object([

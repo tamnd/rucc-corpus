@@ -32,6 +32,7 @@
 //! from are workflow artifacts. They change on every run whether or not the compiler moved, so
 //! keeping them in the history would make every diff unreadable.
 
+use crate::size;
 use crate::summary::{FacetScore, FacetSummary, Summary, Tally};
 use corpus_model::{Facet, Finding, Level, Phase, Verdict};
 use corpus_run::Run;
@@ -257,12 +258,30 @@ fn against(run: &Run, summary: &Summary) -> String {
         .reference()
         .map_or_else(|| summary.reference.clone(), |toolchain| toolchain.version.clone());
     format!(
-        "{} programs built at {}, against {}. Corpus digest `{}`.",
+        "{} programs{}, built at {}, against {}. Corpus digest `{}`.",
         summary.cases,
+        how_big(summary),
         listed(&summary.levels),
         reference,
         short(&summary.corpus_digest)
     )
+}
+
+/// The size of the corpus, as a clause hung off the count of programs.
+///
+/// Empty when nothing measured it, which is what a run assembled from records written before the
+/// size was recorded looks like. Nought lines is not a corpus anybody generated, so saying nothing
+/// is both the honest answer and a better one than a sentence reading as a corpus that has lost
+/// its programs.
+fn how_big(summary: &Summary) -> String {
+    if summary.source.measured() {
+        format!(
+            ", one translation unit each and {} of C in all",
+            size::lines_of(summary.source.lines)
+        )
+    } else {
+        String::new()
+    }
 }
 
 /// The levels written out the way a person would say them.
@@ -334,30 +353,36 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
     out.push_str(
         "None of these are averaged into a single figure for the corpus. A mean over fifty facets of wildly different shapes is a number with no referent.\n\n",
     );
-
     if summary.under_test().is_empty() {
         let _ = writeln!(
             out,
-            "This run had no compiler under test in it. Every column above is a ratio of one compiler against the reference, and the only compiler here was the reference, so there is nothing to put in them. That is what a run on a machine rucc has no back end for looks like, and it is still worth doing, because it checks {} expected answers against a compiler that has been wrong about very few things since 1987.\n",
+            "This run had no compiler under test in it. Every column above is a ratio of one compiler against the reference, and the only compiler here was the reference, so there is nothing to put in them. That is what a run on a machine rucc has no back end for looks like, and it is still worth doing, because it checks {} expected answers against a compiler that has been wrong about very few things since 1987.",
             summary.cases
         );
         return out;
     }
 
+    out.push_str(
+        "The `lines` column is the odd one out, because it is not a ratio and not a cost. It is how much C the facet is, counted once per case however many compilers and levels the case was built with, and it is here because none of the six columns beside it can be read without it. Four hundred milliseconds is quick for ten thousand lines and slow for two hundred. It is a denominator and never a score, so there is deliberately no lines per second anywhere on this page.\n\n",
+    );
+
     for id in summary.under_test() {
         let _ = writeln!(out, "## `{id}` against `{}`\n", summary.reference);
-        out.push_str("| facet | cases | code | on disk | data | compile | run | memory |\n");
-        out.push_str("|---|---|---|---|---|---|---|---|\n");
+        out.push_str(
+            "| facet | cases | lines | code | on disk | data | compile | run | memory |\n",
+        );
+        out.push_str("|---|---|---|---|---|---|---|---|---|\n");
         for facet in &summary.facets {
             let Some(score) = facet.score(id) else {
                 continue;
             };
             let _ = writeln!(
                 out,
-                "| [`{}`]({}) | {} | {} | {} | {} | {} | {} | {} |",
+                "| [`{}`]({}) | {} | {} | {} | {} | {} | {} | {} | {} |",
                 facet.facet.name(),
                 facet_link(facet.facet, "../"),
                 facet.cases,
+                size::cell(facet.source),
                 ratio(score.size_ratio),
                 ratio(score.disk_ratio),
                 ratio(score.data_ratio),
@@ -485,11 +510,11 @@ fn phase_index(summary: &Summary) -> String {
     out.push_str(
         "The phases are the ones in the M4 plan, in the order the plan does them, because each one is built on the one above it. This is the table to read when deciding what to implement next.\n\n",
     );
-    out.push_str("| phase | facets | cases |");
+    out.push_str("| phase | facets | cases | lines |");
     for id in summary.under_test() {
         let _ = write!(out, " `{id}` passed | `{id}` code |");
     }
-    out.push_str("\n|---|---|---|");
+    out.push_str("\n|---|---|---|---|");
     for _ in summary.under_test() {
         out.push_str("---|---|");
     }
@@ -501,7 +526,14 @@ fn phase_index(summary: &Summary) -> String {
             continue;
         }
         let cases: usize = facets.iter().map(|facet| facet.cases).sum();
-        let _ = write!(out, "| [{0}]({0}.md) | {1} | {cases} |", phase.name(), facets.len());
+        let size = crate::summary::add_up(facets.iter().map(|facet| facet.source));
+        let _ = write!(
+            out,
+            "| [{0}]({0}.md) | {1} | {cases} | {2} |",
+            phase.name(),
+            facets.len(),
+            size::cell(size)
+        );
         for id in summary.under_test() {
             let (tally, size) = rolled_up(&facets, id);
             let _ = write!(out, " {} of {} | {} |", tally.pass, tally.ran(), ratio(size));
@@ -524,11 +556,11 @@ fn phase_page(phase: Phase, summary: &Summary) -> String {
             "This run had no compiler under test in it, so the only thing this page can say about each facet is how many programs are in it and where they are.\n\n",
         );
     }
-    out.push_str("| facet | cases |");
+    out.push_str("| facet | cases | lines |");
     for id in summary.under_test() {
         let _ = write!(out, " `{id}` passed | `{id}` code | `{id}` compile | `{id}` memory |");
     }
-    out.push_str("\n|---|---|");
+    out.push_str("\n|---|---|---|");
     for _ in summary.under_test() {
         out.push_str("---|---|---|---|");
     }
@@ -537,10 +569,11 @@ fn phase_page(phase: Phase, summary: &Summary) -> String {
     for facet in &facets {
         let _ = write!(
             out,
-            "| [`{}`]({}) | {} |",
+            "| [`{}`]({}) | {} | {} |",
             facet.facet.name(),
             facet_link(facet.facet, "../../"),
-            facet.cases
+            facet.cases,
+            size::cell(facet.source)
         );
         for id in summary.under_test() {
             let Some(score) = facet.score(id) else {
@@ -823,6 +856,37 @@ mod tests {
         // somewhere between the record and the page.
         assert!(cost.text.contains("40% more"), "{}", cost.text);
         assert!(cost.text.contains("80% more"), "{}", cost.text);
+    }
+
+    #[test]
+    fn every_page_that_quotes_a_cost_says_how_much_source_it_was_against() {
+        let (run, summary) = a_run();
+        let block = headline(&run, &summary);
+        assert!(block.contains("1 line of C in all"), "{block}");
+        let pages = generate(&run, &summary);
+        let hub = pages.iter().find(|page| page.path == "reports/README.md").unwrap();
+        assert!(hub.text.contains("1 line of C in all"), "{}", hub.text);
+        let cost = pages.iter().find(|page| page.path == "reports/cost.md").unwrap();
+        assert!(cost.text.contains("| lines |"), "the cost page has no lines column");
+        let phases = pages.iter().find(|page| page.path == "reports/phases/README.md").unwrap();
+        assert!(phases.text.contains("| lines |"), "the phase index has no lines column");
+        let loops = pages.iter().find(|page| page.path == "reports/phases/loops.md").unwrap();
+        assert!(loops.text.contains("| lines |"), "the phase page has no lines column");
+    }
+
+    #[test]
+    fn a_run_from_before_the_size_was_kept_leaves_the_clause_out_rather_than_saying_nought() {
+        let (mut run, _) = a_run();
+        for record in &mut run.records {
+            record.source = corpus_model::Source::default();
+        }
+        let summary = summarise(&run, "d".repeat(64).as_str(), 1);
+        let block = headline(&run, &summary);
+        assert!(!block.contains("of C in all"), "{block}");
+        assert!(block.contains("1 programs"), "the rest of the sentence is still there");
+        for page in generate(&run, &summary) {
+            assert!(!page.text.contains("0 lines of C"), "{} reports an empty corpus", page.path);
+        }
     }
 
     #[test]

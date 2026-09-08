@@ -9,7 +9,7 @@ use crate::exec;
 use crate::insight;
 use crate::object;
 use crate::toolchain::Spec;
-use corpus_model::{Case, Compile, Execute, Expect, Insight, Level, RunRecord};
+use corpus_model::{Case, Compile, Execute, Expect, Insight, Level, RunRecord, Source};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -154,6 +154,7 @@ pub fn record(case: &Case, toolchain: &str, level: Level, built: Built) -> RunRe
         dialect: case.dialect,
         toolchain: toolchain.to_owned(),
         level,
+        source: Source::of(&case.source),
         compile: built.compile,
         execute: built.execute,
         insights: built.insights,

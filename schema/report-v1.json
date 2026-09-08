@@ -44,6 +44,7 @@
       "type": "integer",
       "minimum": 0
     },
+    "source": { "$ref": "#/$defs/source" },
     "reference": {
       "description": "The id of the toolchain the others are measured against.",
       "type": "string"
@@ -167,6 +168,16 @@
         "met": { "type": "boolean" }
       }
     },
+    "source": {
+      "description": "How much C something is, counted once per case however many toolchains and levels the case was built with. This is the denominator for every cost in the report. A tool comparing two runs needs it to tell a compile time that moved because the compiler changed from one that moved because the corpus grew, and it is here rather than derived because nothing else in the file can answer that.",
+      "type": "object",
+      "required": ["lines", "bytes"],
+      "additionalProperties": false,
+      "properties": {
+        "lines": { "description": "Lines of C, with a last line that has no newline after it still counted as a line.", "type": "integer", "minimum": 0 },
+        "bytes": { "description": "Bytes of C.", "type": "integer", "minimum": 0 }
+      }
+    },
     "facet": {
       "description": "One named transformation, and how every toolchain did on the programs written for it.",
       "type": "object",
@@ -176,6 +187,7 @@
         "phase": { "enum": ["floor", "local", "global", "loops", "interprocedural", "backend", "correctness"] },
         "describes": { "description": "What the facet is about, in one sentence.", "type": "string" },
         "cases": { "type": "integer", "minimum": 0 },
+        "source": { "$ref": "#/$defs/source" },
         "reference_said": {
           "description": "What the reference compiler reported through -fopt-info on these programs. Reference data and not a pass or fail signal. A high missed count means the transformation was available and the reference did not take it, which is a hint about the program rather than about anybody's compiler.",
           "type": "object",

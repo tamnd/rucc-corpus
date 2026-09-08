@@ -2,7 +2,7 @@
 
 Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
 
-1461 programs built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Homebrew GCC 16.2.0) 16.2.0. Corpus digest `dbfc0cafbb185c10`.
+1461 programs, one translation unit each and 47,898 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Homebrew GCC 16.2.0) 16.2.0. Corpus digest `dbfc0cafbb185c10`.
 
 | compiler | version | role |
 |---|---|---|
