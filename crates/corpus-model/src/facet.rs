@@ -87,6 +87,8 @@ pub enum Facet {
     LoopDeletion,
     /// Rotating a loop so the test lands at the bottom.
     LoopRotate,
+    /// The shape a loop is left in by canonicalization, rather than what it computes.
+    LoopShape,
     /// Exchanging or fusing loops for locality.
     LoopRestructure,
 
@@ -180,6 +182,7 @@ impl Facet {
         Self::LoopIdiom,
         Self::LoopDeletion,
         Self::LoopRotate,
+        Self::LoopShape,
         Self::LoopRestructure,
         Self::Inline,
         Self::TailCall,
@@ -235,6 +238,7 @@ impl Facet {
             Self::LoopIdiom => "loop-idiom",
             Self::LoopDeletion => "loop-deletion",
             Self::LoopRotate => "loop-rotate",
+            Self::LoopShape => "loop-shape",
             Self::LoopRestructure => "loop-restructure",
             Self::Inline => "inline",
             Self::TailCall => "tail-call",
@@ -293,6 +297,7 @@ impl Facet {
             Self::LoopIdiom => "recognizing a loop the runtime already implements",
             Self::LoopDeletion => "deleting a loop whose body nobody reads",
             Self::LoopRotate => "rotating a loop so the test lands at the bottom",
+            Self::LoopShape => "the shape a loop is left in, before any pass reads it",
             Self::LoopRestructure => "exchanging or fusing loops for locality",
             Self::Inline => "replacing a call with the body of what it called",
             Self::TailCall => "turning a call in tail position into a jump",
@@ -353,6 +358,7 @@ impl Facet {
             | Self::LoopIdiom
             | Self::LoopDeletion
             | Self::LoopRotate
+            | Self::LoopShape
             | Self::LoopRestructure => Phase::Loops,
             Self::Inline
             | Self::TailCall

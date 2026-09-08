@@ -4,7 +4,7 @@ A C corpus for proving that an optimization in [rucc](https://github.com/tamnd/r
 
 Every program here was written for exactly one named transformation. Every program prints an answer that this repository worked out in Rust before any C compiler was involved. Every program prints nothing that depends on the machine it runs on, so one expected answer is right everywhere.
 
-1461 programs across 49 facets, grouped by the phases of the M4 plan.
+1525 programs across 50 facets, grouped by the phases of the M4 plan.
 
 ## Where it stands
 
@@ -43,7 +43,7 @@ programs/
   floor/             baseline, control flow shapes, branch probability and frontend, which have to be right before anything else means much
   local/             constant folding, strength reduction, width narrowing, dead code, the peephole rules
   global/            common subexpressions, alias analysis, memory SSA, propagation, scalar replacement
-  loops/             invariant motion, induction variables, unrolling, unswitching, idioms
+  loops/             loop shape, invariant motion, induction variables, unrolling, unswitching, idioms
   interprocedural/   inlining, tail calls, purity, specialization, reachability
   backend/           selection, register pressure and allocation, scheduling, layout, switch lowering
   correctness/       programs where the compiler must not act, and acting is the bug

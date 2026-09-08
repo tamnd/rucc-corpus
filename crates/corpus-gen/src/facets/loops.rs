@@ -36,6 +36,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     loop_idiom(sink);
     loop_deletion(sink);
     loop_rotate(sink);
+    loop_shape(sink);
     loop_restructure(sink);
 }
 
@@ -677,6 +678,315 @@ fn loop_rotate(sink: &mut Sink<'_>) {
             }
         }
     }
+}
+
+/// The shapes a loop can arrive in, rather than the arithmetic it does.
+///
+/// Every loop pass after canonicalization is allowed to assume the loop has a preheader, one
+/// latch, exits that belong to it, values handed over at those exits, and a test at the
+/// bottom. Nothing else in this corpus is written to notice when one of those is wrong,
+/// because every other loop case prints the right number whatever shape the loop came out in.
+/// That is the gap these cases fill: they still print a number the generator worked out, and
+/// they are also the programs to point `-fopt-info` at, since a case here that says it wants
+/// its header copied and gets told the header was declined has failed even though the number
+/// is right.
+///
+/// The first eight are canonicalization and the last eight are header copying. Two of the
+/// eight are shapes the whole corpus never produced once, a loop the ranges can prove never
+/// runs and a header over either size limit, so neither limit had any evidence behind it.
+///
+/// The remarks these get on rucc are worth writing down, because two of them are not what
+/// they look like. `live-out-from-header` is copied rather than declined, and that is right:
+/// canonicalization puts the loop in loop closed form first, so the value is handed over at
+/// the exit and the header no longer defines anything read outside. The shapes that really
+/// do get declined for an escaping value are `two-exits-one-join` and `live-out-multi-exit`,
+/// which says loop closed form covers the single exit case and not the several exit one,
+/// which is what section 26.4 of the rucc spec warns about from the other side.
+fn loop_shape(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "two-exits-one-join",
+        "two-latches",
+        "header-many-preds",
+        "live-out-once",
+        "live-out-twice",
+        "live-out-multi-exit",
+        "already-canonical",
+        "irreducible",
+        "while-to-do-while",
+        "entry-provable",
+        "entry-disprovable",
+        "entry-unknown",
+        "header-store",
+        "header-over-size-limit",
+        "header-over-speed-limit",
+        "live-out-from-header",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::LoopShape) {
+                return;
+            }
+            let Some(program) = shaped(ty, shape) else { continue };
+            sink.push(
+                Facet::LoopShape,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The program for one shape, or nothing when the answer will not fit the accumulator.
+///
+/// One function per shape would read better and would put sixteen names in a file that has
+/// nine. The shapes share the same frame, a loop that accumulates and a check afterwards, and
+/// what differs between them is a handful of lines, so they are written out here where a
+/// reader can see the sixteen next to each other and tell what each one is doing that its
+/// neighbour is not.
+#[expect(clippy::too_many_lines, reason = "sixteen shapes read better side by side")]
+fn shaped(ty: Ty, shape: &str) -> Option<Program> {
+    let name = ty.c_name();
+    let mut program = Program::new(match shape {
+        "two-exits-one-join" => format!("a {name} loop with two exits that leave to one block"),
+        "two-latches" => format!("a {name} loop whose `continue` gives it a second back edge"),
+        "header-many-preds" => format!("a {name} loop two blocks outside it jump into"),
+        "live-out-once" => format!("a {name} loop whose counter is read once afterwards"),
+        "live-out-twice" => format!("a {name} loop whose counter is read twice afterwards"),
+        "live-out-multi-exit" => format!("a {name} loop read afterwards that leaves two ways"),
+        "already-canonical" => format!("a {name} loop that is already in all five shapes"),
+        "irreducible" => format!("a {name} cycle of two blocks entered at both of them"),
+        "while-to-do-while" => format!("a plain {name} `while` loop, which should end up a `do`"),
+        "entry-provable" => format!("a {name} loop the ranges can prove runs at least once"),
+        "entry-disprovable" => format!("a {name} loop the ranges can prove never runs"),
+        "entry-unknown" => format!("a {name} loop whose entry test the ranges cannot settle"),
+        "header-store" => format!("a {name} loop whose test writes to memory"),
+        "header-over-size-limit" => format!("a {name} loop header over the -Os limit of five"),
+        "header-over-speed-limit" => format!("a {name} loop header over the -O1 limit of twenty"),
+        _ => format!("a {name} loop whose header defines a value read after the loop"),
+    });
+
+    // The bound is an input rather than a literal wherever the point of the shape is that the
+    // compiler cannot see the trip count. Where the point is the opposite, that the ranges
+    // can see it, the case still reads an input and then narrows it with arithmetic, because
+    // a literal would be settled by constant folding long before the ranges were asked.
+    let total: i128 = match shape {
+        "two-exits-one-join" => {
+            program.input(Ty::I32, "first", 5);
+            program.input(Ty::I32, "second", 9);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 16; i++) {");
+            program.line_at(1, "if (i == first) break;");
+            program.line_at(1, "if (i == second) break;");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..5).sum()
+        }
+        "two-latches" => {
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 12; i++) {");
+            program.line_at(1, "switch (i % 3) {");
+            program.line_at(1, "case 0:");
+            program.line_at(2, "total += 1;");
+            program.line_at(2, "continue;");
+            program.line_at(1, "case 1:");
+            program.line_at(2, "total += 2;");
+            program.line_at(2, "break;");
+            program.line_at(1, "default:");
+            program.line_at(2, "total += 3;");
+            program.line_at(2, "break;");
+            program.line_at(1, "}");
+            program.line_at(1, "total += 10;");
+            program.line("}");
+            (0..12i128)
+                .map(|at| match at % 3 {
+                    0 => 1,
+                    1 => 12,
+                    _ => 13,
+                })
+                .sum()
+        }
+        "header-many-preds" => {
+            program.input(Ty::I32, "which", 1);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("if (which) goto top;");
+            program.line("total += 1;");
+            program.line("goto top;");
+            program.line("top:");
+            program.line("while (i < 8) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            (0..8).sum()
+        }
+        "live-out-once" | "live-out-twice" => {
+            program.input(Ty::I32, "bound", 10);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i;");
+            program.line("for (i = 0; i < bound; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "i", 10);
+            if shape == "live-out-twice" {
+                program.check(Ty::I32, "i * 2", 20);
+            }
+            (0..10).sum()
+        }
+        "live-out-multi-exit" => {
+            program.input(Ty::I32, "bound", 10);
+            program.input(Ty::I32, "stop", 6);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i;");
+            program.line("for (i = 0; i < bound; i++) {");
+            program.line_at(1, "if (i == stop) break;");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "i", 6);
+            (0..6).sum()
+        }
+        "already-canonical" => {
+            program.input(Ty::I32, "bound", 8);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("if (0 < bound) {");
+            program.line_at(1, "do {");
+            program.line_at(2, format!("total += ({name})i;"));
+            program.line_at(2, "i++;");
+            program.line_at(1, "} while (i < bound);");
+            program.line("}");
+            (0..8).sum()
+        }
+        "irreducible" => {
+            program.input(Ty::I32, "start_odd", 0);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("if (start_odd) goto odd;");
+            program.line("even:");
+            program.line("if (i >= 8) goto done;");
+            program.line(format!("total += ({name})i;"));
+            program.line("i++;");
+            program.line("goto odd;");
+            program.line("odd:");
+            program.line("if (i >= 8) goto done;");
+            program.line(format!("total += ({name})(2 * i);"));
+            program.line("i++;");
+            program.line("goto even;");
+            program.line("done:;");
+            (0..8i128).map(|at| if at % 2 == 0 { at } else { 2 * at }).sum()
+        }
+        "while-to-do-while" => {
+            program.input(Ty::I32, "bound", 10);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("while (i < bound) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            (0..10).sum()
+        }
+        "entry-provable" => {
+            // `% 8 + 1` is one to eight, so the ranges know the loop runs whatever the input
+            // was. Getting that from a literal instead would prove nothing about the ranges,
+            // because folding would have settled it several passes earlier.
+            program.input(Ty::U32, "seed", 13);
+            program.blank();
+            program.line("unsigned bound = seed % 8u + 1u;");
+            program.line(format!("{name} total = 0;"));
+            program.line("unsigned i = 0;");
+            program.line("while (i < bound) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            (0..6).sum()
+        }
+        "entry-disprovable" => {
+            // Nought to three against a counter that starts at eight, so the ranges know the
+            // test can never hold and the whole loop goes.
+            program.input(Ty::U32, "seed", 13);
+            program.blank();
+            program.line("unsigned bound = seed % 4u;");
+            program.line(format!("{name} total = 0;"));
+            program.line("unsigned i = 8;");
+            program.line("while (i < bound) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            0
+        }
+        "entry-unknown" => {
+            program.input(Ty::U32, "bound", 9);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("unsigned i = 0;");
+            program.line("while (i < bound) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            (0..9).sum()
+        }
+        "header-store" => {
+            program.top("static int counter;");
+            program.top("");
+            program.top("static int step(void) {");
+            program.top("    counter++;");
+            program.top("    return counter < 8;");
+            program.top("}");
+            program.line(format!("{name} total = 0;"));
+            program.line("while (step()) {");
+            program.line_at(1, format!("total += ({name})counter;"));
+            program.line("}");
+            (1..8).sum()
+        }
+        "header-over-size-limit" | "header-over-speed-limit" => {
+            // Exclusive ors rather than a sum of the counter, because a chain a compiler can
+            // reassociate into one multiply is a header that is over the limit on the way in
+            // and under it by the time anybody asks.
+            let terms: i128 = if shape == "header-over-size-limit" { 3 } else { 11 };
+            let at = |i: i128| (1..=terms).map(|k| i ^ k).sum::<i128>();
+            let bound = at(0) + 4;
+            let trips = (0..).take_while(|&i| at(i) < bound).count() as i128;
+            let sum = (1..=terms).map(|k| format!("(i ^ {k})")).collect::<Vec<_>>().join(" + ");
+            program.input(Ty::I32, "bound", bound);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line(format!("while ({sum} < bound) {{"));
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            (0..trips).sum()
+        }
+        _ => {
+            program.input(Ty::I32, "bound", 20);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("int last = 0;");
+            program.line("while ((last = i * 3) < bound) {");
+            program.line_at(1, format!("total += ({name})last;"));
+            program.line_at(1, "i++;");
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "last", 21);
+            (0..).map(|i: i128| i * 3).take_while(|&last| last < 20).sum()
+        }
+    };
+    if !fits(ty, total) {
+        return None;
+    }
+    program.blank();
+    program.check(ty.promoted(), "total", total);
+    Some(program)
 }
 
 /// Nested loops that could be walked in either order, or run as one.
