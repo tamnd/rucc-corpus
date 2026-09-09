@@ -575,8 +575,9 @@ fn iv_selection(sink: &mut Sink<'_>) {
 /// loop through [`Program::input`] rather than as a literal, because a loop whose count is a
 /// literal is a loop an unroller takes away, and a case about which induction variables a loop
 /// is left with is worth nothing once there is no loop. The arrays are still filled by a loop
-/// with a literal count, which every compiler here does unroll, so what survives to the point
-/// where the selection happens is the one loop the case is about.
+/// with a literal count, which is a loop a compiler is free to take away and which asks nothing
+/// interesting of the selection either way, so the case is about the one loop that has to
+/// survive.
 fn selected(ty: Ty, shape: &str) -> Option<Program> {
     const TRIPS: i128 = 16;
     let name = ty.c_name();
