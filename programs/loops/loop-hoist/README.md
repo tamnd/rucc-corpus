@@ -2,10 +2,18 @@
 
 whether an invariant computation is allowed out of its loop. Part of the loops phase of the M4 plan.
 
-56 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+64 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
+| [`loop-hoist.f32.14-live-under-pressure.c17.d9eb990c`](loop-hoist.f32.14-live-under-pressure.c17.d9eb990c.c) | type=f32, shape=14-live-under-pressure | c17 | `1680` |
+| [`loop-hoist.f32.4-live-under-pressure.c17.2f5b92fd`](loop-hoist.f32.4-live-under-pressure.c17.2f5b92fd.c) | type=f32, shape=4-live-under-pressure | c17 | `320` |
+| [`loop-hoist.f32.6-live-under-pressure.c17.34af9df4`](loop-hoist.f32.6-live-under-pressure.c17.34af9df4.c) | type=f32, shape=6-live-under-pressure | c17 | `528` |
+| [`loop-hoist.f32.7-live-under-pressure.c17.f90359cb`](loop-hoist.f32.7-live-under-pressure.c17.f90359cb.c) | type=f32, shape=7-live-under-pressure | c17 | `644` |
+| [`loop-hoist.f64.14-live-under-pressure.c17.5c00e919`](loop-hoist.f64.14-live-under-pressure.c17.5c00e919.c) | type=f64, shape=14-live-under-pressure | c17 | `1680` |
+| [`loop-hoist.f64.4-live-under-pressure.c17.3120e46d`](loop-hoist.f64.4-live-under-pressure.c17.3120e46d.c) | type=f64, shape=4-live-under-pressure | c17 | `320` |
+| [`loop-hoist.f64.6-live-under-pressure.c17.130c3d26`](loop-hoist.f64.6-live-under-pressure.c17.130c3d26.c) | type=f64, shape=6-live-under-pressure | c17 | `528` |
+| [`loop-hoist.f64.7-live-under-pressure.c17.473b1f13`](loop-hoist.f64.7-live-under-pressure.c17.473b1f13.c) | type=f64, shape=7-live-under-pressure | c17 | `644` |
 | [`loop-hoist.i32.a-call-with-nothing-in-it.c17.b01c8fd2`](loop-hoist.i32.a-call-with-nothing-in-it.c17.b01c8fd2.c) | type=i32, shape=a-call-with-nothing-in-it | c17 | `100` |
 | [`loop-hoist.i32.a-chain-of-three.c17.53aa2571`](loop-hoist.i32.a-chain-of-three.c17.53aa2571.c) | type=i32, shape=a-chain-of-three | c17 | `1116` |
 | [`loop-hoist.i32.a-store-of-something-invariant.c17.bfcd2d20`](loop-hoist.i32.a-store-of-something-invariant.c17.bfcd2d20.c) | type=i32, shape=a-store-of-something-invariant | c17 | `8 28` |

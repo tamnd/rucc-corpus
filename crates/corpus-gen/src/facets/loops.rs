@@ -30,6 +30,7 @@ const TYPES: &[Ty] = Ty::WIDE;
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     loop_invariant(sink);
     loop_hoist(sink);
+    float_pressure(sink);
     induction_variable(sink);
     trip_counts(sink);
     loop_unswitch(sink);
@@ -131,6 +132,88 @@ fn loop_hoist(sink: &mut Sink<'_>) {
             );
         }
     }
+}
+
+/// The same hoisting question asked of the other bank of registers.
+///
+/// Everything else in this file accumulates into an integer, so every pressure case the corpus
+/// has puts its load on the general purpose registers. A compiler that counts one number for
+/// both banks passes all of them and is still wrong, because the floating point bank does not
+/// give up a stack pointer or a frame pointer and has two more registers to spend. These are the
+/// cases that can tell the difference.
+///
+/// The live count is the axis and the four values sit either side of a decision rather than
+/// spread evenly. Three values besides the accumulators are live across the loop, the two the
+/// invariant is built from and the invariant itself, so the load on the bank is the count plus
+/// three. Four is comfortably inside any answer and the invariant should come out. Fourteen is
+/// past every answer and it should stay. Six and seven are the two that matter: with two
+/// registers held back as a margin they are inside a bank of fourteen and outside a bank of
+/// twelve, so a compiler pricing the floating point bank at the general purpose bank's size
+/// leaves the invariant in the loop and a compiler that asked the target moves it.
+///
+/// The values are small whole numbers throughout, so every result is exact in both `float` and
+/// `double` and the total can be checked as an integer. That is not a way of dodging floating
+/// point, it is what keeps the case about register pressure: a total that depended on rounding
+/// would be a case that also asked whether the compiler reassociated, and it would fail for the
+/// wrong reason.
+fn float_pressure(sink: &mut Sink<'_>) {
+    const LIVE: &[usize] = &[4, 6, 7, 14];
+    for &name in &["float", "double"] {
+        for &live in LIVE {
+            if !sink.wants(Facet::LoopHoist) {
+                return;
+            }
+            sink.push(
+                Facet::LoopHoist,
+                Axes::of([
+                    ("type", if name == "float" { "f32" } else { "f64" }),
+                    ("shape", &format!("{live}-live-under-pressure")),
+                ]),
+                Dialect::C17,
+                floating(name, live),
+            );
+        }
+    }
+}
+
+/// One floating point pressure case: `live` accumulators and one cheap invariant on top.
+///
+/// The invariant is an add of two values read out of `volatile` globals, so nothing in the loop
+/// changes it and no compiler is allowed to fold it. An add rather than a multiply, and that is
+/// the whole design of the case: a multiply comes out of a loop whatever the pressure is,
+/// because it is dear enough to be worth a register on its own, so a case built on one passes
+/// everywhere and says nothing. An add is only worth moving when there is somewhere to put it.
+fn floating(name: &str, live: usize) -> Program {
+    let mut program = Program::new(format!(
+        "{live} live {name} accumulators and a cheap invariant, which is what the other bank sees"
+    ));
+    program.top(format!("static volatile {name} scale_in = 2;"));
+    program.top(format!("static volatile {name} bias_in = 3;"));
+    program.blank();
+    program.line(format!("{name} scale = scale_in;"));
+    program.line(format!("{name} bias = bias_in;"));
+    for at in 0..live {
+        program.line(format!("{name} v{at} = 0;"));
+    }
+    program.line("for (int i = 0; i < 8; i++) {");
+    program.line_at(1, format!("{name} k = scale + bias;"));
+    for at in 0..live {
+        program.line_at(1, format!("v{at} += k + (i + {at});"));
+    }
+    program.line("}");
+    program.blank();
+    program.line(format!(
+        "{name} total = {};",
+        (0..live).map(|at| format!("v{at}")).collect::<Vec<_>>().join(" + ")
+    ));
+    program.blank();
+
+    // Eight iterations, each adding five for the invariant plus the loop counter plus the
+    // accumulator's own number. Every term is a whole number under a hundred thousand, so the
+    // sum is exact in a `float` as well as in a `double`.
+    let total: i128 = (0..live as i128).flat_map(|at| (0..8i128).map(move |i| 5 + i + at)).sum();
+    program.check(Ty::I64, "total", total);
+    program
 }
 
 /// One shape of the hoisting question, or `None` where the accumulator cannot hold the answer.
