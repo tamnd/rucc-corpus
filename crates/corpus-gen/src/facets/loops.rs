@@ -34,6 +34,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     trip_counts(sink);
     loop_unswitch(sink);
     loop_unroll(sink);
+    loop_unroll_shape(sink);
     loop_idiom(sink);
     loop_deletion(sink);
     loop_rotate(sink);
@@ -782,6 +783,349 @@ fn loop_unroll(sink: &mut Sink<'_>) {
             }
         }
     }
+}
+
+/// The loop shapes an unroller has to count correctly or leave alone.
+///
+/// `loop-unroll` asks whether a loop with a known trip count is unrolled. This asks whether
+/// the count is right, which is a different question and the one with the wrong answers in
+/// it. Section 29.7 of the rucc optimizer spec calls the off by one the most common bug in
+/// unrolling, and every way of writing a loop in C puts the fencepost somewhere else: an
+/// inclusive bound runs once more than an exclusive one, a countdown ends on a different
+/// value, a step that does not divide the distance overshoots, and `!=` only terminates
+/// because the step lands on the bound exactly.
+///
+/// The rest are the shapes an unroller has to refuse rather than count. A `break` is a second
+/// way out, so a trip count taken from the other exit is not a bound on the loop at all. A
+/// counter narrower than `int` wraps at its own width rather than at the promoted one. A
+/// nested loop whose inner bound is not known cannot be unrolled from the inside out. And a
+/// body with a call in it has to run exactly as often after the unroll as before, which is
+/// what the call counter in that case is there to say.
+fn loop_unroll_shape(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "an-exclusive-bound",
+        "an-inclusive-bound",
+        "counting-down",
+        "counting-down-inclusive",
+        "a-step-that-does-not-divide",
+        "landing-on-the-bound-exactly",
+        "an-unsigned-counter",
+        "a-counter-narrower-than-int",
+        "one-iteration",
+        "no-iterations",
+        "testing-at-the-bottom",
+        "a-nest-both-counted",
+        "a-nest-the-inner-one-unknown",
+        "a-second-way-out",
+        "a-branch-inside-the-body",
+        "a-call-in-the-body",
+        "stores-through-a-pointer",
+        "a-counter-read-after-the-loop",
+        "right-at-the-copy-limit",
+        "one-past-the-copy-limit",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::LoopUnrollShape) {
+                return;
+            }
+            let Some(program) = unrolled(ty, shape) else { continue };
+            sink.push(
+                Facet::LoopUnrollShape,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// One shape of [`loop_unroll_shape`], or nothing when the answer would not fit the type.
+///
+/// Every case accumulates into the type under test and prints the total, so a count that is
+/// one too small or one too large is a different number rather than a different instruction
+/// sequence. Several of them print a second value as well, because a loop can run the right
+/// number of times and still leave the wrong thing behind it.
+#[expect(clippy::too_many_lines, reason = "twenty shapes, each one short and self contained")]
+fn unrolled(ty: Ty, shape: &str) -> Option<Program> {
+    let name = ty.c_name();
+    let mut program = Program::new(match shape {
+        "an-exclusive-bound" => format!("counting up to a bound the loop never reaches, {name}"),
+        "an-inclusive-bound" => format!("counting up to a bound the loop does reach, {name}"),
+        "counting-down" => format!("counting down to a bound the loop never reaches, {name}"),
+        "counting-down-inclusive" => format!("counting down through zero, {name}"),
+        "a-step-that-does-not-divide" => format!("a step that overshoots the bound, {name}"),
+        "landing-on-the-bound-exactly" => format!("a loop that ends on != rather than <, {name}"),
+        "an-unsigned-counter" => format!("a loop counted by an unsigned variable, {name}"),
+        "a-counter-narrower-than-int" => format!("a loop counted by an unsigned char, {name}"),
+        "one-iteration" => format!("a loop that runs exactly once, {name}"),
+        "no-iterations" => format!("a loop that never runs at all, {name}"),
+        "testing-at-the-bottom" => {
+            format!("a do while, which is already the rotated shape, {name}")
+        }
+        "a-nest-both-counted" => format!("a nest whose loops both have a known count, {name}"),
+        "a-nest-the-inner-one-unknown" => format!("a nest whose inner bound is not known, {name}"),
+        "a-second-way-out" => format!("a loop with a break in it, {name}"),
+        "a-branch-inside-the-body" => format!("a loop with a continue in it, {name}"),
+        "a-call-in-the-body" => {
+            format!("a body that calls something which counts the calls, {name}")
+        }
+        "stores-through-a-pointer" => format!("filling an array through a pointer, {name}"),
+        "a-counter-read-after-the-loop" => format!("a counter that outlives its loop, {name}"),
+        "right-at-the-copy-limit" => format!("sixteen iterations, {name}"),
+        _ => format!("seventeen iterations, {name}"),
+    });
+
+    let total: i128 = match shape {
+        "an-exclusive-bound" => {
+            // The base case, and the one every other fencepost is measured against. Seven
+            // iterations, i taking 0 through 6.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 7; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..7i128).sum()
+        }
+        "an-inclusive-bound" => {
+            // The same loop with <= instead of <, which runs one more time. A compiler that
+            // shares one trip count formula between the two prints the same number twice.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i <= 7; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..=7i128).sum()
+        }
+        "counting-down" => {
+            // A negative step, so the count is the distance divided by a step the analysis
+            // has to read as -1 rather than 1. Six iterations, i taking 6 down to 1.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 6; i > 0; i--) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (1..=6i128).sum()
+        }
+        "counting-down-inclusive" => {
+            // The same again through zero, which is seven iterations and the fencepost in the
+            // other direction.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 6; i >= 0; i--) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..=6i128).sum()
+        }
+        "a-step-that-does-not-divide" => {
+            // Ten over three is four iterations rather than three, because the last one starts
+            // inside the bound and the counter leaves it. The rounding is the whole case.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 10; i += 3) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            [0i128, 3, 6, 9].into_iter().sum()
+        }
+        "landing-on-the-bound-exactly" => {
+            // != terminates only because the step divides the distance. The count is four and
+            // the loop is an infinite one for any step that misses, which is why an unroller
+            // has to work the divisibility out rather than assume it.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i != 8; i += 2) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            [0i128, 2, 4, 6].into_iter().sum()
+        }
+        "an-unsigned-counter" => {
+            // No overflow promise on the counter, so a trip count that leans on signed
+            // overflow being undefined is not available here and the wrap has to be ruled out
+            // some other way.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (unsigned i = 0u; i < 9u; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..9i128).sum()
+        }
+        "a-counter-narrower-than-int" => {
+            // The counter is an unsigned char and the bound is 200, so it stays inside its own
+            // width, but the comparison happens after the integer promotion. A chrec that
+            // keeps the promoted width and forgets the assignment truncates counts wrong.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (unsigned char i = 0; i < 200; i++) {");
+            program.line_at(1, format!("total += ({name})1;"));
+            program.line("}");
+            200
+        }
+        "one-iteration" => {
+            // One copy, which is the loop with its back edge taken out and nothing added. The
+            // case exists because an unroller that adds a copy here has an off by one that
+            // every larger count hides.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 1; i++) {");
+            program.line_at(1, format!("total += ({name})5;"));
+            program.line("}");
+            5
+        }
+        "no-iterations" => {
+            // Zero copies, which is the loop going away entirely. An unroller that makes one
+            // copy here runs a body the program never runs.
+            program.blank();
+            program.line(format!("{name} total = 99;"));
+            program.line("for (int i = 0; i < 0; i++) {");
+            program.line_at(1, format!("total += ({name})1;"));
+            program.line("}");
+            99
+        }
+        "testing-at-the-bottom" => {
+            // A do while runs its body before it tests, so the count is the number of times
+            // the test succeeds plus the entry. This is the shape rotation produces and the
+            // one an unroller sees most often.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int i = 0;");
+            program.line("do {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "i++;");
+            program.line("} while (i < 6);");
+            (0..6i128).sum()
+        }
+        "a-nest-both-counted" => {
+            // Twelve iterations of the inner body. Unrolling the inner loop makes the outer
+            // body twelve instructions longer, so the outer one is priced against what the
+            // inner one became rather than against what it was.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int x = 0; x < 4; x++) {");
+            program.line_at(1, "for (int y = 0; y < 3; y++) {");
+            program.line_at(2, format!("total += ({name})(x * y);"));
+            program.line_at(1, "}");
+            program.line("}");
+            (0..4i128).flat_map(|x| (0..3i128).map(move |y| x * y)).sum()
+        }
+        "a-nest-the-inner-one-unknown" => {
+            // The outer loop is countable and the inner one is not, which is the case an
+            // unroller has to refuse from the inside and may still take from the outside.
+            program.input(Ty::I32, "inner", 4);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int x = 0; x < 3; x++) {");
+            program.line_at(1, "for (int y = 0; y < inner; y++) {");
+            program.line_at(2, format!("total += ({name})y;"));
+            program.line_at(1, "}");
+            program.line("}");
+            3 * (0..4i128).sum::<i128>()
+        }
+        "a-second-way-out" => {
+            // The bound says six and the break says four. A count taken from the bound is not
+            // a count of this loop, because control reaches the break first, and an unroller
+            // that reads one exit and copies the body that many times runs the body twice too
+            // often.
+            program.input(Ty::I32, "stop", 4);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 6; i++) {");
+            program.line_at(1, "if (i == stop) {");
+            program.line_at(2, "break;");
+            program.line_at(1, "}");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..4i128).sum()
+        }
+        "a-branch-inside-the-body" => {
+            // A continue is a branch inside the body and not a second way out, so the count is
+            // still six and the copies each keep their own branch.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 6; i++) {");
+            program.line_at(1, "if (i & 1) {");
+            program.line_at(2, "continue;");
+            program.line_at(1, "}");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..6i128).filter(|at| at % 2 == 0).sum()
+        }
+        "a-call-in-the-body" => {
+            // The counter says how many times the body ran, so this case reports the trip
+            // count directly rather than inferring it from the total. A copy too many or too
+            // few is a different second line whatever the first one says.
+            program.top("static int calls;");
+            program.top("");
+            program.top("static int bump(int x) {");
+            program.top("    calls++;");
+            program.top("    return x + 1;");
+            program.top("}");
+            program.blank();
+            program.line("int stepped = 0;");
+            program.line("for (int i = 0; i < 5; i++) {");
+            program.line_at(1, "stepped = bump(stepped);");
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "calls", 5);
+            program.line(format!("{name} total = ({name})stepped;"));
+            5
+        }
+        "stores-through-a-pointer" => {
+            // Every copy stores to a different element, so the addresses are what the unroll
+            // turns into constants. A copy too many writes past the end of the array.
+            program.blank();
+            program.line("int room[6];");
+            program.line("int *at = room;");
+            program.line("for (int i = 0; i < 6; i++) {");
+            program.line_at(1, "at[i] = i * 3;");
+            program.line("}");
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 6; i++) {");
+            program.line_at(1, format!("total += ({name})room[i];"));
+            program.line("}");
+            (0..6i128).map(|at| at * 3).sum()
+        }
+        "a-counter-read-after-the-loop" => {
+            // The value the loop leaves behind comes from the last copy and not the first,
+            // which is the substitution an unroller gets wrong by reusing one round's renaming
+            // on top of another's.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("int last = -1;");
+            program.line("for (int i = 0; i < 5; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line_at(1, "last = i;");
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "last", 4);
+            (0..5i128).sum()
+        }
+        "right-at-the-copy-limit" => {
+            // Sixteen is gcc's max-completely-peel-times, so this is the largest count that is
+            // unrolled and the next case is the smallest that is not. Neither answer is wrong,
+            // and a corpus that has both can say which one a compiler picked.
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 16; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..16i128).sum()
+        }
+        _ => {
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < 17; i++) {");
+            program.line_at(1, format!("total += ({name})i;"));
+            program.line("}");
+            (0..17i128).sum()
+        }
+    };
+
+    if !fits(ty, total) {
+        return None;
+    }
+    program.blank();
+    program.check(ty.promoted(), "total", total);
+    Some(program)
 }
 
 /// Loops that are really a library function.

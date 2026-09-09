@@ -91,6 +91,8 @@ pub enum Facet {
     LoopUnswitch,
     /// Unrolling a loop body, whether the trip count is known or not.
     LoopUnroll,
+    /// The loop shapes complete unrolling has to count correctly or leave alone.
+    LoopUnrollShape,
     /// Recognizing a loop that is a memory operation the runtime already has.
     LoopIdiom,
     /// Deleting a loop whose body computes nothing anybody reads.
@@ -220,6 +222,7 @@ impl Facet {
         Self::InductionVariable,
         Self::LoopUnswitch,
         Self::LoopUnroll,
+        Self::LoopUnrollShape,
         Self::LoopIdiom,
         Self::LoopDeletion,
         Self::LoopRotate,
@@ -281,6 +284,7 @@ impl Facet {
             Self::InductionVariable => "induction-variable",
             Self::LoopUnswitch => "loop-unswitch",
             Self::LoopUnroll => "loop-unroll",
+            Self::LoopUnrollShape => "loop-unroll-shape",
             Self::LoopIdiom => "loop-idiom",
             Self::LoopDeletion => "loop-deletion",
             Self::LoopRotate => "loop-rotate",
@@ -345,6 +349,7 @@ impl Facet {
             Self::InductionVariable => "rewriting induction variables into a cheaper set",
             Self::LoopUnswitch => "removing a test the loop guard already decided",
             Self::LoopUnroll => "unrolling a loop body, known trip count or not",
+            Self::LoopUnrollShape => "the loop shapes an unroller has to count or refuse",
             Self::LoopIdiom => "recognizing a loop the runtime already implements",
             Self::LoopDeletion => "deleting a loop whose body nobody reads",
             Self::LoopRotate => "rotating a loop so the test lands at the bottom",
@@ -412,6 +417,7 @@ impl Facet {
             | Self::InductionVariable
             | Self::LoopUnswitch
             | Self::LoopUnroll
+            | Self::LoopUnrollShape
             | Self::LoopIdiom
             | Self::LoopDeletion
             | Self::LoopRotate
