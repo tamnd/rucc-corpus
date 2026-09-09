@@ -32,6 +32,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     loop_hoist(sink);
     float_pressure(sink);
     induction_variable(sink);
+    iv_selection(sink);
     trip_counts(sink);
     loop_unswitch(sink);
     loop_unroll(sink);
@@ -526,6 +527,210 @@ fn induction_variable(sink: &mut Sink<'_>) {
             );
         }
     }
+}
+
+/// The address shapes that decide which induction variables a loop is left with.
+///
+/// The facet above asks whether a compiler reduces three variables to one. This one asks
+/// something narrower, which is whether it picks the right set, because the answer depends on
+/// the machine's addressing modes and there is no target-independent right one. Every shape
+/// here is a loop whose arithmetic is trivial and whose addressing is not, so what differs
+/// between a compiler that chooses well and one that does not is the instructions in the body
+/// rather than the answer at the end.
+///
+/// The answer is still checked, and it has to be, because a wrong set of induction variables is
+/// a wrong program rather than a slow one. A rewrite that gets the scale wrong reads the wrong
+/// element and a rewrite that gets the exit test wrong runs the wrong number of times, and both
+/// of those come out in the totals these print.
+fn iv_selection(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "grouped-offsets",
+        "two-arrays",
+        "legal-scale",
+        "awkward-stride",
+        "counter-dead-after",
+        "counter-live-after",
+        "many-walks",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::IvSelection) {
+                return;
+            }
+            let Some(program) = selected(ty, shape) else { continue };
+            sink.push(
+                Facet::IvSelection,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// One shape of the selection question, or `None` where the accumulator cannot hold the answer.
+///
+/// The trip count is sixteen everywhere, which is small enough that every total below fits an
+/// `int` and large enough that the loop is worth an addressing decision at all. It reaches the
+/// loop through [`Program::input`] rather than as a literal, because a loop whose count is a
+/// literal is a loop an unroller takes away, and a case about which induction variables a loop
+/// is left with is worth nothing once there is no loop. The arrays are still filled by a loop
+/// with a literal count, which is a loop a compiler is free to take away and which asks nothing
+/// interesting of the selection either way, so the case is about the one loop that has to
+/// survive.
+fn selected(ty: Ty, shape: &str) -> Option<Program> {
+    const TRIPS: i128 = 16;
+    let name = ty.c_name();
+    let mut program = Program::new(match shape {
+        "grouped-offsets" => {
+            format!("three {name} reads a constant apart, which want one variable between them")
+        }
+        "two-arrays" => format!("two {name} arrays walked at once, which want one each"),
+        "legal-scale" => format!("a {name} walk whose stride an addressing mode holds"),
+        "awkward-stride" => format!("a {name} walk whose stride no addressing mode holds"),
+        "counter-dead-after" => format!("a {name} loop whose counter nothing reads afterwards"),
+        "counter-live-after" => format!("a {name} loop whose counter something reads afterwards"),
+        "many-walks" => format!("six {name} walks at once, which is more than the registers"),
+        _ => unreachable!("unknown shape {shape}"),
+    });
+
+    // Every array is filled from the loop counter before it is read, so nothing here depends on
+    // what was in memory and the totals are the generator's arithmetic rather than a guess.
+    let fill = |program: &mut Program, array: &str, scale: i128| {
+        program.line(format!(
+            "for (int i = 0; i < {}; i++) {array}[i] = ({name})(i * {scale});",
+            TRIPS + 4
+        ));
+    };
+
+    // The count the loops under test are bounded by. The generator knows it is sixteen and the
+    // optimizer is not allowed to, which is the whole reason it is read out of a volatile.
+    program.input(Ty::I32, "n", TRIPS);
+
+    match shape {
+        // a[i] + a[i+1] + a[i+2]. One group of three, a constant apart, so a compiler that
+        // groups keeps one pointer and one that does not keeps three.
+        "grouped-offsets" => {
+            let total: i128 = (0..TRIPS).map(|i| i + (i + 1) + (i + 2)).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.line(format!("{name} a[{}];", TRIPS + 4));
+            fill(&mut program, "a", 1);
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i++) {");
+            program.line_at(1, "total += a[i] + a[i + 1] + a[i + 2];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        // Two bases stepping together, which the loop's own counter cannot express because a
+        // counter is an integer and an address is not.
+        "two-arrays" => {
+            let total: i128 = (0..TRIPS).map(|i| i + i * 2).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.line(format!("{name} a[{}], b[{}];", TRIPS + 4, TRIPS + 4));
+            fill(&mut program, "a", 1);
+            fill(&mut program, "b", 2);
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i++) {");
+            program.line_at(1, "total += a[i] + b[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        // A stride of four elements. Four is a scale every one of these machines holds, so the
+        // multiply belongs in the addressing mode and not in the body.
+        "legal-scale" => {
+            let total: i128 = (0..TRIPS / 4).map(|k| k * 4).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.line(format!("{name} a[{}];", TRIPS + 4));
+            fill(&mut program, "a", 1);
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i += 4) {");
+            program.line_at(1, "total += a[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        // A stride of three elements, which no scale holds, so something has to be multiplied
+        // out or stepped by hand. This is the shape where a compiler that keeps a pointer beats
+        // one that recomputes the address.
+        "awkward-stride" => {
+            let total: i128 = (0..TRIPS).filter(|i| i % 3 == 0).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.line(format!("{name} a[{}];", TRIPS + 4));
+            fill(&mut program, "a", 1);
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i += 3) {");
+            program.line_at(1, "total += a[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        // Nothing reads the counter after the loop, so the counter is free to become a countdown
+        // to zero and the exit test free to become a comparison against it.
+        "counter-dead-after" => {
+            let total: i128 = (0..TRIPS).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.line(format!("{name} a[{}];", TRIPS + 4));
+            fill(&mut program, "a", 1);
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i++) {");
+            program.line_at(1, "total += a[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        // The same loop with the counter read afterwards, which is the case that stops the
+        // countdown. A compiler that rewrites this one anyway prints the wrong number, which is
+        // why the pair is worth more than either half.
+        "counter-live-after" => {
+            let total: i128 = (0..TRIPS).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.line(format!("{name} a[{}];", TRIPS + 4));
+            fill(&mut program, "a", 1);
+            program.line(format!("{name} total = 0;"));
+            program.line("int i;");
+            program.line("for (i = 0; i < n; i++) {");
+            program.line_at(1, "total += a[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+            program.check(Ty::I32, "i", TRIPS);
+        }
+        // Six bases at once, which is past what the selection is allowed to spend on one loop
+        // once the margin is taken off. A compiler that keeps a pointer per array spills, and a
+        // compiler that keeps one and reaches the rest off it does not.
+        "many-walks" => {
+            let total: i128 = (0..TRIPS).map(|i| (1..=6).map(|k| i * k).sum::<i128>()).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            for at in 1..=6 {
+                program.line(format!("{name} a{at}[{}];", TRIPS + 4));
+                fill(&mut program, &format!("a{at}"), at);
+            }
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i++) {");
+            program.line_at(1, "total += a1[i] + a2[i] + a3[i] + a4[i] + a5[i] + a6[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        _ => unreachable!("unknown shape {shape}"),
+    }
+    Some(program)
 }
 
 /// The loop shapes whose trip count is the thing being tested.

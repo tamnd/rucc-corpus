@@ -87,6 +87,8 @@ pub enum Facet {
     LoopHoist,
     /// Rewriting the induction variables of a loop into a cheaper set.
     InductionVariable,
+    /// The address shapes that decide which induction variables a loop is left with.
+    IvSelection,
     /// Removing a bound check or a branch that the loop guard already decided.
     LoopUnswitch,
     /// Unrolling a loop body, whether the trip count is known or not.
@@ -220,6 +222,7 @@ impl Facet {
         Self::LoopInvariant,
         Self::LoopHoist,
         Self::InductionVariable,
+        Self::IvSelection,
         Self::LoopUnswitch,
         Self::LoopUnroll,
         Self::LoopUnrollShape,
@@ -282,6 +285,7 @@ impl Facet {
             Self::LoopInvariant => "loop-invariant",
             Self::LoopHoist => "loop-hoist",
             Self::InductionVariable => "induction-variable",
+            Self::IvSelection => "iv-selection",
             Self::LoopUnswitch => "loop-unswitch",
             Self::LoopUnroll => "loop-unroll",
             Self::LoopUnrollShape => "loop-unroll-shape",
@@ -347,6 +351,7 @@ impl Facet {
             Self::LoopInvariant => "hoisting an invariant computation out of a loop",
             Self::LoopHoist => "whether an invariant computation is allowed out of its loop",
             Self::InductionVariable => "rewriting induction variables into a cheaper set",
+            Self::IvSelection => "which induction variables a loop is left with, and how many",
             Self::LoopUnswitch => "removing a test the loop guard already decided",
             Self::LoopUnroll => "unrolling a loop body, known trip count or not",
             Self::LoopUnrollShape => "the loop shapes an unroller has to count or refuse",
@@ -415,6 +420,7 @@ impl Facet {
             | Self::ScalarReplacement => Phase::Global,
             Self::LoopInvariant
             | Self::InductionVariable
+            | Self::IvSelection
             | Self::LoopUnswitch
             | Self::LoopUnroll
             | Self::LoopUnrollShape
