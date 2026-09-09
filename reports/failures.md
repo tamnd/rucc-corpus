@@ -1,6 +1,61 @@
 # What went wrong
 
-285 findings, worst first. A finding is one case, one compiler, one level.
+270 findings, worst first. A finding is one case, one compiler, one level.
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O0` on `rucc`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: 15
+actual:   10
+```
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O1` on `rucc`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: 15
+actual:   10
+```
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O2` on `rucc`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: 15
+actual:   10
+```
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O3` on `rucc`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: 15
+actual:   10
+```
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `Os` on `rucc`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: 15
+actual:   10
+```
 
 ### `atomics.stdatomic-flag.c17.6551714c` at `O0` on `rucc`
 
@@ -387,62 +442,7 @@ expected: the program compiles
 actual:   rucc: error: internal error: invalid IR, @main block1 mul: %37 arrives at block3 and does not reach here [E0652]\nruc...
 ```
 
-### `computed-goto.dispatch-in-loop.32.c17.0aa5c5d2` at `O0` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: internal error: invalid IR, @main block1 mul: %307 arrives at block33 and does not reach here [E0652]\nr...
-```
-
-### `computed-goto.dispatch-in-loop.32.c17.0aa5c5d2` at `O1` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: internal error: invalid IR, @main block1 mul: %307 arrives at block33 and does not reach here [E0652]\nr...
-```
-
-### `computed-goto.dispatch-in-loop.32.c17.0aa5c5d2` at `O2` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: internal error: invalid IR, @main block1 mul: %307 arrives at block33 and does not reach here [E0652]\nr...
-```
-
-### `computed-goto.dispatch-in-loop.32.c17.0aa5c5d2` at `O3` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: internal error: invalid IR, @main block1 mul: %307 arrives at block33 and does not reach here [E0652]\nr...
-```
-
-### `computed-goto.dispatch-in-loop.32.c17.0aa5c5d2` at `Os` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: internal error: invalid IR, @main block1 mul: %307 arrives at block33 and does not reach here [E0652]\nr...
-```
-
-And 245 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
+And 230 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
 
 ## What the compiler says it has not built yet
 
@@ -451,9 +451,8 @@ Its own section rather than a line in the failures, because the response is diff
 | what the compiler said | cases | compiler |
 |---|---|---|
 | error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] | 80 | `rucc` |
-| error: `__atomic_exchange_n` is not implemented yet [E0686] | 40 | `rucc` |
-| error: `__atomic_fetch_add` is not implemented yet [E0686] | 40 | `rucc` |
-| error: `__atomic_load` is not implemented yet [E0686] | 40 | `rucc` |
+| error: cannot generate code for 'main': no rule lowers a `stacksave` producing a `ptr` [E0653] | 30 | `rucc` |
+| error: `__builtin_alloca` is not implemented yet [E0686] | 15 | `rucc` |
 | error: `__atomic_signal_fence` is not implemented yet [E0686] | 5 | `rucc` |
-| error: `__atomic_test_and_set` is not implemented yet [E0686] | 5 | `rucc` |
+| error: cannot generate code for 'total': no rule lowers a `va_arg` producing a `f80` [E0653] | 5 | `rucc` |
 

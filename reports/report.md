@@ -1,21 +1,21 @@
 # rucc corpus report
 
-75 case results did not come out as expected. They are listed below, worst first.
+135 case results did not come out as expected. They are listed below, worst first.
 
-The corpus holds 1525 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `690da57bab01fe09`.
+The corpus holds 1708 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `dff6e22dd72921a6`.
 
-That is 49,314 lines of C, 1.8 MiB, one translation unit per program, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 53,227 lines of C, 1.9 MiB, in 1,732 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.8.2 | under test |
+| `rucc` | rucc 0.9.3 | under test |
 
 ## Did it meet the targets
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 75 failures | no |
+| `correctness` | 0 failures | 135 failures | no |
 | `code-quality:rucc` | within 10 percent | 10 percent more | no |
 | `compile-throughput:rucc` | no worse | 51 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
@@ -29,11 +29,101 @@ That is 49,314 lines of C, 1.8 MiB, one translation unit per program, and it is 
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 7593 | 7593 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `rucc` | 7593 | 7308 | 0 | 75 | 210 | 0 | 0 | 0 |
+| `gcc-16` | 8508 | 8508 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `rucc` | 8508 | 8238 | 5 | 125 | 135 | 0 | 5 | 0 |
 
 ## What went wrong
 
+### `setjmp-longjmp.volatile-survives.c17.59577dbb`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it. This is a case about the jump that leaves a function without returning from it, built at `-O0`.
+
+Expected:
+
+```
+15
+```
+
+Got:
+
+```
+10
+```
+
+The program is `programs/correctness/setjmp-longjmp/setjmp-longjmp.volatile-survives.c17.59577dbb.c` and the working directory of the failing build was kept under the run directory.
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it. This is a case about the jump that leaves a function without returning from it, built at `-O1`.
+
+Expected:
+
+```
+15
+```
+
+Got:
+
+```
+10
+```
+
+The program is `programs/correctness/setjmp-longjmp/setjmp-longjmp.volatile-survives.c17.59577dbb.c` and the working directory of the failing build was kept under the run directory.
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it. This is a case about the jump that leaves a function without returning from it, built at `-O2`.
+
+Expected:
+
+```
+15
+```
+
+Got:
+
+```
+10
+```
+
+The program is `programs/correctness/setjmp-longjmp/setjmp-longjmp.volatile-survives.c17.59577dbb.c` and the working directory of the failing build was kept under the run directory.
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it. This is a case about the jump that leaves a function without returning from it, built at `-O3`.
+
+Expected:
+
+```
+15
+```
+
+Got:
+
+```
+10
+```
+
+The program is `programs/correctness/setjmp-longjmp/setjmp-longjmp.volatile-survives.c17.59577dbb.c` and the working directory of the failing build was kept under the run directory.
+
+### `setjmp-longjmp.volatile-survives.c17.59577dbb`
+
+rucc printed the wrong answer for a case about the jump that leaves a function without returning from it. This is a case about the jump that leaves a function without returning from it, built at `-Os`.
+
+Expected:
+
+```
+15
+```
+
+Got:
+
+```
+10
+```
+
+The program is `programs/correctness/setjmp-longjmp/setjmp-longjmp.volatile-survives.c17.59577dbb.c` and the working directory of the failing build was kept under the run directory.
+
 ### `atomics.stdatomic-flag.c17.6551714c`
 
 rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
@@ -434,107 +524,7 @@ case.c:8:19: error: expected `;`, found `counter` [E0400]
 
 The program is `programs/correctness/atomics/atomics.stdatomic.u32.c17.efd489a1.c` and the working directory of the failing build was kept under the run directory.
 
-### `atomics.stdatomic.u64.c17.53c8ec77`
-
-rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O0`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:4:1: error: `stdatomic.h` file not found [E0341]
-case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
-case.c:8:21: error: expected `;`, found `counter` [E0400]
-```
-
-The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
-
-### `atomics.stdatomic.u64.c17.53c8ec77`
-
-rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O1`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:4:1: error: `stdatomic.h` file not found [E0341]
-case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
-case.c:8:21: error: expected `;`, found `counter` [E0400]
-```
-
-The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
-
-### `atomics.stdatomic.u64.c17.53c8ec77`
-
-rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O2`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:4:1: error: `stdatomic.h` file not found [E0341]
-case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
-case.c:8:21: error: expected `;`, found `counter` [E0400]
-```
-
-The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
-
-### `atomics.stdatomic.u64.c17.53c8ec77`
-
-rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-O3`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:4:1: error: `stdatomic.h` file not found [E0341]
-case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
-case.c:8:21: error: expected `;`, found `counter` [E0400]
-```
-
-The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
-
-### `atomics.stdatomic.u64.c17.53c8ec77`
-
-rucc would not compile a valid program about the atomic builtins at every ordering, and the header over them. This is a case about the atomic builtins at every ordering, and the header over them, built at `-Os`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:4:1: error: `stdatomic.h` file not found [E0341]
-case.c:4:1: note: searched: <builtin>, /usr/local/include, /usr/include/x86_64-linux-gnu, /usr/include
-case.c:8:21: error: expected `;`, found `counter` [E0400]
-```
-
-The program is `programs/correctness/atomics/atomics.stdatomic.u64.c17.53c8ec77.c` and the working directory of the failing build was kept under the run directory.
-
-And 50 more, which are all in `findings.sarif` and in `report.json`.
+And 110 more, which are all in `findings.sarif` and in `report.json`.
 
 ## What is not built yet
 
@@ -542,12 +532,11 @@ These are cases a compiler refused while saying itself that the construct is not
 
 ### `rucc`
 
-- error: `__atomic_exchange_n` is not implemented yet [E0686] (40 cases, first is `atomics.exchange.i16.c17.b3725d59`)
-- error: `__atomic_fetch_add` is not implemented yet [E0686] (40 cases, first is `atomics.fetch-op.i16.c17.f2fddbd2`)
-- error: `__atomic_load` is not implemented yet [E0686] (40 cases, first is `atomics.load-store.i16.c17.74a1721f`)
 - error: `__atomic_signal_fence` is not implemented yet [E0686] (5 cases, first is `atomics.fence.c17.6b7c6e1f`)
-- error: `__atomic_test_and_set` is not implemented yet [E0686] (5 cases, first is `atomics.flag.c17.c1e486c9`)
+- error: `__builtin_alloca` is not implemented yet [E0686] (15 cases, first is `vla-and-alloca.alloca-in-a-loop.c17.c08d97f0`)
 - error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] (80 cases, first is `computed-goto.address-in-variable.16.c17.4419a599`)
+- error: cannot generate code for 'main': no rule lowers a `stacksave` producing a `ptr` [E0653] (30 cases, first is `vla-and-alloca.as-a-parameter.c17.798b835c`)
+- error: cannot generate code for 'total': no rule lowers a `va_arg` producing a `f80` [E0653] (5 cases, first is `long-double.through-varargs.c17.2f2ae387`)
 
 ## How big the code is
 
@@ -559,27 +548,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `bit-builtins` | backend | 22 | 296 percent more | 2 percent less | 46 percent less |
-| `register-alloc` | backend | 40 | 63 percent more | 2 percent more | 53 percent less |
-| `scheduling` | backend | 12 | 60 percent more | 2 percent less | 52 percent less |
-| `register-pressure` | backend | 48 | 55 percent more | 2 percent less | 52 percent less |
-| `loop-restructure` | loops | 48 | 32 percent more | 2 percent less | 54 percent less |
-| `float-conversion` | backend | 66 | 30 percent more | 1 percent more | 52 percent less |
-| `loop-deletion` | loops | 24 | 29 percent more | 5 percent less | 51 percent less |
-| `calling-convention` | backend | 10 | 27 percent more | 1 percent more | 50 percent less |
+| `bit-builtins` | backend | 22 | 296 percent more | 5 percent less | 48 percent less |
+| `loop-restructure` | loops | 48 | 124 percent more | 1 percent less | 51 percent less |
+| `long-double` | backend | 10 | 110 percent more | 1 percent less | 52 percent less |
+| `register-alloc` | backend | 40 | 76 percent more | 4 percent less | 51 percent less |
+| `scheduling` | backend | 12 | 75 percent more | 8 percent more | 48 percent less |
+| `register-pressure` | backend | 48 | 52 percent more | 2 percent more | 51 percent less |
+| `loop-idiom` | loops | 64 | 43 percent more | 2 percent more | 53 percent less |
+| `switch-lowering` | backend | 9 | 33 percent more | 4 percent more | 56 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | run time | compile time |
 |---|---|---|---|---|---|
-| `copy-propagation` | global | 12 | 6 percent less | 8 percent less | 48 percent less |
-| `unreachable-code` | local | 8 | 5 percent less | level | 49 percent less |
-| `reachability` | interprocedural | 9 | 5 percent less | 15 percent more | 50 percent less |
+| `copy-propagation` | global | 12 | 6 percent less | 2 percent less | 47 percent less |
+| `setjmp-longjmp` | correctness | 8 | 6 percent less | 7 percent less | 46 percent less |
+| `unreachable-code` | local | 8 | 5 percent less | 2 percent more | 49 percent less |
+| `reachability` | interprocedural | 9 | 5 percent less | 1 percent more | 48 percent less |
 | `dead-code` | local | 12 | 5 percent less | 2 percent more | 48 percent less |
-| `constant-propagation` | global | 16 | 4 percent less | 3 percent more | 50 percent less |
-| `selection` | backend | 40 | 2 percent less | 2 percent less | 49 percent less |
-| `machine-peephole` | backend | 22 | 2 percent less | 2 percent less | 51 percent less |
-| `scalar-replacement` | global | 20 | 1 percent less | 4 percent less | 51 percent less |
+| `constant-propagation` | global | 16 | 4 percent less | 4 percent more | 48 percent less |
+| `selection` | backend | 40 | 2 percent less | level | 47 percent less |
+| `machine-peephole` | backend | 22 | 2 percent less | 1 percent less | 49 percent less |
 
 ## What `-Os` does
 
@@ -587,8 +576,8 @@ Every other number in this report is one compiler against another at the same le
 
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
-| `gcc-16` | 1517 | level | 722 |
-| `rucc` | 1460 | level | 1446 |
+| `gcc-16` | 1700 | 1 percent less | 769 |
+| `rucc` | 1648 | level | 1142 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -598,23 +587,23 @@ Where `-Os` saves the most:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `baseline` | 10 | level |
-| `control-flow` | 9 | level |
-| `branch-probability` | 34 | level |
-| `constant-fold` | 112 | level |
-| `strength` | 24 | level |
-| `narrowing` | 52 | level |
+| `loop-restructure` | 48 | 42 percent less |
+| `loop-idiom` | 64 | 18 percent less |
+| `loop-hoist` | 56 | 11 percent less |
+| `loop-unswitch` | 64 | 7 percent less |
+| `induction-variable` | 42 | 4 percent less |
+| `function-purity` | 20 | 3 percent less |
 
 Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `calling-convention` | 10 | level |
-| `machine-peephole` | 22 | level |
-| `bit-builtins` | 22 | level |
-| `float-conversion` | 66 | level |
+| `long-double` | 9 | level |
 | `barrier` | 7 | level |
+| `atomics` | 25 | level |
+| `setjmp-longjmp` | 8 | level |
 | `frontend` | 22 | level |
+| `loop-invariant` | 32 | 3 percent more |
 
 ## By phase of the plan
 
@@ -622,13 +611,13 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | lines | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|---|
-| floor | 5 | 109 | 3,222 | 383 of 513 | 9 percent more |
+| floor | 6 | 118 | 3,458 | 383 of 558 | 10 percent more |
 | local | 8 | 309 | 16,979 | 1545 of 1545 | 10 percent more |
-| global | 9 | 193 | 4,374 | 965 of 965 | 4 percent more |
-| loops | 9 | 466 | 9,243 | 2330 of 2330 | 14 percent more |
-| interprocedural | 6 | 117 | 3,087 | 585 of 585 | 11 percent more |
-| backend | 11 | 293 | 10,951 | 1465 of 1465 | 27 percent more |
-| correctness | 2 | 38 | 1,458 | 35 of 190 | 3 percent more |
+| global | 9 | 193 | 4,374 | 965 of 965 | 2 percent more |
+| loops | 11 | 602 | 11,919 | 3010 of 3010 | 21 percent more |
+| interprocedural | 7 | 137 | 3,643 in 161 files | 635 of 685 | 11 percent more |
+| backend | 12 | 303 | 11,177 | 1510 of 1515 | 32 percent more |
+| correctness | 3 | 46 | 1,677 | 190 of 230 | 3 percent more |
 
 ## What gcc-16 said about these programs
 
@@ -645,17 +634,17 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `computed-goto` | floor | 32 | 600 |
 | `narrowing` | local | 0 | 528 |
 | `loop-idiom` | loops | 395 | 76 |
+| `loop-hoist` | loops | 90 | 340 |
 | `loop-shape` | loops | 112 | 304 |
+| `loop-unroll-shape` | loops | 318 | 65 |
 | `loop-unswitch` | loops | 134 | 212 |
 | `loop-unroll` | loops | 196 | 128 |
 | `loop-restructure` | loops | 262 | 60 |
+| `setjmp-longjmp` | correctness | 15 | 302 |
 | `strength` | local | 0 | 288 |
 | `register-pressure` | backend | 75 | 210 |
+| `vla-and-alloca` | floor | 50 | 212 |
 | `load-forwarding` | global | 60 | 184 |
-| `selection` | backend | 0 | 244 |
-| `loop-rotate` | loops | 224 | 0 |
-| `alias-analysis` | global | 66 | 136 |
-| `loop-invariant` | loops | 60 | 128 |
 
 ## Running this yourself
 
@@ -666,4 +655,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1525 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 1708 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
