@@ -1,10 +1,10 @@
 # The corpus
 
-1708 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1716 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `dff6e22dd72921a645d7c2b426da33ecc497a49a6fcf6108c5ef13a746caa30e`.
+Corpus digest `e8243e5f7c71c99fb139d6fa9e8d18158153cb183da0e9aeb4ad53d8e7008ac4`.
 
 ## floor (118 programs)
 
@@ -50,14 +50,14 @@ Transformations across the blocks of one function, which need dataflow rather th
 | [`memory-ssa`](global/memory-ssa/README.md) | 28 | walking back from a load to the store that answers it |
 | [`scalar-replacement`](global/scalar-replacement/README.md) | 20 | turning a non-escaping local back into a value |
 
-## loops (602 programs)
+## loops (610 programs)
 
 Transformations that need loop structure, which is where most of the remaining time in real programs goes.
 
 | facet | programs | what it is about |
 |---|---|---|
 | [`loop-invariant`](loops/loop-invariant/README.md) | 32 | hoisting an invariant computation out of a loop |
-| [`loop-hoist`](loops/loop-hoist/README.md) | 56 | whether an invariant computation is allowed out of its loop |
+| [`loop-hoist`](loops/loop-hoist/README.md) | 64 | whether an invariant computation is allowed out of its loop |
 | [`induction-variable`](loops/induction-variable/README.md) | 42 | rewriting induction variables into a cheaper set |
 | [`loop-unswitch`](loops/loop-unswitch/README.md) | 64 | removing a test the loop guard already decided |
 | [`loop-unroll`](loops/loop-unroll/README.md) | 64 | unrolling a loop body, known trip count or not |
