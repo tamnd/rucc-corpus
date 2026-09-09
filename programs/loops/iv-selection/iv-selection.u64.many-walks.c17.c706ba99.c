@@ -3,7 +3,10 @@
 
 int printf(const char *, ...);
 
+static volatile int n_in = 16;
+
 int main(void) {
+    int n = n_in;
     unsigned long long a1[20];
     for (int i = 0; i < 20; i++) a1[i] = (unsigned long long)(i * 1);
     unsigned long long a2[20];
@@ -17,7 +20,7 @@ int main(void) {
     unsigned long long a6[20];
     for (int i = 0; i < 20; i++) a6[i] = (unsigned long long)(i * 6);
     unsigned long long total = 0;
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < n; i++) {
         total += a1[i] + a2[i] + a3[i] + a4[i] + a5[i] + a6[i];
     }
 

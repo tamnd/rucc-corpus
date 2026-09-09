@@ -3,11 +3,14 @@
 
 int printf(const char *, ...);
 
+static volatile int n_in = 16;
+
 int main(void) {
+    int n = n_in;
     unsigned long long a[20];
     for (int i = 0; i < 20; i++) a[i] = (unsigned long long)(i * 1);
     unsigned long long total = 0;
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < n; i++) {
         total += a[i];
     }
 

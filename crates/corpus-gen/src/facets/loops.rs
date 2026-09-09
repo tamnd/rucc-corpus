@@ -571,7 +571,12 @@ fn iv_selection(sink: &mut Sink<'_>) {
 /// One shape of the selection question, or `None` where the accumulator cannot hold the answer.
 ///
 /// The trip count is sixteen everywhere, which is small enough that every total below fits an
-/// `int` and large enough that the loop is worth an addressing decision at all.
+/// `int` and large enough that the loop is worth an addressing decision at all. It reaches the
+/// loop through [`Program::input`] rather than as a literal, because a loop whose count is a
+/// literal is a loop an unroller takes away, and a case about which induction variables a loop
+/// is left with is worth nothing once there is no loop. The arrays are still filled by a loop
+/// with a literal count, which every compiler here does unroll, so what survives to the point
+/// where the selection happens is the one loop the case is about.
 fn selected(ty: Ty, shape: &str) -> Option<Program> {
     const TRIPS: i128 = 16;
     let name = ty.c_name();
@@ -597,6 +602,10 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
         ));
     };
 
+    // The count the loops under test are bounded by. The generator knows it is sixteen and the
+    // optimizer is not allowed to, which is the whole reason it is read out of a volatile.
+    program.input(Ty::I32, "n", TRIPS);
+
     match shape {
         // a[i] + a[i+1] + a[i+2]. One group of three, a constant apart, so a compiler that
         // groups keeps one pointer and one that does not keeps three.
@@ -608,7 +617,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             program.line(format!("{name} a[{}];", TRIPS + 4));
             fill(&mut program, "a", 1);
             program.line(format!("{name} total = 0;"));
-            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            program.line("for (int i = 0; i < n; i++) {");
             program.line_at(1, "total += a[i] + a[i + 1] + a[i + 2];");
             program.line("}");
             program.blank();
@@ -625,7 +634,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             fill(&mut program, "a", 1);
             fill(&mut program, "b", 2);
             program.line(format!("{name} total = 0;"));
-            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            program.line("for (int i = 0; i < n; i++) {");
             program.line_at(1, "total += a[i] + b[i];");
             program.line("}");
             program.blank();
@@ -641,7 +650,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             program.line(format!("{name} a[{}];", TRIPS + 4));
             fill(&mut program, "a", 1);
             program.line(format!("{name} total = 0;"));
-            program.line(format!("for (int i = 0; i < {TRIPS}; i += 4) {{"));
+            program.line("for (int i = 0; i < n; i += 4) {");
             program.line_at(1, "total += a[i];");
             program.line("}");
             program.blank();
@@ -658,7 +667,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             program.line(format!("{name} a[{}];", TRIPS + 4));
             fill(&mut program, "a", 1);
             program.line(format!("{name} total = 0;"));
-            program.line(format!("for (int i = 0; i < {TRIPS}; i += 3) {{"));
+            program.line("for (int i = 0; i < n; i += 3) {");
             program.line_at(1, "total += a[i];");
             program.line("}");
             program.blank();
@@ -674,7 +683,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             program.line(format!("{name} a[{}];", TRIPS + 4));
             fill(&mut program, "a", 1);
             program.line(format!("{name} total = 0;"));
-            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            program.line("for (int i = 0; i < n; i++) {");
             program.line_at(1, "total += a[i];");
             program.line("}");
             program.blank();
@@ -692,7 +701,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             fill(&mut program, "a", 1);
             program.line(format!("{name} total = 0;"));
             program.line("int i;");
-            program.line(format!("for (i = 0; i < {TRIPS}; i++) {{"));
+            program.line("for (i = 0; i < n; i++) {");
             program.line_at(1, "total += a[i];");
             program.line("}");
             program.blank();
@@ -712,7 +721,7 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
                 fill(&mut program, &format!("a{at}"), at);
             }
             program.line(format!("{name} total = 0;"));
-            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            program.line("for (int i = 0; i < n; i++) {");
             program.line_at(1, "total += a1[i] + a2[i] + a3[i] + a4[i] + a5[i] + a6[i];");
             program.line("}");
             program.blank();

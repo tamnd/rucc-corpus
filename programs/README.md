@@ -4,7 +4,7 @@
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `18f235b5d6e68130795ab2e2de0d85c5e92156a1140a4f0c5487e2e92308d6c4`.
+Corpus digest `821b0682d8a4cae22916933c71f1f13a123206a086e71609a9e4993ab82f68e2`.
 
 ## floor (118 programs)
 
