@@ -27,6 +27,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     if_conversion(sink);
     switch_lowering(sink);
     switch_runs(sink);
+    switch_dispatch(sink);
     calling_convention(sink);
     machine_peephole(sink);
 }
@@ -836,6 +837,326 @@ fn look_alike_arms(sink: &mut Sink<'_>) {
     );
 }
 
+/// How many values a dispatch stream holds.
+///
+/// A power of two, so the walk over it is an `and` rather than a division, and the index
+/// arithmetic is not what the case ends up measuring. Long enough that a branch predictor
+/// cannot learn the whole sequence, short enough that two kilobytes of it stay in the first
+/// level cache and the case measures the switch rather than the memory system.
+const STREAM: i128 = 512;
+
+/// How many times a dispatch case goes round its loop.
+///
+/// Ten million dispatches is a few tens of milliseconds of the shape a compiler emits when it
+/// gets the switch right and a few hundred when it walks the labels one at a time. Both are far
+/// enough above process startup that the wall clock in a record means something, and the whole
+/// facet still fits in a minute at five levels against two compilers.
+///
+/// It is a whole number of passes over the stream, which is what lets the expected answer be a
+/// multiple of one pass rather than a simulation of ten million steps.
+const DISPATCHES: i128 = 10_240_000;
+
+/// The multiplier and the addend of the generator that fills an unpredictable stream.
+const LCG_MUL: u32 = 1_103_515_245;
+
+/// The addend, per [`LCG_MUL`].
+const LCG_ADD: u32 = 12_345;
+
+/// The answers of the shape that is deliberately not a line.
+///
+/// The negative control for switch conversion. Half of these are one more than their position
+/// and the rest are not, so no single multiple and offset gives all sixteen, and a pass looking
+/// for a line has to check every one of them before it may refuse.
+const SCATTER: &[i128] = &[7, 3, 91, 4, 55, 6, 2, 80, 9, 41, 11, 12, 63, 14, 15, 16];
+
+/// The label range of one switch this facet dispatches.
+#[derive(Clone, Copy)]
+struct Shape {
+    /// The axis point, which is also the name of the emitted function once its dash is gone.
+    name: &'static str,
+    /// The lowest label.
+    base: i128,
+    /// How many labels there are.
+    labels: i128,
+    /// How many values the stream draws from, counting up from `base`.
+    ///
+    /// Wider than the label count on purpose. A fifth of the dispatches miss every label and go
+    /// to the default, so the range check a compiler writes in front of the arithmetic is a
+    /// branch that is really taken sometimes rather than one that is never taken and therefore
+    /// free. It is also what makes the default arm reachable evidence rather than dead code.
+    span: i128,
+}
+
+/// The shapes, one program each.
+const SHAPES: &[Shape] = &[
+    Shape { name: "affine", base: 0, labels: 16, span: 20 },
+    Shape { name: "scattered", base: 0, labels: 16, span: 20 },
+    Shape { name: "constant-arms", base: 9, labels: 8, span: 10 },
+    Shape { name: "below-zero", base: -8, labels: 16, span: 20 },
+    Shape { name: "near-the-edge", base: 2_147_483_627, labels: 16, span: 20 },
+    Shape { name: "shared-default", base: 0, labels: 16, span: 20 },
+];
+
+/// A switch called often enough that how it was lowered shows up in the clock.
+///
+/// Every other switch facet is about size and about getting the right answer. This one is about
+/// time, and it is the only place the corpus can see the thing document 24.3 says is the whole
+/// reason to care about switch shape. A chain of equality tests on a value drawn at random from
+/// the label range mispredicts about half the time, and the cost of that is several times the
+/// cost of the instructions themselves. A range check does not mispredict, so a compiler that
+/// reduces the switch to one comparison wins far more clock than it wins instructions, and no
+/// case that dispatches a switch a few dozen times can tell you that.
+///
+/// The dispatch value always comes out of an array that was filled from a `volatile` seed, and
+/// the number of dispatches comes out of a `volatile` too. Either one left as a constant turns
+/// the case into a question about folding.
+fn switch_dispatch(sink: &mut Sink<'_>) {
+    for shape in SHAPES {
+        for &ordered in &[false, true] {
+            // The predictable stream is only worth emitting once. It exists so the two numbers
+            // for one switch can be put side by side, which is what turns "this is faster" into
+            // "this is faster because the branches were being mispredicted", and a second shape
+            // does not make that argument any better.
+            if ordered && shape.name != "affine" {
+                continue;
+            }
+            if !sink.wants(Facet::SwitchDispatch) {
+                return;
+            }
+            let stream = if ordered { "in-order" } else { "unpredictable" };
+            let mut program =
+                Program::new(format!("the {} shape dispatched on {stream} values", shape.name));
+            dispatch_switch(&mut program, shape);
+            dispatch_loop(&mut program, shape, ordered);
+            sink.push(
+                Facet::SwitchDispatch,
+                Axes::of([("shape", shape.name), ("stream", stream)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+    interpreter(sink);
+}
+
+/// The C name of a shape's function.
+fn dispatch_name(shape: &Shape) -> String {
+    shape.name.replace('-', "_")
+}
+
+/// The answer one of these switches gives for a value, with zero for the default.
+fn dispatch_answer(shape: &Shape, value: i128) -> i128 {
+    let step = value - shape.base;
+    if step < 0 || step >= shape.labels {
+        return 0;
+    }
+    match shape.name {
+        "affine" | "below-zero" => step + 1,
+        // Three times the label rather than one times it, because with labels this close to the
+        // top of `int` a multiple of three leaves the offset outside the type. A compiler that
+        // works the offset out in wider arithmetic and then forgets to bring it back to the
+        // width of the label gets this one wrong and gets the other shapes right.
+        "near-the-edge" => 3 * step + 1,
+        "constant-arms" => 1,
+        "scattered" => SCATTER[step as usize],
+        // The last label has no arm of its own, so it goes wherever the default goes.
+        "shared-default" => {
+            if step == shape.labels - 1 {
+                0
+            } else {
+                step + 1
+            }
+        }
+        other => panic!("no answer is written for the {other} shape"),
+    }
+}
+
+/// Writes the switch a dispatch case calls, one arm per label.
+fn dispatch_switch(program: &mut Program, shape: &Shape) {
+    program.top(format!("static int {}(int value) {{", dispatch_name(shape)));
+    program.top("    switch (value) {");
+    for step in 0..shape.labels {
+        let label = shape.base + step;
+        if shape.name == "shared-default" && step == shape.labels - 1 {
+            // No body and no `break`, so this label falls into the default and the block the
+            // default runs is also the block this label goes to. That is the shape that makes a
+            // predecessor count of one a lie: the arm looks singly reached, and a pass that
+            // deletes it on that basis takes the default with it.
+            program.top(format!("    case {label}:"));
+            continue;
+        }
+        program.top(format!("    case {label}: return {};", dispatch_answer(shape, label)));
+    }
+    program.top("    default: return 0;");
+    program.top("    }");
+    program.top("}");
+}
+
+/// The values a stream holds, in the order the fill writes them.
+///
+/// The unpredictable fill takes bits sixteen and up of a linear congruential generator rather
+/// than the low bits, because the low bits of one of these have short periods and a short period
+/// is exactly what makes a branch predictable. This is the same arithmetic the emitted C does,
+/// written twice on purpose, because the expected answer has to come from the generator rather
+/// than from a reference compiler.
+fn dispatch_stream(shape: &Shape, ordered: bool) -> Vec<i128> {
+    let span = u32::try_from(shape.span).expect("a span is small and positive");
+    let mut state = u32::try_from(super::SEED).expect("the seed is small and positive");
+    (0..STREAM)
+        .map(|at| {
+            let step = if ordered {
+                (at + super::SEED) % shape.span
+            } else {
+                state = state.wrapping_mul(LCG_MUL).wrapping_add(LCG_ADD);
+                i128::from((state >> 16) % span)
+            };
+            shape.base + step
+        })
+        .collect()
+}
+
+/// Writes the fill, the dispatch loop and the check on what the loop added up to.
+fn dispatch_loop(program: &mut Program, shape: &Shape, ordered: bool) {
+    let values = dispatch_stream(shape, ordered);
+    let per_pass: i128 = values.iter().map(|&value| dispatch_answer(shape, value)).sum();
+    program.input(Ty::I32, "seed", super::SEED);
+    program.input(Ty::I32, "count", DISPATCHES);
+    program.blank();
+    // Nothing is added when the labels start at zero, so the emitted C reads the way somebody
+    // would have written it rather than the way the generator happened to build it.
+    let from = if shape.base == 0 { String::new() } else { format!("{} + ", shape.base) };
+    program.line(format!("int stream[{STREAM}];"));
+    if ordered {
+        program.line(format!("for (int at = 0; at < {STREAM}; at++) {{"));
+        program.line_at(1, format!("stream[at] = {from}(at + seed) % {};", shape.span));
+    } else {
+        program.line("unsigned int state = (unsigned int)seed;");
+        program.line(format!("for (int at = 0; at < {STREAM}; at++) {{"));
+        program.line_at(1, format!("state = state * {LCG_MUL}u + {LCG_ADD}u;"));
+        program.line_at(1, format!("stream[at] = {from}(int)((state >> 16) % {}u);", shape.span));
+    }
+    program.line("}");
+    program.blank();
+    program.line("long long total = 0;");
+    program.line("for (int at = 0; at < count; at++) {");
+    program.line_at(1, format!("total += {}(stream[at & {}]);", dispatch_name(shape), STREAM - 1));
+    program.line("}");
+    program.blank();
+    program.check(Ty::I64, "total", per_pass * (DISPATCHES / STREAM));
+}
+
+/// How many opcodes the interpreter has, counting the one that falls to the default.
+const OPCODES: i128 = 9;
+
+/// What each of the interpreter's arms does to the accumulator.
+///
+/// Every arm is real work rather than a constant, so switch conversion cannot apply and this
+/// case is the one that stays a switch however good the middle end gets. It is the benchmark
+/// document 24.7 names, and it is where the jump table and the bit test will have to prove
+/// themselves once they are written.
+///
+/// No arm may throw the accumulator away. An `acc & operand` with an operand under two hundred
+/// and fifty six clears every high bit, and after one of those the answer no longer depends on
+/// anything that came before, so a run that dispatched a million steps wrongly could still print
+/// the right number. Every arm here either carries all sixty four bits forward or mixes them, and
+/// the multiply is there to make sure the high ones keep moving.
+const STEPS: &[&str] = &[
+    "acc + operand",
+    "acc - operand",
+    "acc ^ operand",
+    "(acc << 3) ^ operand",
+    "(acc >> 5) | operand",
+    "acc + (operand << 1)",
+    "acc - (operand >> 1)",
+    "acc * 3 + 1",
+];
+
+/// A bytecode interpreter, which is the shape a hot switch really has.
+///
+/// The accumulator carries from one step to the next, so the loop is bound by the latency of
+/// the dispatch rather than by how many of them the machine can have in flight. That is what an
+/// interpreter is actually like and it is what makes a mispredicted indirect branch cost what
+/// document 24.3 says it costs. Everything is unsigned, so every arm is defined for every
+/// accumulator value including the ones that have wrapped.
+fn interpreter(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::SwitchDispatch) {
+        return;
+    }
+    let mut program = Program::new("a bytecode interpreter dispatching on an opcode stream");
+    program.top("static unsigned long long step(int op, unsigned long long acc,");
+    program.top("                               unsigned int operand) {");
+    program.top("    switch (op) {");
+    for (op, work) in STEPS.iter().enumerate() {
+        program.top(format!("    case {op}: return {work};"));
+    }
+    program.top("    default: return acc;");
+    program.top("    }");
+    program.top("}");
+
+    program.input(Ty::I32, "seed", super::SEED);
+    program.input(Ty::I32, "count", DISPATCHES);
+    program.blank();
+    program.line(format!("unsigned char ops[{STREAM}];"));
+    program.line(format!("unsigned int args[{STREAM}];"));
+    program.line("unsigned int state = (unsigned int)seed;");
+    program.line(format!("for (int at = 0; at < {STREAM}; at++) {{"));
+    program.line_at(1, format!("state = state * {LCG_MUL}u + {LCG_ADD}u;"));
+    program.line_at(1, format!("ops[at] = (unsigned char)((state >> 16) % {OPCODES}u);"));
+    program.line_at(1, "args[at] = (state >> 8) & 255u;");
+    program.line("}");
+    program.blank();
+    program.line("unsigned long long acc = 1;");
+    program.line("for (int at = 0; at < count; at++) {");
+    program.line_at(
+        1,
+        format!("acc = step(ops[at & {}], acc, args[at & {}]);", STREAM - 1, STREAM - 1),
+    );
+    program.line("}");
+    program.blank();
+    program.check(Ty::U64, "acc", interpreter_answer());
+
+    sink.push(
+        Facet::SwitchDispatch,
+        Axes::of([("shape", "interpreter"), ("stream", "unpredictable")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// What the interpreter's accumulator holds when the loop stops.
+///
+/// Ten million steps of `u64` arithmetic, run here so the case ships with its answer. The
+/// accumulator carries, so unlike every other shape in this facet there is no shortcut from one
+/// pass over the stream to the whole run.
+fn interpreter_answer() -> i128 {
+    let opcodes = u32::try_from(OPCODES).expect("the opcode count is small and positive");
+    let mut state = u32::try_from(super::SEED).expect("the seed is small and positive");
+    let mut ops = Vec::new();
+    let mut args = Vec::new();
+    for _ in 0..STREAM {
+        state = state.wrapping_mul(LCG_MUL).wrapping_add(LCG_ADD);
+        ops.push(((state >> 16) % opcodes) as usize);
+        args.push(u64::from((state >> 8) & 255));
+    }
+    let mask = (STREAM - 1) as usize;
+    let mut acc: u64 = 1;
+    for at in 0..DISPATCHES as usize {
+        let operand = args[at & mask];
+        acc = match ops[at & mask] {
+            0 => acc.wrapping_add(operand),
+            1 => acc.wrapping_sub(operand),
+            2 => acc ^ operand,
+            3 => (acc << 3) ^ operand,
+            4 => (acc >> 5) | operand,
+            5 => acc.wrapping_add(operand << 1),
+            6 => acc.wrapping_sub(operand >> 1),
+            7 => acc.wrapping_mul(3).wrapping_add(1),
+            _ => acc,
+        };
+    }
+    i128::from(acc)
+}
+
 /// Calls with more arguments than fit in registers, and aggregates passed by value.
 ///
 /// The argument count axis walks past the point where the target runs out of argument
@@ -1136,6 +1457,114 @@ mod tests {
         ] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
         }
+    }
+
+    #[test]
+    fn every_dispatch_shape_is_generated() {
+        let cases = cases_for(Facet::SwitchDispatch);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in [
+            "affine",
+            "scattered",
+            "constant-arms",
+            "below-zero",
+            "near-the-edge",
+            "shared-default",
+            "interpreter",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+        let streams: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("stream")).collect();
+        assert!(streams.contains(&"in-order"), "nothing to compare the unpredictable case against");
+    }
+
+    #[test]
+    fn a_dispatch_case_walks_its_stream_a_whole_number_of_times() {
+        assert_eq!(super::STREAM.count_ones(), 1, "the walk masks the index rather than dividing");
+        assert_eq!(super::DISPATCHES % super::STREAM, 0);
+        for case in cases_for(Facet::SwitchDispatch) {
+            assert!(case.source.contains("count_in = 10240000"), "{}", case.id);
+            assert!(case.source.contains("at & 511"), "{}", case.id);
+        }
+    }
+
+    // The whole facet is about branches nobody can guess, so a stream that repeats every few
+    // values would leave every case here measuring a well predicted branch and saying nothing.
+    // Thirty two is well inside what a modern predictor learns, so a period at or under it is a
+    // broken case rather than a slightly weaker one.
+    #[test]
+    fn the_unpredictable_stream_does_not_repeat_quickly() {
+        for shape in super::SHAPES {
+            let stream = super::dispatch_stream(shape, false);
+            for period in 1..=32 {
+                let repeats = stream.iter().zip(stream.iter().skip(period)).all(|(a, b)| a == b);
+                assert!(!repeats, "the {} stream repeats every {period}", shape.name);
+            }
+        }
+    }
+
+    #[test]
+    fn every_dispatch_stream_reaches_the_default_and_every_label() {
+        for shape in super::SHAPES {
+            let stream = super::dispatch_stream(shape, false);
+            for step in 0..shape.labels {
+                let label = shape.base + step;
+                assert!(stream.contains(&label), "the {} stream misses {label}", shape.name);
+            }
+            let misses = stream.iter().filter(|&&v| v >= shape.base + shape.labels).count();
+            assert!(misses > 0, "the {} stream never takes the default", shape.name);
+        }
+    }
+
+    #[test]
+    fn the_shape_that_is_not_a_line_really_is_not() {
+        let answers = super::SCATTER;
+        let scale = answers[1] - answers[0];
+        let offset = answers[0];
+        let holds = answers
+            .iter()
+            .enumerate()
+            .all(|(step, &answer)| scale * step as i128 + offset == answer);
+        assert!(!holds, "the negative control is a line after all");
+    }
+
+    // The point of putting the labels here is that a compiler working the answers out as a
+    // multiple of the label has to do it in arithmetic that wraps. If the multiple times the
+    // first label still fits in an `int`, nothing wraps and the case tests nothing new.
+    #[test]
+    fn the_answers_near_the_top_of_int_need_arithmetic_that_wraps() {
+        let shape = super::SHAPES
+            .iter()
+            .find(|shape| shape.name == "near-the-edge")
+            .expect("the near-the-edge shape");
+        let scale = super::dispatch_answer(shape, shape.base + 1)
+            - super::dispatch_answer(shape, shape.base);
+        assert!(
+            scale * shape.base > i128::from(i32::MAX),
+            "nothing wraps at {scale} times the base"
+        );
+    }
+
+    #[test]
+    fn the_shared_default_label_has_no_arm_of_its_own() {
+        let case = cases_for(Facet::SwitchDispatch)
+            .into_iter()
+            .find(|c| c.axes.get("shape") == Some("shared-default"))
+            .expect("the shared-default case");
+        assert!(case.source.contains("    case 15:\n    default: return 0;"), "{}", case.source);
+    }
+
+    #[test]
+    fn no_interpreter_arm_throws_the_accumulator_away() {
+        for work in super::STEPS {
+            assert!(work.contains("acc"), "{work} does not read the accumulator");
+        }
+        // An `and` with an operand under two hundred and fifty six would clear every high bit,
+        // and the answer would stop depending on what came before it.
+        assert!(
+            !super::STEPS.iter().any(|work| work.contains('&')),
+            "an arm masks the accumulator"
+        );
     }
 
     #[test]
