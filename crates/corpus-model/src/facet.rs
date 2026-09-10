@@ -53,6 +53,8 @@ pub enum Facet {
     Narrowing,
     /// Algebraic identities and the local peephole rules that follow from them.
     Simplify,
+    /// Collapsing the two branches of `&&` or `||` into one, where that is allowed.
+    ShortCircuit,
     /// Reassociating an associative chain to shorten its dependency height.
     Reassociate,
     /// Removing a computation whose result nothing reads.
@@ -208,6 +210,7 @@ impl Facet {
         Self::Strength,
         Self::Narrowing,
         Self::Simplify,
+        Self::ShortCircuit,
         Self::Reassociate,
         Self::DeadCode,
         Self::DeadStore,
@@ -272,6 +275,7 @@ impl Facet {
             Self::Strength => "strength",
             Self::Narrowing => "narrowing",
             Self::Simplify => "simplify",
+            Self::ShortCircuit => "short-circuit",
             Self::Reassociate => "reassociate",
             Self::DeadCode => "dead-code",
             Self::DeadStore => "dead-store",
@@ -339,6 +343,7 @@ impl Facet {
             Self::Strength => "rewriting an operation into a cheaper one with the same value",
             Self::Narrowing => "taking the width back off arithmetic that C promoted",
             Self::Simplify => "algebraic identities and the local peephole rules",
+            Self::ShortCircuit => "collapsing the two branches of a logical operator into one",
             Self::Reassociate => "reassociating a chain to shorten its dependency height",
             Self::DeadCode => "removing a computation whose result nothing reads",
             Self::DeadStore => "removing a store a later store makes invisible",
@@ -410,6 +415,7 @@ impl Facet {
             | Self::Strength
             | Self::Narrowing
             | Self::Simplify
+            | Self::ShortCircuit
             | Self::Reassociate
             | Self::DeadCode
             | Self::DeadStore
