@@ -157,6 +157,8 @@ fn facet_json(facet: &FacetSummary) -> Json {
                     ("tally", tally_json(&score.tally)),
                     ("compared", Json::int(score.compared as i64)),
                     ("size_ratio", score.size_ratio.map_or(Json::Null, Json::Number)),
+                    ("text_bytes", Json::int(score.text_bytes as i64)),
+                    ("reference_text_bytes", Json::int(score.reference_text_bytes as i64)),
                     ("speed_ratio", score.speed_ratio.map_or(Json::Null, Json::Number)),
                     ("compile_ratio", score.compile_ratio.map_or(Json::Null, Json::Number)),
                     ("memory_ratio", score.memory_ratio.map_or(Json::Null, Json::Number)),
