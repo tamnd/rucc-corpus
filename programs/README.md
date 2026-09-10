@@ -1,10 +1,10 @@
 # The corpus
 
-1803 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1816 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `68767d89575cc4bf6527082aee12943ca42b085db09b957b083be2b1978d4c98`.
+Corpus digest `7f8dd9ba2e75cb0a8f842b30963edc91a481b8e28bfc27bd776ef57cd168dd0a`.
 
 ## floor (118 programs)
 
@@ -19,7 +19,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (347 programs)
+## local (360 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -31,6 +31,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`simplify`](local/simplify/README.md) | 69 | algebraic identities and the local peephole rules |
 | [`short-circuit`](local/short-circuit/README.md) | 22 | collapsing the two branches of a logical operator into one |
 | [`conditional-store`](local/conditional-store/README.md) | 16 | moving a store below a branch whose arms wrote the same place |
+| [`value-settled`](local/value-settled/README.md) | 13 | a condition that settles the value its two arms disagree about |
 | [`reassociate`](local/reassociate/README.md) | 20 | reassociating a chain to shorten its dependency height |
 | [`dead-code`](local/dead-code/README.md) | 12 | removing a computation whose result nothing reads |
 | [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |

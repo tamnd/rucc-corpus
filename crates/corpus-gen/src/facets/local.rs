@@ -20,6 +20,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     simplify(sink);
     short_circuit(sink);
     conditional_store(sink);
+    value_settled(sink);
     reassociate(sink);
     dead_code(sink);
     dead_store(sink);
@@ -1424,6 +1425,219 @@ fn a_call_beside_the_store(sink: &mut Sink<'_>) {
     );
 }
 
+/// How often the partner value is made equal to the sample, as one in this many.
+const MATCH_EVERY: i128 = 4;
+
+/// The partner value a sample is compared against.
+fn mate(index: i128, value: i128) -> i128 {
+    if index % MATCH_EVERY == 0 { value } else { (value + 1) & 255 }
+}
+
+/// Adds up what one term contributes over a full pass, given both values it is handed.
+fn pair_sum(contribution: impl Fn(i128, i128) -> i128) -> i128 {
+    (0..SAMPLES)
+        .map(|index| {
+            let value = sample(index);
+            contribution(value, mate(index, value))
+        })
+        .sum()
+}
+
+/// The lines every value settled shape shares, up to the point its own work starts.
+///
+/// The two `abs` shapes compare one value against zero rather than against another value, so
+/// they get the samples and not the partners. Writing the partner array for them anyway would
+/// leave it dead, and a dead array is work the other eleven shapes are doing and they are not,
+/// which is a difference in the report that has nothing to do with what is being measured.
+fn settled_walk(program: &mut Program, pairs: bool) {
+    program.input(Ty::I32, "seed", SEED);
+    program.blank();
+    program.line(format!("int data[{SAMPLES}];"));
+    if pairs {
+        program.line(format!("int mate[{SAMPLES}];"));
+    }
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, format!("data[i] = (i * {STRIDE} + seed) & 255;"));
+    if pairs {
+        program.line_at(
+            1,
+            format!("mate[i] = (i % {MATCH_EVERY}) == 0 ? data[i] : ((data[i] + 1) & 255);"),
+        );
+    }
+    program.line("}");
+    program.blank();
+    program.line("long long total = 0;");
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, "int a = data[i];");
+    if pairs {
+        program.line_at(1, "int b = mate[i];");
+    }
+}
+
+/// A branch whose condition already settles the value its two arms disagree about.
+///
+/// Section 22.2's second transformation, which `phiopt` calls value replacement. When a branch
+/// tests `a == b` and one arm hands the join `a` while the other hands it `b`, the arm taken
+/// when the test holds is handing over a value the test has already made equal to the other
+/// one. So the join takes whichever of the two it likes, no select is written, and the branch
+/// goes with nothing left to choose between.
+///
+/// A census of the whole corpus before this facet found the transformation firing in exactly
+/// two places, both of them in `if-conversion` and both of them by accident. Nothing had been
+/// written to ask this question, which meant the pass could not be shown to work and, more to
+/// the point, could not be shown to stop where it has to.
+///
+/// Stopping is the half worth writing shapes for. The proof needs an equality, so a condition
+/// that is a `<` settles nothing and the select has to stay. It needs the settled value to be
+/// the one the arm actually hands over, so a shape that adds something to it on the way is a
+/// miss rather than a fold. And the unsigned and signed halves of `x > 0 ? x : 0 - x` are the
+/// pair that matters most: unsigned, `x > 0` is `x != 0` and the negation of zero is zero, so
+/// the whole thing is the identity and folds. Signed, it is not, because a negative `x` comes
+/// back positive, and a compiler that folds it prints a different number.
+///
+/// Every shape walks the same array and prints one total. Three quarters of the samples are
+/// unequal and one quarter are equal, so a fold that fires when it should not is a wrong
+/// answer on the majority of iterations rather than on a corner of the range. The values come
+/// through a `volatile` seed and an array, because two literals compared to each other are
+/// settled by `fold` long before any of this and the case would be measuring the wrong pass.
+fn value_settled(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "settled-equal",
+        "settled-equal-branch",
+        "settled-not-equal",
+        "settled-not-equal-branch",
+        "settled-wide",
+        "settled-narrow",
+        "settled-byte",
+        "settled-pointer",
+        "settled-constant",
+        "unsigned-abs",
+        "signed-abs",
+        "not-an-equality",
+        "one-deep",
+    ];
+    for &shape in SHAPES {
+        if !sink.wants(Facet::ValueSettled) {
+            return;
+        }
+        let mut program = Program::new(settled_purpose(shape));
+        if shape == "one-deep" {
+            program.input(Ty::I32, "c", 5);
+        }
+        settled_walk(&mut program, !shape.ends_with("-abs"));
+        let total = settled_body(&mut program, shape);
+        program.line("}");
+        program.blank();
+        program.check(Ty::I64, "total", total);
+        sink.push(Facet::ValueSettled, Axes::of([("shape", shape)]), Dialect::C17, program);
+    }
+}
+
+/// What each shape is for, in the words the case header carries.
+fn settled_purpose(shape: &str) -> &'static str {
+    match shape {
+        "settled-equal" => "an equality that settles the value, written as a conditional",
+        "settled-equal-branch" => {
+            "the same equality written as a branch, which is what the pass sees"
+        }
+        "settled-not-equal" => "an inequality that settles the value on the arm it is false on",
+        "settled-not-equal-branch" => "the same inequality written as a branch",
+        "settled-wide" => "an equality that settles a long long, so the width is not what decides",
+        "settled-narrow" => "the same on a short, which C promotes before it compares",
+        "settled-byte" => "the same on an unsigned char, the narrowest width there is",
+        "settled-pointer" => {
+            "two pointers compared, which is the case a width refusal used to lose"
+        }
+        "settled-constant" => {
+            "an equality against a constant, where the constant is the settled value"
+        }
+        "unsigned-abs" => "an unsigned abs, which is the identity and should fold to nothing",
+        "signed-abs" => "a signed abs, which is not the identity and must keep both arms",
+        "not-an-equality" => "a less than, which settles nothing and has to keep its select",
+        _ => "a settled value with something added to it, which is one level too deep",
+    }
+}
+
+/// Writes the work one shape does inside the walk, and returns what it adds up to.
+fn settled_body(program: &mut Program, shape: &str) -> i128 {
+    match shape {
+        "settled-equal" => {
+            program.line_at(1, "total += a == b ? b : a;");
+            pair_sum(|a, _| a)
+        }
+        "settled-equal-branch" => {
+            program.line_at(1, "int r;");
+            program.line_at(1, "if (a == b) {");
+            program.line_at(2, "r = b;");
+            program.line_at(1, "} else {");
+            program.line_at(2, "r = a;");
+            program.line_at(1, "}");
+            program.line_at(1, "total += r;");
+            pair_sum(|a, _| a)
+        }
+        "settled-not-equal" => {
+            program.line_at(1, "total += a != b ? a : b;");
+            pair_sum(|a, _| a)
+        }
+        "settled-not-equal-branch" => {
+            program.line_at(1, "int r;");
+            program.line_at(1, "if (a != b) {");
+            program.line_at(2, "r = a;");
+            program.line_at(1, "} else {");
+            program.line_at(2, "r = b;");
+            program.line_at(1, "}");
+            program.line_at(1, "total += r;");
+            pair_sum(|a, _| a)
+        }
+        "settled-wide" => settled_at_width(program, Ty::I64),
+        "settled-narrow" => settled_at_width(program, Ty::I16),
+        "settled-byte" => settled_at_width(program, Ty::U8),
+        "settled-pointer" => {
+            program.line_at(1, "int *p = &cells[a & 15];");
+            program.line_at(1, "int *q = &cells[b & 15];");
+            program.line_at(1, "total += *(p == q ? q : p);");
+            program.top("static int cells[16] = {");
+            program.top("    1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46,");
+            program.top("};");
+            pair_sum(|a, _| (a & 15) * 3 + 1)
+        }
+        "settled-constant" => {
+            program.line_at(1, "total += a == 7 ? 7 : a;");
+            pair_sum(|a, _| a)
+        }
+        "unsigned-abs" => {
+            program.line_at(1, "unsigned int x = a;");
+            program.line_at(1, "total += x > 0u ? x : 0u - x;");
+            pair_sum(|a, _| a)
+        }
+        "signed-abs" => {
+            // Shifted so that most of the samples are negative, which is where the two halves
+            // of the pair part company. Nothing here reaches `INT_MIN`, because negating that
+            // is undefined and the corpus does not get to rely on what a compiler does with it.
+            program.line_at(1, "int x = a - 128;");
+            program.line_at(1, "total += x > 0 ? x : 0 - x;");
+            pair_sum(|a, _| (a - 128).abs())
+        }
+        "not-an-equality" => {
+            program.line_at(1, "total += a < b ? b : a;");
+            pair_sum(|a, b| a.max(b))
+        }
+        _ => {
+            program.line_at(1, "total += a == b ? b + c : a + c;");
+            pair_sum(|a, _| a + 5)
+        }
+    }
+}
+
+/// The plain settled equality at one width, which is the same question asked four ways.
+fn settled_at_width(program: &mut Program, ty: Ty) -> i128 {
+    let name = ty.c_name();
+    program.line_at(1, format!("{name} x = a;"));
+    program.line_at(1, format!("{name} y = b;"));
+    program.line_at(1, "total += x == y ? y : x;");
+    pair_sum(|a, _| a)
+}
+
 /// Chains of associative operations, written every way round.
 ///
 /// A left leaning chain, a right leaning one and a balanced tree all compute the same value,
@@ -2218,6 +2432,134 @@ mod tests {
             assert!(case.source.contains("void corpus_link_error(void);"), "{}", case.id);
             assert!(case.source.contains("corpus_link_error();"), "{}", case.id);
             assert!(!case.source.contains("corpus_link_error(void) {"), "{}", case.id);
+        }
+    }
+    #[test]
+    fn every_value_settled_shape_the_pass_has_to_decide_is_generated() {
+        let cases = cases_for(Facet::ValueSettled);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in [
+            "settled-equal",
+            "settled-equal-branch",
+            "settled-not-equal",
+            "settled-not-equal-branch",
+            "settled-wide",
+            "settled-narrow",
+            "settled-byte",
+            "settled-pointer",
+            "settled-constant",
+            "unsigned-abs",
+            "signed-abs",
+            "not-an-equality",
+            "one-deep",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+        assert_eq!(cases.len(), shapes.len());
+    }
+
+    #[test]
+    fn a_quarter_of_the_samples_are_equal_to_the_partner_they_are_compared_against() {
+        // The number the whole facet rests on. Make them all equal and a fold that fires when
+        // it should not still prints the right answer, because the two values are the same
+        // one. Make none of them equal and the condition is never true and the fold never has
+        // anything to be wrong about. A quarter is enough of each.
+        let equal = (0..super::SAMPLES)
+            .filter(|&index| super::mate(index, super::sample(index)) == super::sample(index))
+            .count();
+        assert_eq!(equal, 64);
+        assert_eq!(super::SAMPLES - equal as i128, 192);
+    }
+
+    #[test]
+    fn the_shapes_where_the_condition_settles_the_value_all_print_the_sum_of_the_samples() {
+        // Every one of these is the identity written a different way, so they agree on the
+        // answer and disagree only in what the compiler has to see to get there.
+        let cases = cases_for(Facet::ValueSettled);
+        for shape in [
+            "settled-equal",
+            "settled-equal-branch",
+            "settled-not-equal",
+            "settled-not-equal-branch",
+            "settled-wide",
+            "settled-narrow",
+            "settled-byte",
+            "settled-constant",
+            "unsigned-abs",
+        ] {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(shape))
+                .unwrap_or_else(|| panic!("no case for {shape}"));
+            assert_eq!(output(case), "32640\n", "{shape}");
+        }
+    }
+
+    #[test]
+    fn the_two_abs_shapes_are_a_matched_pair_whose_answers_differ() {
+        // The unsigned one is the identity and folds. The signed one is not, because a
+        // negative sample comes back positive, and a compiler that folds it prints the
+        // unsigned answer. Two numbers that are far apart is the whole point of the pair.
+        let cases = cases_for(Facet::ValueSettled);
+        let unsigned = cases.iter().find(|c| c.axes.get("shape") == Some("unsigned-abs")).unwrap();
+        let signed = cases.iter().find(|c| c.axes.get("shape") == Some("signed-abs")).unwrap();
+        assert_eq!(output(unsigned), "32640\n");
+        assert_eq!(output(signed), "16384\n");
+        assert!(unsigned.source.contains("x > 0u ? x : 0u - x"), "{}", unsigned.source);
+        assert!(signed.source.contains("x > 0 ? x : 0 - x"), "{}", signed.source);
+    }
+
+    #[test]
+    fn the_shapes_that_have_to_keep_their_select_are_all_here() {
+        // A condition that is not an equality settles nothing, and a settled value with
+        // something added to it is one level deeper than the pass looks. Both belong in the
+        // corpus as known misses, so that a pass taught to go further shows up as a change.
+        let cases = cases_for(Facet::ValueSettled);
+        let less = cases.iter().find(|c| c.axes.get("shape") == Some("not-an-equality")).unwrap();
+        let deep = cases.iter().find(|c| c.axes.get("shape") == Some("one-deep")).unwrap();
+        assert_eq!(output(less), "32832\n");
+        assert_eq!(output(deep), "33920\n");
+        assert!(less.source.contains("a < b ? b : a"), "{}", less.source);
+        assert!(deep.source.contains("a == b ? b + c : a + c"), "{}", deep.source);
+    }
+
+    #[test]
+    fn the_equality_is_written_both_as_a_conditional_and_as_a_branch() {
+        // A conditional may be settled before `phiopt` ever sees a diamond, in which case the
+        // case is measuring `fold` and not the pass it was written for. The branch form is the
+        // one that is certainly still a branch when the pass runs.
+        let cases = cases_for(Facet::ValueSettled);
+        for (value, branch) in [
+            ("settled-equal", "settled-equal-branch"),
+            ("settled-not-equal", "settled-not-equal-branch"),
+        ] {
+            let one = cases.iter().find(|c| c.axes.get("shape") == Some(value)).unwrap();
+            let two = cases.iter().find(|c| c.axes.get("shape") == Some(branch)).unwrap();
+            assert_eq!(output(one), output(two));
+            assert!(!one.source.contains("int r;"), "{}", one.source);
+            assert!(two.source.contains("int r;"), "{}", two.source);
+        }
+    }
+
+    #[test]
+    fn no_value_settled_case_gets_its_values_from_a_literal() {
+        // Two literals compared to each other are settled by `fold`, and the case would be
+        // measuring that instead. Everything here comes through a volatile read.
+        for case in cases_for(Facet::ValueSettled) {
+            assert!(case.source.contains("static volatile int seed_in"), "{}", case.id);
+            assert!(case.source.contains("int seed = seed_in;"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_two_abs_shapes_are_the_only_ones_without_a_partner_array() {
+        // They compare against zero rather than against another value, so a partner array
+        // would be dead in them and alive in everything else, which is a difference in the
+        // report that has nothing to do with what the facet measures.
+        for case in cases_for(Facet::ValueSettled) {
+            let paired = case.source.contains("int mate[256];");
+            let abs = case.axes.get("shape").is_some_and(|s| s.ends_with("-abs"));
+            assert_eq!(paired, !abs, "{}", case.id);
         }
     }
 }
