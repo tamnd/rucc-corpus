@@ -30,13 +30,28 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
 
 /// The same expression computed more than once.
 ///
-/// Four shapes, in increasing order of how much analysis it takes to see the redundancy. In a
-/// straight line anybody can see it. Across an `if` it needs the expression to be available on
-/// both paths. On one path only it is partially redundant and removing it means inserting a
-/// copy on the other path. Through a call it needs the callee not to write what the expression
-/// reads.
+/// Eight shapes, in increasing order of how much analysis it takes to see the redundancy. In a
+/// straight line anybody can see it. With the operands the other way round it takes knowing that
+/// a multiply does not care which way round they are. Written twice underneath a further add it
+/// takes the collapse reaching the top instruction and not only the bottom one. Across an `if` it
+/// needs the expression to be available on both paths. On one path only it is partially redundant
+/// and removing it means inserting a copy on the other path. Through a call it needs the callee
+/// not to write what the expression reads. Across a store it needs knowing that a write to memory
+/// says nothing about arithmetic, which is the opposite of what it says about a load. Through a
+/// subscript the repeated expression is the compiler's own rather than the program's, because the
+/// address is a multiply and an add the front end wrote out twice, and giving those two one name
+/// is what lets the store answer the load.
 fn common_subexpr(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["straight", "across-if", "partial", "across-call"];
+    const SHAPES: &[&str] = &[
+        "straight",
+        "commutative",
+        "chained",
+        "across-if",
+        "partial",
+        "across-call",
+        "across-store",
+        "subscript",
+    ];
     for &ty in Ty::WIDE {
         for &shape in SHAPES {
             if !sink.wants(Facet::CommonSubexpr) {
@@ -55,11 +70,29 @@ fn common_subexpr(sink: &mut Sink<'_>) {
             let Some(twice) = eval(Op::Add, ty, product, product) else {
                 continue;
             };
+            let Some(shifted) = eval(Op::Add, ty, product, 6) else {
+                continue;
+            };
+            let Some(shifted_twice) = eval(Op::Add, ty, shifted, shifted) else {
+                continue;
+            };
+            let mut expected = twice;
             match shape {
                 "straight" => {
                     program.line(format!("{name} first = a * b;"));
                     program.line(format!("{name} second = a * b;"));
                     program.line(format!("{name} total = first + second;"));
+                }
+                "commutative" => {
+                    program.line(format!("{name} first = a * b;"));
+                    program.line(format!("{name} second = b * a;"));
+                    program.line(format!("{name} total = first + second;"));
+                }
+                "chained" => {
+                    program.line(format!("{name} first = a * b + a;"));
+                    program.line(format!("{name} second = a * b + a;"));
+                    program.line(format!("{name} total = first + second;"));
+                    expected = shifted_twice;
                 }
                 "across-if" => {
                     program.line(format!("{name} total = 0;"));
@@ -78,7 +111,7 @@ fn common_subexpr(sink: &mut Sink<'_>) {
                     program.line_at(1, format!("total = total + {};", lit(ty, 0)));
                     program.line("}");
                 }
-                _ => {
+                "across-call" => {
                     program.top(format!("static {name} identity({name} value) {{"));
                     program.top("    return value;".to_owned());
                     program.top("}".to_owned());
@@ -86,9 +119,24 @@ fn common_subexpr(sink: &mut Sink<'_>) {
                     program.line(format!("{name} kept = identity(first);"));
                     program.line(format!("{name} total = kept + a * b;"));
                 }
+                "across-store" => {
+                    program.line(format!("{name} slots[2];"));
+                    program.line(format!("{name} first = a * b;"));
+                    program.line("slots[0] = a;");
+                    program.line("slots[1] = b;");
+                    program.line(format!("{name} second = a * b;"));
+                    program.line(format!("{name} total = first + second;"));
+                    program.sink("slots[0] + slots[1]");
+                }
+                _ => {
+                    program.line(format!("{name} slots[4];"));
+                    program.line("int k = flag + 1;");
+                    program.line("slots[k] = a * b;");
+                    program.line(format!("{name} total = slots[k] + slots[k];"));
+                }
             }
             program.blank();
-            program.check(ty.promoted(), "total", twice);
+            program.check(ty.promoted(), "total", expected);
             sink.push(
                 Facet::CommonSubexpr,
                 Axes::of([("type", ty.name()), ("shape", shape)]),
@@ -1350,11 +1398,25 @@ mod tests {
     }
 
     #[test]
-    fn every_common_subexpression_shape_computes_the_same_total() {
+    fn every_common_subexpression_shape_adds_the_repeated_expression_to_itself() {
         let cases = cases_for(Facet::CommonSubexpr);
         assert!(!cases.is_empty());
         for case in &cases {
-            assert_eq!(case.expect, Expect::Output("84\n".to_owned()), "{}", case.id);
+            // Seven shapes repeat `a * b`, which is 42, and `chained` repeats `a * b + a`,
+            // which is 48. The point of the facet is that the total is twice whatever the
+            // repeated expression came to, so a shape that printed anything else would be
+            // measuring something other than the repetition.
+            let wanted = if case.axes.get("shape") == Some("chained") { "96\n" } else { "84\n" };
+            assert_eq!(case.expect, Expect::Output(wanted.to_owned()), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_common_subexpression_shapes_value_numbering_is_for_are_all_present() {
+        let cases = cases_for(Facet::CommonSubexpr);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in ["commutative", "chained", "across-store", "subscript"] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
         }
     }
 
