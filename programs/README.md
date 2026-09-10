@@ -1,10 +1,10 @@
 # The corpus
 
-1744 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1765 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `821b0682d8a4cae22916933c71f1f13a123206a086e71609a9e4993ab82f68e2`.
+Corpus digest `5d33efb8b373e6f286e8197e5946ac918074d2e829a661cea5f978b72c80b9b9`.
 
 ## floor (118 programs)
 
@@ -83,7 +83,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (303 programs)
+## backend (324 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -95,7 +95,8 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`scheduling`](backend/scheduling/README.md) | 12 | ordering instructions within a block |
 | [`block-layout`](backend/block-layout/README.md) | 4 | laying out blocks so the common path falls through |
 | [`if-conversion`](backend/if-conversion/README.md) | 20 | turning a short branch into branchless code |
-| [`switch-lowering`](backend/switch-lowering/README.md) | 9 | choosing how to lower a switch |
+| [`switch-lowering`](backend/switch-lowering/README.md) | 15 | choosing how to lower a switch |
+| [`switch-runs`](backend/switch-runs/README.md) | 15 | stretches of consecutive labels that share one arm |
 | [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
