@@ -18,6 +18,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     narrowing(sink);
     cast_chain(sink);
     simplify(sink);
+    short_circuit(sink);
     reassociate(sink);
     dead_code(sink);
     dead_store(sink);
@@ -802,6 +803,261 @@ fn one_bit_identities(sink: &mut Sink<'_>) {
     );
 }
 
+/// How many values one pass of a shape looks at.
+const SAMPLES: i128 = 256;
+
+/// The step the sample walk takes.
+///
+/// Thirty seven and two hundred and fifty six have no factor in common, so a full pass sees
+/// every value from zero to two hundred and fifty five exactly once. That is what makes a hit
+/// count here a count over the whole byte range, and it is what keeps the branches
+/// unpredictable, which is the condition the cost rule is really being asked about.
+const STRIDE: i128 = 37;
+
+/// The offset the sample walk starts from, read through a `volatile` global.
+const SEED: i128 = 7;
+
+/// The two ways of writing the same condition.
+const FORMS: &[&str] = &["branch", "value"];
+
+/// The value the walk sees at one index.
+fn sample(index: i128) -> i128 {
+    (index * STRIDE + SEED) & 255
+}
+
+/// One condition, and everything needed to build a program around it.
+struct Shape {
+    /// The axis value, which is also the name of the decision being asked for.
+    name: &'static str,
+    /// One line saying what the compiler has to work out.
+    purpose: &'static str,
+    /// Declarations that go before `main`.
+    top: &'static [&'static str],
+    /// Statements between the two loops, each with the depth to write it at.
+    prepare: &'static [(usize, &'static str)],
+    /// Statements at the top of the walk, before the condition is tested.
+    setup: &'static [&'static str],
+    /// The condition, written the way a person would write it.
+    condition: &'static str,
+    /// The same condition in Rust, so the generator knows the answer without running anything.
+    holds: fn(i128) -> bool,
+    /// When the right half is a call, the left half, so the call count can be checked too.
+    left: Option<fn(i128) -> bool>,
+}
+
+/// The conditions, one per thing the collapse has to decide.
+///
+/// Every predicate is written to read the same way as the C next to it, which is the only
+/// thing keeping the two in step. A range test written as a range test would break that,
+/// hence the one allow.
+#[allow(clippy::manual_range_contains)]
+const SHAPES: &[Shape] = &[
+    Shape {
+        name: "cheap-and",
+        purpose: "two cheap comparisons joined by and",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "v > 100 && v < 200",
+        holds: |v| v > 100 && v < 200,
+        left: None,
+    },
+    Shape {
+        name: "cheap-or",
+        purpose: "two cheap comparisons joined by or",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "v < 50 || v > 200",
+        holds: |v| v < 50 || v > 200,
+        left: None,
+    },
+    Shape {
+        name: "chain-of-three",
+        purpose: "three cheap comparisons in a row, which nests and should collapse twice",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "v > 30 && v < 220 && (v & 1) == 0",
+        holds: |v| v > 30 && v < 220 && (v & 1) == 0,
+        left: None,
+    },
+    Shape {
+        name: "and-before-or",
+        purpose: "and binding tighter than or, which the collapse has to keep",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "v > 200 && (v & 1) == 0 || v < 20",
+        holds: |v| v > 200 && (v & 1) == 0 || v < 20,
+        left: None,
+    },
+    Shape {
+        name: "or-before-and",
+        purpose: "or written first with and still binding tighter",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "v < 20 || v > 200 && (v & 1) == 0",
+        holds: |v| v < 20 || v > 200 && (v & 1) == 0,
+        left: None,
+    },
+    Shape {
+        name: "guarded-load",
+        purpose: "a load that only the left half says is allowed",
+        top: &["struct cell { int x; };", "static struct cell cells[256];"],
+        prepare: &[
+            (0, "for (int i = 0; i < 256; i++) {"),
+            (1, "cells[i].x = data[i] & 4;"),
+            (0, "}"),
+        ],
+        setup: &["struct cell *p = (v & 3) != 0 ? &cells[i] : 0;"],
+        condition: "p && p->x",
+        holds: |v| (v & 3) != 0 && (v & 4) != 0,
+        left: None,
+    },
+    Shape {
+        name: "guarded-division",
+        purpose: "a division that traps unless the left half is tested first",
+        top: &[],
+        prepare: &[],
+        setup: &["int d = v & 7;", "int n = v + 100;"],
+        condition: "d && n / d > 1",
+        holds: |v| (v & 7) != 0 && (v + 100) / (v & 7) > 1,
+        left: None,
+    },
+    Shape {
+        name: "guarded-index",
+        purpose: "an index that is only inside the array when the left half says so",
+        top: &[],
+        prepare: &[
+            (0, "int small[16];"),
+            (0, "for (int i = 0; i < 16; i++) {"),
+            (1, "small[i] = i & 1;"),
+            (0, "}"),
+        ],
+        setup: &["int k = v & 31;"],
+        condition: "k < 16 && small[k]",
+        holds: |v| (v & 31) < 16 && ((v & 31) & 1) != 0,
+        left: None,
+    },
+    Shape {
+        name: "costly-right",
+        purpose: "a right half that is real work rather than a test",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "(v & 1) == 0 && (v * 37 + 11) * (v + 3) % 97 > 40",
+        holds: |v| (v & 1) == 0 && ((v * 37 + 11) * (v + 3)) % 97 > 40,
+        left: None,
+    },
+    Shape {
+        name: "calling-right",
+        purpose: "a right half that calls something with an effect, so it cannot move",
+        top: &[
+            "static int calls;",
+            "static int bump(int v) {",
+            "    calls++;",
+            "    return (v & 8) != 0;",
+            "}",
+        ],
+        prepare: &[],
+        setup: &[],
+        condition: "(v & 1) == 0 && bump(v)",
+        holds: |v| (v & 1) == 0 && (v & 8) != 0,
+        left: Some(|v| (v & 1) == 0),
+    },
+    Shape {
+        name: "predictable-left",
+        purpose: "a left half that is nearly always true, so the branch odds decide",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "v < 250 && (v & 1) == 0",
+        holds: |v| v < 250 && (v & 1) == 0,
+        left: None,
+    },
+];
+
+/// Collapsing the two branches of `&&` or `||` into one, and the places that forbid it.
+///
+/// A compiler is allowed to evaluate the right half of a logical operator whether or not the
+/// left half needed it, as long as doing so cannot fault, trap or be noticed, and as long as
+/// it is cheap enough to be worth losing the branch. Every one of those words is a decision,
+/// so there is one shape here per decision: two that should collapse, three that pin the
+/// precedence through the collapse, three that must keep the branch because speculating would
+/// read a null pointer, divide by zero or run off the end of an array, one that must be
+/// refused on cost, one that must be refused on effects, and one whose left half is so
+/// predictable that keeping the branch is the cheaper answer.
+///
+/// Each shape is written twice, once as `if (a && b)` and once as `x = a && b;`, because the
+/// two lower to the same triangle and a compiler that collapses one and not the other has a
+/// gap worth naming.
+///
+/// The values are read out of an array filled from a `volatile` seed. Writing the condition
+/// against a literal would make every one of these a constant folding case instead, which is
+/// the lesson the iv-selection facet already paid for.
+fn short_circuit(sink: &mut Sink<'_>) {
+    for shape in SHAPES {
+        for &form in FORMS {
+            if !sink.wants(Facet::ShortCircuit) {
+                return;
+            }
+            let mut hits = 0;
+            let mut calls = 0;
+            for index in 0..SAMPLES {
+                let value = sample(index);
+                if (shape.holds)(value) {
+                    hits += 1;
+                }
+                if shape.left.is_some_and(|left| left(value)) {
+                    calls += 1;
+                }
+            }
+            let mut program = Program::new(format!("{}, written as a {form}", shape.purpose));
+            for line in shape.top {
+                program.top(*line);
+            }
+            program.input(Ty::I32, "seed", SEED);
+            program.blank();
+            program.line(format!("int data[{SAMPLES}];"));
+            program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+            program.line_at(1, format!("data[i] = (i * {STRIDE} + seed) & 255;"));
+            program.line("}");
+            for &(depth, text) in shape.prepare {
+                program.line_at(depth, text);
+            }
+            program.blank();
+            program.line("int hits = 0;");
+            program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+            program.line_at(1, "int v = data[i];");
+            for line in shape.setup {
+                program.line_at(1, *line);
+            }
+            if form == "branch" {
+                program.line_at(1, format!("if ({}) {{", shape.condition));
+                program.line_at(2, "hits++;");
+                program.line_at(1, "}");
+            } else {
+                program.line_at(1, format!("int got = {};", shape.condition));
+                program.line_at(1, "hits += got;");
+            }
+            program.line("}");
+            program.blank();
+            program.check(Ty::I32, "hits", hits);
+            if shape.left.is_some() {
+                program.check(Ty::I32, "calls", calls);
+            }
+            sink.push(
+                Facet::ShortCircuit,
+                Axes::of([("shape", shape.name), ("form", form)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// Chains of associative operations, written every way round.
 ///
 /// A left leaning chain, a right leaning one and a balanced tree all compute the same value,
@@ -1363,6 +1619,111 @@ mod tests {
         assert_eq!(cases.len(), 8);
         for case in cases {
             assert_eq!(case.expect, Expect::Output("11\n".to_owned()), "{}", case.id);
+        }
+    }
+
+    fn output(case: &corpus_model::Case) -> &str {
+        match &case.expect {
+            Expect::Output(text) => text,
+            Expect::Rejected(_) => panic!("{} should run", case.id),
+        }
+    }
+
+    #[test]
+    fn every_short_circuit_shape_is_written_both_as_a_branch_and_as_a_value() {
+        let cases = cases_for(Facet::ShortCircuit);
+        assert_eq!(cases.len(), super::SHAPES.len() * 2);
+        for shape in super::SHAPES {
+            for form in super::FORMS {
+                let found = cases.iter().any(|c| {
+                    c.axes.get("shape") == Some(shape.name) && c.axes.get("form") == Some(*form)
+                });
+                assert!(found, "no {} as a {form}", shape.name);
+            }
+        }
+        for case in &cases {
+            let source = &case.source;
+            if case.axes.get("form") == Some("branch") {
+                assert!(source.contains("if ("), "{}", case.id);
+            } else {
+                assert!(source.contains("int got = "), "{}", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn the_three_shapes_that_would_fault_if_speculated_are_all_here() {
+        // These are the cases the collapse has to refuse, and the reason it has to refuse
+        // each one is different: a null pointer, a zero divisor and an index past the end.
+        let cases = cases_for(Facet::ShortCircuit);
+        for (shape, needle) in [
+            ("guarded-load", "p && p->x"),
+            ("guarded-division", "d && n / d > 1"),
+            ("guarded-index", "k < 16 && small[k]"),
+        ] {
+            let found: Vec<_> =
+                cases.iter().filter(|c| c.axes.get("shape") == Some(shape)).collect();
+            assert_eq!(found.len(), 2, "{shape}");
+            for case in found {
+                assert!(case.source.contains(needle), "{}", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn the_guarded_index_really_would_run_off_the_end_without_its_guard() {
+        // Sixteen elements of room and five bits of index, so half the values the walk sees
+        // are outside the array and the guard is the only thing keeping them out.
+        let cases = cases_for(Facet::ShortCircuit);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("shape") == Some("guarded-index"))
+            .expect("the guarded index");
+        assert!(case.source.contains("int small[16];"), "{}", case.source);
+        assert!(case.source.contains("int k = v & 31;"), "{}", case.source);
+    }
+
+    #[test]
+    fn the_calling_case_counts_its_calls_so_the_short_circuit_itself_is_checked() {
+        // A compiler that evaluates the right half anyway still prints the right hit count
+        // and the wrong call count, which is the only way to catch it from the output.
+        let cases = cases_for(Facet::ShortCircuit);
+        let found: Vec<_> =
+            cases.iter().filter(|c| c.axes.get("shape") == Some("calling-right")).collect();
+        assert_eq!(found.len(), 2);
+        for case in found {
+            assert_eq!(output(case), "64\n128\n", "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn a_full_pass_of_the_walk_sees_every_byte_value_exactly_once() {
+        let mut seen = [false; 256];
+        for index in 0..super::SAMPLES {
+            let value = super::sample(index);
+            let slot = usize::try_from(value).expect("a byte");
+            assert!(!seen[slot], "{value} twice");
+            seen[slot] = true;
+        }
+        assert!(seen.iter().all(|&hit| hit));
+    }
+
+    #[test]
+    fn the_cheap_and_case_counts_the_values_between_its_two_bounds() {
+        // One hundred and one through one hundred and ninety nine, which is ninety nine of
+        // them, and the walk sees each of them once.
+        let cases = cases_for(Facet::ShortCircuit);
+        let case =
+            cases.iter().find(|c| c.axes.get("shape") == Some("cheap-and")).expect("the cheap and");
+        assert_eq!(output(case), "99\n");
+    }
+
+    #[test]
+    fn no_short_circuit_case_gets_its_values_from_a_literal() {
+        // The whole facet turns into a constant folding facet if it does.
+        for case in cases_for(Facet::ShortCircuit) {
+            assert!(case.source.contains("static volatile int seed_in"), "{}", case.id);
+            assert!(case.source.contains("int seed = seed_in;"), "{}", case.id);
         }
     }
 
