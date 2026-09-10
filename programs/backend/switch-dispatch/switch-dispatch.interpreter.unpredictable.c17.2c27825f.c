@@ -9,8 +9,8 @@ static unsigned long long step(int op, unsigned long long acc,
     case 0: return acc + operand;
     case 1: return acc - operand;
     case 2: return acc ^ operand;
-    case 3: return (acc << 3) ^ operand;
-    case 4: return (acc >> 5) | operand;
+    case 3: return ((acc << 3) | (acc >> 61)) ^ operand;
+    case 4: return ((acc >> 5) | (acc << 59)) + operand;
     case 5: return acc + (operand << 1);
     case 6: return acc - (operand >> 1);
     case 7: return acc * 3 + 1;
@@ -24,10 +24,10 @@ int main(void) {
     int seed = seed_in;
     int count = count_in;
 
-    unsigned char ops[512];
-    unsigned int args[512];
+    unsigned char ops[4096];
+    unsigned int args[4096];
     unsigned int state = (unsigned int)seed;
-    for (int at = 0; at < 512; at++) {
+    for (int at = 0; at < 4096; at++) {
         state = state * 1103515245u + 12345u;
         ops[at] = (unsigned char)((state >> 16) % 9u);
         args[at] = (state >> 8) & 255u;
@@ -35,7 +35,7 @@ int main(void) {
 
     unsigned long long acc = 1;
     for (int at = 0; at < count; at++) {
-        acc = step(ops[at & 511], acc, args[at & 511]);
+        acc = step(ops[at & 4095], acc, args[at & 4095]);
     }
 
     printf("%llu\n", (unsigned long long)(acc));

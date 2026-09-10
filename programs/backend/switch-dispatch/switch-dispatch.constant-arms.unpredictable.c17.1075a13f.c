@@ -23,16 +23,16 @@ int main(void) {
     int seed = seed_in;
     int count = count_in;
 
-    int stream[512];
+    int stream[4096];
     unsigned int state = (unsigned int)seed;
-    for (int at = 0; at < 512; at++) {
+    for (int at = 0; at < 4096; at++) {
         state = state * 1103515245u + 12345u;
         stream[at] = 9 + (int)((state >> 16) % 10u);
     }
 
     long long total = 0;
     for (int at = 0; at < count; at++) {
-        total += constant_arms(stream[at & 511]);
+        total += constant_arms(stream[at & 4095]);
     }
 
     printf("%lld\n", (long long)(total));

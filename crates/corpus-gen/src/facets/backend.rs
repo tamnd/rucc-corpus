@@ -840,10 +840,20 @@ fn look_alike_arms(sink: &mut Sink<'_>) {
 /// How many values a dispatch stream holds.
 ///
 /// A power of two, so the walk over it is an `and` rather than a division, and the index
-/// arithmetic is not what the case ends up measuring. Long enough that a branch predictor
-/// cannot learn the whole sequence, short enough that two kilobytes of it stay in the first
-/// level cache and the case measures the switch rather than the memory system.
-const STREAM: i128 = 512;
+/// arithmetic is not what the case ends up measuring. Sixteen kilobytes of it, which stays in
+/// the first level cache on anything this corpus runs on, so the case measures the switch
+/// rather than the memory system.
+///
+/// The length matters more than it looks. A modern predictor keeps enough history to memorise
+/// a repeating sequence of a few hundred branches, and a shorter stream than this one is
+/// learned outright. Measured on a six core Xeon, dispatching the `scattered` shape ten million
+/// times on the unpredictable stream: 512 values gives 25,645 mispredicts, 1024 gives 122,626,
+/// 2048 gives 1,310,981 and 4096 gives 5,004,629. So a 512 value stream is not unpredictable at
+/// all, it is a pattern the hardware has already learned by the time the timer starts, and the
+/// case built on it would have been measuring branch throughput while claiming to measure
+/// mispredicts. At 4096 the rate is about one mispredict every two dispatches, which is what a
+/// chain of equality tests on a value it cannot guess is supposed to cost.
+const STREAM: i128 = 4096;
 
 /// How many times a dispatch case goes round its loop.
 ///
@@ -904,11 +914,18 @@ const PAIRED: &[&str] = &["affine", "scattered"];
 ///
 /// Every other switch facet is about size and about getting the right answer. This one is about
 /// time, and it is the only place the corpus can see the thing document 24.3 says is the whole
-/// reason to care about switch shape. A chain of equality tests on a value drawn at random from
-/// the label range mispredicts about half the time, and the cost of that is several times the
-/// cost of the instructions themselves. A range check does not mispredict, so a compiler that
-/// reduces the switch to one comparison wins far more clock than it wins instructions, and no
-/// case that dispatches a switch a few dozen times can tell you that.
+/// reason to care about switch shape. A chain of equality tests on a value the hardware cannot
+/// guess mispredicts about once every two dispatches, and that costs about half as much again
+/// as the instructions themselves. A range check is one branch instead of eight and it is taken
+/// the same way almost every time, so a compiler that reduces the switch to one comparison wins
+/// more clock than it wins instructions, and no case that dispatches a switch a few dozen times
+/// can tell you that.
+///
+/// The size of that second effect is worth being honest about. Going from the chain to the
+/// range check cuts the instructions by half and the cycles by rather more than half, and only
+/// part of the difference is mispredicts. That is why the two paired shapes exist: the same
+/// switch on a stream the predictor learns and on one it does not, so the mispredict share can
+/// be read off rather than assumed.
 ///
 /// The dispatch value always comes out of an array that was filled from a `volatile` seed, and
 /// the number of dispatches comes out of a `volatile` too. Either one left as a constant turns
@@ -1061,17 +1078,23 @@ const OPCODES: i128 = 9;
 /// document 24.7 names, and it is where the jump table and the bit test will have to prove
 /// themselves once they are written.
 ///
-/// No arm may throw the accumulator away. An `acc & operand` with an operand under two hundred
-/// and fifty six clears every high bit, and after one of those the answer no longer depends on
-/// anything that came before, so a run that dispatched a million steps wrongly could still print
-/// the right number. Every arm here either carries all sixty four bits forward or mixes them, and
-/// the multiply is there to make sure the high ones keep moving.
+/// Every arm is invertible in the accumulator, and that is the rule rather than a nicety.
+///
+/// If an arm can lose a bit then the answer can stop depending on what came before it, and a run
+/// that dispatched a million steps wrongly would still print the right number. An `acc & operand`
+/// with an operand under two hundred and fifty six is the obvious way to get that wrong, but it
+/// is not the only one: an earlier draft of this list had `(acc << 3) ^ operand` and
+/// `(acc >> 5) | operand`, neither of which masks anything, and the two of them together still
+/// walked a sixty four bit accumulator down to fifteen bits over ten million steps. So the shifts
+/// here are rotates, which keep every bit they are given, and the multiply is by an odd number,
+/// which is invertible on a wrapping word. A composition of invertible steps is invertible, so
+/// two runs that started differently can never meet.
 const STEPS: &[&str] = &[
     "acc + operand",
     "acc - operand",
     "acc ^ operand",
-    "(acc << 3) ^ operand",
-    "(acc >> 5) | operand",
+    "((acc << 3) | (acc >> 61)) ^ operand",
+    "((acc >> 5) | (acc << 59)) + operand",
     "acc + (operand << 1)",
     "acc - (operand >> 1)",
     "acc * 3 + 1",
@@ -1135,6 +1158,15 @@ fn interpreter(sink: &mut Sink<'_>) {
 /// accumulator carries, so unlike every other shape in this facet there is no shortcut from one
 /// pass over the stream to the whole run.
 fn interpreter_answer() -> i128 {
+    i128::from(interpreter_run(1))
+}
+
+/// The interpreter's loop, from a starting accumulator, which is what the emitted C does.
+///
+/// Taking the start as an argument is what lets a test ask whether the answer still depends on
+/// it after ten million steps. If it does not, some arm is throwing the accumulator away and
+/// the case has stopped being an oracle, whatever number it prints.
+fn interpreter_run(start: u64) -> u64 {
     let opcodes = u32::try_from(OPCODES).expect("the opcode count is small and positive");
     let mut state = u32::try_from(super::SEED).expect("the seed is small and positive");
     let mut ops = Vec::new();
@@ -1145,22 +1177,22 @@ fn interpreter_answer() -> i128 {
         args.push(u64::from((state >> 8) & 255));
     }
     let mask = (STREAM - 1) as usize;
-    let mut acc: u64 = 1;
+    let mut acc: u64 = start;
     for at in 0..DISPATCHES as usize {
         let operand = args[at & mask];
         acc = match ops[at & mask] {
             0 => acc.wrapping_add(operand),
             1 => acc.wrapping_sub(operand),
             2 => acc ^ operand,
-            3 => (acc << 3) ^ operand,
-            4 => (acc >> 5) | operand,
+            3 => acc.rotate_left(3) ^ operand,
+            4 => acc.rotate_right(5).wrapping_add(operand),
             5 => acc.wrapping_add(operand << 1),
             6 => acc.wrapping_sub(operand >> 1),
             7 => acc.wrapping_mul(3).wrapping_add(1),
             _ => acc,
         };
     }
-    i128::from(acc)
+    acc
 }
 
 /// Calls with more arguments than fit in registers, and aggregates passed by value.
@@ -1496,19 +1528,24 @@ mod tests {
         assert_eq!(super::DISPATCHES % super::STREAM, 0);
         for case in cases_for(Facet::SwitchDispatch) {
             assert!(case.source.contains("count_in = 10240000"), "{}", case.id);
-            assert!(case.source.contains("at & 511"), "{}", case.id);
+            assert!(case.source.contains("at & 4095"), "{}", case.id);
         }
     }
 
-    // The whole facet is about branches nobody can guess, so a stream that repeats every few
-    // values would leave every case here measuring a well predicted branch and saying nothing.
-    // Thirty two is well inside what a modern predictor learns, so a period at or under it is a
-    // broken case rather than a slightly weaker one.
+    // The whole facet is about branches nobody can guess, and the only thing that actually makes
+    // a stream unguessable is its length. Every stream here repeats, because the loop walks the
+    // same array over and over, so the question is never whether it repeats but whether the
+    // period is longer than the history a predictor keeps. Measured, 512 values are learned
+    // outright and 4096 mispredict about half the time, so the bar is the measurement and not a
+    // guess about what a pattern looks like. See [`super::STREAM`] for the numbers.
     #[test]
-    fn the_unpredictable_stream_does_not_repeat_quickly() {
+    fn the_unpredictable_stream_is_longer_than_a_predictor_remembers() {
+        const { assert!(super::STREAM >= 4096, "the stream is short enough to be learned") };
         for shape in super::SHAPES {
             let stream = super::dispatch_stream(shape, false);
-            for period in 1..=32 {
+            assert_eq!(stream.len() as i128, super::STREAM);
+            // A period shorter than the array would undo the length, whatever the array holds.
+            for period in 1..=64 {
                 let repeats = stream.iter().zip(stream.iter().skip(period)).all(|(a, b)| a == b);
                 assert!(!repeats, "the {} stream repeats every {period}", shape.name);
             }
@@ -1571,12 +1608,26 @@ mod tests {
         for work in super::STEPS {
             assert!(work.contains("acc"), "{work} does not read the accumulator");
         }
-        // An `and` with an operand under two hundred and fifty six would clear every high bit,
-        // and the answer would stop depending on what came before it.
+        // An `and` with an operand under two hundred and fifty six would clear every high bit in
+        // one step. It is the cheapest way to break the oracle, so it is worth naming, but it is
+        // not the whole property. The test below is what actually holds the arms to their rule.
         assert!(
             !super::STEPS.iter().any(|work| work.contains('&')),
             "an arm masks the accumulator"
         );
+    }
+
+    // Reading the arms is not proof, because a mixture of arms can lose the accumulator even
+    // when no single one of them does. `(acc >> 5) | operand` keeps every bit it is given, but
+    // enough of them in a row would still walk a sixty four bit value down to nothing. So ask
+    // the loop directly: start it somewhere else and see whether ten million steps later it
+    // still remembers. If it does not, the case prints the same number whatever happened in it.
+    #[test]
+    fn the_interpreter_answer_still_depends_on_where_the_loop_started() {
+        let from_one = super::interpreter_run(1);
+        assert_ne!(from_one, super::interpreter_run(2), "the accumulator was thrown away");
+        assert_ne!(from_one, super::interpreter_run(u64::MAX), "the high bits were thrown away");
+        assert_eq!(i128::from(from_one), super::interpreter_answer());
     }
 
     #[test]

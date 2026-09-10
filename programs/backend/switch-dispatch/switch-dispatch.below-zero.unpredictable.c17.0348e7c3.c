@@ -31,16 +31,16 @@ int main(void) {
     int seed = seed_in;
     int count = count_in;
 
-    int stream[512];
+    int stream[4096];
     unsigned int state = (unsigned int)seed;
-    for (int at = 0; at < 512; at++) {
+    for (int at = 0; at < 4096; at++) {
         state = state * 1103515245u + 12345u;
         stream[at] = -8 + (int)((state >> 16) % 20u);
     }
 
     long long total = 0;
     for (int at = 0; at < count; at++) {
-        total += below_zero(stream[at & 511]);
+        total += below_zero(stream[at & 4095]);
     }
 
     printf("%lld\n", (long long)(total));
