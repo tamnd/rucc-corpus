@@ -160,6 +160,9 @@ pub enum Facet {
     CallingConvention,
     /// The peephole rules that only make sense on machine instructions.
     MachinePeephole,
+    /// The address shapes that decide whether an address is worked out once into a register
+    /// or carried by every instruction that reads it.
+    AddressFold,
     /// The bit counting builtins, which a back end has to have an instruction for.
     BitBuiltins,
     /// Conversions between the floating types and the integer ones, in both directions.
@@ -265,6 +268,7 @@ impl Facet {
         Self::SwitchDispatch,
         Self::CallingConvention,
         Self::MachinePeephole,
+        Self::AddressFold,
         Self::BitBuiltins,
         Self::FloatConversion,
         Self::LongDouble,
@@ -334,6 +338,7 @@ impl Facet {
             Self::SwitchDispatch => "switch-dispatch",
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
+            Self::AddressFold => "address-fold",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
             Self::LongDouble => "long-double",
@@ -408,6 +413,7 @@ impl Facet {
             Self::SwitchDispatch => "a switch dispatched often enough to time how it was lowered",
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
+            Self::AddressFold => "whether an address is worked out once or carried by each reader",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
             Self::LongDouble => {
@@ -484,6 +490,7 @@ impl Facet {
             | Self::SwitchDispatch
             | Self::CallingConvention
             | Self::MachinePeephole
+            | Self::AddressFold
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,

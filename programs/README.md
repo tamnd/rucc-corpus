@@ -1,10 +1,10 @@
 # The corpus
 
-1856 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1884 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `d46afc8cf5bf8226a4a342b1d0c9a246fc771a5b27c1cb4123e7ca1bf495f59e`.
+Corpus digest `1dfd90cd9be79d88155503592865b84befe2a32a9c3fd2fbf626da4ee9b5314a`.
 
 ## floor (118 programs)
 
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (333 programs)
+## backend (361 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -104,6 +104,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`switch-dispatch`](backend/switch-dispatch/README.md) | 9 | a switch dispatched often enough to time how it was lowered |
 | [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
+| [`address-fold`](backend/address-fold/README.md) | 28 | whether an address is worked out once or carried by each reader |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |

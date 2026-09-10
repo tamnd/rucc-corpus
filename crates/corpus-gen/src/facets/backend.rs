@@ -30,6 +30,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     switch_dispatch(sink);
     calling_convention(sink);
     machine_peephole(sink);
+    address_fold(sink);
 }
 
 /// Expressions that a target usually has one instruction for.
@@ -1367,6 +1368,138 @@ fn machine_peephole(sink: &mut Sink<'_>) {
     }
 }
 
+/// One address and the instructions that read it.
+///
+/// A machine that can put a base, an index and a displacement in a memory operand can either
+/// work an address out into a register once and have every reader name that register, or leave
+/// the address where it is and have every reader carry the whole of it. Which is cheaper is not
+/// a question about one reader. Folding into some of a set and not the rest leaves the address
+/// computation there for the rest, so the folds bought nothing and the registers the address
+/// reads are live across instructions that no longer read them.
+///
+/// So the shapes here vary the thing that decides it: how many readers there are, whether they
+/// are all in one block, whether the base survives from the address to the last of them, and
+/// whether the address is a register or a symbol, which is the case where every reader that
+/// takes it writes a whole address word rather than a register number.
+fn address_fold(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "several-offsets",
+        "store-then-load",
+        "computed-index",
+        "base-written-between",
+        "reader-in-another-block",
+        "filled-then-read",
+        "global-many-readers",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::AddressFold) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("one {name} address, {shape}"));
+            program.input(ty, "seed", 5);
+            if matches!(shape, "store-then-load" | "computed-index" | "reader-in-another-block") {
+                program.input(Ty::I32, "at", 3);
+            }
+            if shape == "reader-in-another-block" {
+                program.input(Ty::I32, "flag", 1);
+            }
+            program.blank();
+            let value: i128 = match shape {
+                // Three readers of one address at three displacements, which is the shape the
+                // pass exists for and the one every reader can take.
+                "several-offsets" => {
+                    program.line(format!("{name} buffer[8] = {{ 0 }};"));
+                    program.line(format!("{name} *q = &buffer[0];"));
+                    program.line("q[0] = seed;");
+                    program.line(format!("q[3] = seed + {};", lit(ty, 1)));
+                    program.line(format!("q[7] = seed + {};", lit(ty, 2)));
+                    program.line(format!("{name} total = q[0] + q[3] + q[7];"));
+                    18
+                }
+                // Two readers of one address, and they are not the same kind of instruction.
+                // Value numbering is what gives the store and the load one address rather than
+                // two, so this is the smallest case that depends on both passes.
+                "store-then-load" => {
+                    program.line(format!("{name} buffer[8] = {{ 0 }};"));
+                    program.line(format!("buffer[at] = seed + {};", lit(ty, 1)));
+                    program.line(format!("{name} total = buffer[at];"));
+                    6
+                }
+                // The same, with the address made of a base and a scaled index rather than a
+                // base and a number, which is the other thing a memory operand has room for.
+                "computed-index" => {
+                    program.line(format!("{name} buffer[8] = {{ 0 }};"));
+                    program.line("buffer[at] = seed;");
+                    program.line(format!("buffer[at + 1] = seed + {};", lit(ty, 1)));
+                    program.line(format!("{name} total = buffer[at] + buffer[at + 1];"));
+                    11
+                }
+                // The base is written between the two readers, so the address the second one
+                // would carry is not the address the first one read. Nothing may move.
+                "base-written-between" => {
+                    program.line(format!("{name} buffer[8] = {{ 0 }};"));
+                    program.line(format!("{name} *q = &buffer[2];"));
+                    program.line("q[0] = seed;");
+                    program.line("q = &buffer[5];");
+                    program.line(format!("q[0] = seed + {};", lit(ty, 1)));
+                    program.line(format!("{name} total = buffer[2] + buffer[5];"));
+                    11
+                }
+                // One of the readers is behind a branch, so the set is not all in one block and
+                // a decision taken a block at a time cannot see the whole of it.
+                "reader-in-another-block" => {
+                    program.line(format!("{name} buffer[8] = {{ 0 }};"));
+                    program.line(format!("{name} *q = &buffer[at];"));
+                    program.line("q[0] = seed;");
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("q[1] = seed + {};", lit(ty, 1)));
+                    program.line("}");
+                    program.line(format!("{name} total = buffer[3] + buffer[4];"));
+                    11
+                }
+                // An array filled in one loop and read back in the next. Both loops unroll, and
+                // every element then has one address with a store reading it and a load reading
+                // it, which is eight sets of two rather than one set of eight.
+                "filled-then-read" => {
+                    program.line(format!("{name} grid[8];"));
+                    program.line("for (int i = 0; i < 8; i++) {");
+                    program.line_at(1, format!("grid[i] = seed + ({name})i;"));
+                    program.line("}");
+                    program.line(format!("{name} total = 0;"));
+                    program.line("for (int i = 0; i < 8; i++) {");
+                    program.line_at(1, "total += grid[i];");
+                    program.line("}");
+                    68
+                }
+                // A global rather than a local, read four times. The address of a global is not
+                // a register, so a reader that takes it writes the symbol itself, and four
+                // readers write it four times to save one instruction that wrote it once.
+                _ => {
+                    program.top(format!("static {name} shared[4];"));
+                    program.line("shared[0] = seed;");
+                    program.line(format!("shared[1] = seed + {};", lit(ty, 1)));
+                    program.line(format!("shared[2] = seed + {};", lit(ty, 2)));
+                    program.line(format!("shared[3] = seed + {};", lit(ty, 3)));
+                    program.line(format!(
+                        "{name} total = shared[0] + shared[1] + shared[2] + shared[3];"
+                    ));
+                    26
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", value);
+            sink.push(
+                Facet::AddressFold,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -1731,6 +1864,50 @@ mod tests {
     fn every_layout_case_expects_a_thousand_iterations_of_the_common_path() {
         for case in cases_for(Facet::BlockLayout) {
             assert_eq!(output(&case), "1000\n", "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn every_address_fold_case_reads_back_exactly_what_it_wrote() {
+        let cases = cases_for(Facet::AddressFold);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            // Every shape stores through an address and then adds up what it stored, so the
+            // number is fixed by the seed and the offsets rather than by anything the compiler
+            // decides. A case printing something else would mean a store and a load that were
+            // meant to be the same address were not.
+            let wanted = match case.axes.get("shape") {
+                Some("several-offsets") => "18\n",
+                Some("store-then-load") => "6\n",
+                Some("computed-index" | "base-written-between" | "reader-in-another-block") => {
+                    "11\n"
+                }
+                Some("filled-then-read") => "68\n",
+                _ => "26\n",
+            };
+            assert_eq!(output(case), wanted, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_address_shapes_the_fold_has_to_refuse_are_all_present() {
+        let cases = cases_for(Facet::AddressFold);
+        let shapes: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("shape")).collect();
+        for wanted in ["base-written-between", "reader-in-another-block", "global-many-readers"] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+    }
+
+    #[test]
+    fn the_global_many_readers_shape_puts_its_array_at_file_scope() {
+        for case in cases_for(Facet::AddressFold) {
+            if case.axes.get("shape") == Some("global-many-readers") {
+                // The point of the shape is that the address is a symbol rather than a
+                // register, which is only true of an array outside any function.
+                assert!(case.source.contains("shared[4];\n"), "{}", case.id);
+                let at = case.source.find("shared[4];").unwrap();
+                assert!(at < case.source.find("int main").unwrap(), "{}", case.id);
+            }
         }
     }
 }
