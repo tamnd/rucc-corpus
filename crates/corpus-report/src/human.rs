@@ -248,12 +248,24 @@ fn code_quality(out: &mut String, summary: &Summary) {
     }
     out.push_str("## How big the code is\n\n");
     out.push_str(&format!(
-        "Code size is the size of the executable sections, not the size of the file, so the runtime and the symbol table do not get counted as somebody's optimizer. Everything below is at `-O2` against `{}` at `-O2`, and every number is a median over the cases in that facet, because a facet holds programs of very different sizes and one tiny program should not set the headline.\n\n",
+        "Code size is the size of the executable sections, not the size of the file, so the runtime and the symbol table do not get counted as somebody's optimizer. Everything below is at `-O2` against `{}` at `-O2`. The per facet figures are medians over the cases in that facet, because a facet holds programs of very different sizes and one tiny program should not set the facet's number. The headline for each compiler is the corpus total instead, every byte counted once, because that is the number that does not move when somebody adds a facet.\n\n",
         summary.reference
     ));
 
     for id in under_test {
         out.push_str(&format!("### `{id}`\n\n"));
+
+        if let Some(total) = crate::summary::weighted_size_ratio(&summary.facets, id) {
+            let mut per_facet: Vec<f64> =
+                summary.facets.iter().filter_map(|facet| facet.score(id)?.size_ratio).collect();
+            let middle = crate::summary::median(&mut per_facet);
+            out.push_str(&format!(
+                "Over the whole corpus, `{id}` produces {}. The middle facet is {}, over {} facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.\n\n",
+                as_change(total),
+                middle.map_or_else(|| "not measured".to_owned(), as_change),
+                per_facet.len()
+            ));
+        }
 
         let worst = summary.worst_facets(id, RANKED);
         if worst.is_empty() {

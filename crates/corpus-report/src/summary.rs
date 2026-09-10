@@ -4,13 +4,20 @@
 //! That is not a theoretical worry. A report where the table says one thing and the JSON says
 //! another is worse than no report, because somebody will quote whichever half suits them.
 //!
-//! # Why the median
+//! # Why the median, and where it is the wrong tool
 //!
-//! Every ratio here is a median rather than a mean. The corpus contains programs whose text
-//! is a few dozen bytes, and on those a single extra instruction is a twenty percent
-//! regression. A mean lets a handful of tiny cases decide the headline number for the whole
-//! corpus. The median says what a typical case looks like, which is the thing the ten percent
-//! target in spec 16 was actually about.
+//! Every per case and per facet ratio here is a median rather than a mean. The corpus contains
+//! programs whose text is a few dozen bytes, and on those a single extra instruction is a twenty
+//! percent regression. A mean lets a handful of tiny cases decide the number for a whole facet.
+//! The median says what a typical case in that facet looks like.
+//!
+//! What a median cannot do is combine facets. A median over facets weights `baseline` with its ten
+//! programs the same as `constant-fold` with its several hundred, so it is a fact about the facet
+//! list rather than about the compiler, and adding a facet moves it without any compiler changing.
+//! That is not a hypothetical, it happened in tamnd/rucc-corpus#34 and is written up in
+//! tamnd/rucc-corpus#35. So the `code-quality` target is [`weighted_size_ratio`], every byte in the
+//! corpus counted once. The per facet medians are still reported, because a total hides whether one
+//! enormous facet is carrying the number, but nothing is gated on them.
 
 use corpus_model::{Facet, Level, Phase, RunRecord, Source, Verdict};
 use corpus_run::{Run, compare};
@@ -103,6 +110,15 @@ pub struct FacetScore {
     pub data_ratio: Option<f64>,
     /// How many cases had a measurable size ratio, which is how much the median is worth.
     pub compared: usize,
+    /// The code this compiler produced across the facet, at the headline level, in bytes.
+    ///
+    /// Summed over exactly the cases that went into `size_ratio`, so this and
+    /// `reference_text_bytes` are two totals over the same set of programs and their quotient is
+    /// a number rather than an accident. A facet that had nothing comparable in it contributes
+    /// nought to both, which is what a facet that says nothing should contribute.
+    pub text_bytes: u64,
+    /// What the reference produced over the same cases, per [`FacetScore::text_bytes`].
+    pub reference_text_bytes: u64,
     /// How many cases had a measurable memory ratio, which is how much that median is worth.
     ///
     /// Its own count rather than sharing `compared`, because memory is the one number here
@@ -497,6 +513,8 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
     let mut memories = Vec::new();
     let mut disks = Vec::new();
     let mut datas = Vec::new();
+    let mut text_bytes = 0;
+    let mut reference_text_bytes = 0;
 
     for record in records {
         if record.toolchain != toolchain {
@@ -514,6 +532,8 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
         }
         if let Some(value) = compare::size_ratio(record, against) {
             sizes.push(value);
+            text_bytes += record.compile.text_bytes;
+            reference_text_bytes += against.compile.text_bytes;
         }
         if let Some(value) = compare::speed_ratio(record, against) {
             speeds.push(value);
@@ -537,6 +557,8 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
         tally,
         compared: sizes.len(),
         memory_compared: memories.len(),
+        text_bytes,
+        reference_text_bytes,
         size_ratio: median(&mut sizes),
         speed_ratio: median(&mut speeds),
         compile_ratio: median(&mut compiles),
@@ -559,6 +581,47 @@ pub fn median(values: &mut [f64]) -> Option<f64> {
     } else {
         Some(f64::midpoint(values[middle - 1], values[middle]))
     }
+}
+
+/// How much bigger than the reference the code may be before `code-quality` is not met.
+///
+/// Ten percent, which is the number spec 16 asks for. It is a long way from where this compiler
+/// is, and the target reads not met because of it. That is on purpose. The gate used to be the
+/// median of the per facet medians against the same ten percent, and it read met by one
+/// thousandth, which was luck rather than quality: tamnd/rucc-corpus#34 added a facet that is
+/// better than the corpus average and flipped the gate to not met, because adding a forty eighth
+/// value moved the middle. See tamnd/rucc-corpus#35.
+///
+/// A target that says not met and a number that gets smaller is worth more than a target that
+/// says met and cannot be moved without being lucky. The threshold does not move until the
+/// compiler reaches it.
+const CODE_QUALITY: f64 = 1.10;
+
+/// The code the compiler produced against the code the reference produced, over the whole corpus.
+///
+/// Every byte counts once, so a facet with four hundred programs in it matters four hundred times
+/// as much as a facet with one, which is what anybody asking how good the code is means. The
+/// median over facets that this replaced weighted `baseline` with its ten programs the same as
+/// `constant-fold` with its several hundred, and it could be moved by adding a facet without any
+/// compiler changing at all.
+///
+/// The median is still worth reporting, because a total hides whether one enormous facet is
+/// carrying the number, and [`Summary`] still carries the per facet figures for that. It is just
+/// not what anything is gated on.
+#[must_use]
+pub fn weighted_size_ratio(facets: &[FacetSummary], toolchain: &str) -> Option<f64> {
+    let mut mine = 0u64;
+    let mut theirs = 0u64;
+    for facet in facets {
+        if let Some(score) = facet.score(toolchain) {
+            mine += score.text_bytes;
+            theirs += score.reference_text_bytes;
+        }
+    }
+    if theirs == 0 {
+        return None;
+    }
+    Some(mine as f64 / theirs as f64)
 }
 
 /// Checks each claim against the run.
@@ -586,17 +649,15 @@ fn check_targets(
         if id == reference {
             continue;
         }
-        let mut sizes: Vec<f64> =
-            facets.iter().filter_map(|facet| facet.score(id)?.size_ratio).collect();
-        let size = median(&mut sizes);
+        let size = weighted_size_ratio(facets, id);
         targets.push(Target {
             name: format!("code-quality:{id}"),
             wanted: format!(
-                "the code {id} produces at -O2 is within ten percent of what {reference} produces at -O2"
+                "the code {id} produces at -O2 is within ten percent of what {reference} produces at -O2, counted over the whole corpus by byte"
             ),
-            threshold: Some(1.10),
+            threshold: Some(CODE_QUALITY),
             actual: size,
-            met: size.is_some_and(|value| value <= 1.10),
+            met: size.is_some_and(|value| value <= CODE_QUALITY),
         });
 
         let mut compiles: Vec<f64> =
@@ -639,7 +700,7 @@ fn check_targets(
 
 #[cfg(test)]
 mod tests {
-    use super::{Tally, median, summarise};
+    use super::{Summary, Tally, median, summarise};
     use corpus_model::{
         Axes, Case, Compile, Dialect, Execute, Expect, Facet, Level, Manifest, RunRecord,
         Toolchain, Verdict,
@@ -809,6 +870,60 @@ mod tests {
         assert_eq!(quality.threshold, Some(1.10));
         // The reference is not measured against itself.
         assert!(!summary.targets.iter().any(|t| t.name.ends_with("gcc-16")));
+    }
+
+    /// A big facet going badly and two small ones going well.
+    ///
+    /// The two small facets are one case each and beat the reference. The big one is four cases
+    /// and is twice the size. By count of facets the middle value is a win, and by count of bytes
+    /// the corpus is well behind, which is the disagreement the gate used to get wrong.
+    fn lopsided() -> Vec<RunRecord> {
+        let mut records = Vec::new();
+        for (facet, name) in [(Facet::Simplify, "small-one"), (Facet::ConstantFold, "small-two")] {
+            let case = case_for(facet, name);
+            records.push(record_for(&case, "gcc-16", Level::O2, 100, 100));
+            records.push(record_for(&case, "rucc", Level::O2, 90, 100));
+        }
+        for at in 0..4 {
+            let case = case_for(Facet::LoopUnroll, &format!("big-{at}"));
+            records.push(record_for(&case, "gcc-16", Level::O2, 1000, 100));
+            records.push(record_for(&case, "rucc", Level::O2, 2000, 100));
+        }
+        records
+    }
+
+    // The gate counts bytes, so the facet with four thousand of them decides the number and the
+    // two with ninety each do not. The median over facets says 0.9, which is a claim that this
+    // compiler beats the reference, and it would be reported while the corpus is at 1.94.
+    #[test]
+    fn the_gate_counts_bytes_rather_than_facets() {
+        let summary = summarise(&run_of(lopsided()), "abc", 6);
+        let quality = summary.targets.iter().find(|t| t.name == "code-quality:rucc").unwrap();
+        assert_eq!(quality.actual, Some(8180.0 / 4200.0));
+        assert!(!quality.met);
+
+        let mut per_facet: Vec<f64> =
+            summary.facets.iter().filter_map(|facet| facet.score("rucc")?.size_ratio).collect();
+        assert_eq!(median(&mut per_facet), Some(0.9), "the middle facet disagrees, as it should");
+    }
+
+    // The fault in tamnd/rucc-corpus#35, written as a test. A facet was added, no compiler
+    // changed, and the gate went from met to not met because the middle of the list moved. A
+    // total cannot do that: adding programs that are exactly as good as the corpus already is
+    // leaves the number alone.
+    #[test]
+    fn adding_a_facet_that_is_no_better_or_worse_does_not_move_the_gate() {
+        let before = summarise(&run_of(lopsided()), "abc", 6);
+        let mut records = lopsided();
+        let case = case_for(Facet::SwitchDispatch, "added");
+        records.push(record_for(&case, "gcc-16", Level::O2, 4200, 100));
+        records.push(record_for(&case, "rucc", Level::O2, 8180, 100));
+        let after = summarise(&run_of(records), "abc", 7);
+
+        let of = |summary: &Summary| {
+            summary.targets.iter().find(|t| t.name == "code-quality:rucc").unwrap().actual
+        };
+        assert_eq!(of(&before), of(&after));
     }
 
     #[test]

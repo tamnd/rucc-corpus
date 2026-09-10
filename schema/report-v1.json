@@ -139,6 +139,8 @@
           "minimum": 0
         },
         "size_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's executable section bytes over the reference's, at -O2. One is level with the reference and more than one is bigger." },
+        "text_bytes": { "type": "integer", "minimum": 0, "description": "This toolchain's executable section bytes summed over the facet at -O2, across exactly the cases size_ratio was taken over. Divide the sum of these by the sum of reference_text_bytes to get the code-quality target, which counts bytes rather than facets so that adding a facet cannot move it." },
+        "reference_text_bytes": { "type": "integer", "minimum": 0, "description": "The reference's executable section bytes over the same cases, per text_bytes." },
         "speed_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's run time over the reference's. Less than one is faster." },
         "compile_ratio": { "$ref": "#/$defs/ratio", "description": "Median of this toolchain's compile time over the reference's. Less than one is faster to compile." },
         "memory_ratio": { "$ref": "#/$defs/ratio", "description": "Median of the largest high water mark in this toolchain's process tree over the reference's, while building. Null on any platform where the harness cannot read a process tree, which is everything that is not Linux." },
