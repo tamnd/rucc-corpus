@@ -1,10 +1,10 @@
 # The corpus
 
-1840 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1856 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `98d13f70c4e28dd452b8ecdce9f9f33512791eda1beba4efc6f187a24206d2f6`.
+Corpus digest `d46afc8cf5bf8226a4a342b1d0c9a246fc771a5b27c1cb4123e7ca1bf495f59e`.
 
 ## floor (118 programs)
 
@@ -37,13 +37,13 @@ Transformations that need to see no further than one basic block, which is where
 | [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |
 | [`unreachable-code`](local/unreachable-code/README.md) | 8 | removing a branch with a known condition and its dead arm |
 
-## global (208 programs)
+## global (224 programs)
 
 Transformations across the blocks of one function, which need dataflow rather than a peephole.
 
 | facet | programs | what it is about |
 |---|---|---|
-| [`common-subexpr`](global/common-subexpr/README.md) | 16 | reusing an earlier computation instead of repeating it |
+| [`common-subexpr`](global/common-subexpr/README.md) | 32 | reusing an earlier computation instead of repeating it |
 | [`load-forwarding`](global/load-forwarding/README.md) | 40 | replacing a load with the value already in that place |
 | [`code-motion`](global/code-motion/README.md) | 12 | moving a computation to where it runs no more often |
 | [`copy-propagation`](global/copy-propagation/README.md) | 12 | propagating a copy so the copy becomes dead |
