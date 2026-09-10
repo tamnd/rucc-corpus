@@ -19,6 +19,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     cast_chain(sink);
     simplify(sink);
     short_circuit(sink);
+    conditional_store(sink);
     reassociate(sink);
     dead_code(sink);
     dead_store(sink);
@@ -1058,6 +1059,371 @@ fn short_circuit(sink: &mut Sink<'_>) {
     }
 }
 
+/// The value the un-stored half of a one armed case is left holding.
+const KEPT: i128 = 5;
+
+/// The widths a select is lowered at, which is what decides whether the fold can happen.
+const WIDTHS: &[Ty] = &[Ty::I8, Ty::I16, Ty::I32, Ty::I64];
+
+/// Adds up what one term of the sum loop contributes over a full pass.
+fn sum(contribution: impl Fn(i128) -> i128) -> i128 {
+    (0..SAMPLES).map(|index| contribution(sample(index))).sum()
+}
+
+/// Writes the array every conditional store shape reads its condition and its values from.
+fn store_data(program: &mut Program) {
+    program.input(Ty::I32, "seed", SEED);
+    program.blank();
+    program.line(format!("int data[{SAMPLES}];"));
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, format!("data[i] = (i * {STRIDE} + seed) & 255;"));
+    program.line("}");
+}
+
+/// Fills an array with the value a one armed case leaves behind where it does not store.
+fn store_preset(program: &mut Program, ty: Ty, name: &str) {
+    program.line(format!("{} {name}[{SAMPLES}];", ty.c_name()));
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, format!("{name}[i] = {};", ty.literal(KEPT)));
+    program.line("}");
+}
+
+/// Opens the loop the stores happen in.
+fn store_walk(program: &mut Program) {
+    program.blank();
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, "int v = data[i];");
+}
+
+/// Closes the loop and adds up what the stores left behind.
+fn store_total(program: &mut Program, reads: &[&str], total: i128) {
+    program.line("}");
+    program.blank();
+    program.line("long long total = 0;");
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    for read in reads {
+        program.line_at(1, format!("total += {read};"));
+    }
+    program.line("}");
+    program.blank();
+    program.check(Ty::I64, "total", total);
+}
+
+/// A branch whose two arms both store, which is section 22.2's fourth transformation.
+///
+/// When both arms of a branch write to the same address, the store belongs below the branch
+/// and the branch becomes a choice between two values: `if (c) *p = a; else *p = b;` is
+/// `*p = c ? a : b`, and what is left is a diamond with empty arms that turns into a
+/// conditional move. There was nothing in the corpus with that shape in it, so the census on
+/// the whole of it found zero of them and the pass could neither be shown to work nor be
+/// shown to be safe.
+///
+/// Safe is the harder half. Moving a store below a branch means storing on a path that did
+/// not store before, and a program that did not write to an address is a program another
+/// thread may be writing to. So the transformation is only allowed when both arms already
+/// wrote to the same address, and every shape here that breaks that condition has to keep its
+/// branch: two different addresses, one arm storing and the other not, a `volatile` store, an
+/// atomic store, and a store with a call beside it.
+///
+/// Every shape walks the same array of samples and prints one total, so a compiler that
+/// stores the wrong value, stores on the wrong path or stores nothing at all comes out with a
+/// different number. The condition and the values are read out of that array, which comes
+/// from a `volatile` seed, so none of these folds away before the pass gets to look at it.
+fn conditional_store(sink: &mut Sink<'_>) {
+    hoisted_address(sink);
+    struct_field(sink);
+    same_value(sink);
+    unhoisted_address(sink);
+    two_addresses(sink);
+    one_armed(sink);
+    volatile_arms(sink);
+    atomic_arms(sink);
+    both_arms_at_each_width(sink);
+    a_call_beside_the_store(sink);
+}
+
+/// Both arms storing through a pointer worked out once, which is the case that folds.
+fn hoisted_address(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing through one pointer worked out above them");
+    store_data(&mut program);
+    program.line(format!("int out[{SAMPLES}];"));
+    store_walk(&mut program);
+    program.line_at(1, "int *q = &out[i];");
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "*q = v;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "*q = v + 1;");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v } else { v + 1 });
+    store_total(&mut program, &["out[i]"], total);
+    sink.push(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "hoisted-address")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// The same thing through a struct field, where the address arrives a different way.
+fn struct_field(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing to one field of one struct");
+    // Two fields around the one being written, so a compiler that gets the offset wrong
+    // writes over something the total reads and the case says so.
+    program.top("struct box { int lo; int x; int hi; };");
+    store_data(&mut program);
+    program.line(format!("struct box boxes[{SAMPLES}];"));
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, "boxes[i].lo = 0;");
+    program.line_at(1, "boxes[i].hi = 0;");
+    program.line("}");
+    store_walk(&mut program);
+    program.line_at(1, "struct box *s = &boxes[i];");
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "s->x = v;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "s->x = v + 1;");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v } else { v + 1 });
+    store_total(&mut program, &["boxes[i].lo", "boxes[i].x", "boxes[i].hi"], total);
+    sink.push(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "struct-field")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// Both arms storing the same value, which wants a store and no choice at all.
+fn same_value(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing the same value to the same place");
+    store_data(&mut program);
+    program.line(format!("int out[{SAMPLES}];"));
+    store_walk(&mut program);
+    program.line_at(1, "int *q = &out[i];");
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "*q = v + 3;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "*q = v + 3;");
+    program.line_at(1, "}");
+    let total = sum(|v| v + 3);
+    store_total(&mut program, &["out[i]"], total);
+    sink.push(Facet::ConditionalStore, Axes::of([("shape", "same-value")]), Dialect::C17, program);
+}
+
+/// Both arms storing to the same subscript, with the address worked out twice.
+///
+/// This is the one that is refused today, and it is refused for a reason that is nothing to
+/// do with stores: each arm computes `out + i` for itself, and two instructions that compute
+/// the same address are two different values until something says otherwise. So it is a
+/// measurement of what document 16's value numbering is worth, and it wants to be in the
+/// corpus before value numbering arrives rather than after.
+fn unhoisted_address(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing to one subscript, worked out twice");
+    store_data(&mut program);
+    program.line(format!("int out[{SAMPLES}];"));
+    store_walk(&mut program);
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "out[i] = v;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "out[i] = v + 1;");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v } else { v + 1 });
+    store_total(&mut program, &["out[i]"], total);
+    sink.push(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "unhoisted-address")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// Two arms storing to two places that really are different, which has to keep its branch.
+fn two_addresses(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("two arms storing to two addresses that are not the same");
+    store_data(&mut program);
+    store_preset(&mut program, Ty::I32, "left");
+    store_preset(&mut program, Ty::I32, "right");
+    store_walk(&mut program);
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "left[i] = v;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "right[i] = v + 1;");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v + KEPT } else { KEPT + v + 1 });
+    store_total(&mut program, &["left[i]", "right[i]"], total);
+    sink.push(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "two-addresses")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// One arm storing and the other not, at every width.
+///
+/// Section 22.6 calls this the worst bug in the document, and there is a case per width
+/// because it is the one where being wrong writes to memory. A compiler that folds this
+/// stores on the path that used to store nothing, and if another thread owns that address
+/// between the two, the program has a write that its source does not have.
+///
+/// A single threaded case cannot show that race, and one that passes under both compilers
+/// proves nothing about the thing being avoided. What it does prove is the half that is
+/// checkable: the value left behind where no store happened is the value that was there
+/// before. A compiler that folds this and gets the choice backwards writes the wrong number
+/// into every other slot and the total says so.
+fn one_armed(sink: &mut Sink<'_>) {
+    for &ty in WIDTHS {
+        if !sink.wants(Facet::ConditionalStore) {
+            return;
+        }
+        let mut program =
+            Program::new(format!("one arm storing {} and the other storing nothing", ty.c_name()));
+        store_data(&mut program);
+        store_preset(&mut program, ty, "out");
+        store_walk(&mut program);
+        program.line_at(1, "if (v & 1) {");
+        program.line_at(2, format!("out[i] = ({})(v + 1);", ty.c_name()));
+        program.line_at(1, "}");
+        let total = sum(|v| if (v & 1) != 0 { ty.convert(v + 1) } else { ty.convert(KEPT) });
+        store_total(&mut program, &["out[i]"], total);
+        sink.push(
+            Facet::ConditionalStore,
+            Axes::of([("shape", "one-armed"), ("width", ty.name())]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
+/// Both arms storing through a `volatile` pointer, which has to keep its branch.
+fn volatile_arms(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing through a volatile pointer");
+    // A volatile store is a thing that happens, not a value that arrives, so the number of
+    // them and the order they go in are both part of the program.
+    program.top(format!("static volatile int cell[{SAMPLES}];"));
+    store_data(&mut program);
+    store_walk(&mut program);
+    program.line_at(1, "volatile int *q = &cell[i];");
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "*q = v;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "*q = v + 1;");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v } else { v + 1 });
+    store_total(&mut program, &["cell[i]"], total);
+    sink.push(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "volatile-arms")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// Both arms storing atomically, which has to keep its branch.
+fn atomic_arms(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing atomically to the same place");
+    store_data(&mut program);
+    program.line(format!("int out[{SAMPLES}];"));
+    store_walk(&mut program);
+    program.line_at(1, "int *q = &out[i];");
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "__atomic_store_n(q, v, __ATOMIC_RELAXED);");
+    program.line_at(1, "} else {");
+    program.line_at(2, "__atomic_store_n(q, v + 1, __ATOMIC_RELAXED);");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v } else { v + 1 });
+    store_total(&mut program, &["out[i]"], total);
+    sink.push_tagged(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "atomic-arms")]),
+        Dialect::C17,
+        program,
+        &["gnu"],
+    );
+}
+
+/// Both arms storing, at each of the four widths a select is lowered at.
+fn both_arms_at_each_width(sink: &mut Sink<'_>) {
+    for &ty in WIDTHS {
+        if !sink.wants(Facet::ConditionalStore) {
+            return;
+        }
+        let mut program =
+            Program::new(format!("both arms storing {} to the same place", ty.c_name()));
+        store_data(&mut program);
+        program.line(format!("{} out[{SAMPLES}];", ty.c_name()));
+        store_walk(&mut program);
+        program.line_at(1, format!("{} *q = &out[i];", ty.c_name()));
+        program.line_at(1, "if (v & 4) {");
+        program.line_at(2, format!("*q = ({})(v * 3);", ty.c_name()));
+        program.line_at(1, "} else {");
+        program.line_at(2, format!("*q = ({})(v + 100);", ty.c_name()));
+        program.line_at(1, "}");
+        let total = sum(|v| if (v & 4) != 0 { ty.convert(v * 3) } else { ty.convert(v + 100) });
+        store_total(&mut program, &["out[i]"], total);
+        sink.push(
+            Facet::ConditionalStore,
+            Axes::of([("shape", "both-arms"), ("width", ty.name())]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
+/// Both arms storing with a call on one of them, which has to keep its branch.
+fn a_call_beside_the_store(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::ConditionalStore) {
+        return;
+    }
+    let mut program = Program::new("both arms storing, with a call on one of them");
+    program.top("static int calls;");
+    program.top("static void note(void) {");
+    program.top("    calls++;");
+    program.top("}");
+    store_data(&mut program);
+    program.line(format!("int out[{SAMPLES}];"));
+    store_walk(&mut program);
+    program.line_at(1, "int *q = &out[i];");
+    program.line_at(1, "if (v & 1) {");
+    program.line_at(2, "note();");
+    program.line_at(2, "*q = v;");
+    program.line_at(1, "} else {");
+    program.line_at(2, "*q = v + 1;");
+    program.line_at(1, "}");
+    let total = sum(|v| if (v & 1) != 0 { v } else { v + 1 });
+    store_total(&mut program, &["out[i]"], total);
+    // The call count is the oracle for the branch itself. The store can be moved below the
+    // branch and the answer stays right, but the call cannot, and only this number says so.
+    program.check(Ty::I32, "calls", sum(|v| i128::from((v & 1) != 0)));
+    sink.push(
+        Facet::ConditionalStore,
+        Axes::of([("shape", "call-on-one-arm")]),
+        Dialect::C17,
+        program,
+    );
+}
+
 /// Chains of associative operations, written every way round.
 ///
 /// A left leaning chain, a right leaning one and a balanced tree all compute the same value,
@@ -1725,6 +2091,117 @@ mod tests {
             assert!(case.source.contains("static volatile int seed_in"), "{}", case.id);
             assert!(case.source.contains("int seed = seed_in;"), "{}", case.id);
         }
+    }
+
+    #[test]
+    fn every_conditional_store_shape_the_pass_has_to_decide_is_generated() {
+        let cases = cases_for(Facet::ConditionalStore);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in [
+            "hoisted-address",
+            "struct-field",
+            "same-value",
+            "unhoisted-address",
+            "two-addresses",
+            "one-armed",
+            "volatile-arms",
+            "atomic-arms",
+            "both-arms",
+            "call-on-one-arm",
+        ] {
+            assert!(shapes.contains(&wanted), "no {wanted}");
+        }
+        // Ten shapes, two of which are generated once per width.
+        assert_eq!(cases.len(), 8 + super::WIDTHS.len() * 2);
+    }
+
+    #[test]
+    fn the_shapes_that_must_keep_their_branch_are_all_here() {
+        // Each of these breaks the condition that makes the fold safe, and each breaks it in
+        // a different way: a second address, a path that did not store, a store that is an
+        // event, a store with an ordering on it, and an effect beside the store.
+        let cases = cases_for(Facet::ConditionalStore);
+        for (shape, needle) in [
+            ("two-addresses", "right[i] = v + 1;"),
+            ("volatile-arms", "volatile int *q = &cell[i];"),
+            ("atomic-arms", "__atomic_store_n(q, v, __ATOMIC_RELAXED);"),
+            ("call-on-one-arm", "note();"),
+        ] {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(shape))
+                .unwrap_or_else(|| panic!("no {shape}"));
+            assert!(case.source.contains(needle), "{}", case.source);
+        }
+    }
+
+    #[test]
+    fn the_one_armed_cases_have_one_arm_and_a_known_value_under_the_other() {
+        // Section 22.6 calls this the worst bug in the document, and there is one per width
+        // because it is the one where being wrong writes to memory.
+        let cases = cases_for(Facet::ConditionalStore);
+        let armed: Vec<_> =
+            cases.iter().filter(|c| c.axes.get("shape") == Some("one-armed")).collect();
+        assert_eq!(armed.len(), super::WIDTHS.len());
+        for case in armed {
+            assert!(!case.source.contains("} else {"), "{}", case.source);
+            assert!(case.source.contains("out[i] = 5"), "{}", case.source);
+        }
+    }
+
+    #[test]
+    fn both_arms_are_written_at_every_width_a_select_is_lowered_at() {
+        let cases = cases_for(Facet::ConditionalStore);
+        for ty in super::WIDTHS {
+            let case = cases
+                .iter()
+                .find(|c| {
+                    c.axes.get("shape") == Some("both-arms")
+                        && c.axes.get("width") == Some(ty.name())
+                })
+                .unwrap_or_else(|| panic!("no both-arms at {}", ty.name()));
+            assert!(case.source.contains(&format!("{} *q = &out[i];", ty.c_name())), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_atomic_case_is_tagged_so_a_run_that_has_not_got_that_far_can_leave_it_out() {
+        let cases = cases_for(Facet::ConditionalStore);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("shape") == Some("atomic-arms"))
+            .expect("the atomic arms");
+        assert!(case.tags.iter().any(|tag| tag == "gnu"), "{} is untagged", case.id);
+    }
+
+    #[test]
+    fn the_call_case_counts_its_calls_because_the_answer_alone_would_not_catch_it() {
+        // The store can move below the branch and the total stays right. The call cannot,
+        // and the second number is the only thing that says so.
+        let cases = cases_for(Facet::ConditionalStore);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("shape") == Some("call-on-one-arm"))
+            .expect("the call on one arm");
+        assert!(output(case).ends_with("\n128\n"), "{}", output(case));
+    }
+
+    #[test]
+    fn the_two_subscript_cases_differ_only_in_where_the_address_is_worked_out() {
+        // Which is the whole point of the pair. One folds today and one does not, and the
+        // difference is value numbering rather than anything about stores.
+        let cases = cases_for(Facet::ConditionalStore);
+        let hoisted = cases
+            .iter()
+            .find(|c| c.axes.get("shape") == Some("hoisted-address"))
+            .expect("the hoisted address");
+        let plain = cases
+            .iter()
+            .find(|c| c.axes.get("shape") == Some("unhoisted-address"))
+            .expect("the unhoisted address");
+        assert_eq!(output(hoisted), output(plain));
+        assert!(hoisted.source.contains("int *q = &out[i];"), "{}", hoisted.source);
+        assert!(!plain.source.contains("int *q = &out[i];"), "{}", plain.source);
     }
 
     #[test]
