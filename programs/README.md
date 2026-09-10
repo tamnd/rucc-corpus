@@ -1,10 +1,10 @@
 # The corpus
 
-1787 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1803 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `df6486cc5efc329e2da6b1186270a3ed8944af0993ac5033048af1ff568e2b55`.
+Corpus digest `68767d89575cc4bf6527082aee12943ca42b085db09b957b083be2b1978d4c98`.
 
 ## floor (118 programs)
 
@@ -19,7 +19,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (331 programs)
+## local (347 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -30,6 +30,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`narrowing`](local/narrowing/README.md) | 52 | taking the width back off arithmetic that C promoted |
 | [`simplify`](local/simplify/README.md) | 69 | algebraic identities and the local peephole rules |
 | [`short-circuit`](local/short-circuit/README.md) | 22 | collapsing the two branches of a logical operator into one |
+| [`conditional-store`](local/conditional-store/README.md) | 16 | moving a store below a branch whose arms wrote the same place |
 | [`reassociate`](local/reassociate/README.md) | 20 | reassociating a chain to shorten its dependency height |
 | [`dead-code`](local/dead-code/README.md) | 12 | removing a computation whose result nothing reads |
 | [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |
