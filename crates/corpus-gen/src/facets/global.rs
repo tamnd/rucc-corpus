@@ -5,7 +5,7 @@
 //! able to get things wrong in ways that only show up on one path in four, so almost every
 //! case here computes its answer along several paths and prints all of them.
 
-use super::lit;
+use super::{SAMPLES, lit, sample, sample_data};
 use crate::Sink;
 use crate::emit::Program;
 use crate::lang::{Op, Ty, eval};
@@ -21,6 +21,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     constant_propagation(sink);
     value_range(sink);
     value_range_places(sink);
+    prune(sink);
     alias_analysis(sink);
     alias_layers(sink);
     memory_ssa(sink);
@@ -649,6 +650,300 @@ fn value_range_places(sink: &mut Sink<'_>) {
     }
 }
 
+/// One settled test, and everything needed to build a program around it.
+struct Pruned {
+    /// The axis value, which is also the name of the shape.
+    name: &'static str,
+    /// One line saying what the compiler has to work out.
+    purpose: &'static str,
+    /// Declarations that go before `main`.
+    top: &'static [&'static str],
+    /// The body of the walk, each line with the depth to write it at.
+    body: &'static [(usize, &'static str)],
+    /// What one sample adds to the outer count and to the inner count.
+    counts: fn(i128) -> (i128, i128),
+}
+
+/// Every shape the prune facet asks about.
+const PRUNED: &[Pruned] = &[
+    Pruned {
+        name: "greater-then-greater",
+        purpose: "a lower bound that settles a weaker lower bound",
+        top: &[],
+        body: &[
+            (1, "if (x > 100) {"),
+            (2, "outer++;"),
+            (2, "if (x > 50) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x > 100 { (1, i128::from(x > 50)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "greater-then-not-greater",
+        purpose: "a lower bound that rules out an upper bound",
+        top: &[],
+        body: &[
+            (1, "if (x > 100) {"),
+            (2, "outer++;"),
+            (2, "if (x <= 50) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x > 100 { (1, i128::from(x <= 50)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "less-then-less",
+        purpose: "an upper bound that settles a weaker upper bound",
+        top: &[],
+        body: &[
+            (1, "if (x < 100) {"),
+            (2, "outer++;"),
+            (2, "if (x < 200) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x < 100 { (1, i128::from(x < 200)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "less-then-not-less",
+        purpose: "an upper bound that rules out a lower bound",
+        top: &[],
+        body: &[
+            (1, "if (x < 100) {"),
+            (2, "outer++;"),
+            (2, "if (x >= 200) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x < 100 { (1, i128::from(x >= 200)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "at-or-above-then-greater",
+        purpose: "a bound that keeps its endpoint settling one that does not",
+        top: &[],
+        body: &[
+            (1, "if (x >= 100) {"),
+            (2, "outer++;"),
+            (2, "if (x > 50) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x >= 100 { (1, i128::from(x > 50)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "at-or-below-then-at-or-below",
+        purpose: "an upper bound at its endpoint settling a weaker one",
+        top: &[],
+        body: &[
+            (1, "if (x <= 100) {"),
+            (2, "outer++;"),
+            (2, "if (x <= 200) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x <= 100 { (1, i128::from(x <= 200)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "equal-then-unequal",
+        purpose: "an equality that settles a later inequality",
+        top: &[],
+        body: &[
+            (1, "if (x == 50) {"),
+            (2, "outer++;"),
+            (2, "if (x != 49) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x == 50 { (1, i128::from(x != 49)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "equal-then-nonzero",
+        purpose: "an equality that settles a later test for zero",
+        top: &[],
+        body: &[
+            (1, "if (x == 50) {"),
+            (2, "outer++;"),
+            (2, "if (x) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x == 50 { (1, i128::from(x != 0)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "through-a-call",
+        purpose: "a settled test on the far side of a call that has to be inlined first",
+        top: &["static int above(int v) {", "    return v > 50;", "}"],
+        body: &[
+            (1, "if (x > 100) {"),
+            (2, "outer++;"),
+            (2, "if (above(x)) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| if x > 100 { (1, i128::from(x > 50)) } else { (0, 0) },
+    },
+    Pruned {
+        name: "two-values",
+        purpose: "a relation between two unknowns settling the same relation written backwards",
+        top: &[],
+        body: &[
+            (1, "int b = (x * 3 + 1) & 255;"),
+            (1, "if (x < b) {"),
+            (2, "outer++;"),
+            (2, "if (b > x) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| {
+            let other = (x * 3 + 1) & 255;
+            if x < other { (1, i128::from(other > x)) } else { (0, 0) }
+        },
+    },
+    Pruned {
+        name: "masked-bound",
+        purpose: "a mask that settles a bound on the value it produced",
+        top: &[],
+        body: &[
+            (1, "unsigned int u = (unsigned int)x & 63u;"),
+            (1, "outer++;"),
+            (1, "if (u < 64u) {"),
+            (2, "inner++;"),
+            (1, "}"),
+        ],
+        counts: |x| {
+            let masked = x & 63;
+            (1, i128::from(masked < 64))
+        },
+    },
+    Pruned {
+        name: "switch-unreachable-case",
+        purpose: "a switch with a case the mask on its value puts out of reach",
+        top: &[],
+        body: &[
+            (1, "switch (x & 3) {"),
+            (2, "case 0: outer++; break;"),
+            (2, "case 2: outer++; break;"),
+            (2, "case 7: inner++; break;"),
+            (2, "default: break;"),
+            (1, "}"),
+        ],
+        counts: |x| (i128::from(matches!(x & 3, 0 | 2)), i128::from(matches!(x & 3, 7))),
+    },
+    Pruned {
+        name: "switch-every-case-unreachable",
+        purpose: "a switch the mask on its value reduces to its default",
+        top: &[],
+        body: &[
+            (1, "switch (x & 3) {"),
+            (2, "case 4: inner++; break;"),
+            (2, "case 5: inner++; break;"),
+            (2, "case 9: inner++; break;"),
+            (2, "default: outer++; break;"),
+            (1, "}"),
+        ],
+        counts: |x| (1, i128::from(matches!(x & 3, 4 | 5 | 9))),
+    },
+    Pruned {
+        name: "switch-after-a-range-check",
+        purpose: "a switch whose value a range check before it has bounded",
+        top: &[],
+        body: &[
+            (1, "int n = x & 15;"),
+            (1, "if (n < 4) {"),
+            (2, "outer++;"),
+            (2, "switch (n) {"),
+            (3, "case 0: case 1: case 2: case 3: inner++; break;"),
+            (3, "case 9: inner += 100; break;"),
+            (3, "default: break;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| {
+            let n = x & 15;
+            if n >= 4 {
+                return (0, 0);
+            }
+            (1, if n == 9 { 100 } else { 1 })
+        },
+    },
+    Pruned {
+        name: "inside-a-loop",
+        purpose: "a test inside a loop that the loop bound settles",
+        top: &[],
+        body: &[
+            (1, "int n = x & 15;"),
+            (1, "for (int j = 0; j < n; j++) {"),
+            (2, "outer++;"),
+            (2, "if (j < 16) {"),
+            (3, "inner++;"),
+            (2, "}"),
+            (1, "}"),
+        ],
+        counts: |x| (x & 15, x & 15),
+    },
+];
+
+/// A branch or a switch case that a condition above it has already settled.
+///
+/// Section 24.2's first job. A test whose answer a dominating test already fixed is a branch
+/// the compiler can delete, and the arm that cannot run goes with it. What makes this a
+/// separate facet rather than a corner of the value range one is that the fact and the
+/// question sit in different blocks, so the answer needs a walk up the dominator tree and not
+/// just a look at the operands.
+///
+/// Every case counts two things. The outer count says how many samples reached the guarded
+/// region, and the inner count says how many of them ran the arm the guard settled. Both are
+/// printed, so a compiler that pruned the wrong side prints the wrong number rather than
+/// merely emitting code of a different size. Eight of the fifteen shapes are the plain nested
+/// comparison in each of the orders a range can settle, two of them settle to false so the
+/// whole inner arm is dead, and the rest are the places the same reasoning has to reach: a
+/// call, a pair of unknowns, a mask, three switches and a loop.
+fn prune(sink: &mut Sink<'_>) {
+    for shape in PRUNED {
+        if !sink.wants(Facet::Prune) {
+            return;
+        }
+        let mut program = Program::new(shape.purpose);
+        for line in shape.top {
+            program.top(*line);
+        }
+        sample_data(&mut program);
+        program.blank();
+        program.line("int outer = 0;");
+        program.line("int inner = 0;");
+        program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+        program.line_at(1, "int x = data[i];");
+        for &(depth, text) in shape.body {
+            program.line_at(depth, text);
+        }
+        program.line("}");
+        program.blank();
+        let (outer, inner) = tally(shape.counts);
+        program.check(Ty::I32, "outer", outer);
+        program.check(Ty::I32, "inner", inner);
+        sink.push(Facet::Prune, Axes::of([("shape", shape.name)]), Dialect::C17, program);
+    }
+}
+
+/// Adds up what a shape counts over a full pass of the samples.
+fn tally(counts: fn(i128) -> (i128, i128)) -> (i128, i128) {
+    (0..SAMPLES).fold((0, 0), |(outer, inner), index| {
+        let (reached, settled) = counts(sample(index));
+        (outer + reached, inner + settled)
+    })
+}
+
 /// Two references that either can or cannot name the same object.
 ///
 /// The `restrict` and distinct type shapes are the ones where a wrong answer is a real
@@ -1124,5 +1419,115 @@ mod tests {
         for wanted in ["direct", "through-copy", "same-on-both-arms", "through-array"] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
         }
+    }
+
+    /// The outer and inner counts one prune shape prints, as the numbers they are.
+    fn prune_counts(cases: &[Case], shape: &str) -> (i64, i64) {
+        let case = cases
+            .iter()
+            .find(|case| case.axes.get("shape") == Some(shape))
+            .unwrap_or_else(|| panic!("no prune case for {shape}"));
+        let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
+        let counts: Vec<i64> = text.lines().map(|line| line.parse().expect("a count")).collect();
+        assert_eq!(counts.len(), 2, "{} prints {text:?}", case.id);
+        (counts[0], counts[1])
+    }
+
+    #[test]
+    fn every_prune_shape_the_pass_has_to_decide_is_generated() {
+        let cases = cases_for(Facet::Prune);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in [
+            "greater-then-greater",
+            "greater-then-not-greater",
+            "less-then-less",
+            "less-then-not-less",
+            "at-or-above-then-greater",
+            "at-or-below-then-at-or-below",
+            "equal-then-unequal",
+            "equal-then-nonzero",
+            "through-a-call",
+            "two-values",
+            "masked-bound",
+            "switch-unreachable-case",
+            "switch-every-case-unreachable",
+            "switch-after-a-range-check",
+            "inside-a-loop",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+        assert_eq!(shapes.len(), cases.len());
+    }
+
+    #[test]
+    fn a_shape_the_guard_settles_runs_its_inner_arm_every_time_the_guard_lets_a_sample_through() {
+        let cases = cases_for(Facet::Prune);
+        for shape in [
+            "greater-then-greater",
+            "less-then-less",
+            "at-or-above-then-greater",
+            "at-or-below-then-at-or-below",
+            "equal-then-unequal",
+            "equal-then-nonzero",
+            "through-a-call",
+            "two-values",
+            "masked-bound",
+            "switch-after-a-range-check",
+            "inside-a-loop",
+        ] {
+            let (outer, inner) = prune_counts(&cases, shape);
+            assert_eq!(outer, inner, "{shape} counts");
+            assert!(outer > 0, "{shape} never reaches its guarded region");
+        }
+    }
+
+    #[test]
+    fn a_shape_the_guard_rules_out_never_runs_its_inner_arm() {
+        let cases = cases_for(Facet::Prune);
+        for shape in [
+            "greater-then-not-greater",
+            "less-then-not-less",
+            "switch-unreachable-case",
+            "switch-every-case-unreachable",
+        ] {
+            let (outer, inner) = prune_counts(&cases, shape);
+            assert_eq!(inner, 0, "{shape} runs an arm it cannot reach");
+            assert!(outer > 0, "{shape} never reaches its guarded region");
+        }
+    }
+
+    #[test]
+    fn the_counts_are_the_ones_a_full_pass_over_the_byte_range_produces() {
+        let cases = cases_for(Facet::Prune);
+        assert_eq!(prune_counts(&cases, "greater-then-greater"), (155, 155));
+        assert_eq!(prune_counts(&cases, "less-then-less"), (100, 100));
+        assert_eq!(prune_counts(&cases, "at-or-above-then-greater"), (156, 156));
+        assert_eq!(prune_counts(&cases, "at-or-below-then-at-or-below"), (101, 101));
+        assert_eq!(prune_counts(&cases, "equal-then-unequal"), (1, 1));
+        assert_eq!(prune_counts(&cases, "two-values"), (128, 128));
+        assert_eq!(prune_counts(&cases, "masked-bound"), (256, 256));
+        assert_eq!(prune_counts(&cases, "switch-unreachable-case"), (128, 0));
+        assert_eq!(prune_counts(&cases, "switch-every-case-unreachable"), (256, 0));
+        assert_eq!(prune_counts(&cases, "switch-after-a-range-check"), (64, 64));
+        assert_eq!(prune_counts(&cases, "inside-a-loop"), (1920, 1920));
+    }
+
+    #[test]
+    fn no_prune_case_gets_the_value_it_tests_from_a_literal() {
+        for case in cases_for(Facet::Prune) {
+            assert!(case.source.contains("static volatile int seed_in"), "{}", case.id);
+            assert!(case.source.contains("data[i] = (i * 37 + seed) & 255;"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_shape_that_needs_inlining_first_is_the_only_one_with_a_helper() {
+        let cases = cases_for(Facet::Prune);
+        let with_helper: Vec<&str> = cases
+            .iter()
+            .filter(|case| case.source.contains("static int above("))
+            .filter_map(|case| case.axes.get("shape"))
+            .collect();
+        assert_eq!(with_helper, ["through-a-call"]);
     }
 }

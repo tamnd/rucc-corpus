@@ -15,7 +15,41 @@ pub(crate) mod runtime;
 pub(crate) mod special;
 pub(crate) mod surface;
 
+use crate::emit::Program;
 use crate::lang::Ty;
+
+/// How many values a walk over the sample array sees.
+pub(crate) const SAMPLES: i128 = 256;
+
+/// The step the sample walk takes.
+///
+/// Thirty seven and two hundred and fifty six have no factor in common, so a full pass sees
+/// every value from zero to two hundred and fifty five exactly once. That is what makes a hit
+/// count here a count over the whole byte range, and it is what keeps the branches
+/// unpredictable, which is the condition a cost rule is really being asked about.
+pub(crate) const STRIDE: i128 = 37;
+
+/// The offset the sample walk starts from, read through a `volatile` global.
+pub(crate) const SEED: i128 = 7;
+
+/// The value the sample walk sees at one index.
+pub(crate) fn sample(index: i128) -> i128 {
+    (index * STRIDE + SEED) & 255
+}
+
+/// Writes the array a sample walk reads its values from.
+///
+/// The seed arrives through a `volatile` read, so the fill is not a constant the compiler can
+/// work out ahead of time and the values in the array are values it has to treat as unknown.
+/// Every facet that needs a run of unpredictable bytes starts this way.
+pub(crate) fn sample_data(program: &mut Program) {
+    program.input(Ty::I32, "seed", SEED);
+    program.blank();
+    program.line(format!("int data[{SAMPLES}];"));
+    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+    program.line_at(1, format!("data[i] = (i * {STRIDE} + seed) & 255;"));
+    program.line("}");
+}
 
 /// A literal of a type, cast so that the expression really has that type.
 ///

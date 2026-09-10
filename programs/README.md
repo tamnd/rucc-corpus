@@ -1,10 +1,10 @@
 # The corpus
 
-1816 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1831 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `7f8dd9ba2e75cb0a8f842b30963edc91a481b8e28bfc27bd776ef57cd168dd0a`.
+Corpus digest `096ade4ec00e39a669be88e1cf86429d986d0bdc0c5fa8c43e6508fef29eb087`.
 
 ## floor (118 programs)
 
@@ -37,7 +37,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |
 | [`unreachable-code`](local/unreachable-code/README.md) | 8 | removing a branch with a known condition and its dead arm |
 
-## global (193 programs)
+## global (208 programs)
 
 Transformations across the blocks of one function, which need dataflow rather than a peephole.
 
@@ -49,6 +49,7 @@ Transformations across the blocks of one function, which need dataflow rather th
 | [`copy-propagation`](global/copy-propagation/README.md) | 12 | propagating a copy so the copy becomes dead |
 | [`constant-propagation`](global/constant-propagation/README.md) | 16 | propagating a value constant on every reaching path |
 | [`value-range`](global/value-range/README.md) | 13 | narrowing an integer to the range it can hold |
+| [`prune`](global/prune/README.md) | 15 | a branch or a switch case a condition above it has settled |
 | [`alias-analysis`](global/alias-analysis/README.md) | 36 | proving two references cannot name the same object |
 | [`memory-ssa`](global/memory-ssa/README.md) | 28 | walking back from a load to the store that answers it |
 | [`scalar-replacement`](global/scalar-replacement/README.md) | 20 | turning a non-escaping local back into a value |
