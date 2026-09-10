@@ -5,7 +5,7 @@
 //! when a compiler is misbehaving, because a compiler that gets constant folding wrong will
 //! get everything downstream of it wrong too.
 
-use super::{all_ones, lit, spread};
+use super::{SAMPLES, SEED, STRIDE, all_ones, lit, sample, sample_data, spread};
 use crate::Sink;
 use crate::emit::Program;
 use crate::lang::{Op, Ty, eval, interesting, result_ty, shift_counts};
@@ -805,27 +805,8 @@ fn one_bit_identities(sink: &mut Sink<'_>) {
     );
 }
 
-/// How many values one pass of a shape looks at.
-const SAMPLES: i128 = 256;
-
-/// The step the sample walk takes.
-///
-/// Thirty seven and two hundred and fifty six have no factor in common, so a full pass sees
-/// every value from zero to two hundred and fifty five exactly once. That is what makes a hit
-/// count here a count over the whole byte range, and it is what keeps the branches
-/// unpredictable, which is the condition the cost rule is really being asked about.
-const STRIDE: i128 = 37;
-
-/// The offset the sample walk starts from, read through a `volatile` global.
-const SEED: i128 = 7;
-
 /// The two ways of writing the same condition.
 const FORMS: &[&str] = &["branch", "value"];
-
-/// The value the walk sees at one index.
-fn sample(index: i128) -> i128 {
-    (index * STRIDE + SEED) & 255
-}
 
 /// One condition, and everything needed to build a program around it.
 struct Shape {
@@ -1071,16 +1052,6 @@ fn sum(contribution: impl Fn(i128) -> i128) -> i128 {
     (0..SAMPLES).map(|index| contribution(sample(index))).sum()
 }
 
-/// Writes the array every conditional store shape reads its condition and its values from.
-fn store_data(program: &mut Program) {
-    program.input(Ty::I32, "seed", SEED);
-    program.blank();
-    program.line(format!("int data[{SAMPLES}];"));
-    program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
-    program.line_at(1, format!("data[i] = (i * {STRIDE} + seed) & 255;"));
-    program.line("}");
-}
-
 /// Fills an array with the value a one armed case leaves behind where it does not store.
 fn store_preset(program: &mut Program, ty: Ty, name: &str) {
     program.line(format!("{} {name}[{SAMPLES}];", ty.c_name()));
@@ -1149,7 +1120,7 @@ fn hoisted_address(sink: &mut Sink<'_>) {
         return;
     }
     let mut program = Program::new("both arms storing through one pointer worked out above them");
-    store_data(&mut program);
+    sample_data(&mut program);
     program.line(format!("int out[{SAMPLES}];"));
     store_walk(&mut program);
     program.line_at(1, "int *q = &out[i];");
@@ -1177,7 +1148,7 @@ fn struct_field(sink: &mut Sink<'_>) {
     // Two fields around the one being written, so a compiler that gets the offset wrong
     // writes over something the total reads and the case says so.
     program.top("struct box { int lo; int x; int hi; };");
-    store_data(&mut program);
+    sample_data(&mut program);
     program.line(format!("struct box boxes[{SAMPLES}];"));
     program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
     program.line_at(1, "boxes[i].lo = 0;");
@@ -1206,7 +1177,7 @@ fn same_value(sink: &mut Sink<'_>) {
         return;
     }
     let mut program = Program::new("both arms storing the same value to the same place");
-    store_data(&mut program);
+    sample_data(&mut program);
     program.line(format!("int out[{SAMPLES}];"));
     store_walk(&mut program);
     program.line_at(1, "int *q = &out[i];");
@@ -1232,7 +1203,7 @@ fn unhoisted_address(sink: &mut Sink<'_>) {
         return;
     }
     let mut program = Program::new("both arms storing to one subscript, worked out twice");
-    store_data(&mut program);
+    sample_data(&mut program);
     program.line(format!("int out[{SAMPLES}];"));
     store_walk(&mut program);
     program.line_at(1, "if (v & 1) {");
@@ -1256,7 +1227,7 @@ fn two_addresses(sink: &mut Sink<'_>) {
         return;
     }
     let mut program = Program::new("two arms storing to two addresses that are not the same");
-    store_data(&mut program);
+    sample_data(&mut program);
     store_preset(&mut program, Ty::I32, "left");
     store_preset(&mut program, Ty::I32, "right");
     store_walk(&mut program);
@@ -1294,7 +1265,7 @@ fn one_armed(sink: &mut Sink<'_>) {
         }
         let mut program =
             Program::new(format!("one arm storing {} and the other storing nothing", ty.c_name()));
-        store_data(&mut program);
+        sample_data(&mut program);
         store_preset(&mut program, ty, "out");
         store_walk(&mut program);
         program.line_at(1, "if (v & 1) {");
@@ -1320,7 +1291,7 @@ fn volatile_arms(sink: &mut Sink<'_>) {
     // A volatile store is a thing that happens, not a value that arrives, so the number of
     // them and the order they go in are both part of the program.
     program.top(format!("static volatile int cell[{SAMPLES}];"));
-    store_data(&mut program);
+    sample_data(&mut program);
     store_walk(&mut program);
     program.line_at(1, "volatile int *q = &cell[i];");
     program.line_at(1, "if (v & 1) {");
@@ -1344,7 +1315,7 @@ fn atomic_arms(sink: &mut Sink<'_>) {
         return;
     }
     let mut program = Program::new("both arms storing atomically to the same place");
-    store_data(&mut program);
+    sample_data(&mut program);
     program.line(format!("int out[{SAMPLES}];"));
     store_walk(&mut program);
     program.line_at(1, "int *q = &out[i];");
@@ -1372,7 +1343,7 @@ fn both_arms_at_each_width(sink: &mut Sink<'_>) {
         }
         let mut program =
             Program::new(format!("both arms storing {} to the same place", ty.c_name()));
-        store_data(&mut program);
+        sample_data(&mut program);
         program.line(format!("{} out[{SAMPLES}];", ty.c_name()));
         store_walk(&mut program);
         program.line_at(1, format!("{} *q = &out[i];", ty.c_name()));
@@ -1402,7 +1373,7 @@ fn a_call_beside_the_store(sink: &mut Sink<'_>) {
     program.top("static void note(void) {");
     program.top("    calls++;");
     program.top("}");
-    store_data(&mut program);
+    sample_data(&mut program);
     program.line(format!("int out[{SAMPLES}];"));
     store_walk(&mut program);
     program.line_at(1, "int *q = &out[i];");
