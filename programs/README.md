@@ -1,10 +1,10 @@
 # The corpus
 
-1839 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1840 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `78343c85cbbb0e83de28eab98d7111ac9042d2fd5e996181b00506227c611b97`.
+Corpus digest `38afffd574175a93d1e93326565987b7164a39bb0bac65149acc6f9065400210`.
 
 ## floor (118 programs)
 
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (332 programs)
+## backend (333 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -101,7 +101,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`if-conversion`](backend/if-conversion/README.md) | 20 | turning a short branch into branchless code |
 | [`switch-lowering`](backend/switch-lowering/README.md) | 15 | choosing how to lower a switch |
 | [`switch-runs`](backend/switch-runs/README.md) | 15 | stretches of consecutive labels that share one arm |
-| [`switch-dispatch`](backend/switch-dispatch/README.md) | 8 | a switch dispatched often enough to time how it was lowered |
+| [`switch-dispatch`](backend/switch-dispatch/README.md) | 9 | a switch dispatched often enough to time how it was lowered |
 | [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |

@@ -897,6 +897,9 @@ const SHAPES: &[Shape] = &[
     Shape { name: "shared-default", base: 0, labels: 16, span: 20 },
 ];
 
+/// The shapes that are also dispatched on a stream a branch predictor can guess.
+const PAIRED: &[&str] = &["affine", "scattered"];
+
 /// A switch called often enough that how it was lowered shows up in the clock.
 ///
 /// Every other switch facet is about size and about getting the right answer. This one is about
@@ -913,11 +916,14 @@ const SHAPES: &[Shape] = &[
 fn switch_dispatch(sink: &mut Sink<'_>) {
     for shape in SHAPES {
         for &ordered in &[false, true] {
-            // The predictable stream is only worth emitting once. It exists so the two numbers
-            // for one switch can be put side by side, which is what turns "this is faster" into
-            // "this is faster because the branches were being mispredicted", and a second shape
-            // does not make that argument any better.
-            if ordered && shape.name != "affine" {
+            // The predictable stream is only worth emitting for the two shapes that are paired
+            // with each other. `affine` says what the conversion is worth, and `scattered` is
+            // the same switch that no conversion can touch, so it keeps saying what a chain of
+            // comparisons costs long after `affine` has stopped being one. Either pair on its
+            // own is a claim that something got faster. The two together are the argument that
+            // it got faster because the branches were being mispredicted, which is what the
+            // facet is for, and a third shape does not make that argument any better.
+            if ordered && !PAIRED.contains(&shape.name) {
                 continue;
             }
             if !sink.wants(Facet::SwitchDispatch) {
@@ -1474,8 +1480,14 @@ mod tests {
         ] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
         }
-        let streams: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("stream")).collect();
-        assert!(streams.contains(&"in-order"), "nothing to compare the unpredictable case against");
+        for paired in super::PAIRED {
+            let both = cases
+                .iter()
+                .filter(|c| c.axes.get("shape") == Some(*paired))
+                .filter_map(|c| c.axes.get("stream"))
+                .count();
+            assert_eq!(both, 2, "the {paired} shape has nothing to be compared against");
+        }
     }
 
     #[test]
