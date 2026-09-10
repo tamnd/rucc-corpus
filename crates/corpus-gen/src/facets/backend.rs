@@ -26,6 +26,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     block_layout(sink);
     if_conversion(sink);
     switch_lowering(sink);
+    switch_runs(sink);
     calling_convention(sink);
     machine_peephole(sink);
 }
@@ -461,10 +462,14 @@ fn if_conversion(sink: &mut Sink<'_>) {
 /// Labels spread over a wide range become a binary search or a chain. Three labels become
 /// three comparisons whatever their spacing. Every case walks every label and adds up what it
 /// got, so a switch that falls into the wrong arm for one input out of forty is caught.
+///
+/// The sizes sit either side of thirty two, which is where rucc stops walking the clusters and
+/// starts searching them. A facet whose nearest sizes to that line are eight and forty can tell
+/// you the search works but not that the two halves agree at the point they meet.
 fn switch_lowering(sink: &mut Sink<'_>) {
     const DENSITIES: &[(&str, i128)] = &[("dense", 1), ("sparse", 17), ("very-sparse", 1000)];
     for &(density, stride) in DENSITIES {
-        for &labels in &[3i128, 8, 40] {
+        for &labels in &[3i128, 8, 31, 33, 40] {
             if !sink.wants(Facet::SwitchLowering) {
                 return;
             }
@@ -495,6 +500,340 @@ fn switch_lowering(sink: &mut Sink<'_>) {
             );
         }
     }
+}
+
+/// Where a run of labels starts, in the shapes that do not need a particular value.
+const RUN_BASE: i128 = 10;
+
+/// How far either side of a run the walk goes, so the label next to the run is asked about too.
+const RUN_PAD: i128 = 3;
+
+/// How long each run is in the shapes that have more than one of them.
+const RUN_LENGTH: i128 = 8;
+
+/// Stretches of consecutive labels that all go to one arm.
+///
+/// This is the shape every hand written classifier has and the one [`switch_lowering`] does not
+/// cover, because there every label goes somewhere different and so nothing can become a range
+/// test. A stretch that shares an arm is one subtraction and one unsigned comparison however long
+/// it is, and a compiler that walks the labels one at a time instead is emitting a test per label
+/// for nothing. Without cases like these the corpus cannot tell the two apart, and a change to
+/// the cluster code can regress with every program still printing the right answer.
+///
+/// The value under test always comes out of a `volatile`, and so does the number of times the
+/// walk runs. A switch on a value the optimizer knows is not a switch by the time it reaches the
+/// back end, and a walk with a literal bound is a walk that gets unrolled into a list of
+/// constants, so either one left alone turns the case into a question about folding.
+fn switch_runs(sink: &mut Sink<'_>) {
+    one_run(sink);
+    several_runs(sink);
+    runs_and_singles(sink);
+    runs_at_the_edge(sink);
+    classifiers(sink);
+    look_alike_arms(sink);
+}
+
+/// Emits the walk that drives one of these switches, and the check on what it added up to.
+fn walk(program: &mut Program, call: &str, first: i128, count: i128, total: i128) {
+    program.input(Ty::I32, "first", first);
+    program.input(Ty::I32, "count", count);
+    program.blank();
+    program.line("long long total = 0;");
+    program.line("for (int step = 0; step < count; step++) {");
+    program.line_at(1, format!("total += {call}(first + step);"));
+    program.line("}");
+    program.blank();
+    program.check(Ty::I64, "total", total);
+}
+
+/// Writes the `default` arm and closes the switch and the function around it.
+fn close(program: &mut Program) {
+    program.top("    default:");
+    program.top("        return 0;");
+    program.top("    }");
+    program.top("}");
+}
+
+/// One run, at three lengths.
+///
+/// Four labels is short enough that a chain of comparisons is a reasonable answer and a range
+/// test is only slightly better. A hundred is long enough that the difference between the two is
+/// the difference between one comparison and a hundred, which is the point.
+fn one_run(sink: &mut Sink<'_>) {
+    for &length in &[4i128, 26, 100] {
+        if !sink.wants(Facet::SwitchRuns) {
+            return;
+        }
+        let mut program = Program::new(format!("one run of {length} labels sharing an arm"));
+        program.top("static int in_run(int value) {");
+        program.top("    switch (value) {");
+        for label in 0..length {
+            program.top(format!("    case {}:", RUN_BASE + label));
+        }
+        program.top("        return 1;");
+        close(&mut program);
+        walk(&mut program, "in_run", RUN_BASE - RUN_PAD, length + 2 * RUN_PAD, length);
+        sink.push(
+            Facet::SwitchRuns,
+            Axes::of([("shape", "one-run"), ("variant", &length.to_string())]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
+/// Adjacent runs, each to its own arm, at counts either side of the cluster limit.
+///
+/// This is the partition rather than the single range test: the switch is one run after another
+/// with nothing between them, so the answer is a subtraction and a lookup or a search over the
+/// runs, and never a test per label. Thirty one and thirty three sit either side of the point
+/// where rucc stops walking the clusters and starts searching them.
+fn several_runs(sink: &mut Sink<'_>) {
+    for &arms in &[2i128, 4, 31, 33] {
+        if !sink.wants(Facet::SwitchRuns) {
+            return;
+        }
+        let mut program =
+            Program::new(format!("{arms} runs of {RUN_LENGTH} labels, each to its own arm"));
+        program.top("static int which_run(int value) {");
+        program.top("    switch (value) {");
+        for arm in 0..arms {
+            for label in 0..RUN_LENGTH {
+                program.top(format!("    case {}:", RUN_BASE + arm * RUN_LENGTH + label));
+            }
+            program.top(format!("        return {};", arm + 1));
+        }
+        close(&mut program);
+        let total = RUN_LENGTH * (1..=arms).sum::<i128>();
+        let count = arms * RUN_LENGTH + 2 * RUN_PAD;
+        walk(&mut program, "which_run", RUN_BASE - RUN_PAD, count, total);
+        sink.push(
+            Facet::SwitchRuns,
+            Axes::of([("shape", "several-runs"), ("variant", &arms.to_string())]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
+/// Runs and scattered single labels in one statement.
+///
+/// Section 24.2 argues for clusters rather than a single decision about the whole switch by
+/// pointing at exactly this: part of it is dense enough to be a range test and part of it is so
+/// spread out that nothing but a comparison will do. A compiler that picks one lowering for the
+/// whole statement gets one half of this wrong whichever it picks.
+///
+/// The probe list is three values around each single and six around each run, so the label at
+/// each end of a run and the one just outside it are all asked about. It is driven through an
+/// opaque bump so the calls are not a list of constants.
+fn runs_and_singles(sink: &mut Sink<'_>) {
+    const RUNS: &[(i128, i128, i128)] = &[(10, 15, 1), (40, 45, 2), (300, 311, 3)];
+    const SINGLES: &[(i128, i128)] = &[(100, 4), (250, 5), (600, 6), (1500, 7), (4000, 8)];
+    if !sink.wants(Facet::SwitchRuns) {
+        return;
+    }
+    let mut program = Program::new("runs and scattered single labels in one switch");
+    program.top("static int mixed(int value) {");
+    program.top("    switch (value) {");
+    for &(low, high, arm) in RUNS {
+        for label in low..=high {
+            program.top(format!("    case {label}:"));
+        }
+        program.top(format!("        return {arm};"));
+    }
+    for &(value, arm) in SINGLES {
+        program.top(format!("    case {value}: return {arm};"));
+    }
+    close(&mut program);
+
+    let answer = |value: i128| -> i128 {
+        for &(low, high, arm) in RUNS {
+            if value >= low && value <= high {
+                return arm;
+            }
+        }
+        for &(single, arm) in SINGLES {
+            if value == single {
+                return arm;
+            }
+        }
+        0
+    };
+    let mut probes: Vec<i128> = Vec::new();
+    for &(low, high, _) in RUNS {
+        probes.extend([low - 1, low, low + 1, high - 1, high, high + 1]);
+    }
+    for &(single, _) in SINGLES {
+        probes.extend([single - 1, single, single + 1]);
+    }
+    let total: i128 = probes.iter().copied().map(answer).sum();
+    let written: Vec<String> = probes.iter().map(i128::to_string).collect();
+    program.top(format!("static const int probes[] = {{ {} }};", written.join(", ")));
+    program.input(Ty::I32, "bump", 0);
+    program.input(Ty::I32, "count", probes.len() as i128);
+    program.blank();
+    program.line("long long total = 0;");
+    program.line("for (int at = 0; at < count; at++) {");
+    program.line_at(1, "total += mixed(probes[at] + bump);");
+    program.line("}");
+    program.blank();
+    program.check(Ty::I64, "total", total);
+    sink.push(
+        Facet::SwitchRuns,
+        Axes::of([("shape", "runs-and-singles"), ("variant", "mixed")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// A run that reaches the last value of its type, at both ends and in both signednesses.
+///
+/// Section 24.6 names this one. A range test is the low label subtracted from the value compared
+/// against the length of the run, and working the length out is one past the high label minus the
+/// low one. When the run reaches the end of the type that addition is the overflow the section is
+/// about, and a compiler that computes it in the type of the switch rather than in something
+/// wider produces a test that is off by the whole range.
+fn runs_at_the_edge(sink: &mut Sink<'_>) {
+    const WINDOW: i128 = 6;
+    const LENGTH: i128 = 3;
+    for &ty in &[Ty::I32, Ty::U32] {
+        for &top in &[false, true] {
+            if !sink.wants(Facet::SwitchRuns) {
+                return;
+            }
+            let edge = if top { "top" } else { "bottom" };
+            let low = if top { ty.max() - LENGTH + 1 } else { ty.min() };
+            let first = if top { ty.max() - WINDOW + 1 } else { ty.min() };
+            let mut program = Program::new(format!(
+                "a run of {LENGTH} labels reaching the {edge} of {}",
+                ty.c_name()
+            ));
+            program.top(format!("static int at_edge({} value) {{", ty.c_name()));
+            program.top("    switch (value) {");
+            for label in low..low + LENGTH {
+                program.top(format!("    case {}:", ty.literal(label)));
+            }
+            program.top("        return 1;");
+            close(&mut program);
+            program.input(ty, "first", first);
+            program.input(Ty::I32, "count", WINDOW);
+            program.blank();
+            program.line("long long total = 0;");
+            program.line("for (int step = 0; step < count; step++) {");
+            program.line_at(1, format!("total += at_edge(first + ({})step);", ty.c_name()));
+            program.line("}");
+            program.blank();
+            program.check(Ty::I64, "total", LENGTH);
+            sink.push(
+                Facet::SwitchRuns,
+                Axes::of([("shape", "edge-run"), ("variant", &format!("{}-{edge}", ty.name()))]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// A character classifier, written the way people write them.
+///
+/// Twenty six letters to one arm, twenty six more to another, ten digits to a third and three
+/// spaces to a fourth. That is sixty five labels and four answers, and it is what the front of
+/// every lexer looks like. The text is all ASCII, so whether a plain `char` is signed does not
+/// change the answer, which is what makes it fair to run the same expected output against both
+/// spellings of the parameter.
+fn classifiers(sink: &mut Sink<'_>) {
+    const CLASSES: &[(char, char, i128)] = &[('a', 'z', 1), ('A', 'Z', 2), ('0', '9', 3)];
+    const SPACES: &[(&str, char)] = &[("' '", ' '), ("'\\t'", '\t'), ("'\\n'", '\n')];
+    const TEXT: &str = "The quick brown fox jumps over 13 lazy dogs.\tTwice, at 07:45.\n";
+    for &name in &["char", "unsigned char"] {
+        if !sink.wants(Facet::SwitchRuns) {
+            return;
+        }
+        let mut program = Program::new(format!("a character classifier written over {name}"));
+        program.top(format!("static int kind({name} c) {{"));
+        program.top("    switch (c) {");
+        for &(low, high, arm) in CLASSES {
+            for letter in low..=high {
+                program.top(format!("    case '{letter}':"));
+            }
+            program.top(format!("        return {arm};"));
+        }
+        for &(spelling, _) in SPACES {
+            program.top(format!("    case {spelling}:"));
+        }
+        program.top("        return 4;");
+        close(&mut program);
+
+        let answer = |letter: char| -> i128 {
+            for &(low, high, arm) in CLASSES {
+                if letter >= low && letter <= high {
+                    return arm;
+                }
+            }
+            if SPACES.iter().any(|&(_, space)| space == letter) { 4 } else { 0 }
+        };
+        let total: i128 = TEXT.chars().map(answer).sum();
+        let written: String = TEXT
+            .chars()
+            .map(|letter| match letter {
+                '\t' => "\\t".to_owned(),
+                '\n' => "\\n".to_owned(),
+                other => other.to_string(),
+            })
+            .collect();
+        program.top(format!("static volatile {name} text[] = \"{written}\";"));
+        program.input(Ty::I32, "count", TEXT.len() as i128);
+        program.blank();
+        program.line("long long total = 0;");
+        program.line("for (int at = 0; at < count; at++) {");
+        program.line_at(1, "total += kind(text[at]);");
+        program.line("}");
+        program.blank();
+        program.check(Ty::I64, "total", total);
+        let variant = if name == "char" { "char" } else { "unsigned-char" };
+        sink.push(
+            Facet::SwitchRuns,
+            Axes::of([("shape", "classifier"), ("variant", variant)]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
+/// Consecutive labels whose arms are written the same way and are not the same arm.
+///
+/// The negative control. Every arm here is one assignment of the switch value plus a constant, so
+/// they look alike to anything comparing the shape of the code, and each one adds a different
+/// constant so folding them into a single range test gives four wrong answers out of five. A run
+/// is only a run when the labels agree about where they go, not about how they get there.
+fn look_alike_arms(sink: &mut Sink<'_>) {
+    const LENGTH: i128 = 5;
+    if !sink.wants(Facet::SwitchRuns) {
+        return;
+    }
+    let mut program = Program::new("consecutive labels whose arms look alike and are not");
+    program.top("static int pick(int value) {");
+    program.top("    int out;");
+    program.top("    switch (value) {");
+    for step in 0..LENGTH {
+        program.top(format!("    case {}:", RUN_BASE + step));
+        program.top(format!("        out = value + {};", step + 1));
+        program.top("        break;");
+    }
+    program.top("    default:");
+    program.top("        out = 0;");
+    program.top("        break;");
+    program.top("    }");
+    program.top("    return out;");
+    program.top("}");
+    let total: i128 = (0..LENGTH).map(|step| RUN_BASE + step + step + 1).sum();
+    walk(&mut program, "pick", RUN_BASE - RUN_PAD, LENGTH + 2 * RUN_PAD, total);
+    sink.push(
+        Facet::SwitchRuns,
+        Axes::of([("shape", "look-alike-arms"), ("variant", "five")]),
+        Dialect::C17,
+        program,
+    );
 }
 
 /// Calls with more arguments than fit in registers, and aggregates passed by value.
@@ -773,6 +1112,82 @@ mod tests {
             })
             .unwrap();
         assert!(sparse.source.contains("case 7000:"), "{}", sparse.source);
+    }
+
+    #[test]
+    fn the_switch_sizes_sit_either_side_of_the_cluster_limit() {
+        let cases = cases_for(Facet::SwitchLowering);
+        let labels: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("labels")).collect();
+        assert!(labels.contains(&"31"), "nothing below the limit and near it");
+        assert!(labels.contains(&"33"), "nothing above the limit and near it");
+    }
+
+    #[test]
+    fn every_shape_of_a_run_is_generated() {
+        let cases = cases_for(Facet::SwitchRuns);
+        let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
+        for wanted in [
+            "one-run",
+            "several-runs",
+            "runs-and-singles",
+            "edge-run",
+            "classifier",
+            "look-alike-arms",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+    }
+
+    #[test]
+    fn a_run_really_is_a_stretch_of_labels_going_to_one_arm() {
+        let cases = cases_for(Facet::SwitchRuns);
+        let long = cases
+            .iter()
+            .find(|c| {
+                c.axes.get("shape") == Some("one-run") && c.axes.get("variant") == Some("100")
+            })
+            .unwrap();
+        assert_eq!(long.source.matches("    case ").count(), 100, "{}", long.id);
+        assert_eq!(long.source.matches("return 1;").count(), 1, "{}", long.id);
+        assert_eq!(output(long), "100\n", "{}", long.id);
+    }
+
+    #[test]
+    fn a_run_at_the_edge_reaches_the_last_value_of_its_type() {
+        let cases = cases_for(Facet::SwitchRuns);
+        let top = cases.iter().find(|c| c.axes.get("variant") == Some("u32-top")).unwrap();
+        assert!(top.source.contains("case 4294967295u:"), "{}", top.source);
+        let bottom = cases.iter().find(|c| c.axes.get("variant") == Some("i32-bottom")).unwrap();
+        assert!(bottom.source.contains("case (-2147483647 - 1):"), "{}", bottom.source);
+        assert_eq!(output(top), "3\n");
+        assert_eq!(output(bottom), "3\n");
+    }
+
+    #[test]
+    fn the_classifier_sends_sixty_five_labels_to_four_arms() {
+        for variant in ["char", "unsigned-char"] {
+            let cases = cases_for(Facet::SwitchRuns);
+            let case = cases
+                .iter()
+                .find(|c| {
+                    c.axes.get("shape") == Some("classifier")
+                        && c.axes.get("variant") == Some(variant)
+                })
+                .unwrap();
+            assert_eq!(case.source.matches("    case ").count(), 65, "{}", case.id);
+            assert!(case.source.contains("case 'z':"), "{}", case.id);
+            assert!(case.source.contains("case '\\t':"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_look_alike_arms_each_give_a_different_answer() {
+        let cases = cases_for(Facet::SwitchRuns);
+        let case = cases.iter().find(|c| c.axes.get("shape") == Some("look-alike-arms")).unwrap();
+        for step in 1..=5 {
+            assert!(case.source.contains(&format!("out = value + {step};")), "{}", case.id);
+        }
+        assert_eq!(output(case), "75\n", "{}", case.id);
     }
 
     #[test]

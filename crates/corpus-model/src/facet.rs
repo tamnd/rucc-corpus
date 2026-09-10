@@ -144,6 +144,8 @@ pub enum Facet {
     IfConversion,
     /// Choosing how to lower a switch.
     SwitchLowering,
+    /// Stretches of consecutive labels that share one arm.
+    SwitchRuns,
     /// Deciding what a call has to save and restore.
     CallingConvention,
     /// The peephole rules that only make sense on machine instructions.
@@ -245,6 +247,7 @@ impl Facet {
         Self::BlockLayout,
         Self::IfConversion,
         Self::SwitchLowering,
+        Self::SwitchRuns,
         Self::CallingConvention,
         Self::MachinePeephole,
         Self::BitBuiltins,
@@ -308,6 +311,7 @@ impl Facet {
             Self::BlockLayout => "block-layout",
             Self::IfConversion => "if-conversion",
             Self::SwitchLowering => "switch-lowering",
+            Self::SwitchRuns => "switch-runs",
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
             Self::BitBuiltins => "bit-builtins",
@@ -374,6 +378,7 @@ impl Facet {
             Self::BlockLayout => "laying out blocks so the common path falls through",
             Self::IfConversion => "turning a short branch into branchless code",
             Self::SwitchLowering => "choosing how to lower a switch",
+            Self::SwitchRuns => "stretches of consecutive labels that share one arm",
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -444,6 +449,7 @@ impl Facet {
             | Self::BlockLayout
             | Self::IfConversion
             | Self::SwitchLowering
+            | Self::SwitchRuns
             | Self::CallingConvention
             | Self::MachinePeephole
             | Self::BitBuiltins
