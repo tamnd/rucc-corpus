@@ -57,6 +57,8 @@ pub enum Facet {
     ShortCircuit,
     /// Moving a store below a branch whose two arms both wrote to the same place.
     ConditionalStore,
+    /// A branch whose condition already settles the value its two arms disagree about.
+    ValueSettled,
     /// Reassociating an associative chain to shorten its dependency height.
     Reassociate,
     /// Removing a computation whose result nothing reads.
@@ -214,6 +216,7 @@ impl Facet {
         Self::Simplify,
         Self::ShortCircuit,
         Self::ConditionalStore,
+        Self::ValueSettled,
         Self::Reassociate,
         Self::DeadCode,
         Self::DeadStore,
@@ -280,6 +283,7 @@ impl Facet {
             Self::Simplify => "simplify",
             Self::ShortCircuit => "short-circuit",
             Self::ConditionalStore => "conditional-store",
+            Self::ValueSettled => "value-settled",
             Self::Reassociate => "reassociate",
             Self::DeadCode => "dead-code",
             Self::DeadStore => "dead-store",
@@ -351,6 +355,7 @@ impl Facet {
             Self::ConditionalStore => {
                 "moving a store below a branch whose arms wrote the same place"
             }
+            Self::ValueSettled => "a condition that settles the value its two arms disagree about",
             Self::Reassociate => "reassociating a chain to shorten its dependency height",
             Self::DeadCode => "removing a computation whose result nothing reads",
             Self::DeadStore => "removing a store a later store makes invisible",
@@ -424,6 +429,7 @@ impl Facet {
             | Self::Simplify
             | Self::ShortCircuit
             | Self::ConditionalStore
+            | Self::ValueSettled
             | Self::Reassociate
             | Self::DeadCode
             | Self::DeadStore
