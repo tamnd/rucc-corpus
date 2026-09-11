@@ -1,11 +1,12 @@
 # The per-commit gate.
 #
-# Three claims are checked here and they are checked in this order, cheapest first.
+# Four claims are checked here and they are checked in this order, cheapest first.
 #
 # One, the crates build and their tests pass. Two, the C in `programs/` is exactly what the
 # generator produces, so nobody can hand-edit a case into passing. Three, every program in the
 # corpus prints the answer this repository computed in Rust, checked against GCC 16, which is
-# the only way to find out that an expected answer was wrong.
+# the only way to find out that an expected answer was wrong. Four, rucc gets exactly the set of
+# cases wrong that `known-failures.json` says it gets wrong, and no others.
 #
 # The third claim is the one worth the machine time. The generator works out every answer
 # itself and never asks a compiler, so an answer that is wrong is wrong in a way no
@@ -143,14 +144,21 @@ jobs:
   # What rucc actually does with the corpus, measured against GCC 16 on the same machine in
   # the same run. This is the number the M4 milestones are judged on.
   #
-  # It does not gate a merge to this repository, because rucc is under development and a
-  # corpus that goes red every time the compiler has not got to a pass yet is a corpus nobody
-  # reads. The reports go up as an artifact and the nightly job commits them.
+  # This job used to be advisory, because rucc is under development and a corpus that goes red
+  # every time the compiler has not got to a pass yet is a corpus nobody reads. An advisory job
+  # that has been red for weeks is also a job nobody reads, and this one had been. What replaces
+  # it is `known-failures.json`: every family rucc is known not to handle is written down with
+  # the issue behind it, and the run fails on any failure the file does not name and on any line
+  # in the file that did not fail. So the job is red when something changed and green when
+  # nothing did, which is the only thing a gate has to do.
+  #
+  # rucc is built from the tip of its own repository rather than from a pinned commit, so a
+  # change over there can turn this red here. That is deliberate. The corpus exists to say what
+  # the compiler does, and a pin would mean it stopped saying it.
   compiler:
     name: rucc against gcc 16
     needs: quick
     runs-on: ubuntu-24.04
-    continue-on-error: true
     steps:
       - name: the reference compiler
         run: |
@@ -195,11 +203,10 @@ jobs:
           if-no-files-found: ignore
 
   # A single required check, so branch protection does not have to list every job above.
-  # The rucc job is deliberately not in the list, for the reason given on it.
   ci:
     name: ci
     if: always()
-    needs: [quick, generated, reference]
+    needs: [quick, generated, reference, compiler]
     runs-on: ubuntu-24.04
     steps:
       - name: every required job passed

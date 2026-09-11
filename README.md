@@ -145,6 +145,26 @@ The reports carry it as a difference rather than as a ratio, and that is the par
 
 Nothing in the corpus depends on the counter working. A machine without `perf`, a container without the permission and a virtual machine with no counters are all ordinary places to run this, and on all of them the column reads `not measured` and every verdict is exactly what it would have been. Whether the machine counted is part of the cache key, so a result cached on a machine that could not count is not handed back on one that can.
 
+## What the compiler is known not to do
+
+`known-failures.json` names every family rucc is currently known to get wrong, with the issue that will close it and one line saying what is missing. A run fails on any failure that file does not name, and it also fails on any line in the file whose case did not fail this time.
+
+Both directions matter and the second one is the one that is usually left out. A corpus that fails on everything a compiler under development has not reached yet is a corpus nobody runs, so its job gets marked advisory and then stays red for weeks and catches nothing. A corpus that tolerates a list of failures and never checks the list is a corpus whose list rots. Failing in both directions is what keeps the file honest: a new failure is red because it is not in the file, and a fixed one is red because it is in the file and did not happen, and the message says which line to take out.
+
+The key is the family rather than the case. A case id ends in a digest of the program text, so it moves whenever the generator changes what the program says, and a file keyed on ids would churn on every generator edit while quietly ceasing to cover the case it was written for. The family is the id without that digest, which is the facet, the axis point and the dialect. The level is not in the key either, because a construct a compiler cannot lower cannot be lowered at any level. What the level does change is whether a case that works at `-O0` breaks at `-O2`, and that is not a gap, it is a miscompilation, and it arrives as a `wrong` verdict on a family that is either absent from the file or present with a different verdict. Both are red.
+
+Regenerate it after a run:
+
+```sh
+cargo run --release -p rucc-corpus -- run \
+    --toolchain gcc-16 --toolchain rucc=../rucc/target/release/rucc \
+    --reference gcc-16 --accept
+```
+
+That keeps the issue and the prose on every line that is still failing, and gives a new line an empty issue and a reason taken from the compiler's own words, which is a starting point for somebody to write over rather than an answer. A run only rewrites the part of the file it exercised. A run narrowed with `--facet` leaves the other facets alone, and a run whose command line did not name a compiler leaves that compiler's lines alone, which is why the reference job can run GCC 16 on its own without deleting everything the file says about rucc.
+
+As of the run that created it the file has 32 lines, all of them rucc, across four things: the address of a label and the indirect jump through it, `__builtin_alloca`, `__atomic_signal_fence`, and the library `setjmp` and `longjmp`. GCC 16 compiles and runs all of them.
+
 ## A case that has not changed is not built again
 
 A result whose every input hashes to what it hashed last time is read out of a cache instead of being built. The key covers the source, the expected answer, the dialect, the level, the compiler as bytes and as a version string, the extra flags, the repeat count, the operating system, the architecture and the version of the harness. Change any one of them and the entry misses.

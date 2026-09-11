@@ -18,6 +18,7 @@ pub mod compile;
 pub mod counter;
 pub mod exec;
 pub mod insight;
+pub mod known;
 pub mod memory;
 pub mod object;
 pub mod toolchain;

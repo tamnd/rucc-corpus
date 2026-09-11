@@ -680,6 +680,22 @@ impl Verdict {
         }
     }
 
+    /// The verdict with this name, as it is spelled in a record.
+    #[must_use]
+    pub fn parse(name: &str) -> Option<Self> {
+        [
+            Self::Pass,
+            Self::Wrong,
+            Self::Rejected,
+            Self::Unimplemented,
+            Self::Accepted,
+            Self::Crashed,
+            Self::Skipped,
+        ]
+        .into_iter()
+        .find(|verdict| verdict.name() == name)
+    }
+
     /// Whether this verdict should turn the build red.
     #[must_use]
     pub const fn is_failure(self) -> bool {

@@ -26,7 +26,7 @@ pub mod json;
 pub mod record;
 pub mod sha256;
 
-pub use case::{Axes, Case, Dialect, Expect, Manifest, Unit, program_path};
+pub use case::{Axes, Case, Dialect, Expect, Manifest, Unit, family_of, program_path};
 pub use facet::{Facet, Phase};
 pub use json::Json;
 pub use record::{
