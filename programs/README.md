@@ -1,10 +1,10 @@
 # The corpus
 
-1898 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1910 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `77bb73f4574d1cbdcd30dfcee4249c6c9fbb9e6d6120d053cc9f27eb5c5a8f30`.
+Corpus digest `cffa24ab30a9fa5b763fc1614c989124d8bcaae0fa3813e2c46134beab00e890`.
 
 ## floor (118 programs)
 
@@ -87,14 +87,14 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (367 programs)
+## backend (379 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
 | facet | programs | what it is about |
 |---|---|---|
 | [`selection`](backend/selection/README.md) | 40 | choosing the machine instruction for an operation |
-| [`register-pressure`](backend/register-pressure/README.md) | 48 | how many values are live at once, and what that costs |
+| [`register-pressure`](backend/register-pressure/README.md) | 60 | how many values are live at once, and what that costs |
 | [`register-alloc`](backend/register-alloc/README.md) | 40 | assigning registers and deciding what to spill |
 | [`scheduling`](backend/scheduling/README.md) | 12 | ordering instructions within a block |
 | [`block-layout`](backend/block-layout/README.md) | 4 | laying out blocks so the common path falls through |
