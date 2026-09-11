@@ -108,8 +108,16 @@ fn selection(sink: &mut Sink<'_>) {
 /// of registers and has to be counted as two numbers rather than one. `one-arm-only` holds
 /// them across one arm of a branch, where a count taken over the whole function says the
 /// pressure is high everywhere and a count taken per point says it is high in one place.
+///
+/// `call-off-the-path` is the same question asked the other way round. The values are read in
+/// the second arm of a branch and the call is in the first, so a compiler that measures where
+/// a value is live by where it sits in the function as written has the call in the middle of
+/// every one of them, and a compiler that measures it on the control flow graph has the call
+/// on a path none of them are on. The first answer costs every caller saved register at once,
+/// which on x86-64 is seven of them, for a call the values never reach. tamnd/rucc#982.
 fn register_pressure(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["across-a-call", "through-a-loop", "both-classes", "one-arm-only"];
+    const SHAPES: &[&str] =
+        &["across-a-call", "through-a-loop", "both-classes", "one-arm-only", "call-off-the-path"];
     for &ty in TYPES {
         for &live in &[6usize, 12, 24] {
             for &shape in SHAPES {
@@ -120,7 +128,7 @@ fn register_pressure(sink: &mut Sink<'_>) {
                 let mut program = Program::new(format!(
                     "{live} live {name} values held {shape}, which is what the pressure model counts"
                 ));
-                if shape == "across-a-call" {
+                if matches!(shape, "across-a-call" | "call-off-the-path") {
                     program.top(format!("static {name} opaque({name} v) {{"));
                     program.top("    return v + 1;".to_owned());
                     program.top("}".to_owned());
@@ -148,6 +156,20 @@ fn register_pressure(sink: &mut Sink<'_>) {
                         program.line("}");
                         total += 4;
                     }
+                    "call-off-the-path" => {
+                        // The call is written first and the reads are written second, so every
+                        // value's first definition is above the call and its only use is below
+                        // it. The branch is on a value read out of `volatile` storage, so no
+                        // compiler is entitled to decide which arm runs.
+                        program.line(format!("{name} kept = 0;"));
+                        program.line("if (flag == 0) {");
+                        program.line_at(1, "kept = opaque(seed);");
+                        program.line("} else {");
+                        for at in (0..live).rev() {
+                            program.line_at(1, format!("kept += v{at};"));
+                        }
+                        program.line("}");
+                    }
                     "both-classes" => {
                         // A double alongside the integers, because they are two register files
                         // and a model that adds them up gets both numbers wrong.
@@ -168,10 +190,14 @@ fn register_pressure(sink: &mut Sink<'_>) {
                 }
                 program.blank();
 
-                // Read back to front, so the value defined first is the one live longest.
+                // Read back to front, so the value defined first is the one live longest. The
+                // off the path shape has read them already, inside the arm that is the whole
+                // point of it, and reading them again here would put them back on every path.
                 program.line(format!("{name} total = kept;"));
-                for at in (0..live).rev() {
-                    program.line(format!("total += v{at};"));
+                if shape != "call-off-the-path" {
+                    for at in (0..live).rev() {
+                        program.line(format!("total += v{at};"));
+                    }
                 }
                 if !ty.promoted().holds(total) {
                     continue;
@@ -1597,6 +1623,26 @@ mod tests {
             })
             .unwrap();
         assert_eq!(output(case), "10\n");
+    }
+
+    #[test]
+    fn the_call_off_the_path_cases_read_their_values_only_in_the_arm_without_the_call() {
+        let cases = cases_for(Facet::RegisterPressure);
+        let case = cases
+            .iter()
+            .find(|c| {
+                c.axes.get("shape") == Some("call-off-the-path")
+                    && c.axes.get("type") == Some("i32")
+                    && c.axes.get("live") == Some("6")
+            })
+            .unwrap();
+        // One read of each value, and all six inside the else arm, which is what makes the call
+        // in the other arm something none of them is live over.
+        for at in 0..6 {
+            assert_eq!(case.source.matches(&format!("v{at};")).count(), 1, "v{at} in {}", case.id);
+            assert!(case.source.contains(&format!("        kept += v{at};")), "{}", case.id);
+        }
+        assert_eq!(output(case), "21\n");
     }
 
     #[test]
