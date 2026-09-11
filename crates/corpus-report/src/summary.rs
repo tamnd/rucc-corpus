@@ -93,6 +93,14 @@ pub struct FacetScore {
     pub size_ratio: Option<f64>,
     /// Median run time against the reference, at the headline level.
     pub speed_ratio: Option<f64>,
+    /// How much the machine moved underneath that number, at the headline level.
+    ///
+    /// The median, over the same cases the speed ratio was taken over, of the widest spread
+    /// either compiler's repetitions showed on that case. It is the size of the difference the
+    /// machine can produce on its own, so a speed ratio closer to one than this is a ratio with
+    /// nothing in it. `FacetScore::speed_is_real` is that comparison, and the report asks it
+    /// before printing a run time rather than after. tamnd/rucc-corpus#8.
+    pub speed_spread: Option<f64>,
     /// Median compile time against the reference, at the headline level.
     pub compile_ratio: Option<f64>,
     /// Median compiler memory against the reference, at the headline level.
@@ -124,6 +132,23 @@ pub struct FacetScore {
     /// Its own count rather than sharing `compared`, because memory is the one number here
     /// that can be missing for a reason that has nothing to do with the compiler.
     pub memory_compared: usize,
+}
+
+impl FacetScore {
+    /// Whether the run time difference is bigger than the noise it was measured in.
+    ///
+    /// False when there is no ratio, when the spread was never measured, and when the ratio is
+    /// closer to one than the spread is to nought. The last of those is the point: a compiler
+    /// that comes out two percent faster on a machine whose own repetitions of one program
+    /// spread by five percent has not come out faster, and the honest thing to print is that
+    /// the measurement cannot tell.
+    #[must_use]
+    pub fn speed_is_real(&self) -> bool {
+        let (Some(ratio), Some(spread)) = (self.speed_ratio, self.speed_spread) else {
+            return false;
+        };
+        (ratio - 1.0).abs() > spread
+    }
 }
 
 /// What every compiler did with one facet.
@@ -509,6 +534,7 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
     let mut tally = Tally::default();
     let mut sizes = Vec::new();
     let mut speeds = Vec::new();
+    let mut spreads = Vec::new();
     let mut compiles = Vec::new();
     let mut memories = Vec::new();
     let mut disks = Vec::new();
@@ -537,6 +563,12 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
         }
         if let Some(value) = compare::speed_ratio(record, against) {
             speeds.push(value);
+            // The wider of the two, because the ratio is a quotient of both sides and either
+            // side moving is enough to move it. Taking the compiler under test alone would
+            // report a tighter noise floor than the number was actually measured in.
+            if let Some(spread) = widest(record, against) {
+                spreads.push(spread);
+            }
         }
         if let Some(value) = compare::compile_ratio(record, against) {
             compiles.push(value);
@@ -561,10 +593,24 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
         reference_text_bytes,
         size_ratio: median(&mut sizes),
         speed_ratio: median(&mut speeds),
+        speed_spread: median(&mut spreads),
         compile_ratio: median(&mut compiles),
         memory_ratio: median(&mut memories),
         disk_ratio: median(&mut disks),
         data_ratio: median(&mut datas),
+    }
+}
+
+/// The wider of the two spreads on one case, or `None` when neither side kept its samples.
+///
+/// A record from a report written before the samples were kept has none, so the answer there is
+/// missing rather than nought. Nought would say the machine held perfectly still, which is a
+/// claim, and the whole point of this number is not to make claims the samples cannot support.
+fn widest(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
+    match (mine.execute.spread(), reference.execute.spread()) {
+        (Some(one), Some(other)) => Some(one.max(other)),
+        (Some(one), None) | (None, Some(one)) => Some(one),
+        (None, None) => None,
     }
 }
 
@@ -762,6 +808,64 @@ mod tests {
             verdicts,
             findings: Vec::new(),
         }
+    }
+
+    /// The same record with samples on it, which is what a run of the current harness records.
+    fn timed(mut record: RunRecord, samples: &[u64]) -> RunRecord {
+        record.execute.micros = samples.iter().copied().min().unwrap_or(0);
+        record.execute.samples = samples.to_vec();
+        record
+    }
+
+    #[test]
+    fn a_run_time_difference_smaller_than_the_machine_moved_is_not_reported_as_a_difference() {
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference = timed(
+            record_for(&case, "gcc-16", Level::O2, 100, 0),
+            // A tenth apart between the fastest and the slowest, which is an ordinary morning
+            // on a machine that is doing anything else at all.
+            &[1_000, 1_100, 1_020],
+        );
+        let mine = timed(record_for(&case, "rucc", Level::O2, 100, 0), &[1_030, 1_120, 1_050]);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        // Three percent slower, measured in something that moved by ten, so the three percent
+        // is the machine.
+        assert!((score.speed_ratio.unwrap() - 1.03).abs() < 1e-9);
+        assert!((score.speed_spread.unwrap() - 0.1).abs() < 1e-9);
+        assert!(!score.speed_is_real());
+    }
+
+    #[test]
+    fn a_run_time_difference_bigger_than_the_machine_moved_is_reported() {
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference =
+            timed(record_for(&case, "gcc-16", Level::O2, 100, 0), &[1_000, 1_005, 1_002]);
+        let mine = timed(record_for(&case, "rucc", Level::O2, 100, 0), &[1_400, 1_410, 1_405]);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        assert!((score.speed_ratio.unwrap() - 1.4).abs() < 1e-9);
+        assert!(score.speed_is_real());
+    }
+
+    #[test]
+    fn a_facet_whose_records_kept_no_samples_says_nothing_about_the_noise() {
+        // Which is every record in a report written before the samples were kept. The ratio is
+        // still there, since it always was, and the spread is missing rather than nought.
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference = record_for(&case, "gcc-16", Level::O2, 100, 1_000);
+        let mine = record_for(&case, "rucc", Level::O2, 100, 1_030);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        assert!(score.speed_ratio.is_some());
+        assert_eq!(score.speed_spread, None);
+        assert!(!score.speed_is_real());
     }
 
     #[test]

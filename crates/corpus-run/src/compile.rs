@@ -155,6 +155,7 @@ pub fn build_and_run(
             status: if ran.timed_out { -1 } else { ran.status },
             micros: ran.micros,
             repeats: repeats.max(1),
+            samples: ran.samples,
             peak_bytes: ran.peak_bytes,
             output: ran.stdout,
         }

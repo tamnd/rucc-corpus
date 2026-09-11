@@ -10,7 +10,7 @@
 //! and on a phone, and a chart that only renders in one of those is worse than a table that
 //! renders in all three.
 
-use crate::summary::{FacetSummary, Summary, Tally};
+use crate::summary::{FacetScore, FacetSummary, Summary, Tally};
 use corpus_model::{Finding, Phase};
 use corpus_run::Run;
 use std::collections::BTreeMap;
@@ -251,6 +251,9 @@ fn code_quality(out: &mut String, summary: &Summary) {
         "Code size is the size of the executable sections, not the size of the file, so the runtime and the symbol table do not get counted as somebody's optimizer. Everything below is at `-O2` against `{}` at `-O2`. The per facet figures are medians over the cases in that facet, because a facet holds programs of very different sizes and one tiny program should not set the facet's number. The headline for each compiler is the corpus total instead, every byte counted once, because that is the number that does not move when somebody adds a facet.\n\n",
         summary.reference
     ));
+    out.push_str(
+        "The run time column is the same comparison over the fastest of the repetitions of each program, and it says `inside the noise` where the difference between the two compilers is smaller than the difference this machine produced running one of them several times. Size is exact and time is not, so on most of these facets the size column is the honest signal and the time column is there to be checked rather than quoted. Every repetition is in `runs.jsonl` under `execute.samples`, so any number here can be traced back to what was measured.\n\n",
+    );
 
     for id in under_test {
         out.push_str(&format!("### `{id}`\n\n"));
@@ -364,7 +367,7 @@ fn ratio_table(out: &mut String, toolchain: &str, ranked: &[(&FacetSummary, f64)
             facet.phase.name(),
             facet.cases,
             as_change(*size),
-            score.and_then(|s| s.speed_ratio).map_or_else(|| "not measured".to_owned(), as_change),
+            score.map_or_else(|| "not measured".to_owned(), as_speed),
             score
                 .and_then(|s| s.compile_ratio)
                 .map_or_else(|| "not measured".to_owned(), as_change),
@@ -486,6 +489,26 @@ fn as_change(ratio: f64) -> String {
     }
 }
 
+/// A run time written the way people talk about it, or a refusal to write one.
+///
+/// The refusal is the useful half. A facet whose repetitions of one program spread further than
+/// the difference between two compilers has measured the machine rather than the compilers, and
+/// printing a number there invites somebody to defend or attack a change on the strength of it.
+/// So the cell says the measurement could not tell, and the samples behind that are in
+/// `runs.jsonl` for anybody who wants to check. tamnd/rucc-corpus#8.
+fn as_speed(score: &FacetScore) -> String {
+    let Some(ratio) = score.speed_ratio else {
+        return "not measured".to_owned();
+    };
+    let change = as_change(ratio);
+    // A cell that already says level is claiming nothing, so there is nothing for the noise to
+    // take away. The message replaces a number, and only a number.
+    if change == "level" || score.speed_spread.is_none() || score.speed_is_real() {
+        return change;
+    }
+    "inside the noise".to_owned()
+}
+
 /// A threshold written the same way.
 fn as_percent_limit(ratio: f64) -> String {
     let percent = (ratio - 1.0) * 100.0;
@@ -517,7 +540,8 @@ fn short(digest: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{as_change, clip, report_md};
+    use super::{as_change, as_speed, clip, report_md};
+    use crate::summary::FacetScore;
     use crate::summary::summarise;
     use corpus_model::{
         Axes, Case, Compile, Dialect, Execute, Expect, Facet, Finding, Insight, Level, RunRecord,
@@ -748,6 +772,25 @@ mod tests {
         assert_eq!(as_change(1.30), "30 percent more");
         assert_eq!(as_change(0.90), "10 percent less");
         assert_eq!(as_change(1.001), "level");
+    }
+
+    #[test]
+    fn a_run_time_the_machine_could_have_produced_on_its_own_is_not_printed_as_a_number() {
+        let scored = |ratio: f64, spread: Option<f64>| FacetScore {
+            speed_ratio: Some(ratio),
+            speed_spread: spread,
+            ..FacetScore::default()
+        };
+        // Four percent measured in a machine that moves by ten, which is nothing.
+        assert_eq!(as_speed(&scored(1.04, Some(0.10))), "inside the noise");
+        // Forty percent measured in the same machine, which is something.
+        assert_eq!(as_speed(&scored(1.40, Some(0.10))), "40 percent more");
+        assert_eq!(as_speed(&scored(0.60, Some(0.10))), "40 percent less");
+        // A cell that claims nothing in the first place stays as it was.
+        assert_eq!(as_speed(&scored(1.0, Some(0.10))), "level");
+        // And a report written before the samples were kept reads as it always did.
+        assert_eq!(as_speed(&scored(1.04, None)), "4 percent more");
+        assert_eq!(as_speed(&FacetScore::default()), "not measured");
     }
 
     #[test]

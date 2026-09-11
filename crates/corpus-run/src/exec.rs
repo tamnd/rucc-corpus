@@ -34,8 +34,13 @@ pub struct Outcome {
     pub stdout: String,
     /// Everything it wrote to standard error.
     pub stderr: String,
-    /// Wall time in microseconds.
+    /// Wall time in microseconds. The fastest of the repetitions, when there was more than one.
     pub micros: u64,
+    /// Every repetition's wall time, in the order they were taken.
+    ///
+    /// One entry for a program that was run once, which is every compile. A run that never
+    /// started has none.
+    pub samples: Vec<u64>,
     /// The largest high water mark reached by any process in the tree, in bytes.
     ///
     /// `None` on a platform that cannot say, which is every platform that is not Linux, and
@@ -55,6 +60,7 @@ impl Outcome {
             stdout: String::new(),
             stderr: format!("could not start the program: {error}"),
             micros: 0,
+            samples: Vec::new(),
             peak_bytes: None,
         }
     }
@@ -139,15 +145,20 @@ pub fn run<S: AsRef<OsStr>>(
         stdout,
         stderr,
         micros,
+        samples: vec![micros],
         peak_bytes,
     })
 }
 
-/// Runs a program several times and keeps the fastest.
+/// Runs a program several times and keeps the fastest, and keeps the rest as well.
 ///
 /// The fastest is the honest number on a machine that is doing other things. Every slower
 /// measurement contains somebody else's work as well as ours, and there is no way to subtract
 /// it, so the floor is the closest thing available to the time the code alone would take.
+///
+/// The rest are kept too, in `samples`, because the floor on its own says nothing about how
+/// much the machine moved while it was being measured and that is what decides whether a
+/// difference between two compilers means anything. See `corpus_model::Execute::spread`.
 ///
 /// The output and status come from the first repetition. If a program is not deterministic
 /// across repetitions the corpus has a bigger problem than its timing.
@@ -172,6 +183,7 @@ pub fn run_repeatedly<S: AsRef<OsStr>>(
             return Ok(again);
         }
         best.micros = best.micros.min(again.micros);
+        best.samples.push(again.micros);
         // The largest across the repetitions rather than the one that went with the fastest,
         // because the repetitions run the same program on the same input and a difference
         // between them is the sampler having missed something, not the program having changed.

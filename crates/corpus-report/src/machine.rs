@@ -160,6 +160,8 @@ fn facet_json(facet: &FacetSummary) -> Json {
                     ("text_bytes", Json::int(score.text_bytes as i64)),
                     ("reference_text_bytes", Json::int(score.reference_text_bytes as i64)),
                     ("speed_ratio", score.speed_ratio.map_or(Json::Null, Json::Number)),
+                    ("speed_spread", score.speed_spread.map_or(Json::Null, Json::Number)),
+                    ("speed_is_real", Json::Bool(score.speed_is_real())),
                     ("compile_ratio", score.compile_ratio.map_or(Json::Null, Json::Number)),
                     ("memory_ratio", score.memory_ratio.map_or(Json::Null, Json::Number)),
                     ("disk_ratio", score.disk_ratio.map_or(Json::Null, Json::Number)),
