@@ -127,6 +127,19 @@ fn number(value: &Json, key: &str) -> u64 {
     value.get(key).and_then(Json::as_f64).map_or(0, |n| if n < 0.0 { 0 } else { n as u64 })
 }
 
+/// A list of whole numbers read back out of a record.
+///
+/// Missing reads as empty, on the same terms as a missing number reads as nought. A report
+/// written before the samples were kept has no list on the line, and the run it describes is
+/// still worth reading.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn numbers(value: &Json, key: &str) -> Vec<u64> {
+    let Some(items) = value.get(key).and_then(Json::as_array) else {
+        return Vec::new();
+    };
+    items.iter().filter_map(Json::as_f64).map(|n| if n < 0.0 { 0 } else { n as u64 }).collect()
+}
+
 /// A signed status read back out of a record.
 #[allow(clippy::cast_possible_truncation)]
 fn status(value: &Json, key: &str) -> i32 {
@@ -246,6 +259,18 @@ pub struct Execute {
     pub micros: u64,
     /// How many times it was run to get that number.
     pub repeats: u32,
+    /// Every repetition's wall time, in microseconds, in the order the repetitions were taken.
+    ///
+    /// Kept rather than thrown away once the minimum has been taken, because a minimum on its
+    /// own cannot be argued with. Two runs of this corpus over byte for byte identical programs
+    /// moved the total wall time by nearly nine percent, and a report that prints a one percent
+    /// speedup out of samples that spread by nine is not reporting a speedup. The samples are
+    /// what lets a reader see that, and they are what a number in the human report can be
+    /// traced back to. tamnd/rucc-corpus#8.
+    ///
+    /// Empty for a run that never happened, and for a run that was read back from a report
+    /// written before the samples were kept.
+    pub samples: Vec<u64>,
     /// The largest high water mark the program reached, in bytes, across the repetitions.
     ///
     /// `None` on the same terms as the compile's, and for the same reasons.
@@ -263,9 +288,49 @@ impl Execute {
             status: -1,
             micros: 0,
             repeats: 0,
+            samples: Vec::new(),
             peak_bytes: None,
             output: String::new(),
         }
+    }
+
+    /// The middle of the repetitions, in microseconds.
+    ///
+    /// `None` when the samples were not kept, which is every record from a report written
+    /// before they were, rather than nought. Nought is a time somebody measured.
+    #[must_use]
+    pub fn median_micros(&self) -> Option<u64> {
+        if self.samples.is_empty() {
+            return None;
+        }
+        let mut sorted = self.samples.clone();
+        sorted.sort_unstable();
+        let middle = sorted.len() / 2;
+        if sorted.len() % 2 == 1 {
+            Some(sorted[middle])
+        } else {
+            Some(sorted[middle - 1].midpoint(sorted[middle]))
+        }
+    }
+
+    /// How far the repetitions spread, as a fraction of the fastest one.
+    ///
+    /// Nought means every repetition took the same time and one means the slowest took twice as
+    /// long as the fastest. This is the number a claim about run time has to beat: a difference
+    /// between two compilers that is smaller than the spread within one of them is a difference
+    /// the machine made rather than one the compiler made.
+    ///
+    /// `None` when there is fewer than one sample to spread, or when the fastest was nought,
+    /// which means the program finished inside the clock's resolution and there is no ratio to
+    /// take.
+    #[must_use]
+    pub fn spread(&self) -> Option<f64> {
+        let low = *self.samples.iter().min()?;
+        let high = *self.samples.iter().max()?;
+        if low == 0 {
+            return None;
+        }
+        Some((high - low) as f64 / low as f64)
     }
 
     /// The run as JSON.
@@ -276,6 +341,7 @@ impl Execute {
             ("status", Json::int(i64::from(self.status))),
             ("micros", Json::int(self.micros as i64)),
             ("repeats", Json::int(i64::from(self.repeats))),
+            ("samples", Json::array(self.samples.iter().map(|&one| Json::int(one as i64)))),
             ("peak_bytes", maybe(self.peak_bytes)),
             ("output", Json::string(self.output.clone())),
         ])
@@ -290,6 +356,7 @@ impl Execute {
             status: status(value, "status"),
             micros: number(value, "micros"),
             repeats: number(value, "repeats") as u32,
+            samples: numbers(value, "samples"),
             peak_bytes: measured(value, "peak_bytes"),
             output: text(value, "output"),
         }
@@ -779,6 +846,7 @@ mod tests {
             status: 0,
             micros: 1_200,
             repeats: 3,
+            samples: vec![1_400, 1_200, 1_300],
             peak_bytes: Some(1_800_000),
             output: "done\n".to_owned(),
         };
@@ -790,6 +858,39 @@ mod tests {
         }];
         let read = RunRecord::from_json(&crate::json::parse(&record.to_json().to_line()).unwrap());
         assert_eq!(read, Some(record));
+    }
+
+    #[test]
+    fn the_middle_of_the_repetitions_is_the_middle_and_not_the_average() {
+        // Four hundred is the mean of these and the middle is three hundred, which is the
+        // number that survives one repetition having been interrupted by something else.
+        let five = Execute { samples: vec![300, 290, 310, 1_100, 300], ..Execute::skipped() };
+        assert_eq!(five.median_micros(), Some(300));
+        let four = Execute { samples: vec![300, 290, 310, 1_100], ..Execute::skipped() };
+        assert_eq!(four.median_micros(), Some(305));
+        assert_eq!(Execute::skipped().median_micros(), None);
+    }
+
+    #[test]
+    fn the_spread_is_the_distance_from_the_fastest_to_the_slowest() {
+        let steady = Execute { samples: vec![200, 200, 200], ..Execute::skipped() };
+        assert_eq!(steady.spread(), Some(0.0));
+        let moved = Execute { samples: vec![200, 300, 240], ..Execute::skipped() };
+        assert_eq!(moved.spread(), Some(0.5));
+        // A record from a report written before the samples were kept, which cannot say.
+        assert_eq!(Execute::skipped().spread(), None);
+        // And a program that finished inside the clock, where there is no ratio to take.
+        let instant = Execute { samples: vec![0, 0], ..Execute::skipped() };
+        assert_eq!(instant.spread(), None);
+    }
+
+    #[test]
+    fn a_run_read_back_from_a_report_without_samples_has_none_rather_than_a_nought() {
+        let json = crate::json::parse("{\"ok\":true,\"micros\":900,\"repeats\":5}").unwrap();
+        let read = Execute::from_json(&json);
+        assert_eq!(read.micros, 900);
+        assert!(read.samples.is_empty());
+        assert_eq!(read.spread(), None);
     }
 
     #[test]

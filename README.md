@@ -131,6 +131,14 @@ cargo run --release -p rucc-corpus -- run --facet loop-unroll --level O2 --keep
 
 The reference is GCC 16, which is the current release. Homebrew installs it as `gcc-16` and the Ubuntu toolchain archive installs it under the same name.
 
+## What a run time in here is worth
+
+Every case is run five times by default and every one of those times is kept, in `runs.jsonl` under `execute.samples`. The number the reports compare is the fastest of them, because on a machine that is doing anything else the slower measurements contain somebody else's work and there is no way to subtract it. The rest are kept so the floor can be argued with.
+
+The reason they are kept is that the floor on its own hides how much the machine moved while it was being measured. Two runs of this corpus over byte for byte identical programs moved the total wall time by nearly nine percent, with more than fifteen hundred programs moving by more than five percent each. Nothing about those programs changed. So a report that prints a one percent speedup out of samples that spread by nine is not reporting a speedup, and both the cost page and the human report say `inside the noise` instead of printing the number when the difference between two compilers is smaller than the spread within one of them. `report.json` carries `speed_spread` and `speed_is_real` per facet for anyone who wants the arithmetic.
+
+Size is exact and time is not. For most facets in here the size columns are the honest signal, and the time columns are there to be checked rather than quoted. A claim about how fast something got wants a benchmark built for it, on a quiet machine, counting instructions rather than seconds.
+
 ## A case that has not changed is not built again
 
 A result whose every input hashes to what it hashed last time is read out of a cache instead of being built. The key covers the source, the expected answer, the dialect, the level, the compiler as bytes and as a version string, the extra flags, the repeat count, the operating system, the architecture and the version of the harness. Change any one of them and the entry misses.

@@ -387,7 +387,7 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
                 ratio(score.disk_ratio),
                 ratio(score.data_ratio),
                 ratio(score.compile_ratio),
-                ratio(score.speed_ratio),
+                speed(score),
                 ratio(score.memory_ratio)
             );
         }
@@ -667,6 +667,18 @@ fn ratio(value: Option<f64>) -> String {
         return "level".to_owned();
     }
     if percent > 0.0 { format!("{percent:.0}% more") } else { format!("{:.0}% less", -percent) }
+}
+
+/// A run time, or the reason there is no run time worth printing.
+///
+/// Same rule as the human report's, and it has to be the same rule, because two pages of the
+/// same run that disagree about whether a facet got faster are worse than either page alone.
+fn speed(score: &FacetScore) -> String {
+    let cell = ratio(score.speed_ratio);
+    if cell == "level" || score.speed_spread.is_none() || score.speed_is_real() {
+        return cell;
+    }
+    "inside the noise".to_owned()
 }
 
 /// The first line of a diagnostic with the file, line and column taken off the front.
