@@ -271,6 +271,22 @@ pub struct Execute {
     /// Empty for a run that never happened, and for a run that was read back from a report
     /// written before the samples were kept.
     pub samples: Vec<u64>,
+    /// How many instructions the program retired, on a machine that would say.
+    ///
+    /// The fewest of the measurements, on the same argument as the fastest of the timings, and
+    /// in practice they are all the same number. This is the honest version of the question
+    /// the wall clock is asked: it is what the program did rather than how long the machine
+    /// took to let it do it, and on one machine it reproduces to within a hundredth of a
+    /// percent where the clock moves by a factor of four.
+    ///
+    /// `None` on a machine with no counters, which is every platform that is not Linux and
+    /// plenty of Linux ones. See `corpus_run::counter`.
+    pub instructions: Option<u64>,
+    /// Every instruction count, in the order the measurements were taken.
+    ///
+    /// Kept for the same reason the timings are. A count that does not reproduce is worth
+    /// knowing about, and a number with nothing behind it is worth arguing with.
+    pub instruction_samples: Vec<u64>,
     /// The largest high water mark the program reached, in bytes, across the repetitions.
     ///
     /// `None` on the same terms as the compile's, and for the same reasons.
@@ -289,6 +305,8 @@ impl Execute {
             micros: 0,
             repeats: 0,
             samples: Vec::new(),
+            instructions: None,
+            instruction_samples: Vec::new(),
             peak_bytes: None,
             output: String::new(),
         }
@@ -342,6 +360,11 @@ impl Execute {
             ("micros", Json::int(self.micros as i64)),
             ("repeats", Json::int(i64::from(self.repeats))),
             ("samples", Json::array(self.samples.iter().map(|&one| Json::int(one as i64)))),
+            ("instructions", maybe(self.instructions)),
+            (
+                "instruction_samples",
+                Json::array(self.instruction_samples.iter().map(|&one| Json::int(one as i64))),
+            ),
             ("peak_bytes", maybe(self.peak_bytes)),
             ("output", Json::string(self.output.clone())),
         ])
@@ -357,6 +380,8 @@ impl Execute {
             micros: number(value, "micros"),
             repeats: number(value, "repeats") as u32,
             samples: numbers(value, "samples"),
+            instructions: measured(value, "instructions"),
+            instruction_samples: numbers(value, "instruction_samples"),
             peak_bytes: measured(value, "peak_bytes"),
             output: text(value, "output"),
         }
@@ -847,6 +872,8 @@ mod tests {
             micros: 1_200,
             repeats: 3,
             samples: vec![1_400, 1_200, 1_300],
+            instructions: Some(112_183),
+            instruction_samples: vec![112_183, 112_184],
             peak_bytes: Some(1_800_000),
             output: "done\n".to_owned(),
         };

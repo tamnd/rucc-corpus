@@ -5,6 +5,7 @@
 //! failing case is what the source actually was and what the compiler actually said, and a
 //! harness that deletes both leaves them re-running it by hand to find out.
 
+use crate::counter;
 use crate::exec;
 use crate::insight;
 use crate::object;
@@ -150,12 +151,22 @@ pub fn build_and_run(
             repeats,
         )
         .map_err(|error| format!("could not run {}: {error}", binary.display()))?;
+        // Only for a program that worked. Counting the instructions of a program that crashed
+        // would count the ones it managed before it died, which is a number that looks like a
+        // measurement and is not one.
+        let counted = if ran.ok {
+            counter::count_repeatedly::<String>(&format!("./{BINARY}"), &[], Some(dir))
+        } else {
+            Vec::new()
+        };
         Execute {
             ok: ran.ok,
             status: if ran.timed_out { -1 } else { ran.status },
             micros: ran.micros,
             repeats: repeats.max(1),
             samples: ran.samples,
+            instructions: counted.iter().min().copied(),
+            instruction_samples: counted,
             peak_bytes: ran.peak_bytes,
             output: ran.stdout,
         }
