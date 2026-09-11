@@ -551,6 +551,8 @@ fn iv_selection(sink: &mut Sink<'_>) {
         "counter-dead-after",
         "counter-live-after",
         "many-walks",
+        "wide-power-of-two",
+        "wide-awkward",
     ];
     for &ty in TYPES {
         for &shape in SHAPES {
@@ -591,6 +593,12 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
         "counter-dead-after" => format!("a {name} loop whose counter nothing reads afterwards"),
         "counter-live-after" => format!("a {name} loop whose counter something reads afterwards"),
         "many-walks" => format!("six {name} walks at once, which is more than the registers"),
+        "wide-power-of-two" => {
+            format!("a walk over structs of eight {name}, whose stride is a power of two")
+        }
+        "wide-awkward" => {
+            format!("the same walk over structs of six {name}, whose stride is not")
+        }
         _ => unreachable!("unknown shape {shape}"),
     });
 
@@ -724,6 +732,44 @@ fn selected(ty: Ty, shape: &str) -> Option<Program> {
             program.line(format!("{name} total = 0;"));
             program.line("for (int i = 0; i < n; i++) {");
             program.line_at(1, "total += a1[i] + a2[i] + a3[i] + a4[i] + a5[i] + a6[i];");
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+        }
+        // An array of a `struct`, walked by index, which is the commonest form this question
+        // takes and the one every shape above leaves out. A scalar array strides by one, two,
+        // four or eight bytes and every one of those is a scale an addressing mode holds, so the
+        // multiply the selection is choosing about never has to exist. Eight fields is thirty
+        // two bytes or sixty four, no mode scales by either, and the choice is real again: work
+        // the offset out on every access, or keep a pointer of the loop's own and step it.
+        //
+        // Two fields are read rather than one, at offsets far enough apart that they are not the
+        // same cache line on the wide type. One access is an address a compiler folds into the
+        // instruction that uses it, and two at different offsets off the same element is where
+        // holding a base pays for the register it costs.
+        //
+        // The pair with `wide-awkward` below is the point. That one strides by twenty four or
+        // forty eight, which is a multiply on any machine, and this one strides by a power of two,
+        // which is a shift on the machine even where the compiler has not learned to write it
+        // yet. A cost model that gets those two confused prefers a pointer here and not there,
+        // and the two totals being equal is what makes the assembly worth putting side by side.
+        "wide-power-of-two" | "wide-awkward" => {
+            let fields: i128 = if shape == "wide-power-of-two" { 8 } else { 6 };
+            let total: i128 = (0..TRIPS).map(|i| i + (i + 3)).sum();
+            if !fits(ty, total) {
+                return None;
+            }
+            program.top(format!("struct wide {{ {name} f[{fields}]; }};"));
+            program.line(format!("struct wide a[{}];", TRIPS + 4));
+            program.line(format!("for (int i = 0; i < {}; i++) {{", TRIPS + 4));
+            program.line_at(
+                1,
+                format!("for (int k = 0; k < {fields}; k++) a[i].f[k] = ({name})(i + k);"),
+            );
+            program.line("}");
+            program.line(format!("{name} total = 0;"));
+            program.line("for (int i = 0; i < n; i++) {");
+            program.line_at(1, "total += a[i].f[0] + a[i].f[3];");
             program.line("}");
             program.blank();
             program.check(ty.promoted(), "total", total);
