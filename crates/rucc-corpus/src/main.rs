@@ -18,7 +18,7 @@ use args::Args;
 use corpus_gen::Options;
 use corpus_model::{Facet, Level};
 use corpus_report::terminal::Watcher;
-use corpus_run::{Plan, cache::Reuse, toolchain::Spec};
+use corpus_run::{Plan, cache::Reuse, known, toolchain::Spec};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -80,6 +80,8 @@ Options for run:
   --no-pages           do not write the linked report pages or touch the front page
   --refresh            build every case, then keep the results for next time
   --no-cache           neither read nor write the record cache
+  --known FILE         what each compiler is allowed to fail, default known-failures.json
+  --accept             write that file from this run instead of checking against it
 ";
 
 /// Writes the corpus out as C.
@@ -129,25 +131,33 @@ fn cases(how_many: usize) -> String {
     format!("{how_many} result{}", if how_many == 1 { "" } else { "s" })
 }
 
+/// Everything `run` will accept.
+///
+/// Spelled out here rather than at the call site so that a test can hold it against the usage
+/// text. An option the program takes and does not document is an option nobody uses.
+const RUN_OPTIONS: &[&str] = &[
+    "toolchain",
+    "reference",
+    "level",
+    "facet",
+    "limit",
+    "exclude-tag",
+    "out",
+    "work",
+    "jobs",
+    "repeats",
+    "keep",
+    "quiet",
+    "no-pages",
+    "refresh",
+    "no-cache",
+    "known",
+    "accept",
+];
+
 /// Builds and runs the corpus, and writes the reports.
 fn run(args: &Args) -> Result<ExitCode, String> {
-    args.only(&[
-        "toolchain",
-        "reference",
-        "level",
-        "facet",
-        "limit",
-        "exclude-tag",
-        "out",
-        "work",
-        "jobs",
-        "repeats",
-        "keep",
-        "quiet",
-        "no-pages",
-        "refresh",
-        "no-cache",
-    ])?;
+    args.only(RUN_OPTIONS)?;
 
     let corpus = corpus_gen::generate(&options(args)?)?;
     let work = PathBuf::from(args.value_or("work", "target/corpus-work"));
@@ -224,11 +234,87 @@ fn run(args: &Args) -> Result<ExitCode, String> {
     }
     if outcome.failed() {
         println!("{} results did not come out as expected", outcome.failures());
-        return Ok(ExitCode::FAILURE);
+    } else {
+        println!("every case produced the answer the generator computed");
     }
-    println!("every case produced the answer the generator computed");
-    Ok(ExitCode::SUCCESS)
+    against_the_known(args, &corpus, &plan, &outcome)
 }
+
+/// Compares what went wrong against the file that says what is allowed to go wrong.
+///
+/// This is what decides the exit status, rather than the raw failure count. A compiler under
+/// development fails cases it has not got to yet, and a job that goes red on those is a job that
+/// is red every day and catches nothing on the day it matters. See tamnd/rucc-corpus#22.
+fn against_the_known(
+    args: &Args,
+    corpus: &corpus_model::Manifest,
+    plan: &Plan,
+    outcome: &corpus_run::Run,
+) -> Result<ExitCode, String> {
+    let path = PathBuf::from(args.value_or("known", known::FILE));
+    let known = known::Known::read(&path)?;
+    let covered = known::Coverage::new(
+        plan.specs.iter().map(|spec| spec.id.clone()),
+        corpus.cases.iter().map(|case| case.facet),
+    );
+
+    if args.flag("accept") {
+        let next = known.accepting(&outcome.findings, &covered);
+        std::fs::write(&path, next.to_text())
+            .map_err(|error| format!("could not write {}: {error}", path.display()))?;
+        println!("wrote {} lines to {}", next.entries.len(), path.display());
+        return Ok(ExitCode::SUCCESS);
+    }
+
+    let check = known.check(&outcome.findings, &covered);
+    if check.agrees() {
+        if !known.entries.is_empty() {
+            println!(
+                "every failure is one {} already names, and every line in it still fails",
+                path.display()
+            );
+        }
+        return Ok(ExitCode::SUCCESS);
+    }
+
+    if !check.unexpected.is_empty() {
+        println!(
+            "\n{} result{} went wrong that {} does not name:",
+            check.unexpected.len(),
+            if check.unexpected.len() == 1 { "" } else { "s" },
+            path.display()
+        );
+        for finding in check.unexpected.iter().take(TOLD) {
+            println!("  {} {} {}", finding.toolchain, finding.case, finding.verdict);
+            println!("    {}", finding.summary);
+        }
+        if check.unexpected.len() > TOLD {
+            println!("  and {} more, all of them in the report", check.unexpected.len() - TOLD);
+        }
+    }
+    if !check.fixed.is_empty() {
+        println!(
+            "\n{} line{} in {} did not fail this time, so the compiler has caught up:",
+            check.fixed.len(),
+            if check.fixed.len() == 1 { "" } else { "s" },
+            path.display()
+        );
+        for entry in check.fixed.iter().take(TOLD) {
+            println!("  {}", entry.describe());
+        }
+        if check.fixed.len() > TOLD {
+            println!("  and {} more", check.fixed.len() - TOLD);
+        }
+    }
+    println!("\nrun the same command with --accept to write the file this run would have made");
+    Ok(ExitCode::FAILURE)
+}
+
+/// How many lines of either kind are printed before the rest are counted instead.
+///
+/// Enough to see the shape of what happened without a wall of output in a CI log that nobody
+/// scrolls. The report has all of them.
+const TOLD: usize = 20;
 
 /// Says what is in the corpus, without building anything.
 fn list(args: &Args) -> Result<ExitCode, String> {
@@ -310,12 +396,19 @@ fn levels(args: &Args) -> Result<Vec<Level>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{levels, options, specs};
+    use super::{RUN_OPTIONS, USAGE, levels, options, specs};
     use crate::args::Args;
     use corpus_model::{Facet, Level};
 
     fn parse(line: &str) -> Args {
         Args::parse(line.split_whitespace().map(str::to_owned)).unwrap()
+    }
+
+    #[test]
+    fn every_option_the_run_command_takes_is_in_the_usage_text() {
+        for option in RUN_OPTIONS {
+            assert!(USAGE.contains(&format!("--{option} ")), "--{option} is not documented");
+        }
     }
 
     #[test]

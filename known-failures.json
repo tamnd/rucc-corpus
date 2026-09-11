@@ -1,0 +1,229 @@
+{
+  "note": "Every family a compiler under test is known not to handle, with the issue that will close it. A run fails on any failure this file does not name, and on any line in this file whose case has started working. Regenerate with `rucc-corpus run --accept`, and read the whole story in the README under \"What the compiler is known not to do\".",
+  "known": [
+    {
+      "toolchain": "rucc",
+      "family": "atomics.fence.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#1008",
+      "why": "rucc has no lowering for __atomic_signal_fence, the one atomic builtin that was left behind when the rest got theirs"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.address-in-variable.16.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.address-in-variable.2.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.address-in-variable.32.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.address-in-variable.4.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.address-in-variable.8.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.direct-threading.16.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.direct-threading.2.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.direct-threading.32.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.direct-threading.4.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.direct-threading.8.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-block.16.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-block.2.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-block.32.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-block.4.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-block.8.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-in-loop.16.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#1009",
+      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-in-loop.2.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#1009",
+      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-in-loop.32.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#1009",
+      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-in-loop.4.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#1009",
+      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.dispatch-in-loop.8.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#1009",
+      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.static-table.16.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#446",
+      "why": "rucc refuses a static array of label addresses, because the address of a label is not a constant as far as the initializer is concerned"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.static-table.2.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#446",
+      "why": "rucc refuses a static array of label addresses, because the address of a label is not a constant as far as the initializer is concerned"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.static-table.32.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#446",
+      "why": "rucc refuses a static array of label addresses, because the address of a label is not a constant as far as the initializer is concerned"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.static-table.4.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#446",
+      "why": "rucc refuses a static array of label addresses, because the address of a label is not a constant as far as the initializer is concerned"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "computed-goto.static-table.8.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#446",
+      "why": "rucc refuses a static array of label addresses, because the address of a label is not a constant as far as the initializer is concerned"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "control-flow.computed-goto.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#353",
+      "why": "rucc has no rule that lowers a block_addr, so the back end stops on the address of a label and on the indirect jump through it"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "setjmp-longjmp.a-retry-loop.c17",
+      "verdict": "crashed",
+      "issue": "tamnd/rucc#652",
+      "why": "rucc compiles the library setjmp and longjmp and then gets the program wrong, because nothing tells the optimizer that the call can come back a second time"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "setjmp-longjmp.volatile-survives.c17",
+      "verdict": "wrong",
+      "issue": "tamnd/rucc#652",
+      "why": "rucc compiles the library setjmp and longjmp and then gets the program wrong, because nothing tells the optimizer that the call can come back a second time"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "vla-and-alloca.alloca-in-a-loop.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#1007",
+      "why": "rucc has no lowering for __builtin_alloca, so a frame can only grow at a declaration"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "vla-and-alloca.alloca.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#1007",
+      "why": "rucc has no lowering for __builtin_alloca, so a frame can only grow at a declaration"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "vla-and-alloca.both-in-one-frame.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#1007",
+      "why": "rucc has no lowering for __builtin_alloca, so a frame can only grow at a declaration"
+    }
+  ]
+}

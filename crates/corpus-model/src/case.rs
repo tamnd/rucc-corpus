@@ -270,6 +270,17 @@ impl Case {
         case
     }
 
+    /// The name of the family this case belongs to, which is its id without the digest.
+    ///
+    /// The id ends in eight characters of a hash of the program text, so it moves whenever the
+    /// generator changes what the program says, even when the case is about exactly the same
+    /// thing it was about before. Anything that has to name a case across such a change names
+    /// the family instead. See [`family_of`].
+    #[must_use]
+    pub fn family(&self) -> String {
+        family_of(&self.id).to_owned()
+    }
+
     /// Everything about the case that decides what a compiler is asked to do.
     ///
     /// The sources, the names they are compiled under, and the flags. Not the facet and not the
@@ -385,6 +396,19 @@ impl Case {
 #[must_use]
 pub fn program_path(facet: Facet, id: &str) -> String {
     format!("{}/{}/{id}.c", facet.phase().name(), facet.name())
+}
+
+/// A case id with its trailing digest taken off.
+///
+/// The stable half of an id, which is the facet, the axis point and the dialect. An id with no
+/// dot in it is returned whole, since there is nothing to take off and a caller that hands one
+/// over wants a name back rather than an empty string.
+#[must_use]
+pub fn family_of(id: &str) -> &str {
+    match id.rfind('.') {
+        Some(at) => &id[..at],
+        None => id,
+    }
 }
 
 /// The whole corpus, as one list plus the digest that identifies it.
