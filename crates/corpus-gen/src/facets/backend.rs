@@ -31,6 +31,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     calling_convention(sink);
     machine_peephole(sink);
     address_fold(sink);
+    frame_address(sink);
 }
 
 /// Expressions that a target usually has one instruction for.
@@ -1500,6 +1501,53 @@ fn address_fold(sink: &mut Sink<'_>) {
     }
 }
 
+/// One local, used at a counted number of offsets, one program per count.
+///
+/// The question here is a number rather than a yes or a no. An address into the frame is a
+/// distance from the stack pointer, and on x86-64 a memory operand based on the stack pointer
+/// needs an index byte whether anything is indexed or not, so an instruction that takes one grows
+/// by more than an instruction that takes an address in an ordinary register. Working the address
+/// out once into a register costs an instruction and saves every user those bytes, so there is a
+/// count past which handing it to all of them is the worse of the two, and the count belongs to
+/// the target rather than to the compiler. tamnd/rucc#784 picked three for x86-64 by building one
+/// compiler per candidate value and reading `.text` over the whole corpus, which says what the
+/// number is without ever showing the shape it is about. These programs are that shape and
+/// nothing else.
+///
+/// Every offset is written and then read, so a program on this axis hands its one address rather
+/// more users than the axis point says. That is the honest way round: the axis is a count of
+/// offsets, which is a fact about the C, and how many instructions end up wanting the address is
+/// a fact about the compiler, which is what the run is measuring. Nothing here has an index in
+/// it, because an address that is folded into a reader takes the base slot and an index would
+/// mean the two do not compose.
+fn frame_address(sink: &mut Sink<'_>) {
+    const COUNTS: &[(i128, &str)] =
+        &[(1, "one"), (2, "two"), (3, "three"), (4, "four"), (5, "five"), (6, "six")];
+    const SEED: i128 = 5;
+    for &(offsets, spelled) in COUNTS {
+        if !sink.wants(Facet::FrameAddress) {
+            return;
+        }
+        let mut program = Program::new(format!("one frame address, used at {spelled} offsets"));
+        program.input(Ty::I64, "seed", SEED);
+        program.blank();
+        // The widest integer, so the offsets are eight bytes apart and no two of them share a
+        // displacement, and exactly as many elements as the program uses, so the frame is as
+        // small as the count allows and the displacements stay in one byte.
+        program.line(format!("long long room[{offsets}];"));
+        for at in 0..offsets {
+            let more = if at == 0 { String::new() } else { format!(" + {}", lit(Ty::I64, at)) };
+            program.line(format!("room[{at}] = seed{more};"));
+        }
+        let reads: Vec<String> = (0..offsets).map(|at| format!("room[{at}]")).collect();
+        program.line(format!("long long total = {};", reads.join(" + ")));
+        program.blank();
+        // Every offset is in the sum, so a compiler that loses one prints a different number.
+        program.check(Ty::I64, "total", offsets * SEED + offsets * (offsets - 1) / 2);
+        sink.push(Facet::FrameAddress, Axes::of([("offsets", spelled)]), Dialect::C17, program);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -1908,6 +1956,32 @@ mod tests {
                 let at = case.source.find("shared[4];").unwrap();
                 assert!(at < case.source.find("int main").unwrap(), "{}", case.id);
             }
+        }
+    }
+
+    #[test]
+    fn the_frame_address_family_counts_from_one_offset_to_six() {
+        let cases = cases_for(Facet::FrameAddress);
+        let counted: Vec<Option<&str>> =
+            cases.iter().map(|case| case.axes.get("offsets")).collect();
+        let wanted = ["one", "two", "three", "four", "five", "six"];
+        assert_eq!(counted, wanted.map(Some), "one program per count and no others");
+    }
+
+    #[test]
+    fn every_frame_address_case_uses_one_more_offset_than_the_one_before() {
+        // The sum of the first n of 5, 6, 7 and so on, which is what the offsets hold once they
+        // have been written. A case printing anything else has lost one of them.
+        let wanted = ["5\n", "11\n", "18\n", "26\n", "35\n", "45\n"];
+        for (at, (case, answer)) in cases_for(Facet::FrameAddress).iter().zip(wanted).enumerate() {
+            assert_eq!(output(case), answer, "{}", case.id);
+            // The last offset the program uses, and the first one it does not. An array sized to
+            // the count is what keeps the frame small enough for a one byte displacement.
+            assert!(case.source.contains(&format!("long long room[{}];", at + 1)), "{}", case.id);
+            assert!(case.source.contains(&format!("room[{at}] = seed")), "{}", case.id);
+            assert!(!case.source.contains(&format!("room[{}] = seed", at + 1)), "{}", case.id);
+            // An index would take the slot a folded address needs, so there is never one.
+            assert!(!case.source.contains("room[i]"), "{}", case.id);
         }
     }
 }

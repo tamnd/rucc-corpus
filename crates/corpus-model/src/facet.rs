@@ -163,6 +163,15 @@ pub enum Facet {
     /// The address shapes that decide whether an address is worked out once into a register
     /// or carried by every instruction that reads it.
     AddressFold,
+    /// One local, used at a counted number of offsets.
+    ///
+    /// A back end facet of its own rather than a shape of `address-fold`, because the question
+    /// is a number rather than a yes or a no. An address into the frame is a distance from the
+    /// stack pointer, so a reader that takes one costs more than a reader that takes an
+    /// address in an ordinary register, and there is a count past which handing it to all of
+    /// them is worse than working it out once. This is one program per count, so the count can
+    /// be read off a family rather than inferred from a total.
+    FrameAddress,
     /// The bit counting builtins, which a back end has to have an instruction for.
     BitBuiltins,
     /// Conversions between the floating types and the integer ones, in both directions.
@@ -269,6 +278,7 @@ impl Facet {
         Self::CallingConvention,
         Self::MachinePeephole,
         Self::AddressFold,
+        Self::FrameAddress,
         Self::BitBuiltins,
         Self::FloatConversion,
         Self::LongDouble,
@@ -339,6 +349,7 @@ impl Facet {
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
             Self::AddressFold => "address-fold",
+            Self::FrameAddress => "frame-address",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
             Self::LongDouble => "long-double",
@@ -414,6 +425,7 @@ impl Facet {
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
+            Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
             Self::LongDouble => {
@@ -491,6 +503,7 @@ impl Facet {
             | Self::CallingConvention
             | Self::MachinePeephole
             | Self::AddressFold
+            | Self::FrameAddress
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,
