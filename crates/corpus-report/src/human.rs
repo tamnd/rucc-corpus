@@ -254,6 +254,9 @@ fn code_quality(out: &mut String, summary: &Summary) {
     out.push_str(
         "The run time column is the same comparison over the fastest of the repetitions of each program, and it says `inside the noise` where the difference between the two compilers is smaller than the difference this machine produced running one of them several times. Size is exact and time is not, so on most of these facets the size column is the honest signal and the time column is there to be checked rather than quoted. Every repetition is in `runs.jsonl` under `execute.samples`, so any number here can be traced back to what was measured.\n\n",
     );
+    out.push_str(
+        "The instructions column is how many instructions this compiler's programs ran across the facet, less how many the reference's ran. A count rather than a clock, so it comes back the same to within one part in a hundred thousand on a machine where the wall clock moves by a factor of twelve. It is a difference rather than a ratio on purpose. A program in this corpus retires about a hundred and forty thousand instructions and about a hundred and eight thousand of those are the process starting up before `main`, which is the same code on both sides, so a ratio has all of that in its denominator and comes out at one however the compilers differed. A difference has none of it, because a constant on both sides subtracts away exactly. The ratio is still in `report.json` as `instruction_ratio` for anyone who wants to check that. The column says `not measured` where the machine would not count, which is any machine without `perf` and any machine that will not hand a counter to an unprivileged process.\n\n",
+    );
 
     for id in under_test {
         out.push_str(&format!("### `{id}`\n\n"));
@@ -358,15 +361,16 @@ fn size_facet_table(out: &mut String, ranked: &[(corpus_model::Facet, f64, usize
 
 /// A table of facets and their ratios.
 fn ratio_table(out: &mut String, toolchain: &str, ranked: &[(&FacetSummary, f64)]) {
-    out.push_str("| facet | phase | cases | code size | run time | compile time |\n|---|---|---|---|---|---|\n");
+    out.push_str("| facet | phase | cases | code size | instructions | run time | compile time |\n|---|---|---|---|---|---|---|\n");
     for (facet, size) in ranked {
         let score = facet.score(toolchain);
         out.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} | {} | {} |\n",
             facet.facet.name(),
             facet.phase.name(),
             facet.cases,
             as_change(*size),
+            score.map_or_else(|| "not measured".to_owned(), as_instructions),
             score.map_or_else(|| "not measured".to_owned(), as_speed),
             score
                 .and_then(|s| s.compile_ratio)
@@ -489,6 +493,23 @@ fn as_change(ratio: f64) -> String {
     }
 }
 
+/// How many more instructions this compiler ran than the reference, or why there is no answer.
+///
+/// A signed count rather than a ratio, for the reason in `FacetScore::instruction_delta`: the
+/// process startup is the same on both sides and it is four fifths of every count, so it has to
+/// come out of the comparison rather than sit in its denominator.
+fn as_instructions(score: &FacetScore) -> String {
+    if score.counted == 0 {
+        return "not measured".to_owned();
+    }
+    let delta = score.instruction_delta;
+    if delta == 0 {
+        return "level".to_owned();
+    }
+    let sign = if delta < 0 { "-" } else { "+" };
+    format!("{sign}{}", crate::size::thousands(delta.unsigned_abs()))
+}
+
 /// A run time written the way people talk about it, or a refusal to write one.
 ///
 /// The refusal is the useful half. A facet whose repetitions of one program spread further than
@@ -540,7 +561,7 @@ fn short(digest: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{as_change, as_speed, clip, report_md};
+    use super::{as_change, as_instructions, as_speed, clip, report_md};
     use crate::summary::FacetScore;
     use crate::summary::summarise;
     use corpus_model::{
@@ -791,6 +812,22 @@ mod tests {
         // And a report written before the samples were kept reads as it always did.
         assert_eq!(as_speed(&scored(1.04, None)), "4 percent more");
         assert_eq!(as_speed(&FacetScore::default()), "not measured");
+    }
+
+    #[test]
+    fn an_instruction_column_prints_the_difference_and_says_when_nobody_counted() {
+        let scored = |delta: i64, counted: usize| FacetScore {
+            instruction_delta: delta,
+            counted,
+            ..FacetScore::default()
+        };
+        assert_eq!(as_instructions(&scored(1_103, 1)), "+1,103");
+        assert_eq!(as_instructions(&scored(-24_180, 64)), "-24,180");
+        assert_eq!(as_instructions(&scored(0, 64)), "level");
+        // Nought instructions apart and nobody having counted are different facts, and a
+        // machine without perf must not be reported as a tie.
+        assert_eq!(as_instructions(&scored(0, 0)), "not measured");
+        assert_eq!(as_instructions(&FacetScore::default()), "not measured");
     }
 
     #[test]

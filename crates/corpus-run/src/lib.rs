@@ -15,6 +15,7 @@
 pub mod cache;
 pub mod compare;
 pub mod compile;
+pub mod counter;
 pub mod exec;
 pub mod insight;
 pub mod memory;
@@ -290,6 +291,7 @@ impl Keys {
                 flags: &spec.extra,
                 repeats: plan.repeats,
                 opinions: spec.understands_opt_info(),
+                counters: counter::available(),
                 harness: env!("CARGO_PKG_VERSION"),
                 host: &self.host,
             }

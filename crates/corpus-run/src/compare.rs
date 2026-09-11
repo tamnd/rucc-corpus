@@ -203,6 +203,19 @@ pub fn speed_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
     ratio(mine.execute.micros, reference.execute.micros)
 }
 
+/// How many more instructions the program ran than the same program from the reference.
+///
+/// This is the run time question asked in a way the machine can answer twice and get the same
+/// number. `None` on a machine that would not count, on a program that did not finish, and on
+/// a report written before the corpus counted anything.
+#[must_use]
+pub fn instruction_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
+    if !mine.execute.ok || !reference.execute.ok {
+        return None;
+    }
+    ratio(mine.execute.instructions?, reference.execute.instructions?)
+}
+
 /// How much longer the compiler took than the reference took.
 #[must_use]
 pub fn compile_ratio(mine: &RunRecord, reference: &RunRecord) -> Option<f64> {
@@ -260,7 +273,9 @@ pub const fn comparable(mine: Level, reference: Level) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{comparable, finding, judge, mentions_it, size_ratio, speed_ratio};
+    use super::{
+        comparable, finding, instruction_ratio, judge, mentions_it, size_ratio, speed_ratio,
+    };
     use corpus_model::{
         Axes, Case, Compile, Dialect, Execute, Expect, Facet, Level, RunRecord, Verdict,
     };
@@ -464,6 +479,26 @@ mod tests {
         assert_eq!(judge(&case, &missed), Verdict::Accepted);
         let found = finding(&case, &missed, Verdict::Accepted).unwrap();
         assert!(found.summary.contains("not valid C"));
+    }
+
+    #[test]
+    fn an_instruction_ratio_needs_a_count_from_both_sides_and_not_just_from_one() {
+        let case = running_case();
+        let mut mine = record_for(&case, built(120), ran("42\n", 200));
+        let mut reference = record_for(&case, built(100), ran("42\n", 100));
+        // Neither side counted, which is every machine without perf.
+        assert_eq!(instruction_ratio(&mine, &reference), None);
+
+        mine.execute.instructions = Some(90_000);
+        // One side counted, which should still be nothing rather than a ratio against nought.
+        assert_eq!(instruction_ratio(&mine, &reference), None);
+
+        reference.execute.instructions = Some(100_000);
+        assert_eq!(instruction_ratio(&mine, &reference), Some(0.9));
+
+        // A program that did not finish did not retire the instructions of one that did.
+        let died = record_for(&case, built(120), Execute::skipped());
+        assert_eq!(instruction_ratio(&died, &reference), None);
     }
 
     #[test]

@@ -101,6 +101,30 @@ pub struct FacetScore {
     /// nothing in it. `FacetScore::speed_is_real` is that comparison, and the report asks it
     /// before printing a run time rather than after. tamnd/rucc-corpus#8.
     pub speed_spread: Option<f64>,
+    /// Median instruction count against the reference, at the headline level.
+    ///
+    /// Reproducible and nearly useless on its own, which is why `instruction_delta` is beside
+    /// it. It comes back the same to within one part in a hundred thousand, and it comes back
+    /// at one however the compilers differed, because its denominator is mostly process
+    /// startup. Read the delta and keep this for anyone who wants to check the arithmetic.
+    /// `None` on a machine that would not count. tamnd/rucc-corpus#8.
+    pub instruction_ratio: Option<f64>,
+    /// How many cases had an instruction count on both sides.
+    ///
+    /// Its own count, like `memory_compared`, because a missing instruction ratio says something
+    /// about the machine the run happened on and nothing about the compiler.
+    pub counted: usize,
+    /// How many more instructions this compiler's programs ran than the reference's, summed.
+    ///
+    /// The one to read, and the reason the ratio beside it is not. A program in this corpus runs
+    /// about a hundred and forty thousand instructions and a hundred and eight thousand of those
+    /// are the process starting up, which is the same code on both sides. The ratio carries all
+    /// of that in its denominator and comes out at one however the compilers differed. The
+    /// difference carries none of it, because a constant on both sides subtracts away exactly.
+    ///
+    /// Summed over the same cases `instruction_ratio` was taken over, and worth nothing when
+    /// `counted` is nought. Negative is this compiler running fewer instructions.
+    pub instruction_delta: i64,
     /// Median compile time against the reference, at the headline level.
     pub compile_ratio: Option<f64>,
     /// Median compiler memory against the reference, at the headline level.
@@ -535,6 +559,8 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
     let mut sizes = Vec::new();
     let mut speeds = Vec::new();
     let mut spreads = Vec::new();
+    let mut counts = Vec::new();
+    let mut instruction_delta: i64 = 0;
     let mut compiles = Vec::new();
     let mut memories = Vec::new();
     let mut disks = Vec::new();
@@ -570,6 +596,16 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
                 spreads.push(spread);
             }
         }
+        if let Some(value) = compare::instruction_ratio(record, against) {
+            counts.push(value);
+            // Both sides have a count here, since that is what the ratio needed, so the
+            // difference is the same pair of numbers with the startup subtracted out.
+            if let (Some(mine), Some(theirs)) =
+                (record.execute.instructions, against.execute.instructions)
+            {
+                instruction_delta += mine as i64 - theirs as i64;
+            }
+        }
         if let Some(value) = compare::compile_ratio(record, against) {
             compiles.push(value);
         }
@@ -589,11 +625,14 @@ fn score_facet(run: &Run, records: &[&RunRecord], toolchain: &str, reference: &s
         tally,
         compared: sizes.len(),
         memory_compared: memories.len(),
+        counted: counts.len(),
+        instruction_delta,
         text_bytes,
         reference_text_bytes,
         size_ratio: median(&mut sizes),
         speed_ratio: median(&mut speeds),
         speed_spread: median(&mut spreads),
+        instruction_ratio: median(&mut counts),
         compile_ratio: median(&mut compiles),
         memory_ratio: median(&mut memories),
         disk_ratio: median(&mut disks),
@@ -866,6 +905,86 @@ mod tests {
         assert!(score.speed_ratio.is_some());
         assert_eq!(score.speed_spread, None);
         assert!(!score.speed_is_real());
+    }
+
+    /// The same record with an instruction count on it, from a machine that would count.
+    fn counted(mut record: RunRecord, counts: &[u64]) -> RunRecord {
+        record.execute.instructions = counts.iter().copied().min();
+        record.execute.instruction_samples = counts.to_vec();
+        record
+    }
+
+    #[test]
+    fn a_difference_the_wall_clock_cannot_see_is_still_there_in_the_instruction_count() {
+        // The two programs are a tenth apart in the counter and the clock cannot tell them
+        // apart at all, which is the ordinary case on programs this size. The point of the
+        // column is that this run has a number in it and the run time column does not.
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference = counted(
+            timed(record_for(&case, "gcc-16", Level::O2, 100, 0), &[1_000, 1_100, 1_020]),
+            &[100_000, 100_001],
+        );
+        let mine = counted(
+            timed(record_for(&case, "rucc", Level::O2, 100, 0), &[1_010, 1_090, 1_030]),
+            &[90_000, 90_002],
+        );
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        assert!((score.instruction_ratio.unwrap() - 0.9).abs() < 1e-9);
+        assert_eq!(score.counted, 1);
+        assert!(!score.speed_is_real());
+        // Ten thousand fewer instructions, which is the number the column prints, because the
+        // startup both sides paid for subtracts away rather than diluting a quotient.
+        assert_eq!(score.instruction_delta, -10_000);
+    }
+
+    #[test]
+    fn a_machine_that_would_not_count_leaves_the_instruction_ratio_missing() {
+        // Which is every machine without perf, and every record written before the corpus
+        // counted anything. Missing rather than one, because one is a claim of parity.
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference = record_for(&case, "gcc-16", Level::O2, 100, 1_000);
+        let mine = record_for(&case, "rucc", Level::O2, 100, 1_030);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        assert_eq!(score.instruction_ratio, None);
+        assert_eq!(score.counted, 0);
+        assert_eq!(score.instruction_delta, 0);
+    }
+
+    #[test]
+    fn a_count_from_only_one_side_is_not_half_a_ratio() {
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference = record_for(&case, "gcc-16", Level::O2, 100, 1_000);
+        let mine = counted(record_for(&case, "rucc", Level::O2, 100, 1_030), &[90_000, 90_002]);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        assert_eq!(score.instruction_ratio, None);
+        assert_eq!(score.counted, 0);
+        assert_eq!(score.instruction_delta, 0);
+    }
+
+    #[test]
+    fn the_difference_survives_a_startup_cost_that_swamps_the_ratio() {
+        // The numbers are the ones measured on the machine this was written on. A bare main is
+        // 107,702 instructions there, and a corpus program is about 139,000, so a difference of
+        // 1,103 instructions is eight tenths of a percent of the count and the ratio rounds to
+        // one. The difference is 1,103, exactly, and that is the point of reporting it.
+        let case = case_for(Facet::LoopUnroll, "one");
+        let reference = counted(record_for(&case, "gcc-16", Level::O2, 100, 1_000), &[138_831]);
+        let mine = counted(record_for(&case, "rucc", Level::O2, 100, 1_000), &[139_934]);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = run_of(vec![reference, mine]);
+        let summary = summarise(&run, &manifest.digest(), manifest.cases.len());
+        let score = summary.facets[0].score("rucc").unwrap();
+        assert_eq!(score.instruction_delta, 1_103);
+        assert!((score.instruction_ratio.unwrap() - 1.0).abs() < 0.01);
     }
 
     #[test]

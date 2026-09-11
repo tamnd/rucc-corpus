@@ -136,6 +136,12 @@ pub struct Ingredients<'a> {
     pub repeats: u32,
     /// Whether the compiler was asked what it optimized.
     pub opinions: bool,
+    /// Whether the machine counted the instructions the program ran.
+    ///
+    /// An ingredient because a record taken on a machine that would not count has no instruction
+    /// column in it, and handing that record back on a machine that would count would leave the
+    /// column empty and make it look like the counter had failed. See tamnd/rucc-corpus#8.
+    pub counters: bool,
     /// The version of the harness that produced the record.
     pub harness: &'a str,
     /// The operating system and architecture the record was measured on.
@@ -171,6 +177,7 @@ impl Ingredients<'_> {
         }
         feed("repeats", &self.repeats.to_string());
         feed("opinions", if self.opinions { "yes" } else { "no" });
+        feed("counters", if self.counters { "yes" } else { "no" });
         feed("harness", self.harness);
         feed("host", self.host);
         sha256::hex(feed_into.as_bytes())
@@ -421,6 +428,7 @@ mod tests {
             flags,
             repeats: 5,
             opinions: true,
+            counters: true,
             harness: "0.1.0",
             host: "linux-x86_64",
         }
@@ -454,6 +462,7 @@ mod tests {
         assert_ne!(base, Ingredients { toolchain: "rucc", ..ingredients(&compiler, &flags) }.key());
         assert_ne!(base, Ingredients { repeats: 3, ..ingredients(&compiler, &flags) }.key());
         assert_ne!(base, Ingredients { opinions: false, ..ingredients(&compiler, &flags) }.key());
+        assert_ne!(base, Ingredients { counters: false, ..ingredients(&compiler, &flags) }.key());
         assert_ne!(base, Ingredients { harness: "0.2.0", ..ingredients(&compiler, &flags) }.key());
         assert_ne!(
             base,

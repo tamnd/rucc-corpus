@@ -176,7 +176,7 @@ fn hub(run: &Run, summary: &Summary) -> String {
     out.push_str("## The rest of the report\n\n");
     out.push_str("| page | what is on it |\n|---|---|\n");
     out.push_str(
-        "| [What it cost](cost.md) | Code size, size on disk, initialized data, compile time, run time and compiler memory, per facet, each against the reference build of the same program |\n",
+        "| [What it cost](cost.md) | Code size, size on disk, initialized data, compile time, instructions, run time and compiler memory, per facet, each against the reference build of the same program |\n",
     );
     let _ = writeln!(
         out,
@@ -341,13 +341,14 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
     let mut out = String::new();
     out.push_str("# What it cost\n\n");
     out.push_str(
-        "Six numbers per facet, each a median over the cases in that facet at the headline level, and each a ratio against the reference compiler building the same program on the same machine in the same run. A ratio below one is the compiler under test doing better.\n\n",
+        "Seven numbers per facet, each a median over the cases in that facet at the headline level, and each a ratio against the reference compiler building the same program on the same machine in the same run. A ratio below one is the compiler under test doing better.\n\n",
     );
     out.push_str("| number | what it is | why it is separate |\n|---|---|---|\n");
     out.push_str("| code | Allocated executable sections in the image | This is the code quality number. It is what the optimizer decided and nothing else. |\n");
     out.push_str("| on disk | The whole executable file | What a build costs somebody. Includes the runtime, the symbol table and whatever the linker padded with, none of which the optimizer chose. |\n");
     out.push_str("| data | Allocated initialized sections in the image | A compiler that unrolls by materializing a table and one that folds the loop away move the code column the same way and this column the opposite way. |\n");
     out.push_str("| compile | Wall clock for the build | Noisy and machine dependent. Worth watching between two commits of the compiler, not worth quoting on its own. |\n");
+    out.push_str("| instructions | How many instructions this compiler's programs ran across the facet, less how many the reference's ran | The same question the run column asks, answered by a counter that repeats to within one part in a hundred thousand instead of by a clock that moves by a factor of twelve. A difference and not a ratio, because four fifths of every count is the process starting up and a constant on both sides subtracts away rather than sitting in a denominator. Missing on any machine that will not count. |\n");
     out.push_str("| run | Wall clock for the program, fastest of the repetitions | The fastest rather than the mean, because every slower measurement has somebody else's work in it and there is no way to subtract that. |\n");
     out.push_str("| memory | Largest high water mark in the compiler's process tree | Sampled from outside the process, so it is a floor rather than an exact peak, and it is missing entirely on any platform that is not Linux. |\n\n");
     out.push_str(
@@ -369,16 +370,16 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
     for id in summary.under_test() {
         let _ = writeln!(out, "## `{id}` against `{}`\n", summary.reference);
         out.push_str(
-            "| facet | cases | lines | code | on disk | data | compile | run | memory |\n",
+            "| facet | cases | lines | code | on disk | data | compile | instructions | run | memory |\n",
         );
-        out.push_str("|---|---|---|---|---|---|---|---|---|\n");
+        out.push_str("|---|---|---|---|---|---|---|---|---|---|\n");
         for facet in &summary.facets {
             let Some(score) = facet.score(id) else {
                 continue;
             };
             let _ = writeln!(
                 out,
-                "| [`{}`]({}) | {} | {} | {} | {} | {} | {} | {} | {} |",
+                "| [`{}`]({}) | {} | {} | {} | {} | {} | {} | {} | {} | {} |",
                 facet.facet.name(),
                 facet_link(facet.facet, "../"),
                 facet.cases,
@@ -387,6 +388,7 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
                 ratio(score.disk_ratio),
                 ratio(score.data_ratio),
                 ratio(score.compile_ratio),
+                instructions(score),
                 speed(score),
                 ratio(score.memory_ratio)
             );
@@ -394,7 +396,7 @@ fn cost_page(run: &Run, summary: &Summary) -> String {
         out.push('\n');
         out.push_str(&measured_note(summary, id));
     }
-    // Three of the six columns on this page are times or memory, so this is the page where a
+    // Three of the seven columns on this page are times or memory, so this is the page where a
     // reused record matters most. A ratio is no safer than a raw number here, since the two
     // compilers are cached separately and one half of it can be a fortnight older than the other.
     out.push_str(&reused_note(run));
@@ -669,6 +671,21 @@ fn ratio(value: Option<f64>) -> String {
     if percent > 0.0 { format!("{percent:.0}% more") } else { format!("{:.0}% less", -percent) }
 }
 
+/// How many more instructions this compiler ran than the reference, over the whole facet.
+///
+/// Summed and signed rather than a median ratio, per `FacetScore::instruction_delta`.
+fn instructions(score: &FacetScore) -> String {
+    if score.counted == 0 {
+        return "not measured".to_owned();
+    }
+    let delta = score.instruction_delta;
+    if delta == 0 {
+        return "level".to_owned();
+    }
+    let sign = if delta < 0 { "-" } else { "+" };
+    format!("{sign}{}", size::thousands(delta.unsigned_abs()))
+}
+
 /// A run time, or the reason there is no run time worth printing.
 ///
 /// Same rule as the human report's, and it has to be the same rule, because two pages of the
@@ -856,11 +873,11 @@ mod tests {
     }
 
     #[test]
-    fn the_cost_page_carries_every_one_of_the_six_numbers() {
+    fn the_cost_page_carries_every_one_of_the_seven_numbers() {
         let (run, summary) = a_run();
         let pages = generate(&run, &summary);
         let cost = pages.iter().find(|page| page.path == "reports/cost.md").unwrap();
-        for column in ["code", "on disk", "data", "compile", "run", "memory"] {
+        for column in ["code", "on disk", "data", "compile", "instructions", "run", "memory"] {
             assert!(cost.text.contains(column), "the cost page has no {column} column");
         }
         // 1400 against 1000 is forty percent more code, and 180 against 100 megabytes is
