@@ -32,6 +32,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     calling_convention(sink);
     machine_peephole(sink);
     bit_liveness(sink);
+    compare_elim(sink);
     address_fold(sink);
     frame_address(sink);
 }
@@ -1710,6 +1711,171 @@ fn bit_liveness(sink: &mut Sink<'_>) {
     }
 }
 
+/// A comparison the machine has already made.
+///
+/// A comparison computes nothing. It sets a few bits nobody named and the instruction behind
+/// it reads them, so a comparison that sets the bits already sitting there is one nothing
+/// could tell had run. Two shapes put them there. The same comparison made twice, which is
+/// what an expression that asks a question and then asks its negation comes out as, and a
+/// comparison against zero of a value arithmetic has just worked out, which is what
+/// `if (a & MASK)` comes out as, because the `and` set those bits on its way past.
+/// tamnd/rucc#1132.
+///
+/// A facet of its own rather than a shape of `machine-peephole`, because half of what decides
+/// it is which conditions read what the arithmetic left, and that is a fact about the machine
+/// rather than about the pair of instructions. On x86 an `and` clears the carry and the
+/// overflow and sets the zero and the sign from what it wrote, which is everything a
+/// comparison against zero would have set and the same values, so every condition may read
+/// it. A `sub` agrees about the zero bit alone, because a subtraction that overflowed says so
+/// where the comparison would have said it did not.
+///
+/// `after-sub-ordered` is the one that has to stay, and it is emitted for the signed types
+/// only. That is not a gap. An unsigned value is never below zero and is always at or above
+/// it, so the only comparison against zero an unsigned type has is an equality, which is
+/// exactly the condition a subtraction does answer. There is no unsigned program to write.
+///
+/// `written-in-between` is the case the issue asks for by name. The `and` leaves the bits of
+/// a value that is not zero, then a plain move puts a zero in the same variable, and a move
+/// touches no condition bits at all, so a compiler that read the `and`'s answer for the
+/// comparison behind the move prints a different number rather than a smaller program.
+fn compare_elim(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "same-comparison",
+        "byte-and-branch",
+        "after-and",
+        "after-or",
+        "after-sub",
+        "after-sub-ordered",
+        "written-in-between",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::CompareElim) {
+                return;
+            }
+            // An unsigned value is never below zero, so the shape that is about an ordered
+            // comparison against zero has nothing to say about an unsigned type.
+            if shape == "after-sub-ordered" && !ty.signed() {
+                continue;
+            }
+            let name = ty.c_name();
+            let phrase = match shape {
+                "same-comparison" => "compared with the same pair twice",
+                "byte-and-branch" => "compared once for a value and once for a branch",
+                "after-and" => "masked and then asked whether it is zero",
+                "after-or" => "joined and then asked whether it is zero",
+                "after-sub" => "subtracted and then asked whether the answer is zero",
+                "after-sub-ordered" => "subtracted and then asked which side of zero it is on",
+                _ => "masked, written over, and then asked whether it is zero",
+            };
+            let mut program = Program::new(format!("a {name} {phrase}"));
+            let value: i128 = match shape {
+                // The shape the issue is named after. Two comparisons of the same pair with
+                // nothing between them but the byte each one kept, which is what a program
+                // that asks a question and then asks its negation comes out as.
+                "same-comparison" => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "b", 15);
+                    program.blank();
+                    program.line("int same = (a == b);");
+                    program.line("int differ = (a != b);");
+                    program.line("int total = same * 4 + differ;");
+                    1
+                }
+                // The same pair again, with one of the two comparisons feeding a branch
+                // instead of a value. After the block layout has folded the branch into it
+                // that one keeps no byte at all, so the two comparisons are the two shapes a
+                // comparison comes in and the pass has to see them as one thing.
+                "byte-and-branch" => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "b", 15);
+                    program.blank();
+                    program.line("int total = (a == b);");
+                    program.line("if (a != b) {");
+                    program.line_at(1, "total = total + 7;");
+                    program.line("}");
+                    7
+                }
+                // The common one by a long way, and the reason this is worth a pass. The `and`
+                // already said whether its answer was zero, so the comparison behind it is
+                // asking a question that has been answered.
+                "after-and" => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "mask", 24);
+                    program.blank();
+                    program.line(format!("{name} masked = ({name})(a & mask);"));
+                    program.line("int total = 0;");
+                    program.line("if (masked) {");
+                    program.line_at(1, "total = total + 3;");
+                    program.line("}");
+                    program.line("total = total + (int)masked * 2;");
+                    19
+                }
+                // The same claim about the other two bitwise operations, since what makes them
+                // safe is a fact about all three and a table that named only one of them would
+                // be a table somebody had stopped filling in.
+                "after-or" => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "b", 3);
+                    program.blank();
+                    program.line(format!("{name} joined = ({name})(a | b);"));
+                    program.line("int total = (joined != 0) ? 5 : 9;");
+                    program.line("total = total + (int)(joined & 7);");
+                    8
+                }
+                // A subtraction and the one question a subtraction answers. Whether the answer
+                // was zero is what the zero bit says either way, so this goes.
+                "after-sub" => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "b", 40);
+                    program.blank();
+                    program.line(format!("{name} d = ({name})(a - b);"));
+                    program.line("int total = (d == 0) ? 6 : 9;");
+                    program.line("total = total + (int)d;");
+                    6
+                }
+                // A subtraction and a question it does not answer. A comparison against zero
+                // would have said nothing overflowed and the subtraction says whether it did,
+                // so a signed `<` after one reads a sign and an overflow that no longer belong
+                // together, and the comparison has to stay.
+                "after-sub-ordered" => {
+                    program.input(ty, "a", 15);
+                    program.input(ty, "b", 40);
+                    program.blank();
+                    program.line(format!("{name} d = ({name})(a - b);"));
+                    program.line("int total = (d < 0) ? 4 : 8;");
+                    program.line("total = total + (int)(d + 30);");
+                    9
+                }
+                // The one the issue asks for by name. The bits are still the bits the `and`
+                // left and they are about what the variable held then, not what it holds now,
+                // and the move in between is an instruction that touches no condition bits, so
+                // nothing else stands between a compiler and the wrong answer.
+                _ => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "mask", 24);
+                    program.input(ty, "spare", 0);
+                    program.blank();
+                    program.line(format!("{name} value = ({name})(a & mask);"));
+                    program.line("int first = (value != 0);");
+                    program.line("value = spare;");
+                    program.line("int second = (value == 0);");
+                    program.line("int total = first * 10 + second;");
+                    11
+                }
+            };
+            program.blank();
+            program.check(Ty::I32, "total", value);
+            sink.push(
+                Facet::CompareElim,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// One address and the instructions that read it.
 ///
 /// A machine that can put a base, an index and a displacement in a memory operand can either
@@ -2470,5 +2636,78 @@ mod tests {
             seen += 1;
         }
         assert_eq!(seen, 4, "one shape that must not change per narrow type");
+    }
+
+    #[test]
+    fn every_compare_elim_case_has_two_comparisons_or_arithmetic_before_one() {
+        let cases = cases_for(Facet::CompareElim);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            // The facet is about a comparison whose answer is already there, so a case with
+            // nothing in front of the comparison would be a case about nothing. Either the
+            // program compares the same pair twice or it works a value out and then asks
+            // about that value.
+            let twice =
+                case.source.matches("a == b").count() + case.source.matches("a != b").count();
+            let after = case.source.contains(" & mask")
+                || case.source.contains(" | b")
+                || case.source.contains("(a - b)");
+            assert!(twice >= 2 || after, "{} has nothing in front of its comparison", case.id);
+        }
+    }
+
+    #[test]
+    fn every_compare_elim_case_prints_what_the_comparisons_really_answer() {
+        for case in &cases_for(Facet::CompareElim) {
+            let wanted = match case.axes.get("shape") {
+                Some("same-comparison") => "1\n",
+                Some("byte-and-branch") => "7\n",
+                Some("after-and") => "19\n",
+                Some("after-or") => "8\n",
+                Some("after-sub") => "6\n",
+                Some("after-sub-ordered") => "9\n",
+                _ => "11\n",
+            };
+            assert_eq!(output(case), wanted, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_compare_elim_shape_that_must_stay_is_there_for_every_signed_type() {
+        let cases = cases_for(Facet::CompareElim);
+        let ordered: Vec<&str> = cases
+            .iter()
+            .filter(|case| case.axes.get("shape") == Some("after-sub-ordered"))
+            .filter_map(|case| case.axes.get("type"))
+            .collect();
+        // An unsigned value is never below zero, so the only comparison against zero an
+        // unsigned type has is an equality, which is the one a subtraction does answer. The
+        // shape has no unsigned program to write rather than a missing one.
+        assert_eq!(ordered, ["i32", "i64"]);
+        for case in &cases {
+            if case.axes.get("shape") == Some("after-sub-ordered") {
+                assert!(case.source.contains("(d < 0) ? 4 : 8"), "{}", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn the_compare_elim_case_the_issue_asks_for_writes_the_compared_value_in_between() {
+        let mut seen = 0;
+        for case in cases_for(Facet::CompareElim) {
+            if case.axes.get("shape") != Some("written-in-between") {
+                continue;
+            }
+            // A move between the arithmetic and the comparison, writing the same variable.
+            // A move leaves the condition bits alone, so what stops a compiler getting this
+            // wrong is noticing that the value they are about has been written over.
+            let lines: Vec<&str> = case.source.lines().map(str::trim).collect();
+            let masked = lines.iter().position(|line| line.starts_with("int first"));
+            let moved = lines.iter().position(|line| *line == "value = spare;");
+            let asked = lines.iter().position(|line| line.starts_with("int second"));
+            assert!(masked < moved && moved < asked, "{}", case.id);
+            seen += 1;
+        }
+        assert_eq!(seen, 4, "one per type");
     }
 }
