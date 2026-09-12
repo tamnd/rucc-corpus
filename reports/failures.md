@@ -1,6 +1,6 @@
 # What went wrong
 
-240 findings, worst first. A finding is one case, one compiler, one level.
+160 findings, worst first. A finding is one case, one compiler, one level.
 
 ### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O0` on `rucc`
 
@@ -442,7 +442,7 @@ expected: the program compiles
 actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
 ```
 
-And 200 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
+And 120 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
 
 ## What the compiler says it has not built yet
 
@@ -451,7 +451,6 @@ Its own section rather than a line in the failures, because the response is diff
 | what the compiler said | cases | compiler |
 |---|---|---|
 | error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] | 80 | `rucc` |
-| error: cannot generate code for 'main': no rule lowers a `stacksave` producing a `ptr` [E0653] | 30 | `rucc` |
 | error: `__builtin_alloca` is not implemented yet [E0686] | 15 | `rucc` |
 | error: `__atomic_signal_fence` is not implemented yet [E0686] | 5 | `rucc` |
 
