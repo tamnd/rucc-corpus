@@ -169,6 +169,16 @@ pub enum Facet {
     /// result. The pairs that sit together in one block are a peephole rule. These are the
     /// rest.
     BitLiveness,
+    /// A comparison the machine has already made.
+    ///
+    /// A comparison sets a few bits nobody named and the instruction behind it reads them, so
+    /// a comparison that sets the bits already sitting there is one nothing could tell had
+    /// run. Two shapes put them there: the same comparison made twice, and a comparison
+    /// against zero of a value arithmetic has just worked out. It is a facet of its own rather
+    /// than a shape of `machine-peephole` because half of what decides it is which conditions
+    /// read what the arithmetic left, which is a fact about the machine rather than about the
+    /// pair of instructions.
+    CompareElim,
     /// The address shapes that decide whether an address is worked out once into a register
     /// or carried by every instruction that reads it.
     AddressFold,
@@ -287,6 +297,7 @@ impl Facet {
         Self::CallingConvention,
         Self::MachinePeephole,
         Self::BitLiveness,
+        Self::CompareElim,
         Self::AddressFold,
         Self::FrameAddress,
         Self::BitBuiltins,
@@ -359,6 +370,7 @@ impl Facet {
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
             Self::BitLiveness => "bit-liveness",
+            Self::CompareElim => "compare-elim",
             Self::AddressFold => "address-fold",
             Self::FrameAddress => "frame-address",
             Self::BitBuiltins => "bit-builtins",
@@ -438,6 +450,7 @@ impl Facet {
             Self::BitLiveness => {
                 "a widening whose upper bits nothing reads, across a block boundary"
             }
+            Self::CompareElim => "a comparison the instruction in front of it has already made",
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -517,6 +530,7 @@ impl Facet {
             | Self::CallingConvention
             | Self::MachinePeephole
             | Self::BitLiveness
+            | Self::CompareElim
             | Self::AddressFold
             | Self::FrameAddress
             | Self::BitBuiltins
