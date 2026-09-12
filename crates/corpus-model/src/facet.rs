@@ -160,6 +160,15 @@ pub enum Facet {
     CallingConvention,
     /// The peephole rules that only make sense on machine instructions.
     MachinePeephole,
+    /// A widening whose upper bits nothing ever reads.
+    ///
+    /// A facet of its own rather than a shape of `machine-peephole`, because what decides it
+    /// is not the instruction on the next line. C promotes every narrow operand to `int`
+    /// before doing anything with it, so the conversions are everywhere, and whether the bits
+    /// a widening worked out are bits anybody looks at is a question about every reader of the
+    /// result. The pairs that sit together in one block are a peephole rule. These are the
+    /// rest.
+    BitLiveness,
     /// The address shapes that decide whether an address is worked out once into a register
     /// or carried by every instruction that reads it.
     AddressFold,
@@ -277,6 +286,7 @@ impl Facet {
         Self::SwitchDispatch,
         Self::CallingConvention,
         Self::MachinePeephole,
+        Self::BitLiveness,
         Self::AddressFold,
         Self::FrameAddress,
         Self::BitBuiltins,
@@ -348,6 +358,7 @@ impl Facet {
             Self::SwitchDispatch => "switch-dispatch",
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
+            Self::BitLiveness => "bit-liveness",
             Self::AddressFold => "address-fold",
             Self::FrameAddress => "frame-address",
             Self::BitBuiltins => "bit-builtins",
@@ -424,6 +435,9 @@ impl Facet {
             Self::SwitchDispatch => "a switch dispatched often enough to time how it was lowered",
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
+            Self::BitLiveness => {
+                "a widening whose upper bits nothing reads, across a block boundary"
+            }
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -502,6 +516,7 @@ impl Facet {
             | Self::SwitchDispatch
             | Self::CallingConvention
             | Self::MachinePeephole
+            | Self::BitLiveness
             | Self::AddressFold
             | Self::FrameAddress
             | Self::BitBuiltins

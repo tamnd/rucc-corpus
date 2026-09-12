@@ -31,6 +31,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     switch_dispatch(sink);
     calling_convention(sink);
     machine_peephole(sink);
+    bit_liveness(sink);
     address_fold(sink);
     frame_address(sink);
 }
@@ -1527,6 +1528,188 @@ fn machine_peephole(sink: &mut Sink<'_>) {
     }
 }
 
+/// A widening whose upper bits nothing ever reads.
+///
+/// C promotes every narrow operand to `int` before doing anything with it, so a program
+/// written in `char` is a program full of moves between widths. Most of those sit next to
+/// each other and a peephole rule takes the pair. What is left is the ones with a block
+/// boundary in the middle, where whether the bits the widening worked out matter is a
+/// question about every reader of the result rather than about the instruction on the next
+/// line. Answering it takes a count of how much of a register anything reads, which is bit
+/// group liveness. tamnd/rucc#1131.
+///
+/// Five of the seven shapes put the widening and its reader in different blocks, which is
+/// where a peephole cannot see the pair. `in-another-block` has one narrow reader on the far
+/// side of an `if`, `in-a-loop` puts it behind a back edge, `both-arms` widens in two arms and
+/// reads the low bits at the join, so the answer has to travel along an edge rather than down
+/// a block, `chain-of-widths` goes up twice and comes back down in one step, and
+/// `stored-narrow` has a store for its only reader, which is the reader a pass has to be most
+/// careful about because a store is where a value stops being the compiler's business.
+///
+/// `narrowed-from-a-double` is the other way a conversion gets out of reach, and it does not
+/// need a branch at all. A conversion out of a double lands in a register at the machine's
+/// width, so the narrowing to the type the program asked for is written by the selector and
+/// exists in the machine IR and nowhere above it.
+///
+/// `upper-bits-read` is the one that catches a count that is wrong rather than one that is
+/// missing. Something on the far side of the branch reads the whole widened value, and the
+/// operand has the top bit of its own type set, so a compiler that decided nothing read the
+/// upper bits prints a different number rather than a smaller program.
+fn bit_liveness(sink: &mut Sink<'_>) {
+    const NARROW: &[Ty] = &[Ty::I8, Ty::U8, Ty::I16, Ty::U16];
+    const SHAPES: &[&str] = &[
+        "in-another-block",
+        "in-a-loop",
+        "both-arms",
+        "chain-of-widths",
+        "stored-narrow",
+        "narrowed-from-a-double",
+        "upper-bits-read",
+    ];
+    for &ty in NARROW {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::BitLiveness) {
+                return;
+            }
+            let name = ty.c_name();
+            let phrase = match shape {
+                "in-another-block" => "whose only reader is in another block",
+                "in-a-loop" => "whose only reader is in a loop",
+                "both-arms" => "widened in both arms and read narrow at the join",
+                "chain-of-widths" => "widened twice and read back at its own width",
+                "stored-narrow" => "whose only reader is a store at its own width",
+                "narrowed-from-a-double" => "narrowed out of a double by the selector",
+                _ => "read whole as well as narrow",
+            };
+            let mut program = Program::new(format!("a widened {name} {phrase}"));
+            let value: i128 = match shape {
+                // One narrow reader, on the far side of a branch. The plainest case there is
+                // and the one no rule can reach, since the two instructions are in two blocks.
+                "in-another-block" => {
+                    program.input(ty, "a", 40);
+                    program.input(Ty::I32, "flag", 1);
+                    program.blank();
+                    program.line("int wide = a;");
+                    program.line(format!("{name} low = {};", lit(ty, 0)));
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("low = ({name})wide;"));
+                    program.line("}");
+                    program.line(format!("{name} total = low;"));
+                    40
+                }
+                // The same question with a back edge in it. The widening is outside the loop
+                // and the only thing that reads it is inside, so the count has to come back
+                // round the loop before it settles.
+                "in-a-loop" => {
+                    program.input(ty, "a", 5);
+                    program.input(Ty::I32, "count", 3);
+                    program.blank();
+                    program.line("int wide = a;");
+                    program.line(format!("{name} total = {};", lit(ty, 0)));
+                    program.line("for (int i = 0; i < count; i = i + 1) {");
+                    program.line_at(1, format!("total = ({name})(total + ({name})wide);"));
+                    program.line("}");
+                    15
+                }
+                // Two widenings and one reader. Neither arm has the reader in it, so what
+                // carries the answer is the edge into the block they both go to.
+                "both-arms" => {
+                    program.input(ty, "a", 40);
+                    program.input(ty, "b", 15);
+                    program.input(Ty::I32, "flag", 1);
+                    program.blank();
+                    program.line("int wide;");
+                    program.line("if (flag) {");
+                    program.line_at(1, "wide = a;");
+                    program.line("} else {");
+                    program.line_at(1, "wide = b;");
+                    program.line("}");
+                    program.line(format!("{name} total = ({name})wide;"));
+                    40
+                }
+                // Up to `int`, up to `long long`, and back down to where it started in one
+                // step. Nothing goes unless the count is followed through both widenings.
+                "chain-of-widths" => {
+                    program.input(ty, "a", 40);
+                    program.input(Ty::I32, "flag", 1);
+                    program.blank();
+                    program.line("int wide = a;");
+                    program.line("long long wider = wide;");
+                    program.line(format!("{name} low = {};", lit(ty, 0)));
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("low = ({name})wider;"));
+                    program.line("}");
+                    program.line(format!("{name} total = low;"));
+                    40
+                }
+                // A store for the only reader. How much of a register a store reads is the one
+                // thing a pass here has to get from the target rather than work out, since a
+                // store that writes more than it was asked to writes over somebody else.
+                "stored-narrow" => {
+                    program.input(ty, "a", 40);
+                    program.input(Ty::I32, "flag", 1);
+                    program.blank();
+                    program.line(format!("{name} buffer[4] = {{ 0 }};"));
+                    program.line("int wide = a;");
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("buffer[2] = ({name})wide;"));
+                    program.line("}");
+                    program.line(format!("{name} total = buffer[2];"));
+                    40
+                }
+                // A narrowing the selector wrote rather than one anybody asked for. A
+                // conversion out of a double lands in a register at the machine's width and
+                // the value wanted is narrower, so the narrowing exists in the machine IR and
+                // nowhere above it, which puts it out of reach of every rewrite rule by
+                // construction rather than by luck.
+                "narrowed-from-a-double" => {
+                    program.top("static volatile double source_in = 40.75;");
+                    program.input(Ty::I32, "flag", 1);
+                    program.blank();
+                    program.line("double source = source_in;");
+                    program.line(format!("{name} total = ({name})source;"));
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("total = ({name})(source + 1.0);"));
+                    program.line("}");
+                    41
+                }
+                // The one that catches a count that is wrong rather than one that is missing.
+                // The comparison reads the widened value whole,
+                // and the operand has the top bit of its own type set, so it answers one way
+                // with the widening still there and the other way without it. The test is
+                // against zero on a signed type and against the largest value a signed byte
+                // holds on an unsigned one, because a value read out of an unsigned type is
+                // never below zero and a comparison saying so would be folded away before any
+                // of this.
+                _ => {
+                    let start: i128 = if ty.signed() { -56 } else { 200 };
+                    program.input(ty, "a", start);
+                    program.input(Ty::I32, "flag", 1);
+                    program.blank();
+                    program.line("int wide = a;");
+                    program.line(format!("{name} low = {};", lit(ty, 0)));
+                    program.line("int beyond = 0;");
+                    program.line("if (flag) {");
+                    program.line_at(1, format!("low = ({name})wide;"));
+                    let test = if ty.signed() { "wide < 0" } else { "wide > 127" };
+                    program.line_at(1, format!("beyond = {test};"));
+                    program.line("}");
+                    program.line(format!("{name} total = ({name})(low + ({name})beyond);"));
+                    if ty.signed() { -55 } else { 201 }
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", value);
+            sink.push(
+                Facet::BitLiveness,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// One address and the instructions that read it.
 ///
 /// A machine that can put a base, an index and a displacement in a memory operand can either
@@ -2235,5 +2418,57 @@ mod tests {
             // An index would take the slot a folded address needs, so there is never one.
             assert!(!case.source.contains("room[i]"), "{}", case.id);
         }
+    }
+    #[test]
+    fn every_bit_liveness_case_has_a_block_boundary_between_the_widening_and_its_reader() {
+        let cases = cases_for(Facet::BitLiveness);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            // The facet is for the pairs a peephole cannot see. A case with the widening and
+            // the narrowing next to each other in one block would be testing the rewrite rules
+            // instead, and would pass whether or not anything counted bits.
+            assert!(
+                case.source.contains("if (flag) {") || case.source.contains("for (int i"),
+                "{} has no block boundary in it",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    fn every_bit_liveness_case_prints_what_the_narrow_type_still_holds() {
+        for case in &cases_for(Facet::BitLiveness) {
+            let signed = matches!(case.axes.get("type"), Some("i8" | "i16"));
+            let wanted = match case.axes.get("shape") {
+                Some("in-a-loop") => "15\n",
+                Some("narrowed-from-a-double") => "41\n",
+                Some("upper-bits-read") => {
+                    if signed {
+                        "-55\n"
+                    } else {
+                        "201\n"
+                    }
+                }
+                _ => "40\n",
+            };
+            assert_eq!(output(case), wanted, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_bit_liveness_shape_that_catches_a_wrong_count_reads_the_widened_value_whole() {
+        let mut seen = 0;
+        for case in cases_for(Facet::BitLiveness) {
+            if case.axes.get("shape") != Some("upper-bits-read") {
+                continue;
+            }
+            // A comparison against zero on the widened value, which on a signed type is a
+            // question about a bit the narrow type has not got.
+            let signed = matches!(case.axes.get("type"), Some("i8" | "i16"));
+            let test = if signed { "beyond = wide < 0;" } else { "beyond = wide > 127;" };
+            assert!(case.source.contains(test), "{}", case.id);
+            seen += 1;
+        }
+        assert_eq!(seen, 4, "one shape that must not change per narrow type");
     }
 }

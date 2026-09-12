@@ -1,10 +1,10 @@
 # The corpus
 
-1930 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1958 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `6bea9fb80dcb022853ad5ba9da8ed5939248e2bcb3d317ad178a38cbc924744e`.
+Corpus digest `0ff936fc6f6f10c03ffaa3199f2f26ea116ca14343d296685c5bd7a8f2689f11`.
 
 ## floor (118 programs)
 
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (391 programs)
+## backend (419 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -104,6 +104,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`switch-dispatch`](backend/switch-dispatch/README.md) | 9 | a switch dispatched often enough to time how it was lowered |
 | [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
+| [`bit-liveness`](backend/bit-liveness/README.md) | 28 | a widening whose upper bits nothing reads, across a block boundary |
 | [`address-fold`](backend/address-fold/README.md) | 28 | whether an address is worked out once or carried by each reader |
 | [`frame-address`](backend/frame-address/README.md) | 6 | one local, used at a counted number of offsets |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
