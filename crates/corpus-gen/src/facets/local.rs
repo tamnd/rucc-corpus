@@ -486,6 +486,7 @@ fn simplify(sink: &mut Sink<'_>) {
     }
     one_bit_identities(sink);
     compare_edge(sink);
+    widened_boolean(sink);
 }
 
 /// Comparing a value against the first or the last value its own type can hold.
@@ -545,6 +546,88 @@ fn compare_edge(sink: &mut Sink<'_>) {
                 program,
             );
         }
+    }
+}
+
+/// The boolean expressions a widened test is built out of, and the answer each one has.
+///
+/// The values are fixed by `x` being seven and `y` being three, which is what the program
+/// reads out of its two volatile globals. Both answers appear, because a rewrite that is only
+/// checked against a true condition is a rewrite whose false half nobody has run.
+const WIDENED: &[(&str, &str, i128)] = &[
+    ("eq", "x == 7", 1),
+    ("ne", "y == 7", 0),
+    ("lt", "y < x", 1),
+    ("both", "x == 7 && y < x", 1),
+    ("either", "x != 7 || y > x", 0),
+    ("negated", "!(x - y)", 0),
+    ("twice", "!!(x - y)", 1),
+];
+
+/// A boolean stored in a wider type and then compared against zero.
+///
+/// C has no way to say that a value is one bit wide, so a condition that is kept in a variable
+/// or passed to a function is a one or a zero sitting in an `int` or something wider. Testing
+/// it again is then a comparison against zero on the wide type, and the answer to that
+/// comparison is the bit that went in. The program writes the roundabout form because that is
+/// what real code writes: a flag is computed in one place, stored, and tested somewhere else.
+///
+/// `__builtin_expect` is the reason this shape turns up so often, since its argument is a
+/// `long` and any condition handed to it is widened on the way in. That is where it was found.
+/// The case does not use the builtin, because the widening is the thing being tested and
+/// dragging a GNU extension in would make the case one a compiler could fail for another
+/// reason.
+///
+/// The narrow types are here on purpose even though C promotes them. A `signed char` compared
+/// against zero is compared at `int` width, so the program holds a widening of a widening, and
+/// whether those two collapse into one before anything looks at the comparison is exactly the
+/// question a narrow case asks and a wide one does not.
+fn widened_boolean(sink: &mut Sink<'_>) {
+    for &ty in Ty::ALL {
+        if !sink.wants(Facet::Simplify) {
+            return;
+        }
+        let name = ty.c_name();
+        let mut program =
+            Program::new(format!("a boolean widened to {} and tested again", ty.c_name()));
+        program.input(Ty::I32, "x", 7);
+        program.input(Ty::I32, "y", 3);
+        program.blank();
+        for &(flag, expr, _) in WIDENED {
+            program.line(format!("{name} {flag} = ({expr});"));
+        }
+        program.blank();
+        // The value form first. Each of these is a comparison whose answer is the bit that was
+        // stored, or that bit flipped, and none of them may change what the program prints.
+        for &(flag, _, value) in WIDENED {
+            program.check(Ty::I32, &format!("{flag} != 0"), value);
+            program.check(Ty::I32, &format!("{flag} == 0"), 1 - value);
+            program.check(Ty::I32, &format!("!{flag}"), 1 - value);
+            program.check(Ty::I32, &format!("{flag} ? 1 : 0"), value);
+        }
+        program.blank();
+        // Then the branch form, which is where the rewrite is worth something: a comparison
+        // that feeds a branch is a compare instruction the branch did not need. Each flag adds
+        // or subtracts its own weight, so a single number says which way all seven went.
+        program.line("int taken = 0;");
+        let mut taken: i128 = 0;
+        for (at, &(flag, _, value)) in WIDENED.iter().enumerate() {
+            let weight = i128::try_from(at).unwrap_or(0) + 1;
+            program.line(format!("if ({flag} != 0) {{"));
+            program.line_at(1, format!("taken += {weight};"));
+            program.line("} else {");
+            program.line_at(1, format!("taken -= {weight};"));
+            program.line("}");
+            taken += if value == 1 { weight } else { -weight };
+        }
+        program.blank();
+        program.check(Ty::I32, "taken", taken);
+        sink.push(
+            Facet::Simplify,
+            Axes::of([("type", ty.name()), ("group", "widened-boolean")]),
+            Dialect::C17,
+            program,
+        );
     }
 }
 
@@ -1927,6 +2010,55 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn a_boolean_is_widened_to_every_type_and_tested_again() {
+        let cases = cases_for(Facet::Simplify);
+        for ty in ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"] {
+            let case = cases
+                .iter()
+                .find(|c| {
+                    c.axes.get("type") == Some(ty) && c.axes.get("group") == Some("widened-boolean")
+                })
+                .unwrap_or_else(|| panic!("no widened boolean program for {ty}"));
+            // Both predicates, because they are separate rewrites and a case that only writes
+            // one of them proves only one of them.
+            assert!(case.source.contains("eq != 0"), "{}", case.source);
+            assert!(case.source.contains("eq == 0"), "{}", case.source);
+        }
+    }
+
+    #[test]
+    fn a_widened_boolean_case_agrees_with_the_answers_written_next_to_it() {
+        // The expected output is built from the table rather than from running anything, so a
+        // typo in the table is a case that passes against a compiler that shares the typo,
+        // which is no compiler at all. This recomputes it the long way round.
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| {
+                c.axes.get("type") == Some("i64") && c.axes.get("group") == Some("widened-boolean")
+            })
+            .expect("the long long widened boolean program");
+        let printed: Vec<&str> = output(case).lines().collect();
+        let mut wanted: Vec<String> = Vec::new();
+        for &(_, _, value) in super::WIDENED {
+            wanted.push(value.to_string());
+            wanted.push((1 - value).to_string());
+            wanted.push((1 - value).to_string());
+            wanted.push(value.to_string());
+        }
+        let taken: i128 = super::WIDENED
+            .iter()
+            .enumerate()
+            .map(|(at, &(_, _, value))| {
+                let weight = i128::try_from(at).unwrap_or(0) + 1;
+                if value == 1 { weight } else { -weight }
+            })
+            .sum();
+        wanted.push(taken.to_string());
+        assert_eq!(printed, wanted, "{}", case.source);
     }
 
     #[test]

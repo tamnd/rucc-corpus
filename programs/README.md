@@ -1,10 +1,10 @@
 # The corpus
 
-1910 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1930 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `cffa24ab30a9fa5b763fc1614c989124d8bcaae0fa3813e2c46134beab00e890`.
+Corpus digest `6bea9fb80dcb022853ad5ba9da8ed5939248e2bcb3d317ad178a38cbc924744e`.
 
 ## floor (118 programs)
 
@@ -19,7 +19,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (360 programs)
+## local (368 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -28,7 +28,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`constant-fold`](local/constant-fold/README.md) | 112 | folding an operation on constants into a constant |
 | [`strength`](local/strength/README.md) | 24 | rewriting an operation into a cheaper one with the same value |
 | [`narrowing`](local/narrowing/README.md) | 52 | taking the width back off arithmetic that C promoted |
-| [`simplify`](local/simplify/README.md) | 69 | algebraic identities and the local peephole rules |
+| [`simplify`](local/simplify/README.md) | 77 | algebraic identities and the local peephole rules |
 | [`short-circuit`](local/short-circuit/README.md) | 22 | collapsing the two branches of a logical operator into one |
 | [`conditional-store`](local/conditional-store/README.md) | 16 | moving a store below a branch whose arms wrote the same place |
 | [`value-settled`](local/value-settled/README.md) | 13 | a condition that settles the value its two arms disagree about |
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (379 programs)
+## backend (391 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -97,7 +97,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`register-pressure`](backend/register-pressure/README.md) | 60 | how many values are live at once, and what that costs |
 | [`register-alloc`](backend/register-alloc/README.md) | 40 | assigning registers and deciding what to spill |
 | [`scheduling`](backend/scheduling/README.md) | 12 | ordering instructions within a block |
-| [`block-layout`](backend/block-layout/README.md) | 4 | laying out blocks so the common path falls through |
+| [`block-layout`](backend/block-layout/README.md) | 16 | laying out blocks so the common path falls through |
 | [`if-conversion`](backend/if-conversion/README.md) | 20 | turning a short branch into branchless code |
 | [`switch-lowering`](backend/switch-lowering/README.md) | 15 | choosing how to lower a switch |
 | [`switch-runs`](backend/switch-runs/README.md) | 15 | stretches of consecutive labels that share one arm |

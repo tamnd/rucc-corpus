@@ -24,6 +24,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     register_alloc(sink);
     scheduling(sink);
     block_layout(sink);
+    expect_layout(sink);
     if_conversion(sink);
     switch_lowering(sink);
     switch_runs(sink);
@@ -399,6 +400,137 @@ fn block_layout(sink: &mut Sink<'_>) {
         program.blank();
         program.check(Ty::I64, "total", total);
         sink.push(Facet::BlockLayout, Axes::of([("shape", shape)]), Dialect::C17, program);
+    }
+}
+
+/// One branch shape, written three times: with no hint, and with each of the two that GCC has.
+///
+/// The condition is the same text in all three, and so is the answer, so the only thing that
+/// differs between a triple is what the program said about which way the branch goes. That is
+/// what makes the triple evidence. A compiler that lays all three out the same way is a
+/// compiler that read the hint and threw it away.
+///
+/// The size will often be the same in all three, and that is not the triple failing to say
+/// anything. A block that moved is the same instructions in a different order, so a layout that
+/// changed and a layout that did not can weigh the same, and on a branch this predictable the
+/// time is the same too. What the triple gives is three objects built from one program that
+/// differ only in the hint, which is the thing to put side by side.
+struct Hinted {
+    /// The axis value, which is also the name of the shape.
+    name: &'static str,
+    /// The condition, before a hint is wrapped around it.
+    condition: &'static str,
+    /// Whether the condition is the one that nearly always holds.
+    likely: bool,
+}
+
+/// The branch shapes a hint is worth putting on.
+const HINTED: &[Hinted] = &[
+    Hinted { name: "rare-call", condition: "rare != 0", likely: false },
+    Hinted { name: "hot-then", condition: "rare == 0", likely: true },
+    Hinted { name: "widened-condition", condition: "!!(rare == 1)", likely: false },
+    Hinted { name: "rare-chain", condition: "rare == 1", likely: false },
+];
+
+/// The three ways of writing the same condition.
+const HINTS: &[&str] = &["none", "builtin", "probability"];
+
+/// A condition with a hint wrapped around it, or the condition on its own.
+fn hinted(hint: &str, condition: &str, likely: bool) -> String {
+    match hint {
+        "builtin" => format!("__builtin_expect({condition}, {})", i32::from(likely)),
+        "probability" => {
+            let odds = if likely { "0.99" } else { "0.01" };
+            format!("__builtin_expect_with_probability({condition}, 1, {odds})")
+        }
+        _ => condition.to_owned(),
+    }
+}
+
+/// Branches the program itself says which way they go.
+///
+/// The facet next door has branches that are predictable and says nothing about them, so the
+/// compiler has to guess from the shape. These say it out loud, which is the case where a
+/// guess is not involved and getting the layout wrong has no excuse.
+///
+/// The cold arm is a call through a `volatile` function pointer. A direct call to a `static`
+/// function is not enough, because GCC inlines it and the cold arm stops being a call at all,
+/// which was the first version of these cases and was reported back by `-fopt-info` in so many
+/// words. Reading a `volatile` pointer is a read the compiler has to make, so the call stays a
+/// call in every compiler and the arm stays the heavy one it was written to be. It is plain
+/// C17, which matters, because the third of each triple without a hint has to be a case a run
+/// that excludes extensions still gets to see.
+///
+/// Both spellings are here. `__builtin_expect` says which way and nothing more, and
+/// `__builtin_expect_with_probability` says how strongly, and a compiler that supports the
+/// first and ignores the second is a compiler that will lay the second out by guesswork.
+fn expect_layout(sink: &mut Sink<'_>) {
+    for shape in HINTED {
+        for &hint in HINTS {
+            if !sink.wants(Facet::BlockLayout) {
+                return;
+            }
+            let mut program = Program::new(format!(
+                "a {} branch in a hot loop, with the {hint} hint on it",
+                shape.name
+            ));
+            // The cold arm calls this. It touches a volatile global so that no amount of
+            // inlining can turn the call into nothing, which is what would happen to an empty
+            // function and would take the case with it. The pointer is what the call goes
+            // through, and it is volatile so that the call cannot be turned back into a direct
+            // one and inlined.
+            program.top("static volatile int oops_count;");
+            program.top("static void oops(void) {");
+            program.top("    oops_count = oops_count + 1;");
+            program.top("}");
+            program.top("static void (*volatile cold)(void) = oops;");
+            program.input(Ty::I32, "rare", 0);
+            program.blank();
+            program.line("long long total = 0;");
+            program.line("for (int i = 0; i < 1000; i++) {");
+            let test = hinted(hint, shape.condition, shape.likely);
+            match shape.name {
+                "hot-then" => {
+                    program.line_at(1, format!("if ({test}) {{"));
+                    program.line_at(2, "total += 1;");
+                    program.line_at(1, "} else {");
+                    program.line_at(2, "cold();");
+                    program.line_at(1, "}");
+                }
+                "rare-chain" => {
+                    // Three tests in a row, each one said to be the unlikely way, and the arm
+                    // that runs is the one at the bottom. A layout that walks the tests in the
+                    // order they were written puts three not taken branches on the hot path
+                    // and nothing else, which is the best this shape can do.
+                    for (at, condition) in
+                        ["rare == 1", "rare == 2", "rare == 3"].iter().enumerate()
+                    {
+                        let test = hinted(hint, condition, false);
+                        let lead = if at == 0 { "if" } else { "} else if" };
+                        program.line_at(1, format!("{lead} ({test}) {{"));
+                        program.line_at(2, "cold();");
+                    }
+                    program.line_at(1, "} else {");
+                    program.line_at(2, "total += 1;");
+                    program.line_at(1, "}");
+                }
+                _ => {
+                    program.line_at(1, format!("if ({test}) {{"));
+                    program.line_at(2, "cold();");
+                    program.line_at(1, "}");
+                    program.line_at(1, "total += 1;");
+                }
+            }
+            program.line("}");
+            program.blank();
+            program.check(Ty::I64, "total", 1000);
+            let axes = Axes::of([("shape", shape.name), ("hint", hint)]);
+            if hint == "none" {
+                sink.push(Facet::BlockLayout, axes, Dialect::C17, program);
+            } else {
+                sink.push_tagged(Facet::BlockLayout, axes, Dialect::C17, program, &["gnu"]);
+            }
+        }
     }
 }
 
@@ -1958,6 +2090,80 @@ mod tests {
     fn every_layout_case_expects_a_thousand_iterations_of_the_common_path() {
         for case in cases_for(Facet::BlockLayout) {
             assert_eq!(output(&case), "1000\n", "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn every_hinted_shape_is_written_once_with_a_hint_and_once_without() {
+        let cases = cases_for(Facet::BlockLayout);
+        for shape in super::HINTED {
+            for hint in super::HINTS {
+                assert!(
+                    cases.iter().any(|c| {
+                        c.axes.get("shape") == Some(shape.name) && c.axes.get("hint") == Some(hint)
+                    }),
+                    "no {} program with the {hint} hint",
+                    shape.name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_layout_case_is_tagged_gnu_exactly_when_it_writes_a_builtin() {
+        for case in cases_for(Facet::BlockLayout) {
+            assert_eq!(
+                case.has_tag("gnu"),
+                case.source.contains("__builtin_"),
+                "{} is tagged wrong",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    fn the_two_spellings_of_a_hint_differ_only_in_the_hint() {
+        // Which is what makes a triple evidence rather than three unrelated programs. Strip the
+        // hint back out of each one and the three sources have to be the same text.
+        let cases = cases_for(Facet::BlockLayout);
+        for shape in super::HINTED {
+            let plain = cases
+                .iter()
+                .find(|c| {
+                    c.axes.get("shape") == Some(shape.name) && c.axes.get("hint") == Some("none")
+                })
+                .unwrap_or_else(|| panic!("no plain {} program", shape.name));
+            for hint in ["builtin", "probability"] {
+                let other = cases
+                    .iter()
+                    .find(|c| {
+                        c.axes.get("shape") == Some(shape.name) && c.axes.get("hint") == Some(hint)
+                    })
+                    .unwrap_or_else(|| panic!("no {hint} {} program", shape.name));
+                assert_eq!(
+                    plain.expect, other.expect,
+                    "{} answers differently with the {hint} hint",
+                    shape.name
+                );
+                assert_eq!(
+                    plain.source.lines().count(),
+                    other.source.lines().count(),
+                    "{} is a different program with the {hint} hint",
+                    shape.name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn every_hinted_layout_case_puts_a_call_on_the_arm_it_says_is_cold() {
+        for case in cases_for(Facet::BlockLayout) {
+            if case.axes.get("hint").is_none() {
+                continue;
+            }
+            assert!(case.source.contains("cold();"), "{} has no cold arm", case.id);
+            // Through a volatile pointer, or GCC inlines the body and the arm is not a call.
+            assert!(case.source.contains("(*volatile cold)"), "{} inlines away", case.id);
         }
     }
 
