@@ -1,6 +1,6 @@
 # What went wrong
 
-160 findings, worst first. A finding is one case, one compiler, one level.
+164 findings, worst first. A finding is one case, one compiler, one level.
 
 ### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O0` on `rucc`
 
@@ -442,7 +442,7 @@ expected: the program compiles
 actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
 ```
 
-And 120 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
+And 124 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
 
 ## What the compiler says it has not built yet
 
