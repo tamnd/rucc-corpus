@@ -2113,6 +2113,11 @@ fn load_fold(sink: &mut Sink<'_>) {
                     program.line(format!("{name} value = buffer[at];"));
                     program.line("buffer[other] = seed;");
                     program.line(format!("{name} total = seed + value;"));
+                    // Nothing else reads the array, so without this the store is dead and a
+                    // compiler that removes dead stores removes the whole of the shape. The read
+                    // is after the reader rather than before it, so it is not itself something
+                    // the load had to pass.
+                    program.sink("buffer[0]");
                     13
                 }
                 // A call between the two. What a call does to memory is not written in the call,
