@@ -206,6 +206,20 @@
     },
     {
       "toolchain": "rucc",
+      "family": "simplify.i64.widened-boolean.c17",
+      "verdict": "crashed",
+      "issue": "tamnd/rucc#1203",
+      "why": "the rewriter runs out of scratch registers at -O1, -Os and -Oz on a handful of booleans widened to a long long, and compiles the same file at the levels either side of those"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "simplify.u64.widened-boolean.c17",
+      "verdict": "crashed",
+      "issue": "tamnd/rucc#1203",
+      "why": "the rewriter runs out of scratch registers at -O1, -Os and -Oz on a handful of booleans widened to an unsigned long long, and compiles the same file at the levels either side of those"
+    },
+    {
+      "toolchain": "rucc",
       "family": "vla-and-alloca.alloca-in-a-loop.c17",
       "verdict": "unimplemented",
       "issue": "tamnd/rucc#1007",
