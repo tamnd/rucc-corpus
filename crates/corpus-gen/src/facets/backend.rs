@@ -34,6 +34,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     bit_liveness(sink);
     compare_elim(sink);
     address_fold(sink);
+    load_fold(sink);
     frame_address(sink);
     stack_slots(sink);
 }
@@ -2009,6 +2010,190 @@ fn address_fold(sink: &mut Sink<'_>) {
     }
 }
 
+/// A load one arithmetic instruction reads, and everything that stops it moving.
+///
+/// Most machines can read one source of an addition out of memory, so a load whose value a single
+/// addition reads is two instructions where the machine has one. Doing it means the load stops
+/// being where it was and becomes part of an instruction further down, and that is what these
+/// shapes are about: the conditions are not facts about the pair, they are facts about everything
+/// between the two and about everybody else who wanted the value.
+///
+/// So the axis is the reason rather than the operator. One reader against two, because a second
+/// reader means the value has to exist in a register anyway and the load is not saved. A store, a
+/// call and another load in the way. A register the address reads written in between. A reader in
+/// another block. The left of a subtraction, which is the operand that cannot come out of memory
+/// on a machine whose subtraction writes its first source.
+///
+/// The load in the way is the shape worth having and the one a back end gets wrong. Moving a read
+/// past a read reorders two accesses, and by the time a machine level pass can see them it cannot
+/// tell a `volatile` read from an ordinary one, because nothing in the instruction says which the
+/// program insisted on. So the case is two `volatile` reads and a subtraction of one from the
+/// other, which is a program whose answer is the same either way and whose observable behaviour
+/// is not.
+fn load_fold(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "one-reader",
+        "two-readers",
+        "store-between",
+        "call-between",
+        "load-between",
+        "index-written-between",
+        "subtract-left",
+        "subtract-right",
+        "reader-in-another-block",
+        "narrower-load",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::LoadFold) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("one {name} load, {shape}"));
+            if shape == "load-between" {
+                // No array and no index. The whole of this shape is two reads whose order the
+                // program fixed and one subtraction that reads the earlier of them.
+                program.input(ty, "first", 4);
+                program.input(ty, "second", 9);
+            } else {
+                program.input(ty, "seed", 5);
+                program.input(Ty::I32, "at", 3);
+            }
+            if matches!(shape, "store-between" | "index-written-between") {
+                program.input(Ty::I32, "other", 6);
+            }
+            if shape == "reader-in-another-block" {
+                program.input(Ty::I32, "flag", 1);
+            }
+            if shape == "call-between" {
+                // A call the compiler cannot see through and cannot delete. The body touches a
+                // volatile global so an empty function is not what gets inlined, and the pointer
+                // is volatile so the call cannot be turned back into a direct one.
+                program.top("static volatile int noise_count;");
+                program.top("static void noise(void) {");
+                program.top("    noise_count = noise_count + 1;");
+                program.top("}");
+                program.top("static void (*volatile jump)(void) = noise;");
+            }
+            program.blank();
+            if !matches!(shape, "load-between" | "narrower-load") {
+                // Filled in a loop and then read at an index nothing knows, which is what makes
+                // the read a load. An array written at one index and read back at the same one
+                // is a store the optimizer hands straight to the reader, and then there is no
+                // load for this pass to have an opinion about. Every buffer shape here reads
+                // `buffer[at]`, and every one of the eight stores in front of it is a store the
+                // compiler cannot rule out as the source, so the load stays.
+                program.line(format!("{name} buffer[8];"));
+                program.line("for (int i = 0; i < 8; i++) {");
+                program.line_at(1, format!("buffer[i] = seed + ({name})i;"));
+                program.line("}");
+            }
+            let value: i128 = match shape {
+                // One load, one reader, and the reader is an addition. This is the shape the pass
+                // exists for and the only one here it is meant to change.
+                "one-reader" => {
+                    program.line(format!("{name} total = seed + buffer[at];"));
+                    13
+                }
+                // Two readers of the loaded value. The value has to be in a register for the
+                // second of them whatever happens, so putting the load inside the first buys an
+                // addressing mode and keeps the load, which is worse than leaving it alone.
+                "two-readers" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line(format!(
+                        "{name} total = (seed + value) + (value & {});",
+                        lit(ty, 12)
+                    ));
+                    21
+                }
+                // A store between the load and its reader, to an index the compiler has no way to
+                // tell apart from the one that was read. Whether the two are the same place is a
+                // question about two addresses, so the answer is to leave the load where it is.
+                "store-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("buffer[other] = seed;");
+                    program.line(format!("{name} total = seed + value;"));
+                    // Nothing else reads the array, so without this the store is dead and a
+                    // compiler that removes dead stores removes the whole of the shape. The read
+                    // is after the reader rather than before it, so it is not itself something
+                    // the load had to pass.
+                    program.sink("buffer[0]");
+                    13
+                }
+                // A call between the two. What a call does to memory is not written in the call,
+                // so it is asked separately from whether an instruction has a memory operand.
+                "call-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("jump();");
+                    program.line(format!("{name} total = seed + value;"));
+                    13
+                }
+                // Two volatile reads and a subtraction reading the earlier one. Folding the read
+                // of `first` into the subtraction puts it after the read of `second`, which is an
+                // order this program fixed. Nothing in the instructions says so, which is the
+                // point: the rule has to be that no read moves past another access at all.
+                "load-between" => {
+                    program.line(format!("{name} total = second - first;"));
+                    5
+                }
+                // The index the address reads is written between the load and the reader, so the
+                // address the folded instruction would carry is not the address that was read.
+                "index-written-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("at = other;");
+                    program.line(format!("{name} total = value + buffer[at];"));
+                    19
+                }
+                // The load feeds the left of a subtraction. On a machine whose subtraction writes
+                // its first source, that operand is the destination and cannot come out of memory,
+                // so this is the arithmetic the pass has to check the side of rather than fold.
+                "subtract-left" => {
+                    program.line(format!("{name} total = buffer[at] - seed;"));
+                    3
+                }
+                // The same subtraction the other way round, where the load is the operand that
+                // can come out of memory. The pair is here so the two answers sit next to each
+                // other and a report showing the same instruction count for both is a finding.
+                "subtract-right" => {
+                    program.line(format!("{name} total = (seed + {}) - buffer[at];", lit(ty, 9)));
+                    6
+                }
+                // The reader is behind a branch, so the load and the instruction that would take
+                // it in are not in the same block. A pass that works a block at a time stops here
+                // whether or not the branch is taken.
+                "reader-in-another-block" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line(format!("{name} total = seed;"));
+                    program.line("if (flag) {");
+                    program.line_at(1, "total = seed + value;");
+                    program.line("}");
+                    13
+                }
+                // A byte load feeding arithmetic at the width of the case. The load and the
+                // addition are the same width only when the case is about `unsigned char`, and
+                // every other point on this axis is a pair whose widths disagree, which is a fold
+                // that would change the answer rather than one that costs nothing.
+                _ => {
+                    program.line("unsigned char bytes[8];");
+                    program.line("for (int i = 0; i < 8; i++) {");
+                    program.line_at(1, "bytes[i] = (unsigned char)(seed + i);");
+                    program.line("}");
+                    program.line(format!("{name} total = seed + bytes[at];"));
+                    13
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", value);
+            sink.push(
+                Facet::LoadFold,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// One local, used at a counted number of offsets, one program per count.
 ///
 /// The question here is a number rather than a yes or a no. An address into the frame is a
@@ -2766,6 +2951,88 @@ mod tests {
                 let at = case.source.find("shared[4];").unwrap();
                 assert!(at < case.source.find("int main").unwrap(), "{}", case.id);
             }
+        }
+    }
+
+    #[test]
+    fn every_load_fold_case_prints_the_number_its_shape_fixes() {
+        let cases = cases_for(Facet::LoadFold);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            // Every shape is arithmetic over values the inputs fix, so the number belongs to the
+            // shape and not to the type or to anything the compiler decides. A case printing
+            // something else is a load that moved past something it had to stop at.
+            let wanted = match case.axes.get("shape") {
+                Some("two-readers") => "21\n",
+                Some("load-between") => "5\n",
+                Some("index-written-between") => "19\n",
+                Some("subtract-left") => "3\n",
+                Some("subtract-right") => "6\n",
+                _ => "13\n",
+            };
+            assert_eq!(output(case), wanted, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_load_fold_shapes_the_pass_has_to_refuse_are_all_present() {
+        let cases = cases_for(Facet::LoadFold);
+        let shapes: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("shape")).collect();
+        for wanted in [
+            "two-readers",
+            "store-between",
+            "call-between",
+            "load-between",
+            "index-written-between",
+            "subtract-left",
+            "reader-in-another-block",
+            "narrower-load",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+    }
+
+    #[test]
+    fn every_load_fold_case_with_an_array_fills_it_before_it_reads_it_at_an_unknown_index() {
+        for case in cases_for(Facet::LoadFold) {
+            if case.axes.get("shape") == Some("load-between") {
+                continue;
+            }
+            // Written at one index and read back at the same one is a store the optimizer hands
+            // to the reader, and then the case has no load in it and says nothing about a pass
+            // that is about loads. Filling in a loop and reading at `at` is what keeps it.
+            assert!(case.source.contains("for (int i = 0; i < 8; i++) {"), "{}", case.id);
+            assert!(case.source.contains("[at]"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_load_between_shape_reads_two_volatile_globals_in_the_order_it_subtracts_them() {
+        for case in cases_for(Facet::LoadFold) {
+            if case.axes.get("shape") != Some("load-between") {
+                continue;
+            }
+            // The whole of the shape is that both reads are volatile, that the read of `first`
+            // comes before the read of `second`, and that the subtraction reads `first`. Take any
+            // one of the three away and the case stops saying anything about ordering.
+            assert!(case.source.contains("volatile"), "{}", case.id);
+            let first = case.source.find("first = first_in").unwrap();
+            let second = case.source.find("second = second_in").unwrap();
+            assert!(first < second, "{}", case.id);
+            assert!(case.source.contains("total = second - first;"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_call_between_shape_calls_through_a_pointer_the_compiler_cannot_see_through() {
+        for case in cases_for(Facet::LoadFold) {
+            if case.axes.get("shape") != Some("call-between") {
+                continue;
+            }
+            // A direct call to an empty function is inlined into nothing and the case loses the
+            // one instruction it was written around.
+            assert!(case.source.contains("jump();"), "{} has no call", case.id);
+            assert!(case.source.contains("(*volatile jump)"), "{} inlines away", case.id);
         }
     }
 

@@ -182,6 +182,20 @@ pub enum Facet {
     /// The address shapes that decide whether an address is worked out once into a register
     /// or carried by every instruction that reads it.
     AddressFold,
+    /// A load whose value one arithmetic instruction reads, and everything that stops it moving.
+    ///
+    /// A back end facet of its own rather than a shape of `machine-peephole`, because what
+    /// decides it is not the pair of instructions. The load stops being where it was and
+    /// becomes part of an instruction further down, so what settles it is everything between
+    /// the two and everybody else who wanted the value. So the shapes are the reasons rather
+    /// than the arithmetic: one reader against two, a store in the way, a call in the way,
+    /// another load in the way, a write of a register the address reads, a reader in another
+    /// block, and the distance between the two.
+    ///
+    /// The load in the way is the one worth having. A back end that moves a read past a read
+    /// reorders two accesses, and by the time it can see them it cannot tell a `volatile` one
+    /// from an ordinary one, so the case exists to say what the order has to be.
+    LoadFold,
     /// One local, used at a counted number of offsets.
     ///
     /// A back end facet of its own rather than a shape of `address-fold`, because the question
@@ -310,6 +324,7 @@ impl Facet {
         Self::BitLiveness,
         Self::CompareElim,
         Self::AddressFold,
+        Self::LoadFold,
         Self::FrameAddress,
         Self::StackSlots,
         Self::BitBuiltins,
@@ -384,6 +399,7 @@ impl Facet {
             Self::BitLiveness => "bit-liveness",
             Self::CompareElim => "compare-elim",
             Self::AddressFold => "address-fold",
+            Self::LoadFold => "load-fold",
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
             Self::BitBuiltins => "bit-builtins",
@@ -465,6 +481,7 @@ impl Facet {
             }
             Self::CompareElim => "a comparison the instruction in front of it has already made",
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
+            Self::LoadFold => "a load one arithmetic instruction reads, and what stops it moving",
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::StackSlots => "two things in the frame that may be the same bytes",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -546,6 +563,7 @@ impl Facet {
             | Self::BitLiveness
             | Self::CompareElim
             | Self::AddressFold
+            | Self::LoadFold
             | Self::FrameAddress
             | Self::StackSlots
             | Self::BitBuiltins
