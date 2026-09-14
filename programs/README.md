@@ -1,10 +1,10 @@
 # The corpus
 
-1984 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+1990 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `6f8a28857eaf78402b1a95a673179a2c887aa6cd033418c19944ed2241109c88`.
+Corpus digest `6cb88504dfd2b47201b400698d1b0d40e8f2b2c8b6380c2ae5a8e2041c8682fa`.
 
 ## floor (118 programs)
 
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (445 programs)
+## backend (451 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -108,6 +108,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`compare-elim`](backend/compare-elim/README.md) | 26 | a comparison the instruction in front of it has already made |
 | [`address-fold`](backend/address-fold/README.md) | 28 | whether an address is worked out once or carried by each reader |
 | [`frame-address`](backend/frame-address/README.md) | 6 | one local, used at a counted number of offsets |
+| [`stack-slots`](backend/stack-slots/README.md) | 6 | two things in the frame that may be the same bytes |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
