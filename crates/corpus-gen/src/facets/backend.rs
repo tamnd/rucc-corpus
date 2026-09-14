@@ -2077,15 +2077,23 @@ fn load_fold(sink: &mut Sink<'_>) {
             }
             program.blank();
             if !matches!(shape, "load-between" | "narrower-load") {
-                program.line(format!("{name} buffer[8] = {{ 0 }};"));
-                program.line(format!("buffer[at] = seed + {};", lit(ty, 2)));
+                // Filled in a loop and then read at an index nothing knows, which is what makes
+                // the read a load. An array written at one index and read back at the same one
+                // is a store the optimizer hands straight to the reader, and then there is no
+                // load for this pass to have an opinion about. Every buffer shape here reads
+                // `buffer[at]`, and every one of the eight stores in front of it is a store the
+                // compiler cannot rule out as the source, so the load stays.
+                program.line(format!("{name} buffer[8];"));
+                program.line("for (int i = 0; i < 8; i++) {");
+                program.line_at(1, format!("buffer[i] = seed + ({name})i;"));
+                program.line("}");
             }
             let value: i128 = match shape {
                 // One load, one reader, and the reader is an addition. This is the shape the pass
                 // exists for and the only one here it is meant to change.
                 "one-reader" => {
                     program.line(format!("{name} total = seed + buffer[at];"));
-                    12
+                    13
                 }
                 // Two readers of the loaded value. The value has to be in a register for the
                 // second of them whatever happens, so putting the load inside the first buys an
@@ -2094,9 +2102,9 @@ fn load_fold(sink: &mut Sink<'_>) {
                     program.line(format!("{name} value = buffer[at];"));
                     program.line(format!(
                         "{name} total = (seed + value) + (value & {});",
-                        lit(ty, 6)
+                        lit(ty, 12)
                     ));
-                    18
+                    21
                 }
                 // A store between the load and its reader, to an index the compiler has no way to
                 // tell apart from the one that was read. Whether the two are the same place is a
@@ -2105,7 +2113,7 @@ fn load_fold(sink: &mut Sink<'_>) {
                     program.line(format!("{name} value = buffer[at];"));
                     program.line("buffer[other] = seed;");
                     program.line(format!("{name} total = seed + value;"));
-                    12
+                    13
                 }
                 // A call between the two. What a call does to memory is not written in the call,
                 // so it is asked separately from whether an instruction has a memory operand.
@@ -2113,7 +2121,7 @@ fn load_fold(sink: &mut Sink<'_>) {
                     program.line(format!("{name} value = buffer[at];"));
                     program.line("jump();");
                     program.line(format!("{name} total = seed + value;"));
-                    12
+                    13
                 }
                 // Two volatile reads and a subtraction reading the earlier one. Folding the read
                 // of `first` into the subtraction puts it after the read of `second`, which is an
@@ -2126,25 +2134,24 @@ fn load_fold(sink: &mut Sink<'_>) {
                 // The index the address reads is written between the load and the reader, so the
                 // address the folded instruction would carry is not the address that was read.
                 "index-written-between" => {
-                    program.line(format!("buffer[other] = seed + {};", lit(ty, 4)));
                     program.line(format!("{name} value = buffer[at];"));
                     program.line("at = other;");
                     program.line(format!("{name} total = value + buffer[at];"));
-                    16
+                    19
                 }
                 // The load feeds the left of a subtraction. On a machine whose subtraction writes
                 // its first source, that operand is the destination and cannot come out of memory,
                 // so this is the arithmetic the pass has to check the side of rather than fold.
                 "subtract-left" => {
                     program.line(format!("{name} total = buffer[at] - seed;"));
-                    2
+                    3
                 }
                 // The same subtraction the other way round, where the load is the operand that
                 // can come out of memory. The pair is here so the two answers sit next to each
                 // other and a report showing the same instruction count for both is a finding.
                 "subtract-right" => {
                     program.line(format!("{name} total = (seed + {}) - buffer[at];", lit(ty, 9)));
-                    7
+                    6
                 }
                 // The reader is behind a branch, so the load and the instruction that would take
                 // it in are not in the same block. A pass that works a block at a time stops here
@@ -2155,17 +2162,19 @@ fn load_fold(sink: &mut Sink<'_>) {
                     program.line("if (flag) {");
                     program.line_at(1, "total = seed + value;");
                     program.line("}");
-                    12
+                    13
                 }
                 // A byte load feeding arithmetic at the width of the case. The load and the
                 // addition are the same width only when the case is about `unsigned char`, and
                 // every other point on this axis is a pair whose widths disagree, which is a fold
                 // that would change the answer rather than one that costs nothing.
                 _ => {
-                    program.line("unsigned char bytes[8] = { 0 };");
-                    program.line("bytes[at] = (unsigned char)(seed + 2);");
+                    program.line("unsigned char bytes[8];");
+                    program.line("for (int i = 0; i < 8; i++) {");
+                    program.line_at(1, "bytes[i] = (unsigned char)(seed + i);");
+                    program.line("}");
                     program.line(format!("{name} total = seed + bytes[at];"));
-                    12
+                    13
                 }
             };
             program.blank();
@@ -2949,12 +2958,12 @@ mod tests {
             // shape and not to the type or to anything the compiler decides. A case printing
             // something else is a load that moved past something it had to stop at.
             let wanted = match case.axes.get("shape") {
-                Some("two-readers") => "18\n",
+                Some("two-readers") => "21\n",
                 Some("load-between") => "5\n",
-                Some("index-written-between") => "16\n",
-                Some("subtract-left") => "2\n",
-                Some("subtract-right") => "7\n",
-                _ => "12\n",
+                Some("index-written-between") => "19\n",
+                Some("subtract-left") => "3\n",
+                Some("subtract-right") => "6\n",
+                _ => "13\n",
             };
             assert_eq!(output(case), wanted, "{}", case.id);
         }
@@ -2975,6 +2984,20 @@ mod tests {
             "narrower-load",
         ] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+    }
+
+    #[test]
+    fn every_load_fold_case_with_an_array_fills_it_before_it_reads_it_at_an_unknown_index() {
+        for case in cases_for(Facet::LoadFold) {
+            if case.axes.get("shape") == Some("load-between") {
+                continue;
+            }
+            // Written at one index and read back at the same one is a store the optimizer hands
+            // to the reader, and then the case has no load in it and says nothing about a pass
+            // that is about loads. Filling in a loop and reading at `at` is what keeps it.
+            assert!(case.source.contains("for (int i = 0; i < 8; i++) {"), "{}", case.id);
+            assert!(case.source.contains("[at]"), "{}", case.id);
         }
     }
 
