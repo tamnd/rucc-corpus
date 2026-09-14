@@ -35,6 +35,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     compare_elim(sink);
     address_fold(sink);
     frame_address(sink);
+    stack_slots(sink);
 }
 
 /// Expressions that a target usually has one instruction for.
@@ -2055,6 +2056,214 @@ fn frame_address(sink: &mut Sink<'_>) {
     }
 }
 
+/// Two runs of bytes in the frame, in the shapes where they may be one run and where they may not.
+///
+/// A local and a value the allocator wrote out are the same kind of thing once the back end has
+/// got this far, which is a run of bytes at a distance from the stack pointer. A back end that
+/// lays every one of them out end to end takes a frame as large as all of them added together,
+/// however few of them are wanted at any one point. One that shares takes a frame as large as the
+/// most it needs at once, so these programs are written in pairs: a shape where two things are
+/// never both wanted, and the same amount of C where they are.
+///
+/// The shapes where the answer is no are the ones worth having. A frame that came out larger than
+/// it needed to be is a program that runs. A local given away while something can still reach it
+/// through a pointer is a program that prints the wrong number, and the case that catches that is
+/// `address-escapes`, where the last mention of the name is the call that hands its address out
+/// and every read after that goes through the global the call stored it in. Every array here is
+/// in scope at the point it is read, so there is nothing undefined for a compiler to take
+/// advantage of: what separates a right answer from a wrong one is only whether the frame was
+/// handed to something else too early.
+///
+/// The sizes are what make the difference visible in a report. Eight `long long` is sixty four
+/// bytes, so two of them sharing is a frame sixty four bytes smaller, which is a number that
+/// shows up next to a frame rather than inside the rounding.
+fn stack_slots(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "two-scopes",
+        "both-at-once",
+        "address-escapes",
+        "wide-alignment",
+        "spilled-around-a-call",
+        "scope-in-a-loop",
+    ];
+    const SEED: i128 = 5;
+    const ROOM: i128 = 8;
+    // Filling `room[i]` with `seed + i` and adding all of it up, which every shape does at least
+    // once and which no compiler can work out ahead of time because the seed is volatile.
+    let counted = |from: i128| ROOM * from + ROOM * (ROOM - 1) / 2;
+
+    for &shape in SHAPES {
+        if !sink.wants(Facet::StackSlots) {
+            return;
+        }
+        let mut program = Program::new(format!("two runs of frame bytes, {shape}"));
+        match shape {
+            "address-escapes" => {
+                // Not static and not inline, so that a compiler which cannot see through the
+                // call has to assume the address went somewhere it cannot follow. One that can
+                // see through it still has to keep the object, because the pointer is read
+                // below while the array it points into is still in scope.
+                program.top("static long long *escaped;");
+                program.top("static void stash(long long *p) {");
+                program.top("    escaped = p;");
+                program.top("}");
+            }
+            "spilled-around-a-call" => {
+                program.top("static long long opaque(long long v) {");
+                program.top("    return v + 1;");
+                program.top("}");
+            }
+            _ => {}
+        }
+        program.input(Ty::I64, "seed", SEED);
+        program.blank();
+        program.line("long long total = 0;");
+
+        let total: i128 = match shape {
+            // Two arrays in scopes that do not overlap, which is the shape the sharing exists
+            // for. Nothing may read either of them outside the braces it was declared in, so the
+            // second is free to be the same bytes as the first.
+            "two-scopes" => {
+                for (name, more) in [("first", ""), ("second", " + 10")] {
+                    program.line("{");
+                    program.line_at(1, format!("long long {name}[{ROOM}];"));
+                    program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                    program.line_at(2, format!("{name}[i] = seed{more} + i;"));
+                    program.line_at(1, "}");
+                    program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                    program.line_at(2, format!("total += {name}[i];"));
+                    program.line_at(1, "}");
+                    program.line("}");
+                }
+                counted(SEED) + counted(SEED + 10)
+            }
+            // The same two arrays, both in scope at the same point and both read after both were
+            // written. A compiler that gives them one run of bytes here prints a different
+            // number, which is what makes this the pair of the shape above rather than a
+            // repetition of it.
+            "both-at-once" => {
+                program.line(format!("long long first[{ROOM}];"));
+                program.line(format!("long long second[{ROOM}];"));
+                program.line(format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(1, "first[i] = seed + i;");
+                program.line_at(1, "second[i] = seed + 10 + i;");
+                program.line("}");
+                program.line(format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(1, "total += first[i] * 2 + second[i];");
+                program.line("}");
+                2 * counted(SEED) + counted(SEED + 10)
+            }
+            // The array the call was handed the address of is mentioned by name for the last
+            // time at the call. Everything below reads it through the global, so a compiler that
+            // decides a local is finished with when its name stops appearing hands those bytes
+            // to the array in the braces and prints a number sixty four bytes of rubbish larger
+            // or smaller. The array is still in scope where it is read, so nothing here is
+            // undefined.
+            "address-escapes" => {
+                program.line(format!("long long kept[{ROOM}];"));
+                program.line(format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(1, "kept[i] = seed + i;");
+                program.line("}");
+                program.line("stash(kept);");
+                program.line("{");
+                program.line_at(1, format!("long long other[{ROOM}];"));
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "other[i] = seed + 10 + i;");
+                program.line_at(1, "}");
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "total += other[i];");
+                program.line_at(1, "}");
+                program.line("}");
+                program.line(format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(1, "total += escaped[i];");
+                program.line("}");
+                counted(SEED) + counted(SEED + 10)
+            }
+            // One of the two wants a stricter alignment than the other, which on x86-64 is
+            // sixteen bytes against eight. Bytes shared by both have to be aligned for the
+            // stricter of them, so a compiler that takes the alignment of whichever it placed
+            // first gets an unaligned `long double` and either a wrong answer or a fault.
+            "wide-alignment" => {
+                program.line("{");
+                program.line_at(1, format!("long double wide[{ROOM}];"));
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "wide[i] = (long double)(seed + i);");
+                program.line_at(1, "}");
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "total += (long long)wide[i];");
+                program.line_at(1, "}");
+                program.line("}");
+                program.line("{");
+                program.line_at(1, format!("long long narrow[{ROOM}];"));
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "narrow[i] = seed + 10 + i;");
+                program.line_at(1, "}");
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "total += narrow[i];");
+                program.line_at(1, "}");
+                program.line("}");
+                counted(SEED) + counted(SEED + 10)
+            }
+            // An array whose scope has closed and a pile of values held across a call, which is
+            // the other half of the same question: a value the allocator had to write out is a
+            // run of frame bytes too, and the ones it writes out here are wanted only after the
+            // array is finished with. Twelve of them is past what the convention leaves free
+            // across a call on either target.
+            "spilled-around-a-call" => {
+                const LIVE: i128 = 12;
+                program.line("{");
+                program.line_at(1, format!("long long room[{ROOM}];"));
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "room[i] = seed + i;");
+                program.line_at(1, "}");
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "total += room[i];");
+                program.line_at(1, "}");
+                program.line("}");
+                program.blank();
+                for at in 0..LIVE {
+                    program.line(format!("long long v{at} = seed + {at};"));
+                }
+                program.line("long long kept = opaque(seed);");
+                let reads: Vec<String> = (0..LIVE).map(|at| format!("v{at}")).collect();
+                program.line(format!("total += {} + kept;", reads.join(" + ")));
+                counted(SEED) + LIVE * SEED + LIVE * (LIVE - 1) / 2 + SEED + 1
+            }
+            // An array declared inside a loop body, so it is a different object every turn and
+            // none of them is wanted at the same time as any other, and one more after the loop
+            // that may have all of the same bytes.
+            _ => {
+                const TURNS: i128 = 4;
+                program.line(format!("for (int k = 0; k < {TURNS}; k++) {{"));
+                program.line_at(1, format!("long long room[{ROOM}];"));
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "room[i] = seed + i + k;");
+                program.line_at(1, "}");
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "total += room[i];");
+                program.line_at(1, "}");
+                program.line("}");
+                program.line("{");
+                program.line_at(1, format!("long long after[{ROOM}];"));
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "after[i] = seed + 10 + i;");
+                program.line_at(1, "}");
+                program.line_at(1, format!("for (int i = 0; i < {ROOM}; i++) {{"));
+                program.line_at(2, "total += after[i];");
+                program.line_at(1, "}");
+                program.line("}");
+                TURNS * counted(SEED) + ROOM * (TURNS * (TURNS - 1) / 2) + counted(SEED + 10)
+            }
+        };
+
+        program.blank();
+        // Every element of both arrays is in the sum, so a compiler that hands one of them away
+        // while the other is still wanted prints something else.
+        program.check(Ty::I64, "total", total);
+        sink.push(Facet::StackSlots, Axes::of([("shape", shape)]), Dialect::C17, program);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -2585,6 +2794,36 @@ mod tests {
             assert!(!case.source.contains("room[i]"), "{}", case.id);
         }
     }
+
+    #[test]
+    fn the_stack_slot_shapes_cover_both_the_ones_that_may_share_and_the_ones_that_may_not() {
+        let cases = cases_for(Facet::StackSlots);
+        let shapes: Vec<Option<&str>> = cases.iter().map(|case| case.axes.get("shape")).collect();
+        for wanted in ["two-scopes", "both-at-once", "address-escapes", "wide-alignment"] {
+            assert!(shapes.contains(&Some(wanted)), "no case for {wanted}");
+        }
+        // The pair that makes the facet an experiment rather than an assertion: the same amount
+        // of C, once where the two arrays are never both wanted and once where they are.
+        let apart = cases.iter().find(|c| c.axes.get("shape") == Some("two-scopes")).unwrap();
+        let together = cases.iter().find(|c| c.axes.get("shape") == Some("both-at-once")).unwrap();
+        assert_eq!(output(apart), "216\n");
+        assert_eq!(output(together), "284\n");
+    }
+
+    #[test]
+    fn the_escaping_case_reads_its_array_through_the_pointer_it_handed_out() {
+        let cases = cases_for(Facet::StackSlots);
+        let case = cases.iter().find(|c| c.axes.get("shape") == Some("address-escapes")).unwrap();
+        // The name is mentioned for the last time at the call, and the reads below it go through
+        // the global. That is the whole of what the case is about, so a generator change that
+        // put another `kept[` below the call would quietly turn it into a different case.
+        let (before, after) = case.source.split_once("stash(kept);").unwrap();
+        assert!(before.contains("kept[i] = seed + i;"), "{}", case.id);
+        assert!(!after.contains("kept["), "{}", case.id);
+        assert!(after.contains("total += escaped[i];"), "{}", case.id);
+        assert_eq!(output(case), "216\n");
+    }
+
     #[test]
     fn every_bit_liveness_case_has_a_block_boundary_between_the_widening_and_its_reader() {
         let cases = cases_for(Facet::BitLiveness);

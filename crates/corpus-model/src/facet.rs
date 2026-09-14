@@ -191,6 +191,17 @@ pub enum Facet {
     /// them is worse than working it out once. This is one program per count, so the count can
     /// be read off a family rather than inferred from a total.
     FrameAddress,
+    /// Two things in the frame that are never both wanted, which may be the same bytes.
+    ///
+    /// A local whose last use is behind it and a value the allocator had to write out are both
+    /// runs of bytes off the stack pointer, and a back end that lays every one of them out
+    /// end to end takes a frame as large as all of them at once. One that shares takes a frame
+    /// as large as the most it needs at any point, which is what these count. The shapes are
+    /// the ones where the answer is yes and the ones where it is no, and the no shapes matter
+    /// more: a local whose address got out is one that may be read through a pointer long
+    /// after the name went out of use, and giving its bytes to something else there is a
+    /// miscompilation rather than a frame that came out too big.
+    StackSlots,
     /// The bit counting builtins, which a back end has to have an instruction for.
     BitBuiltins,
     /// Conversions between the floating types and the integer ones, in both directions.
@@ -300,6 +311,7 @@ impl Facet {
         Self::CompareElim,
         Self::AddressFold,
         Self::FrameAddress,
+        Self::StackSlots,
         Self::BitBuiltins,
         Self::FloatConversion,
         Self::LongDouble,
@@ -373,6 +385,7 @@ impl Facet {
             Self::CompareElim => "compare-elim",
             Self::AddressFold => "address-fold",
             Self::FrameAddress => "frame-address",
+            Self::StackSlots => "stack-slots",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
             Self::LongDouble => "long-double",
@@ -453,6 +466,7 @@ impl Facet {
             Self::CompareElim => "a comparison the instruction in front of it has already made",
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
             Self::FrameAddress => "one local, used at a counted number of offsets",
+            Self::StackSlots => "two things in the frame that may be the same bytes",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
             Self::LongDouble => {
@@ -533,6 +547,7 @@ impl Facet {
             | Self::CompareElim
             | Self::AddressFold
             | Self::FrameAddress
+            | Self::StackSlots
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,
