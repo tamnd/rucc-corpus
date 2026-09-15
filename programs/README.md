@@ -1,10 +1,10 @@
 # The corpus
 
-2030 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2038 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `20e2f5c0acc37c05db07e14d4e7f758c2e0b10d804040cb1e9a49a3ddc3689f0`.
+Corpus digest `aa52eddf65166913023d9301479345e7d5fdb47cfbff96634918e41e0a4606de`.
 
 ## floor (118 programs)
 
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (491 programs)
+## backend (499 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -96,7 +96,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`selection`](backend/selection/README.md) | 40 | choosing the machine instruction for an operation |
 | [`register-pressure`](backend/register-pressure/README.md) | 60 | how many values are live at once, and what that costs |
 | [`register-alloc`](backend/register-alloc/README.md) | 40 | assigning registers and deciding what to spill |
-| [`scheduling`](backend/scheduling/README.md) | 12 | ordering instructions within a block |
+| [`scheduling`](backend/scheduling/README.md) | 20 | ordering instructions within a block |
 | [`block-layout`](backend/block-layout/README.md) | 16 | laying out blocks so the common path falls through |
 | [`if-conversion`](backend/if-conversion/README.md) | 20 | turning a short branch into branchless code |
 | [`switch-lowering`](backend/switch-lowering/README.md) | 15 | choosing how to lower a switch |

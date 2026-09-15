@@ -23,6 +23,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     register_pressure(sink);
     register_alloc(sink);
     scheduling(sink);
+    scheduling_memory(sink);
     block_layout(sink);
     expect_layout(sink);
     if_conversion(sink);
@@ -342,6 +343,140 @@ fn scheduling(sink: &mut Sink<'_>) {
                     program,
                 );
             }
+        }
+    }
+}
+
+/// Work with a memory access in the middle of it, which nothing may be reordered around.
+///
+/// A machine scheduler leaves the accesses of a block in the order they arrived in. It does not
+/// ask whether two of them can be the same place, because by the time it runs there is nothing
+/// left to ask with: machine instructions do not carry `volatile` and they do not carry the types
+/// the source had. That is conservative and it is not free, and these cases are here to say what
+/// it buys. Each one puts a store and a load next to each other at an index worked out from the
+/// loop counter and a value read out of a volatile global, so no compiler can decide the two are
+/// different places, and each one prints a number that comes out different if the two are swapped.
+///
+/// The read-only shape is the control. It has the same shape of address arithmetic and the same
+/// number of accesses and no store at all, so the difference between it and the other three is the
+/// cost of the ordering rather than the cost of touching memory.
+fn scheduling_memory(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &["read-after-write", "write-after-read", "two-writes", "read-only"];
+    const SIZE: i128 = 16;
+    const STEPS: i128 = 64;
+    const MASK: i128 = SIZE - 1;
+    for &ty in TYPES {
+        // Unsigned only, for the same reason the chains above are unsigned. Sixty four rounds of
+        // multiply by five overflows every one of these types many times over, and wrapping is
+        // only defined for the unsigned ones.
+        if ty.signed() {
+            continue;
+        }
+        for &shape in SHAPES {
+            if !sink.wants(Facet::Scheduling) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!(
+                "a {shape} memory access in a loop the compiler cannot unpick"
+            ));
+            program.input(ty, "seed", 1);
+            program.input(Ty::I32, "start", 0);
+            if shape == "two-writes" {
+                // Zero, so the two stores go to the same element and the second one decides what
+                // is there. Nothing in the program says that, so a compiler has to keep the two
+                // in the order they were written to find out.
+                program.input(Ty::I32, "gap", 0);
+            }
+            program.blank();
+            program.line(format!("{name} buffer[{SIZE}];"));
+            program.line(format!("for (int i = 0; i < {SIZE}; i++) {{"));
+            program.line_at(1, format!("buffer[i] = seed + ({name})i;"));
+            program.line("}");
+            program.line(format!("{name} total = 0;"));
+            program.line(format!("for (int i = 0; i < {STEPS}; i++) {{"));
+            // Seven and sixteen have no factor in common, so this walks every element of the
+            // buffer before it comes back to one, and it is not the counter so nothing folds it.
+            program.line_at(1, format!("int at = (i * 7 + start) & {MASK};"));
+
+            let mut buffer: Vec<i128> = (0..SIZE).map(|i| ty.convert(1 + i)).collect();
+            let mut total: i128 = 0;
+            match shape {
+                // The load has to wait for the store, because it is reading what the store just
+                // put there. This is the one shape where a swap is a wrong answer rather than a
+                // different one.
+                "read-after-write" => {
+                    program.line_at(
+                        1,
+                        format!("buffer[at] = buffer[at] * {} + {};", lit(ty, 3), lit(ty, 1)),
+                    );
+                    program.line_at(1, format!("total = total * {} + buffer[at];", lit(ty, 5)));
+                    for i in 0..STEPS {
+                        let at = ((i * 7) & MASK) as usize;
+                        buffer[at] = ty.promoted().convert(buffer[at] * 3 + 1);
+                        total = ty.promoted().convert(total * 5 + buffer[at]);
+                    }
+                }
+                // The store has to wait for the load, because it is writing over what the load
+                // reads. No value passes between the two, which is the case a scheduler that
+                // only tracks values would get wrong.
+                "write-after-read" => {
+                    program.line_at(1, format!("{name} seen = buffer[at];"));
+                    program.line_at(
+                        1,
+                        format!("buffer[at] = seen * {} + {};", lit(ty, 3), lit(ty, 1)),
+                    );
+                    program.line_at(1, format!("total = total * {} + seen;", lit(ty, 5)));
+                    for i in 0..STEPS {
+                        let at = ((i * 7) & MASK) as usize;
+                        let seen = buffer[at];
+                        buffer[at] = ty.promoted().convert(seen * 3 + 1);
+                        total = ty.promoted().convert(total * 5 + seen);
+                    }
+                }
+                // Two stores to what turns out to be one element, and then a load of it. The
+                // element ends up holding whichever store ran second.
+                "two-writes" => {
+                    program.line_at(1, format!("buffer[at] = total + {};", lit(ty, 1)));
+                    program.line_at(
+                        1,
+                        format!("buffer[(at + gap) & {MASK}] = total + {};", lit(ty, 2)),
+                    );
+                    program.line_at(1, format!("total = total * {} + buffer[at];", lit(ty, 5)));
+                    for i in 0..STEPS {
+                        let at = ((i * 7) & MASK) as usize;
+                        buffer[at] = ty.promoted().convert(total + 1);
+                        buffer[at] = ty.promoted().convert(total + 2);
+                        total = ty.promoted().convert(total * 5 + buffer[at]);
+                    }
+                }
+                // No store, so the two loads are held in order by nothing but the rule. The
+                // answer is the same whichever order they run in and the time should be too.
+                "read-only" => {
+                    program.line_at(
+                        1,
+                        format!(
+                            "total = total * {} + buffer[at] + buffer[(at + 3) & {MASK}];",
+                            lit(ty, 5)
+                        ),
+                    );
+                    for i in 0..STEPS {
+                        let at = ((i * 7) & MASK) as usize;
+                        let other = ((at as i128 + 3) & MASK) as usize;
+                        total = ty.promoted().convert(total * 5 + buffer[at] + buffer[other]);
+                    }
+                }
+                other => unreachable!("no such shape: {other}"),
+            }
+            program.line("}");
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+            sink.push(
+                Facet::Scheduling,
+                Axes::of([("type", ty.name()), ("access", shape)]),
+                Dialect::C17,
+                program,
+            );
         }
     }
 }
@@ -2551,6 +2686,62 @@ mod tests {
             .unwrap();
         assert_eq!(one.source.matches("* (unsigned long long)3").count(), 8);
         assert_eq!(four.source.matches("* (unsigned long long)3").count(), 32);
+    }
+
+    #[test]
+    fn every_memory_scheduling_shape_is_generated_for_both_unsigned_wide_types() {
+        let shapes = ["read-after-write", "write-after-read", "two-writes", "read-only"];
+        let cases = cases_for(Facet::Scheduling);
+        for ty in ["u32", "u64"] {
+            for shape in shapes {
+                assert!(
+                    cases.iter().any(|c| {
+                        c.axes.get("type") == Some(ty) && c.axes.get("access") == Some(shape)
+                    }),
+                    "no {shape} case for {ty}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn the_four_memory_scheduling_shapes_each_print_a_different_number() {
+        // Which is the whole point of them. A case whose answer does not change when the store
+        // and the load are swapped is a case that cannot catch the swap, and four shapes that
+        // agree on a number would be four ways of testing one of them.
+        let cases = cases_for(Facet::Scheduling);
+        let mut seen: Vec<&str> = cases
+            .iter()
+            .filter(|c| c.axes.get("type") == Some("u64") && c.axes.get("access").is_some())
+            .map(output)
+            .collect();
+        assert_eq!(seen.len(), 4);
+        seen.sort_unstable();
+        seen.dedup();
+        assert_eq!(seen.len(), 4, "two shapes print the same number");
+    }
+
+    #[test]
+    fn the_read_only_memory_shape_is_the_only_one_that_never_stores_in_its_loop() {
+        for case in cases_for(Facet::Scheduling) {
+            let Some(shape) = case.axes.get("access") else {
+                continue;
+            };
+            // The fill loop stores once, and every shape has one of those. Anything past that is
+            // a store inside the loop the case is actually about.
+            let stores = case.source.matches("buffer[").count();
+            let fill = case.source.matches("buffer[i] =").count();
+            assert_eq!(fill, 1, "{} does not fill its buffer once", case.id);
+            if shape == "read-only" {
+                assert!(
+                    !case.source.contains("buffer[at] ="),
+                    "{} stores and says it does not",
+                    case.id
+                );
+            } else {
+                assert!(stores > 2, "{} has nothing for the order to matter to", case.id);
+            }
+        }
     }
 
     #[test]
