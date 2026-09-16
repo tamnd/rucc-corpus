@@ -1,6 +1,6 @@
 # What went wrong
 
-164 findings, worst first. A finding is one case, one compiler, one level.
+40 findings, worst first. A finding is one case, one compiler, one level.
 
 ### `setjmp-longjmp.volatile-survives.c17.59577dbb` at `O0` on `rucc`
 
@@ -332,117 +332,115 @@ expected: the program compiles
 actual:   rucc: error: internal error: invalid IR, @main block1 mul: %91 arrives at block9 and does not reach here [E0652]\nruc...
 ```
 
-### `computed-goto.static-table.16.c17.7956dc9b` at `O0` on `rucc`
+### `atomics.fence.c17.6b7c6e1f` at `O0` on `rucc`
 
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
+rucc has not built the part of the atomic builtins at every ordering, and the header over them this case needs yet
 
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   case.c:10:32: error: initializer element is not constant [E0618]\ncase.c:10:40: error: initializer element is not con...
-```
-
-### `computed-goto.static-table.16.c17.7956dc9b` at `O1` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
+Facet [`atomics`](../programs/correctness/atomics/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:10:32: error: initializer element is not constant [E0618]\ncase.c:10:40: error: initializer element is not con...
+actual:   case.c:16:5: error: `__atomic_signal_fence` is not implemented yet [E0686]\ncase.c:16:5: note: a call to it would go ...
 ```
 
-### `computed-goto.static-table.16.c17.7956dc9b` at `O2` on `rucc`
+### `atomics.fence.c17.6b7c6e1f` at `O1` on `rucc`
 
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
+rucc has not built the part of the atomic builtins at every ordering, and the header over them this case needs yet
 
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   case.c:10:32: error: initializer element is not constant [E0618]\ncase.c:10:40: error: initializer element is not con...
-```
-
-### `computed-goto.static-table.16.c17.7956dc9b` at `O3` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
+Facet [`atomics`](../programs/correctness/atomics/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:10:32: error: initializer element is not constant [E0618]\ncase.c:10:40: error: initializer element is not con...
+actual:   case.c:16:5: error: `__atomic_signal_fence` is not implemented yet [E0686]\ncase.c:16:5: note: a call to it would go ...
 ```
 
-### `computed-goto.static-table.16.c17.7956dc9b` at `Os` on `rucc`
+### `atomics.fence.c17.6b7c6e1f` at `O2` on `rucc`
 
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
+rucc has not built the part of the atomic builtins at every ordering, and the header over them this case needs yet
 
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   case.c:10:32: error: initializer element is not constant [E0618]\ncase.c:10:40: error: initializer element is not con...
-```
-
-### `computed-goto.static-table.2.c17.10f906d7` at `O0` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
+Facet [`atomics`](../programs/correctness/atomics/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
+actual:   case.c:16:5: error: `__atomic_signal_fence` is not implemented yet [E0686]\ncase.c:16:5: note: a call to it would go ...
 ```
 
-### `computed-goto.static-table.2.c17.10f906d7` at `O1` on `rucc`
+### `atomics.fence.c17.6b7c6e1f` at `O3` on `rucc`
 
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
+rucc has not built the part of the atomic builtins at every ordering, and the header over them this case needs yet
 
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
-```
-
-### `computed-goto.static-table.2.c17.10f906d7` at `O2` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
+Facet [`atomics`](../programs/correctness/atomics/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
+actual:   case.c:16:5: error: `__atomic_signal_fence` is not implemented yet [E0686]\ncase.c:16:5: note: a call to it would go ...
 ```
 
-### `computed-goto.static-table.2.c17.10f906d7` at `O3` on `rucc`
+### `atomics.fence.c17.6b7c6e1f` at `Os` on `rucc`
 
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
+rucc has not built the part of the atomic builtins at every ordering, and the header over them this case needs yet
 
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
-
-```
-expected: the program compiles
-actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
-```
-
-### `computed-goto.static-table.2.c17.10f906d7` at `Os` on `rucc`
-
-rucc would not compile a valid program about the address of a label, and the indirect jump through it
-
-Facet [`computed-goto`](../programs/floor/computed-goto/README.md).
+Facet [`atomics`](../programs/correctness/atomics/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:10:31: error: initializer element is not constant [E0618]\ncase.c:10:39: error: initializer element is not con...
+actual:   case.c:16:5: error: `__atomic_signal_fence` is not implemented yet [E0686]\ncase.c:16:5: note: a call to it would go ...
 ```
 
-And 124 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
+### `setjmp-longjmp.a-retry-loop.c17.916756fb` at `O0` on `rucc`
+
+rucc did not finish on a case about the jump that leaves a function without returning from it, exit status -1
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: the program compiles and runs
+actual:   the program was killed, either by a signal or by the timeout
+```
+
+### `setjmp-longjmp.a-retry-loop.c17.916756fb` at `O1` on `rucc`
+
+rucc did not finish on a case about the jump that leaves a function without returning from it, exit status -1
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: the program compiles and runs
+actual:   the program was killed, either by a signal or by the timeout
+```
+
+### `setjmp-longjmp.a-retry-loop.c17.916756fb` at `O2` on `rucc`
+
+rucc did not finish on a case about the jump that leaves a function without returning from it, exit status -1
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: the program compiles and runs
+actual:   the program was killed, either by a signal or by the timeout
+```
+
+### `setjmp-longjmp.a-retry-loop.c17.916756fb` at `O3` on `rucc`
+
+rucc did not finish on a case about the jump that leaves a function without returning from it, exit status -1
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: the program compiles and runs
+actual:   the program was killed, either by a signal or by the timeout
+```
+
+### `setjmp-longjmp.a-retry-loop.c17.916756fb` at `Os` on `rucc`
+
+rucc did not finish on a case about the jump that leaves a function without returning from it, exit status -1
+
+Facet [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md).
+
+```
+expected: the program compiles and runs
+actual:   the program was killed, either by a signal or by the timeout
+```
 
 ## What the compiler says it has not built yet
 
@@ -450,7 +448,5 @@ Its own section rather than a line in the failures, because the response is diff
 
 | what the compiler said | cases | compiler |
 |---|---|---|
-| error: cannot generate code for 'main': no rule lowers a `block_addr` producing a `ptr` [E0653] | 80 | `rucc` |
-| error: `__builtin_alloca` is not implemented yet [E0686] | 15 | `rucc` |
 | error: `__atomic_signal_fence` is not implemented yet [E0686] | 5 | `rucc` |
 
