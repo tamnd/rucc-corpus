@@ -701,26 +701,26 @@ Furthest behind:
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
 | `bit-builtins` | backend | 22 | 88 percent more | not measured | inside the noise | 48 percent less |
-| `long-double` | backend | 10 | 68 percent more | not measured | level | 49 percent less |
+| `long-double` | backend | 10 | 68 percent more | not measured | inside the noise | 49 percent less |
 | `register-alloc` | backend | 40 | 64 percent more | not measured | inside the noise | 49 percent less |
-| `scheduling` | backend | 20 | 46 percent more | not measured | inside the noise | 50 percent less |
-| `loop-restructure` | loops | 48 | 45 percent more | not measured | level | 46 percent less |
-| `register-pressure` | backend | 60 | 38 percent more | not measured | inside the noise | 47 percent less |
-| `float-conversion` | backend | 66 | 23 percent more | not measured | inside the noise | 48 percent less |
-| `calling-convention` | backend | 10 | 20 percent more | not measured | level | 46 percent less |
+| `scheduling` | backend | 20 | 46 percent more | not measured | inside the noise | 49 percent less |
+| `loop-restructure` | loops | 48 | 45 percent more | not measured | inside the noise | 47 percent less |
+| `register-pressure` | backend | 60 | 38 percent more | not measured | inside the noise | 48 percent less |
+| `float-conversion` | backend | 66 | 23 percent more | not measured | level | 48 percent less |
+| `calling-convention` | backend | 10 | 20 percent more | not measured | inside the noise | 47 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `conditional-store` | local | 16 | 31 percent less | not measured | inside the noise | 62 percent less |
-| `short-circuit` | local | 22 | 30 percent less | not measured | inside the noise | 60 percent less |
-| `prune` | global | 15 | 24 percent less | not measured | inside the noise | 53 percent less |
-| `value-settled` | local | 13 | 19 percent less | not measured | inside the noise | 57 percent less |
-| `vla-and-alloca` | floor | 9 | 18 percent less | not measured | inside the noise | 58 percent less |
+| `conditional-store` | local | 16 | 31 percent less | not measured | level | 61 percent less |
+| `short-circuit` | local | 22 | 30 percent less | not measured | inside the noise | 57 percent less |
+| `prune` | global | 15 | 24 percent less | not measured | level | 56 percent less |
+| `value-settled` | local | 13 | 19 percent less | not measured | inside the noise | 56 percent less |
+| `vla-and-alloca` | floor | 9 | 18 percent less | not measured | inside the noise | 63 percent less |
 | `iv-selection` | loops | 36 | 16 percent less | not measured | inside the noise | 58 percent less |
 | `load-fold` | backend | 40 | 11 percent less | not measured | inside the noise | 52 percent less |
-| `setjmp-longjmp` | correctness | 8 | 8 percent less | not measured | inside the noise | 48 percent less |
+| `setjmp-longjmp` | correctness | 8 | 8 percent less | not measured | inside the noise | 43 percent less |
 
 ## What `-Os` does
 
