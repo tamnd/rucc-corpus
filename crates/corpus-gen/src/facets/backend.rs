@@ -37,6 +37,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     address_fold(sink);
     load_fold(sink);
     store_fold(sink);
+    store_fold_constant(sink);
     frame_address(sink);
     stack_slots(sink);
 }
@@ -2540,6 +2541,223 @@ fn store_fold(sink: &mut Sink<'_>) {
     }
 }
 
+/// A load, arithmetic against a constant, and a store of the answer to the same place.
+///
+/// The shape above with the second operand written down instead of held in a register, which is
+/// the commoner half of it: `*p += 1` and `s->count -= 1` are what a program says far more often
+/// than `*p += x`. On the machine it is a different instruction rather than the same one with a
+/// constant in it, since it carries an addressing mode and an immediate at once and no register
+/// of its own, so a back end that has the register form has not got this one for free and these
+/// programs are the ones that say whether it does.
+///
+/// Every type rather than the four at least as wide as `int`, because the widths are the whole
+/// question here. C promotes a narrow operand to `int` before the arithmetic and narrows the
+/// answer on the way back into memory, so reaching the byte form at all means a compiler worked
+/// out that the wide arithmetic in between was not asked for. One that never works that out is
+/// correct in all of these and longer in all of them, which the size column says and the output
+/// does not.
+///
+/// The shapes are the five operations that have a memory destination, the subtraction both ways
+/// round, a constant too big for the short form of the encoding, and then the same reasons the
+/// three are not one that the register form has. There is no multiply, for the same reason as
+/// above, and there is no reversed constant that a compiler could fold either, because `20 - *p`
+/// is the constant minus the memory and the instruction computes the memory minus the constant.
+fn store_fold_constant(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "add",
+        "subtract",
+        "subtract-reversed",
+        "bitwise-or",
+        "bitwise-and",
+        "exclusive-or",
+        "big-constant",
+        "two-readers",
+        "answer-read",
+        "store-between",
+        "call-between",
+        "other-place",
+        "other-offset",
+        "index-written-between",
+        "frame-slots",
+    ];
+    for &ty in Ty::ALL {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::StoreFoldConstant) {
+                return;
+            }
+            // A constant that needs the long form of the encoding does not fit a byte at all,
+            // so there is nothing to ask at the narrowest width and no program for it.
+            if shape == "big-constant" && ty.bits() == 8 {
+                continue;
+            }
+            let name = ty.c_name();
+            let mut program =
+                Program::new(format!("one {name} read and written against a constant, {shape}"));
+            program.input(ty, "seed", 5);
+            if shape != "frame-slots" {
+                program.input(Ty::I32, "at", 3);
+                // The index the answer is read back at, holding what `at` holds without saying
+                // so. The same trick the register form uses, and for the same reason: an array
+                // written and read at one index is a store handed straight to the reader, and
+                // then the program has no store left in it to fold.
+                program.input(Ty::I32, "back", 3);
+            }
+            if matches!(shape, "store-between" | "other-place" | "index-written-between") {
+                program.input(Ty::I32, "other", 6);
+            }
+            if shape == "call-between" {
+                // A call the compiler cannot see through and cannot delete, the same one the
+                // register form uses.
+                program.top("static volatile int noise_count;");
+                program.top("static void noise(void) {");
+                program.top("    noise_count = noise_count + 1;");
+                program.top("}");
+                program.top("static void (*volatile jump)(void) = noise;");
+            }
+            if shape == "frame-slots" {
+                // Where the addresses go, volatile so both stores happen and neither local can
+                // be promoted out of the frame.
+                program.top(format!("static {name} *volatile hold;"));
+            }
+            program.blank();
+            if shape != "frame-slots" {
+                // The same array filled the same way as the register form, so `buffer[3]` is 8
+                // here too and the numbers below can be read against each other.
+                program.line(format!("{name} buffer[8];"));
+                program.line("for (int i = 0; i < 8; i++) {");
+                program.line_at(1, format!("buffer[i] = seed + ({name})i;"));
+                program.line("}");
+            }
+            let value: i128 = match shape {
+                // The shape the walk exists for. 8 and 5 make 13, in one instruction carrying
+                // an address and an immediate on a machine that has one.
+                "add" => {
+                    program.line("buffer[at] += 5;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // The memory minus the constant, which is what the instruction computes.
+                "subtract" => {
+                    program.line("buffer[at] -= 5;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    3
+                }
+                // The constant minus the memory, which it does not. A back end that took this
+                // for the shape above prints 3 where the answer is 12.
+                "subtract-reversed" => {
+                    program.line("buffer[at] = 20 - buffer[at];");
+                    program.line(format!("{name} total = buffer[back];"));
+                    12
+                }
+                // 8 or 5 is 13. At a byte and at a word this is one of the two operations no
+                // rule in rucc selects yet, so it is the shape that says when that changes.
+                "bitwise-or" => {
+                    program.line("buffer[at] |= 5;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // 8 and 12 is 8, with the mask written down rather than handed in, which is the
+                // difference between this facet and the one above.
+                "bitwise-and" => {
+                    program.line("buffer[at] &= 12;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    8
+                }
+                // 8 exclusive or 5 is 13, and the other of the two the narrow widths cannot
+                // reach yet.
+                "exclusive-or" => {
+                    program.line("buffer[at] ^= 5;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // A constant that will not fit the sign extended byte the short encoding holds,
+                // so the instruction is the same one and four bytes longer. 8 and 4660 make
+                // 4668.
+                "big-constant" => {
+                    program.line("buffer[at] += 4660;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    4668
+                }
+                // The word that came back is read by the arithmetic and by the sum at the end,
+                // so it has to be in a register and the load cannot go away. 13 and 8 make 21.
+                "two-readers" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("buffer[at] = value + 5;");
+                    program.line(format!("{name} total = buffer[back] + value;"));
+                    21
+                }
+                // The answer is read by the store and by the sum at the end, and the one
+                // instruction leaves nothing in a register. 13 and 13 make 26.
+                "answer-read" => {
+                    program.line(format!("{name} sum = buffer[at] + 5;"));
+                    program.line("buffer[at] = sum;");
+                    program.line(format!("{name} total = buffer[back] + sum;"));
+                    26
+                }
+                // A store in between, at an index nothing can tell apart from the one being
+                // worked on. 13 and 5 make 18.
+                "store-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("buffer[other] = seed;");
+                    program.line("buffer[at] = value + 5;");
+                    program.line(format!("{name} total = buffer[back] + buffer[other];"));
+                    18
+                }
+                // A call in between. What a call does to memory is not written in the call.
+                "call-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("jump();");
+                    program.line("buffer[at] = value + 5;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // Read at one index and written at another, two addresses of the same shape
+                // that are not the same place. 8 and 13 make 21.
+                "other-place" => {
+                    program.line("buffer[other] = buffer[at] + 5;");
+                    program.line(format!("{name} total = buffer[back] + buffer[other];"));
+                    21
+                }
+                // The same address and the same index, one element along, which is the shape a
+                // back end gets wrong by comparing the base and the index and stopping.
+                "other-offset" => {
+                    program.line("buffer[at + 1] = buffer[at] + 5;");
+                    program.line(format!("{name} total = buffer[back] + buffer[back + 1];"));
+                    21
+                }
+                // The index is written between the load and the store, so the address the one
+                // instruction would carry is not the address that was read.
+                "index-written-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("at = other;");
+                    program.line("buffer[at] = value + 5;");
+                    program.line(format!("{name} total = buffer[back] + buffer[other];"));
+                    21
+                }
+                // Two locals whose addresses got out, neither placed in the frame yet by the
+                // time the back end sees the three instructions. 5 and 10 make 15.
+                _ => {
+                    program.line(format!("{name} one = seed;"));
+                    program.line(format!("{name} two = seed + {};", lit(ty, 1)));
+                    program.line("hold = &one;");
+                    program.line("hold = &two;");
+                    program.line("two = one + 5;");
+                    program.line(format!("{name} total = one + two;"));
+                    15
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", value);
+            sink.push(
+                Facet::StoreFoldConstant,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// One local, used at a counted number of offsets, one program per count.
 ///
 /// The question here is a number rather than a yes or a no. An address into the frame is a
@@ -3542,6 +3760,93 @@ mod tests {
             assert!(case.source.contains("hold = &two;"), "{}", case.id);
             assert!(case.source.contains("*volatile hold;"), "{}", case.id);
             assert!(case.source.contains("two = one + seed;"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn every_store_fold_constant_case_prints_the_number_its_shape_fixes() {
+        let cases = cases_for(Facet::StoreFoldConstant);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            // The same array filled the same way as the register form, so `buffer[3]` is 8 in
+            // every one of these and the number belongs to the shape and not to the type.
+            let wanted = match case.axes.get("shape") {
+                Some("subtract") => "3\n",
+                Some("subtract-reversed") => "12\n",
+                Some("bitwise-and") => "8\n",
+                Some("big-constant") => "4668\n",
+                Some("two-readers") => "21\n",
+                Some("answer-read") => "26\n",
+                Some("store-between") => "18\n",
+                Some("other-place" | "other-offset" | "index-written-between") => "21\n",
+                Some("frame-slots") => "15\n",
+                _ => "13\n",
+            };
+            assert_eq!(output(case), wanted, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_store_fold_constant_shapes_the_walk_has_to_refuse_are_all_present() {
+        let cases = cases_for(Facet::StoreFoldConstant);
+        let shapes: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("shape")).collect();
+        for wanted in [
+            "subtract-reversed",
+            "two-readers",
+            "answer-read",
+            "store-between",
+            "call-between",
+            "other-place",
+            "other-offset",
+            "index-written-between",
+            "frame-slots",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+    }
+
+    #[test]
+    fn the_store_fold_constant_shapes_cover_every_operation_that_has_a_memory_destination() {
+        let cases = cases_for(Facet::StoreFoldConstant);
+        let shapes: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("shape")).collect();
+        // The same five that share the column of opcodes writing memory, and no multiply,
+        // because the machine has no encoding for one.
+        for wanted in ["add", "subtract", "bitwise-and", "bitwise-or", "exclusive-or"] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+        for case in &cases {
+            assert!(!case.source.contains("*="), "{} multiplies", case.id);
+        }
+    }
+
+    #[test]
+    fn every_store_fold_constant_case_works_against_a_number_written_down() {
+        // The whole difference between this facet and the one above is where the second operand
+        // is. A case that reached for the input again would be a second copy of `store-fold`
+        // under another name, and the two would agree whatever a compiler did.
+        for case in cases_for(Facet::StoreFoldConstant) {
+            for reached in ["+= seed", "-= seed", "|= seed", "&= seed", "^= seed", "+ seed;"] {
+                assert!(!case.source.contains(reached), "{} uses {reached}", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn the_store_fold_constant_family_runs_from_a_byte_up_to_eight_of_them() {
+        let cases = cases_for(Facet::StoreFoldConstant);
+        let types: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("type")).collect();
+        // Every width the instruction has, which is what a facet about narrowing has to carry.
+        // The register form stops at `int`, because promotion never changes its result type and
+        // the widths are not what it is asking about.
+        for wanted in ["i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"] {
+            assert!(types.contains(&wanted), "no case at {wanted}");
+        }
+        // A constant too big for a sign extended byte is not a question a byte can be asked.
+        for case in &cases {
+            if case.axes.get("shape") == Some("big-constant") {
+                assert_ne!(case.axes.get("type"), Some("i8"), "{}", case.id);
+                assert_ne!(case.axes.get("type"), Some("u8"), "{}", case.id);
+            }
         }
     }
 

@@ -1,10 +1,10 @@
 # The corpus
 
-2094 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2212 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `557072364218d04048808ce9b842bebe03ab5c9d9320a85374fed6ba04e7644e`.
+Corpus digest `9fceadafe92c2faf4bd709d312c6f9449e9a6e0f670ad2c658b6a1539c421377`.
 
 ## floor (118 programs)
 
@@ -87,7 +87,7 @@ Transformations that need to look at more than one function at a time.
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (555 programs)
+## backend (673 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -109,6 +109,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`address-fold`](backend/address-fold/README.md) | 28 | whether an address is worked out once or carried by each reader |
 | [`load-fold`](backend/load-fold/README.md) | 40 | a load one arithmetic instruction reads, and what stops it moving |
 | [`store-fold`](backend/store-fold/README.md) | 56 | a load, arithmetic on it, and a store back to the same place |
+| [`store-fold-constant`](backend/store-fold-constant/README.md) | 118 | a load, arithmetic against a constant, and a store back to the same place |
 | [`frame-address`](backend/frame-address/README.md) | 6 | one local, used at a counted number of offsets |
 | [`stack-slots`](backend/stack-slots/README.md) | 6 | two things in the frame that may be the same bytes |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
