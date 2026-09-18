@@ -196,6 +196,23 @@ pub enum Facet {
     /// reorders two accesses, and by the time it can see them it cannot tell a `volatile` one
     /// from an ordinary one, so the case exists to say what the order has to be.
     LoadFold,
+    /// A load, arithmetic on what came back, and a store of the answer to the same place.
+    ///
+    /// A back end facet of its own rather than a shape of `load-fold`, because it is not the
+    /// same question with the operands the other way about. Three instructions become one here
+    /// rather than two becoming one, and the three have to be read exactly as instruction
+    /// selection wrote them: `*p -= x` and `x - *p` are the same pair of operands once a load
+    /// has been folded into the subtraction, and only one of them is the instruction that
+    /// writes memory. So the shapes are both arrangements of the subtraction, each of the five
+    /// operations that have a memory destination, and then every reason the three are not one:
+    /// the loaded word read twice, the answer read by something besides the store, an access
+    /// in between, a call in between, a store to somewhere else, a store at another
+    /// displacement off the same address, and an index written in between.
+    ///
+    /// The two frame slots are the shape worth having. Two locals the layout has not placed
+    /// yet are both written down as the same distance from the stack pointer, so a back end
+    /// that compares the addresses it can see says they are one place, and they are two.
+    StoreFold,
     /// One local, used at a counted number of offsets.
     ///
     /// A back end facet of its own rather than a shape of `address-fold`, because the question
@@ -325,6 +342,7 @@ impl Facet {
         Self::CompareElim,
         Self::AddressFold,
         Self::LoadFold,
+        Self::StoreFold,
         Self::FrameAddress,
         Self::StackSlots,
         Self::BitBuiltins,
@@ -400,6 +418,7 @@ impl Facet {
             Self::CompareElim => "compare-elim",
             Self::AddressFold => "address-fold",
             Self::LoadFold => "load-fold",
+            Self::StoreFold => "store-fold",
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
             Self::BitBuiltins => "bit-builtins",
@@ -482,6 +501,7 @@ impl Facet {
             Self::CompareElim => "a comparison the instruction in front of it has already made",
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
             Self::LoadFold => "a load one arithmetic instruction reads, and what stops it moving",
+            Self::StoreFold => "a load, arithmetic on it, and a store back to the same place",
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::StackSlots => "two things in the frame that may be the same bytes",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -564,6 +584,7 @@ impl Facet {
             | Self::CompareElim
             | Self::AddressFold
             | Self::LoadFold
+            | Self::StoreFold
             | Self::FrameAddress
             | Self::StackSlots
             | Self::BitBuiltins

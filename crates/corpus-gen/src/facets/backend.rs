@@ -36,6 +36,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     compare_elim(sink);
     address_fold(sink);
     load_fold(sink);
+    store_fold(sink);
     frame_address(sink);
     stack_slots(sink);
 }
@@ -2329,6 +2330,216 @@ fn load_fold(sink: &mut Sink<'_>) {
     }
 }
 
+/// A load, arithmetic on what came back, and a store of the answer to the same place.
+///
+/// Three instructions rather than two, and one instruction on a machine that can write memory
+/// with its arithmetic. What makes this a facet of its own rather than the shapes above with the
+/// operands the other way about is the subtraction. `buffer[at] -= seed` computes the memory
+/// minus the register, which is what the one instruction computes, and `(seed + 20) - buffer[at]`
+/// computes the register minus the memory, which it does not. Fold the load into the subtraction
+/// first and the two read alike, so the pair is here to say that the three have to be read as
+/// instruction selection wrote them.
+///
+/// The rest of the shapes are the reasons three instructions are not one: the loaded word read
+/// twice, the answer read by somebody besides the store, a store in the way, a call in the way, a
+/// store to another place, a store at another displacement off the same address, and an index
+/// written in between. Each of them is a program whose answer a back end that folds anyway gets
+/// wrong.
+///
+/// The two frame slots are the shape worth having. Two locals the layout has not placed yet are
+/// written down as the same distance from the stack pointer, so a back end comparing the
+/// addresses it can see calls them one place. They are two, and the program says which.
+fn store_fold(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "add",
+        "subtract",
+        "subtract-reversed",
+        "bitwise-or",
+        "bitwise-and",
+        "exclusive-or",
+        "two-readers",
+        "answer-read",
+        "store-between",
+        "call-between",
+        "other-place",
+        "other-offset",
+        "index-written-between",
+        "frame-slots",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::StoreFold) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("one {name} read and write, {shape}"));
+            program.input(ty, "seed", 5);
+            if shape != "frame-slots" {
+                program.input(Ty::I32, "at", 3);
+                // The index the answer is read back at. It holds what `at` holds, and nothing
+                // says so, which is what keeps the store alive: an array written at an index and
+                // read at the same index is a store the optimizer hands straight to the reader,
+                // and then the case has no store in it at all.
+                program.input(Ty::I32, "back", 3);
+            }
+            if matches!(shape, "store-between" | "other-place" | "index-written-between") {
+                program.input(Ty::I32, "other", 6);
+            }
+            if shape == "bitwise-and" {
+                program.input(ty, "mask", 12);
+            }
+            if shape == "call-between" {
+                // A call the compiler cannot see through and cannot delete, the same one the
+                // load fold cases use and for the same reason.
+                program.top("static volatile int noise_count;");
+                program.top("static void noise(void) {");
+                program.top("    noise_count = noise_count + 1;");
+                program.top("}");
+                program.top("static void (*volatile jump)(void) = noise;");
+            }
+            if shape == "frame-slots" {
+                // Where the addresses go. It is volatile so both stores to it happen, which is
+                // what stops either local being promoted into a register and is the whole of
+                // what puts the pair in the frame.
+                program.top(format!("static {name} *volatile hold;"));
+            }
+            program.blank();
+            if shape != "frame-slots" {
+                // Filled in a loop and worked on at an index nothing knows. `buffer[3]` is 8
+                // afterwards, which is the number every shape below counts from.
+                program.line(format!("{name} buffer[8];"));
+                program.line("for (int i = 0; i < 8; i++) {");
+                program.line_at(1, format!("buffer[i] = seed + ({name})i;"));
+                program.line("}");
+            }
+            let value: i128 = match shape {
+                // The shape the pass exists for. 8 and 5 make 13, in one instruction on a
+                // machine that has one.
+                "add" => {
+                    program.line("buffer[at] += seed;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // The memory minus the register, which is the arrangement the one instruction
+                // computes. 8 take away 5 is 3.
+                "subtract" => {
+                    program.line("buffer[at] -= seed;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    3
+                }
+                // The register minus the memory, which the one instruction does not compute.
+                // 25 take away 8 is 17, and a back end that folded this anyway prints 17 less
+                // twice over, which is to say it prints something else.
+                "subtract-reversed" => {
+                    program.line(format!("buffer[at] = (seed + {}) - buffer[at];", lit(ty, 20)));
+                    program.line(format!("{name} total = buffer[back];"));
+                    17
+                }
+                // 8 or 5 is 13.
+                "bitwise-or" => {
+                    program.line("buffer[at] |= seed;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // 8 and 12 is 8. The mask is an input rather than a constant because arithmetic
+                // against a constant is a different instruction, one that carries an address and
+                // an immediate at once, and no target here describes it yet.
+                "bitwise-and" => {
+                    program.line("buffer[at] &= mask;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    8
+                }
+                // 8 exclusive or 5 is 13.
+                "exclusive-or" => {
+                    program.line("buffer[at] ^= seed;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // The word that came back is read by the arithmetic and by the sum at the end,
+                // so it has to be in a register whatever happens and the load cannot go away.
+                // 13 and 8 make 21.
+                "two-readers" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("buffer[at] = value + seed;");
+                    program.line(format!("{name} total = buffer[back] + value;"));
+                    21
+                }
+                // The answer is read by the store and by the sum at the end. One instruction
+                // that writes memory leaves nothing in a register, so this one cannot be it.
+                // 13 and 13 make 26.
+                "answer-read" => {
+                    program.line(format!("{name} sum = buffer[at] + seed;"));
+                    program.line("buffer[at] = sum;");
+                    program.line(format!("{name} total = buffer[back] + sum;"));
+                    26
+                }
+                // A store between the load and the store, at an index nothing can tell apart
+                // from the one being worked on. 13 and 5 make 18.
+                "store-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("buffer[other] = seed;");
+                    program.line("buffer[at] = value + seed;");
+                    program.line(format!("{name} total = buffer[back] + buffer[other];"));
+                    18
+                }
+                // A call between the two. What a call does to memory is not written in the call.
+                "call-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("jump();");
+                    program.line("buffer[at] = value + seed;");
+                    program.line(format!("{name} total = buffer[back];"));
+                    13
+                }
+                // Read at one index and written at another. The two addresses are the same
+                // shape and are not the same place. 8 and 13 make 21.
+                "other-place" => {
+                    program.line("buffer[other] = buffer[at] + seed;");
+                    program.line(format!("{name} total = buffer[back] + buffer[other];"));
+                    21
+                }
+                // The same address and the same index, one element apart. This is the shape a
+                // back end gets wrong by comparing the base and the index and stopping there.
+                // 8 and 13 make 21.
+                "other-offset" => {
+                    program.line("buffer[at + 1] = buffer[at] + seed;");
+                    program.line(format!("{name} total = buffer[back] + buffer[back + 1];"));
+                    21
+                }
+                // The index the address reads is written between the load and the store, so the
+                // address the one instruction would carry is not the address that was read.
+                // 8 and 13 make 21.
+                "index-written-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("at = other;");
+                    program.line("buffer[at] = value + seed;");
+                    program.line(format!("{name} total = buffer[back] + buffer[other];"));
+                    21
+                }
+                // Two locals whose addresses got out, so both are in the frame, and neither has
+                // been given a place in it by the time a back end pass sees the three
+                // instructions. 5 and 10 make 15.
+                _ => {
+                    program.line(format!("{name} one = seed;"));
+                    program.line(format!("{name} two = seed + {};", lit(ty, 1)));
+                    program.line("hold = &one;");
+                    program.line("hold = &two;");
+                    program.line("two = one + seed;");
+                    program.line(format!("{name} total = one + two;"));
+                    15
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", value);
+            sink.push(
+                Facet::StoreFold,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// One local, used at a counted number of offsets, one program per count.
 ///
 /// The question here is a number rather than a yes or a no. An address into the frame is a
@@ -3224,6 +3435,113 @@ mod tests {
             // one instruction it was written around.
             assert!(case.source.contains("jump();"), "{} has no call", case.id);
             assert!(case.source.contains("(*volatile jump)"), "{} inlines away", case.id);
+        }
+    }
+
+    #[test]
+    fn every_store_fold_case_prints_the_number_its_shape_fixes() {
+        let cases = cases_for(Facet::StoreFold);
+        assert!(!cases.is_empty());
+        for case in &cases {
+            // Every shape works on the same array filled the same way, so `buffer[3]` is 8
+            // everywhere and the number belongs to the shape rather than to the type. A case
+            // printing something else is three instructions that became one when they could
+            // not.
+            let wanted = match case.axes.get("shape") {
+                Some("subtract") => "3\n",
+                Some("subtract-reversed") => "17\n",
+                Some("bitwise-and") => "8\n",
+                Some("two-readers") => "21\n",
+                Some("answer-read") => "26\n",
+                Some("store-between") => "18\n",
+                Some("other-place" | "other-offset" | "index-written-between") => "21\n",
+                Some("frame-slots") => "15\n",
+                _ => "13\n",
+            };
+            assert_eq!(output(case), wanted, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_store_fold_shapes_the_pass_has_to_refuse_are_all_present() {
+        let cases = cases_for(Facet::StoreFold);
+        let shapes: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("shape")).collect();
+        for wanted in [
+            "subtract-reversed",
+            "two-readers",
+            "answer-read",
+            "store-between",
+            "call-between",
+            "other-place",
+            "other-offset",
+            "index-written-between",
+            "frame-slots",
+        ] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+    }
+
+    #[test]
+    fn the_store_fold_shapes_cover_every_operation_that_has_a_memory_destination() {
+        let cases = cases_for(Facet::StoreFold);
+        let shapes: Vec<&str> = cases.iter().filter_map(|case| case.axes.get("shape")).collect();
+        // Five operations share the column of opcodes that write memory. The multiply is not
+        // among them and there is no shape for it, because the machine has no such encoding.
+        for wanted in ["add", "subtract", "bitwise-and", "bitwise-or", "exclusive-or"] {
+            assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+        for case in &cases {
+            assert!(!case.source.contains("*="), "{} multiplies", case.id);
+        }
+    }
+
+    #[test]
+    fn both_arrangements_of_the_store_fold_subtraction_are_present_and_differ() {
+        let cases = cases_for(Facet::StoreFold);
+        let one = cases
+            .iter()
+            .find(|case| case.axes.get("shape") == Some("subtract"))
+            .expect("no subtract case");
+        let other = cases
+            .iter()
+            .find(|case| case.axes.get("shape") == Some("subtract-reversed"))
+            .expect("no subtract-reversed case");
+        // The memory minus the register and the register minus the memory. One of them is the
+        // instruction that writes memory and the other is not, and they print different numbers
+        // so a report showing the same answer for both is a finding.
+        assert!(one.source.contains("buffer[at] -= seed;"), "{}", one.id);
+        assert!(other.source.contains("- buffer[at];"), "{}", other.id);
+        assert_ne!(output(one), output(other));
+    }
+
+    #[test]
+    fn every_store_fold_case_with_an_array_reads_the_answer_back_at_an_index_nothing_knows() {
+        for case in cases_for(Facet::StoreFold) {
+            if case.axes.get("shape") == Some("frame-slots") {
+                continue;
+            }
+            // Written at one index and read back at the same one is a store the optimizer hands
+            // to the reader, and then the store is dead and the case has nothing in it. `back`
+            // holds what `at` holds and nothing says so, which is what keeps the store.
+            assert!(case.source.contains("[back]"), "{}", case.id);
+            assert!(case.source.contains("back = back_in;"), "{}", case.id);
+            assert!(case.source.contains("for (int i = 0; i < 8; i++) {"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_frame_slots_shape_puts_both_locals_in_the_frame() {
+        for case in cases_for(Facet::StoreFold) {
+            if case.axes.get("shape") != Some("frame-slots") {
+                continue;
+            }
+            // Two locals whose addresses got out, so neither can live in a register and both are
+            // a distance from the stack pointer that nothing has fixed yet. Take either address
+            // away and the pair goes into registers and the case says nothing.
+            assert!(case.source.contains("hold = &one;"), "{}", case.id);
+            assert!(case.source.contains("hold = &two;"), "{}", case.id);
+            assert!(case.source.contains("*volatile hold;"), "{}", case.id);
+            assert!(case.source.contains("two = one + seed;"), "{}", case.id);
         }
     }
 
