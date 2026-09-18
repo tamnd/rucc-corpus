@@ -56,41 +56,6 @@
       "verdict": "wrong",
       "issue": "tamnd/rucc#652",
       "why": "rucc compiles the library setjmp and longjmp and then gets the program wrong, because nothing tells the optimizer that the call can come back a second time"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "simplify.i64.widened-boolean.c17",
-      "verdict": "crashed",
-      "issue": "tamnd/rucc#1203",
-      "why": "the rewriter runs out of scratch registers at -O1, -Os and -Oz on a handful of booleans widened to a long long, and compiles the same file at the levels either side of those"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "simplify.u64.widened-boolean.c17",
-      "verdict": "crashed",
-      "issue": "tamnd/rucc#1203",
-      "why": "the rewriter runs out of scratch registers at -O1, -Os and -Oz on a handful of booleans widened to an unsigned long long, and compiles the same file at the levels either side of those"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "vla-and-alloca.alloca-in-a-loop.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#1007",
-      "why": "rucc has no lowering for __builtin_alloca, so a frame can only grow at a declaration"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "vla-and-alloca.alloca.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#1007",
-      "why": "rucc has no lowering for __builtin_alloca, so a frame can only grow at a declaration"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "vla-and-alloca.both-in-one-frame.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#1007",
-      "why": "rucc has no lowering for __builtin_alloca, so a frame can only grow at a declaration"
     }
   ]
 }
