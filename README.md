@@ -163,7 +163,7 @@ cargo run --release -p rucc-corpus -- run \
 
 That keeps the issue and the prose on every line that is still failing, and gives a new line an empty issue and a reason taken from the compiler's own words, which is a starting point for somebody to write over rather than an answer. A run only rewrites the part of the file it exercised. A run narrowed with `--facet` leaves the other facets alone, and a run whose command line did not name a compiler leaves that compiler's lines alone, which is why the reference job can run GCC 16 on its own without deleting everything the file says about rucc.
 
-As of the run that created it the file has 32 lines, all of them rucc, across four things: the address of a label and the indirect jump through it, `__builtin_alloca`, `__atomic_signal_fence`, and the library `setjmp` and `longjmp`. GCC 16 compiles and runs all of them.
+As of the run that created it the file has eight lines, all of them rucc, across three things: the address of a label and the indirect jump through it, `__atomic_signal_fence`, and the library `setjmp` and `longjmp`. GCC 16 compiles and runs all of them.
 
 ## A case that has not changed is not built again
 
