@@ -38,6 +38,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     load_fold(sink);
     store_fold(sink);
     store_fold_constant(sink);
+    compare_fold(sink);
     frame_address(sink);
     stack_slots(sink);
 }
@@ -2750,6 +2751,222 @@ fn store_fold_constant(sink: &mut Sink<'_>) {
             program.check(ty.promoted(), "total", value);
             sink.push(
                 Facet::StoreFoldConstant,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// A load and the comparison that reads it, on either side and against a constant.
+///
+/// A comparison is not arithmetic with a different name, which is why this is not a shape of
+/// `load-fold`. It writes no value, only the answer to a question, and which side of it the
+/// memory is on decides the question rather than the operand order. A machine that reads its
+/// right hand side out of memory folds `x < *p` and keeps the condition, and folds `*p < x`
+/// into `x > *p`, so the two arrangements are two different rows in whatever table a back end
+/// keeps. Both arrangements of the equality are here as well, because equality turns over into
+/// itself: a back end whose table reached for the opposite answer rather than the opposite
+/// ordering writes inequality there, and these are the programs that say so.
+///
+/// The comparison against a constant is a different instruction again. It carries an addressing
+/// mode and an immediate at once with no register on either side, and there is nothing to
+/// arrange either way round because the constant has nowhere else to be. The constant written on
+/// the left is here too, since `10 < *p` is the same one instruction with the condition turned
+/// over.
+///
+/// Every type rather than the four at least as wide as `int`, because the two halves do not
+/// behave alike at the narrow widths. C promotes a narrow operand before comparing it. Against a
+/// constant the constant is narrowed along with it, so the comparison can be asked at the width
+/// the memory has; against a register both sides arrive through an extension and the comparison
+/// is asked at `int`, which is a fold that is not there to be made. A report where the narrow
+/// rows of the two halves differ is that difference and not a fault.
+///
+/// The rest of the shapes are the two ways the answer is used, which are a byte and a branch and
+/// are two different instructions once the block layout has been through, and then the reasons
+/// the two are not one: the loaded word read twice, a store in the way, a call in the way, an
+/// index written in between, and the comparison in another block.
+fn compare_fold(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "equal-right",
+        "equal-left",
+        "less-right",
+        "less-left",
+        "constant-equal",
+        "constant-ordered",
+        "constant-reversed",
+        "big-constant",
+        "branch",
+        "byte-and-branch",
+        "two-readers",
+        "store-between",
+        "call-between",
+        "index-written-between",
+        "comparison-in-another-block",
+    ];
+    for &ty in Ty::ALL {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::CompareFold) {
+                return;
+            }
+            // A constant that needs the long form of the encoding does not fit a byte at all,
+            // so there is nothing to ask at the narrowest width and no program for it.
+            if shape == "big-constant" && ty.bits() == 8 {
+                continue;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("one {name} load compared, {shape}"));
+            program.input(ty, "seed", 5);
+            program.input(Ty::I32, "at", 3);
+            if matches!(shape, "store-between" | "index-written-between") {
+                program.input(Ty::I32, "other", 6);
+            }
+            if shape == "comparison-in-another-block" {
+                program.input(Ty::I32, "flag", 1);
+            }
+            if shape == "call-between" {
+                // A call the compiler cannot see through and cannot delete, the same one the
+                // folds above use.
+                program.top("static volatile int noise_count;");
+                program.top("static void noise(void) {");
+                program.top("    noise_count = noise_count + 1;");
+                program.top("}");
+                program.top("static void (*volatile jump)(void) = noise;");
+            }
+            program.blank();
+            // The same array filled the same way as the folds above, so `buffer[3]` is 8 here
+            // too and the numbers can be read against each other.
+            program.line(format!("{name} buffer[8];"));
+            program.line("for (int i = 0; i < 8; i++) {");
+            program.line_at(1, format!("buffer[i] = seed + ({name})i;"));
+            program.line("}");
+            let value: i128 = match shape {
+                // The shape the fold exists for, with the load on the side the machine reads out
+                // of memory. 5 is not 8, so this is the second number.
+                "equal-right" => {
+                    program.line("int total = (seed == buffer[at]) ? 4 : 7;");
+                    7
+                }
+                // The same question with the sides the other way round, which is the same
+                // question. A table that turned the condition into its opposite rather than into
+                // its reverse asks whether they differ here and prints 4.
+                "equal-left" => {
+                    program.line("int total = (buffer[at] == seed) ? 4 : 7;");
+                    7
+                }
+                // An ordering with the load on the right, which folds and keeps the condition it
+                // was written with. 5 is below 8.
+                "less-right" => {
+                    program.line("int total = (seed < buffer[at]) ? 4 : 7;");
+                    4
+                }
+                // The same ordering with the load on the left, which is the one that has to come
+                // out as the question backwards. 8 is not below 5, and a back end that folded
+                // this without turning the condition over prints 4.
+                "less-left" => {
+                    program.line("int total = (buffer[at] < seed) ? 4 : 7;");
+                    7
+                }
+                // The comparison against a constant, which is what a program writes far more
+                // often than either of the two above. 8 is 8.
+                "constant-equal" => {
+                    program.line("int total = (buffer[at] == 8) ? 4 : 7;");
+                    4
+                }
+                // An ordering against a constant, where the constant is the right hand side the
+                // instruction already reads. 8 is below 10.
+                "constant-ordered" => {
+                    program.line("int total = (buffer[at] < 10) ? 4 : 7;");
+                    4
+                }
+                // The constant written first, which is the same one instruction with the
+                // condition turned over. 10 is not below 8.
+                "constant-reversed" => {
+                    program.line("int total = (10 < buffer[at]) ? 4 : 7;");
+                    7
+                }
+                // A constant that will not fit the sign extended byte the short encoding holds,
+                // so the instruction is the same one and four bytes longer.
+                "big-constant" => {
+                    program.line("int total = (buffer[at] < 4660) ? 4 : 7;");
+                    4
+                }
+                // The answer branched on rather than kept, which on a machine whose comparison
+                // sets a byte is a second instruction the block layout takes away again. What is
+                // left reads memory and writes nothing, and that is a form of its own.
+                "branch" => {
+                    program.line("int total = 0;");
+                    program.line("if (buffer[at] > seed) {");
+                    program.line_at(1, "total = total + 9;");
+                    program.line("}");
+                    program.line("total = total + 3;");
+                    12
+                }
+                // The answer read as a value and branched on, so the byte has to survive. The
+                // fold is still there to be made and the instruction it makes still writes a
+                // byte, which is the pair this shape holds apart from the one above.
+                "byte-and-branch" => {
+                    program.line("int answer = (buffer[at] > seed);");
+                    program.line("int total = answer;");
+                    program.line("if (answer) {");
+                    program.line_at(1, "total = total + 9;");
+                    program.line("}");
+                    10
+                }
+                // The loaded word read by the comparison and by the sum at the end, so it has to
+                // be in a register whatever happens and folding the load buys an addressing mode
+                // and keeps the load. 4 and 8 make 12.
+                "two-readers" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("int total = (seed < value) ? 4 : 7;");
+                    program.line("total = total + (int)value;");
+                    12
+                }
+                // A store between the load and the comparison, at an index nothing can tell
+                // apart from the one that was read. 4 and 5 make 9.
+                "store-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("buffer[other] = seed;");
+                    program.line("int total = (seed < value) ? 4 : 7;");
+                    program.line("total = total + (int)buffer[other];");
+                    9
+                }
+                // A call between the two. What a call does to memory is not written in the call,
+                // so it is asked separately from whether an instruction has a memory operand.
+                "call-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("jump();");
+                    program.line("int total = (seed < value) ? 4 : 7;");
+                    4
+                }
+                // The index the address reads is written between the load and the comparison, so
+                // the address a folded comparison would carry is not the address that was read.
+                // A back end that folded anyway compares 11 against 10 and prints 7. 4 and 11
+                // make 15.
+                "index-written-between" => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("at = other;");
+                    program.line("int total = (value < 10) ? 4 : 7;");
+                    program.line("total = total + (int)buffer[at];");
+                    15
+                }
+                // The comparison is behind a branch, so the load and the instruction that would
+                // take it in are not in the same block. A pass that works a block at a time stops
+                // here whether or not the branch is taken.
+                _ => {
+                    program.line(format!("{name} value = buffer[at];"));
+                    program.line("int total = 3;");
+                    program.line("if (flag) {");
+                    program.line_at(1, "total = (seed < value) ? 4 : 7;");
+                    program.line("}");
+                    4
+                }
+            };
+            program.blank();
+            program.check(Ty::I32, "total", value);
+            sink.push(
+                Facet::CompareFold,
                 Axes::of([("type", ty.name()), ("shape", shape)]),
                 Dialect::C17,
                 program,

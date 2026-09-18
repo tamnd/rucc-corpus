@@ -233,6 +233,36 @@ pub enum Facet {
     /// the short form of the encoding, and then every reason the three are not one, which are
     /// the same reasons the register form has.
     StoreFoldConstant,
+    /// A load and a comparison that reads it, against a register and against a constant.
+    ///
+    /// A facet of its own rather than a shape of `load-fold`, because a comparison is not
+    /// arithmetic with a different name. It writes no value, only the answer to a question, and
+    /// which side of it the memory is on decides the question rather than the operand order. On
+    /// a machine that reads its right hand side out of memory, `x < *p` folds and keeps the
+    /// condition it was written with, and `*p < x` folds and comes out as `x > *p`, so a back
+    /// end that folds the left hand side without turning the condition over is the bug this
+    /// facet is for. Equality is the pair that turns over into itself, which is why both
+    /// arrangements of it are here: the wrong table and the right one agree on the name and
+    /// disagree on nothing else.
+    ///
+    /// The comparison against a constant is the other half, and it is a different instruction
+    /// again: an addressing mode and an immediate at once, no register on either side, and
+    /// nothing to arrange either way round because the constant has nowhere else to be. The
+    /// constant on the left is here too, since `10 < *p` is the same one instruction with the
+    /// condition turned over and a back end that only looks at the right hand side misses it.
+    ///
+    /// Eight types rather than the four at least as wide as `int`. C promotes a narrow operand
+    /// before comparing it, so reaching the byte and the word form means a compiler worked out
+    /// that the comparison can be asked at the width the memory has. Against a constant that
+    /// is always available, because the constant is narrowed with it; against a register it is
+    /// only available when both sides came from the same width, which is why the two halves of
+    /// this facet do not report the same numbers at the narrow types.
+    ///
+    /// The rest of the shapes are the two ways the answer is used, which are a byte and a
+    /// branch and are two different instructions once the block layout has been through, and
+    /// then the reasons the two are not one: the loaded word read twice, a store in the way, a
+    /// call in the way, an index written in between, and the comparison in another block.
+    CompareFold,
     /// One local, used at a counted number of offsets.
     ///
     /// A back end facet of its own rather than a shape of `address-fold`, because the question
@@ -364,6 +394,7 @@ impl Facet {
         Self::LoadFold,
         Self::StoreFold,
         Self::StoreFoldConstant,
+        Self::CompareFold,
         Self::FrameAddress,
         Self::StackSlots,
         Self::BitBuiltins,
@@ -441,6 +472,7 @@ impl Facet {
             Self::LoadFold => "load-fold",
             Self::StoreFold => "store-fold",
             Self::StoreFoldConstant => "store-fold-constant",
+            Self::CompareFold => "compare-fold",
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
             Self::BitBuiltins => "bit-builtins",
@@ -527,6 +559,9 @@ impl Facet {
             Self::StoreFoldConstant => {
                 "a load, arithmetic against a constant, and a store back to the same place"
             }
+            Self::CompareFold => {
+                "a load and a comparison that reads it, on either side and against a constant"
+            }
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::StackSlots => "two things in the frame that may be the same bytes",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -611,6 +646,7 @@ impl Facet {
             | Self::LoadFold
             | Self::StoreFold
             | Self::StoreFoldConstant
+            | Self::CompareFold
             | Self::FrameAddress
             | Self::StackSlots
             | Self::BitBuiltins
