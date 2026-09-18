@@ -213,6 +213,26 @@ pub enum Facet {
     /// yet are both written down as the same distance from the stack pointer, so a back end
     /// that compares the addresses it can see says they are one place, and they are two.
     StoreFold,
+    /// A load, arithmetic against a constant, and a store of the answer to the same place.
+    ///
+    /// The same three instructions as `store-fold` with the second operand written down rather
+    /// than in a register, which is the commoner half of the shape and a different instruction
+    /// on the machine: it carries an addressing mode and an immediate at once and no register
+    /// of its own, so a back end that has the register form still has work to do to reach it.
+    /// `*p += 1` is here and `*p += x` is there, and neither one is evidence about the other.
+    ///
+    /// Eight types rather than the four at least as wide as `int`, because the widths are the
+    /// point. C promotes a narrow operand to `int` before the arithmetic and narrows the answer
+    /// back on the way into memory, so reaching the byte and the word form at all means a
+    /// compiler worked out that the wide arithmetic in the middle can be thrown away. A
+    /// compiler that never narrows is correct here and one instruction longer in every one of
+    /// these programs, which is what the size column is for.
+    ///
+    /// The shapes are the five operations that have a memory destination, both arrangements of
+    /// the subtraction, since a constant can only be the right hand one, a constant too big for
+    /// the short form of the encoding, and then every reason the three are not one, which are
+    /// the same reasons the register form has.
+    StoreFoldConstant,
     /// One local, used at a counted number of offsets.
     ///
     /// A back end facet of its own rather than a shape of `address-fold`, because the question
@@ -343,6 +363,7 @@ impl Facet {
         Self::AddressFold,
         Self::LoadFold,
         Self::StoreFold,
+        Self::StoreFoldConstant,
         Self::FrameAddress,
         Self::StackSlots,
         Self::BitBuiltins,
@@ -419,6 +440,7 @@ impl Facet {
             Self::AddressFold => "address-fold",
             Self::LoadFold => "load-fold",
             Self::StoreFold => "store-fold",
+            Self::StoreFoldConstant => "store-fold-constant",
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
             Self::BitBuiltins => "bit-builtins",
@@ -502,6 +524,9 @@ impl Facet {
             Self::AddressFold => "whether an address is worked out once or carried by each reader",
             Self::LoadFold => "a load one arithmetic instruction reads, and what stops it moving",
             Self::StoreFold => "a load, arithmetic on it, and a store back to the same place",
+            Self::StoreFoldConstant => {
+                "a load, arithmetic against a constant, and a store back to the same place"
+            }
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::StackSlots => "two things in the frame that may be the same bytes",
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
@@ -585,6 +610,7 @@ impl Facet {
             | Self::AddressFold
             | Self::LoadFold
             | Self::StoreFold
+            | Self::StoreFoldConstant
             | Self::FrameAddress
             | Self::StackSlots
             | Self::BitBuiltins
