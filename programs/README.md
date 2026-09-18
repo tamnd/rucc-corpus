@@ -1,10 +1,10 @@
 # The corpus
 
-2330 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2336 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `afa3c1225b7a14d75b0d3271663919d480e9211fc909bffe2121664af7237656`.
+Corpus digest `580103525e51da858fc7b92c3d208c971f046e4f0362f74d32b10f60d2f9be60`.
 
 ## floor (118 programs)
 
@@ -117,13 +117,13 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (46 programs)
+## correctness (52 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
 | facet | programs | what it is about |
 |---|---|---|
-| [`barrier`](correctness/barrier/README.md) | 7 | programs where the compiler must not act, and a firing is a bug |
+| [`barrier`](correctness/barrier/README.md) | 13 | programs where the compiler must not act, and a firing is a bug |
 | [`atomics`](correctness/atomics/README.md) | 31 | the atomic builtins at every ordering, and the header over them |
 | [`setjmp-longjmp`](correctness/setjmp-longjmp/README.md) | 8 | the jump that leaves a function without returning from it |
 

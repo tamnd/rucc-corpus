@@ -9,8 +9,8 @@
 //! and the axis says which one the program actually takes.
 //!
 //! `barrier` is the opposite of every other facet. Every case here is a place where the
-//! compiler must not act, and the evidence that it did not is that the answer is right and
-//! the access count in the object file did not go down.
+//! compiler must not act, the answer says the program still means what it meant, and the size
+//! column says what not acting cost.
 //!
 //! `frontend` is about the shape of the language rather than about code generation. It is
 //! where the C23 constructs live, and it is the only facet that contains programs which are
@@ -679,14 +679,30 @@ pub(crate) fn branch_probability(sink: &mut Sink<'_>) {
 /// A `volatile` access has to happen, exactly as many times as it is written, in the order it
 /// is written. Type punning through a union is allowed and the compiler has to see the store.
 /// A `char` pointer may alias anything, so a store through one has to be assumed to hit
-/// whatever the next load reads. Each case checks the value, and the report checks that the
-/// accesses are still in the object file.
+/// whatever the next load reads. Each case checks the value, and the size column says what
+/// leaving the program alone cost.
+///
+/// The six shapes after `volatile-order` are the ones a back end can get wrong on its own,
+/// which is a different question from the four before it. Those four ask whether a machine
+/// independent pass kept the access; these ask whether the word survived instruction
+/// selection. A `volatile` load and an ordinary one are the same machine instruction over the
+/// same address, so a fold that puts a load into the arithmetic that reads it will put this
+/// one there too unless the flag was carried down, which is what tamnd/rucc#1302 was. The
+/// three that name a fold are the three that issue names, and the other three are the places
+/// the word sits somewhere other than on a plain scalar: on a field, on the pointer rather
+/// than on what it points at, and on each of the four widths.
 pub(crate) fn barrier(sink: &mut Sink<'_>) {
     const SHAPES: &[&str] = &[
         "volatile-scalar",
         "volatile-in-loop",
         "volatile-array",
         "volatile-order",
+        "volatile-read-and-add",
+        "volatile-update",
+        "volatile-compare",
+        "volatile-widths",
+        "volatile-field",
+        "volatile-pointer-itself",
         "char-aliasing",
         "union-punning",
         "pointer-escapes",
@@ -738,6 +754,96 @@ pub(crate) fn barrier(sink: &mut Sink<'_>) {
                 program.line("trace[2] = port;");
                 program.blank();
                 program.check(Ty::I32, "trace[0] + trace[1] * 10 + trace[2] * 100", 321);
+            }
+            "volatile-read-and-add" => {
+                // The first of the three folds. The load has one reader and the reader is the
+                // instruction right after it, which is the shape a back end folds into one.
+                program.input(Ty::I32, "step", 4);
+                program.top("static volatile int gauge = 38;");
+                program
+                    .top("static int read_and_add(volatile int *at, int by) { return *at + by; }");
+                program.blank();
+                program.line("int once = read_and_add(&gauge, step);");
+                program.line("int twice = read_and_add(&gauge, once);");
+                program.blank();
+                program.check(Ty::I32, "once", 42);
+                program.check(Ty::I32, "twice", 80);
+            }
+            "volatile-update" => {
+                // The second. A read, an arithmetic and a write of the one address, which is one
+                // read and one write either way and three instructions or one.
+                program.input(Ty::I32, "by", 3);
+                program.top("static volatile int port = 10;");
+                program.top("static void bump(volatile int *at, int by) { *at += by; }");
+                program.blank();
+                program.line("bump(&port, by);");
+                program.line("bump(&port, by);");
+                program.line("bump(&port, 1);");
+                program.blank();
+                program.check(Ty::I32, "port", 17);
+            }
+            "volatile-compare" => {
+                // The third. A comparison reads its right hand side out of memory as happily as
+                // an addition does, and against a constant it is the commoner of the two.
+                // Each comparison is read by the branch on the next line, which is what keeps it
+                // next to the load and so keeps the fold on offer. Handing the answer to a
+                // variable instead lets a compiler do all three reads first and compare them
+                // later, and then there is no fold to refuse and the case proves nothing.
+                program.input(Ty::I32, "want", 7);
+                program.top("static volatile int status = 7;");
+                program.blank();
+                program.line("int tally = 0;");
+                program.line("if (status == 7) tally += 1;");
+                program.line("status = want + 1;");
+                program.line("if (status == 7) tally += 10;");
+                program.line("if (status == want + 1) tally += 100;");
+                program.blank();
+                program.check(Ty::I32, "tally", 101);
+            }
+            "volatile-widths" => {
+                // A fold table has one row per width, so a flag that is carried on one width and
+                // dropped on another is a bug three quarters of a test would miss.
+                program.top("static volatile signed char narrow = 3;");
+                program.top("static volatile short half = 300;");
+                program.top("static volatile int whole = 70000;");
+                program.top("static volatile long long wide = 5000000000ll;");
+                program.blank();
+                program.line("narrow += 1;");
+                program.line("half += 1;");
+                program.line("whole += 1;");
+                program.line("wide += 1;");
+                program.blank();
+                program.check(Ty::I32, "narrow", 4);
+                program.check(Ty::I32, "half", 301);
+                program.check(Ty::I32, "whole", 70001);
+                program.check(Ty::I64, "wide", 5000000001);
+            }
+            "volatile-field" => {
+                // One field of the two, so the aggregate cannot be taken apart and the plain
+                // field beside it still has to be the cheap one.
+                program.top("struct device { int plain; volatile int live; };");
+                program.top("static struct device dev = { 2, 40 };");
+                program.blank();
+                program.line("dev.plain = dev.plain + 1;");
+                program.line("dev.live = dev.live + 1;");
+                program.line("int total = dev.plain + dev.live;");
+                program.blank();
+                program.check(Ty::I32, "total", 44);
+            }
+            "volatile-pointer-itself" => {
+                // The other side of the two readings of the word. Here the pointer is what the
+                // program insisted on and what it points at is ordinary, so the load of the
+                // pointer has to stay and the load through it does not.
+                program.top("static int first = 6;");
+                program.top("static int second = 36;");
+                program.top("static int *volatile cursor;");
+                program.blank();
+                program.line("cursor = &first;");
+                program.line("int a = *cursor;");
+                program.line("cursor = &second;");
+                program.line("int b = *cursor;");
+                program.blank();
+                program.check(Ty::I32, "a + b", 42);
             }
             "char-aliasing" => {
                 program.input(Ty::I32, "seed", 0);
@@ -1166,13 +1272,29 @@ mod tests {
     #[test]
     fn every_barrier_case_actually_contains_the_thing_it_is_a_barrier_about() {
         let cases = cases_for(Facet::Barrier);
-        assert_eq!(cases.len(), 7);
+        assert_eq!(cases.len(), 13);
         for case in &cases {
             let shape = case.axes.get("shape").unwrap();
             if shape.starts_with("volatile") {
                 assert!(case.source.contains("volatile"), "{}", case.id);
             }
         }
+    }
+
+    #[test]
+    fn the_three_shapes_a_back_end_folds_are_each_one_access_and_one_reader() {
+        // The point of these three is the instruction the compiler must not write, and what
+        // makes that instruction available is a load with exactly one reader sitting right in
+        // front of it. A case that read the place twice would be a case where no fold was on
+        // offer, so it would pass whatever the compiler did and prove nothing.
+        let cases = cases_for(Facet::Barrier);
+        for shape in ["volatile-read-and-add", "volatile-update"] {
+            let case = cases.iter().find(|c| c.axes.get("shape") == Some(shape)).unwrap();
+            assert!(case.source.contains("volatile int *at"), "{}", case.id);
+        }
+        let compare =
+            cases.iter().find(|c| c.axes.get("shape") == Some("volatile-compare")).unwrap();
+        assert!(compare.source.contains("if (status == 7) tally += 1;"), "{}", compare.id);
     }
 
     #[test]
