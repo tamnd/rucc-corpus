@@ -4,9 +4,9 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`barrier`](../../programs/correctness/barrier/README.md) | 13 | 241 | 65 of 65 | 1% less | 51% less | 58% less |
-| [`atomics`](../../programs/correctness/atomics/README.md) | 31 | 1,334 | 150 of 155 | 15% more | 50% less | 66% less |
-| [`setjmp-longjmp`](../../programs/correctness/setjmp-longjmp/README.md) | 8 | 219 | 30 of 40 | 8% less | 45% less | 54% less |
+| [`barrier`](../../programs/correctness/barrier/README.md) | 13 | 241 | 65 of 65 | 2% less | 48% less | 57% less |
+| [`atomics`](../../programs/correctness/atomics/README.md) | 31 | 1,334 | 150 of 155 | 8% more | 52% less | 67% less |
+| [`setjmp-longjmp`](../../programs/correctness/setjmp-longjmp/README.md) | 8 | 219 | 30 of 40 | 11% less | 45% less | 57% less |
 
 The reference compiler said it took 36 transformations in this phase and wanted 4454 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
 
