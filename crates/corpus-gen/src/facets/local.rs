@@ -2349,7 +2349,7 @@ mod tests {
             .expect("the kept one bit program");
         let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
         assert_eq!(text.lines().count(), 57, "{}", case.source);
-        for (nth, line) in case.source.lines().filter(|l| l.contains("printf")).enumerate() {
+        for (nth, line) in case.source.lines().filter(|l| l.contains("printf(\"")).enumerate() {
             assert!(line.contains(&format!("(k{nth})")), "{line}");
         }
         assert!(case.source.contains("_Bool k0 = p & p;"), "{}", case.source);
