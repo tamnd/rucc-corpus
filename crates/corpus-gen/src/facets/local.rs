@@ -485,6 +485,7 @@ fn simplify(sink: &mut Sink<'_>) {
         }
     }
     one_bit_identities(sink);
+    one_bit_results(sink);
     compare_edge(sink);
     widened_boolean(sink);
 }
@@ -883,6 +884,82 @@ fn one_bit_identities(sink: &mut Sink<'_>) {
     sink.push(
         Facet::Simplify,
         Axes::of([("type", "bool"), ("group", "one-bit")]),
+        Dialect::C17,
+        program,
+    );
+}
+
+/// The same identities with the answer put back into a `_Bool`, which is the only way C has of
+/// asking for a bitwise operation one bit wide.
+///
+/// The program above takes each answer as the `int` the promotions computed it at. This one takes
+/// it back to one bit, and the two are different questions for the compiler even though they are
+/// the same arithmetic. `_Bool s = p & q;` promotes both operands to `int`, does the `and` there,
+/// and converts the result back, and that conversion is a comparison against zero rather than a
+/// truncation, because the standard says a conversion to `_Bool` gives zero or one according to
+/// whether the value compares equal to zero. So the whole of it is one bit wide from end to end
+/// and nothing in the source says so anywhere.
+///
+/// Two different bits are here as well as the table, because every rule in the table has one
+/// operand or two of the same one, and `p & q` is the case a rule about a constant cannot answer.
+///
+/// The answers are the answers of the program above, and what differs is what a compiler is
+/// allowed to do to reach them. That is the point of having both.
+fn one_bit_results(sink: &mut Sink<'_>) {
+    if !sink.wants(Facet::Simplify) {
+        return;
+    }
+    let mut program = Program::new("algebraic identities on one bit values kept at one bit");
+    program.top("static volatile int truth_in = 1;");
+    program.top("static volatile int falsity_in = 0;");
+    program.top("static volatile int counter_in = 7;");
+    program.line("_Bool p = truth_in != 0;");
+    program.line("_Bool q = falsity_in != 0;");
+    program.line("int counter = counter_in;");
+    program.line("_Bool r = counter > 3;");
+    program.blank();
+    let bits = [("p", 1i128), ("q", 0), ("r", 1)];
+    let mut nth = 0;
+    for (name, value) in bits {
+        for (expr, answer) in [
+            (format!("{name} & {name}"), value),
+            (format!("{name} | {name}"), value),
+            (format!("{name} ^ {name}"), 0),
+            (format!("{name} & 0"), 0),
+            (format!("0 & {name}"), 0),
+            (format!("{name} & 1"), value),
+            (format!("1 & {name}"), value),
+            (format!("{name} | 0"), value),
+            (format!("0 | {name}"), value),
+            (format!("{name} | 1"), 1),
+            (format!("1 | {name}"), 1),
+            (format!("{name} ^ 0"), value),
+            (format!("0 ^ {name}"), value),
+        ] {
+            let kept = format!("k{nth}");
+            program.line(format!("_Bool {kept} = {expr};"));
+            program.check(Ty::I32, &kept, answer);
+            nth += 1;
+        }
+        program.blank();
+    }
+    for (left, l) in bits {
+        for (right, r) in bits {
+            if left == right {
+                continue;
+            }
+            for (op, answer) in [("&", l & r), ("|", l | r), ("^", l ^ r)] {
+                let kept = format!("k{nth}");
+                program.line(format!("_Bool {kept} = {left} {op} {right};"));
+                program.check(Ty::I32, &kept, answer);
+                nth += 1;
+            }
+        }
+        program.blank();
+    }
+    sink.push(
+        Facet::Simplify,
+        Axes::of([("type", "bool"), ("group", "one-bit-kept")]),
         Dialect::C17,
         program,
     );
@@ -2257,6 +2334,26 @@ mod tests {
             .expect("the one bit program");
         assert!(case.source.contains("_Bool p = truth_in != 0;"), "{}", case.source);
         assert!(case.source.contains("p | 1"), "{}", case.source);
+        assert!(!case.source.contains("-1"), "{}", case.source);
+    }
+
+    /// Every answer in the kept program goes through a `_Bool`, because that is the whole of what
+    /// makes it a different program from the one above it. A case that printed the expression
+    /// directly would be a copy of that program under another name.
+    #[test]
+    fn the_kept_one_bit_program_puts_every_answer_back_into_a_bool_first() {
+        let cases = cases_for(Facet::Simplify);
+        let case = cases
+            .iter()
+            .find(|c| c.axes.get("group") == Some("one-bit-kept"))
+            .expect("the kept one bit program");
+        let Expect::Output(text) = &case.expect else { panic!("{} should run", case.id) };
+        assert_eq!(text.lines().count(), 57, "{}", case.source);
+        for (nth, line) in case.source.lines().filter(|l| l.contains("printf(\"")).enumerate() {
+            assert!(line.contains(&format!("(k{nth})")), "{line}");
+        }
+        assert!(case.source.contains("_Bool k0 = p & p;"), "{}", case.source);
+        assert!(case.source.contains("_Bool k39 = p & q;"), "{}", case.source);
         assert!(!case.source.contains("-1"), "{}", case.source);
     }
 
