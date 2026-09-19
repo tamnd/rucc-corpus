@@ -2,10 +2,11 @@
 
 algebraic identities and the local peephole rules. Part of the local phase of the M4 plan.
 
-77 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+78 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
+| [`simplify.bool.one-bit-kept.c17.9cf9d5f1`](simplify.bool.one-bit-kept.c17.9cf9d5f1.c) | type=bool, group=one-bit-kept | c17 | `1 1 0 ...` and 54 more lines |
 | [`simplify.bool.one-bit.c17.4257870d`](simplify.bool.one-bit.c17.4257870d.c) | type=bool, group=one-bit | c17 | `1 1 0 ...` and 36 more lines |
 | [`simplify.i16.additive.c17.470faaa8`](simplify.i16.additive.c17.470faaa8.c) | type=i16, group=additive | c17 | `-32768 -32768 -32768 ...` and 21 more lines |
 | [`simplify.i16.bitwise-constant.c17.32d3064b`](simplify.i16.bitwise-constant.c17.32d3064b.c) | type=i16, group=bitwise-constant | c17 | `0 0 -32768 ...` and 57 more lines |
