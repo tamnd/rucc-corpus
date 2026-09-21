@@ -265,10 +265,34 @@ fn function_purity(sink: &mut Sink<'_>) {
 ///
 /// With one call site the constant can simply be propagated in. With several sites that all
 /// pass the same value it takes a scan of every call, which is the interprocedural version of
-/// the same idea. The mixed shape is the control: one site passes something else, so the
-/// constant is not in fact known and a compiler that specialized anyway is wrong.
+/// the same idea.
+///
+/// The rest of the shapes split into the ones a propagation has to reach through and the ones it
+/// has to refuse. `handed-on` and `one-more-level` are the transitive cases, where the constant
+/// only arrives at the inner function by way of a wrapper, and the second of the two puts
+/// arithmetic in the way so the answer needs the constant to be folded before it can be read off.
+/// `recursive` is the shape that wants an optimistic start, because the self call passes on
+/// whatever the parameter already is and reading that as a disagreement loses the real call site.
+///
+/// The refusals are `sites-disagree`, where one site passes something else so the constant is not
+/// in fact known, `address-escapes`, where the helper is also reached through a pointer so there
+/// are call sites nobody counted, `other-objects-call-it`, where the helper is not static and its
+/// other call sites are in files this compilation never sees, and `through-varargs`, where the
+/// position a call passes and the position the body reads are not the same list. A compiler that
+/// substituted a constant in any of those would print a different total, which is what the check
+/// at the end is there to catch.
 fn constant_args(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] = &["one-site", "all-sites-agree", "sites-disagree"];
+    const SHAPES: &[&str] = &[
+        "one-site",
+        "all-sites-agree",
+        "sites-disagree",
+        "handed-on",
+        "one-more-level",
+        "recursive",
+        "address-escapes",
+        "other-objects-call-it",
+        "through-varargs",
+    ];
     for &ty in TYPES {
         for &shape in SHAPES {
             if !sink.wants(Facet::ConstantArgs) {
@@ -277,28 +301,101 @@ fn constant_args(sink: &mut Sink<'_>) {
             let name = ty.c_name();
             let mut program =
                 Program::new(format!("a {} argument that is constant, {shape}", ty.c_name()));
-            program.top(format!("static {name} scale({name} value, {name} factor) {{"));
-            program.top("    return value * factor;".to_owned());
-            program.top("}".to_owned());
-            program.input(ty, "seed", 3);
-            program.blank();
-            program.line(format!("{name} total = 0;"));
             let total: i128 = match shape {
                 "one-site" => {
+                    scale(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
                     program.line(format!("total += scale(seed, {});", lit(ty, 10)));
                     30
                 }
                 "all-sites-agree" => {
+                    scale(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
                     for _ in 0..3 {
                         program.line(format!("total += scale(seed, {});", lit(ty, 10)));
                     }
                     90
                 }
-                _ => {
+                "sites-disagree" => {
+                    scale(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
                     program.line(format!("total += scale(seed, {});", lit(ty, 10)));
                     program.line(format!("total += scale(seed, {});", lit(ty, 10)));
                     program.line(format!("total += scale(seed, {});", lit(ty, 4)));
                     72
+                }
+                "handed-on" => {
+                    scale(&mut program, ty, "static ");
+                    program.top(format!("static {name} outer({name} value, {name} factor) {{"));
+                    program.top("    return scale(value, factor);".to_owned());
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += outer(seed, {});", lit(ty, 10)));
+                    }
+                    60
+                }
+                "one-more-level" => {
+                    scale(&mut program, ty, "static ");
+                    program.top(format!("static {name} outer({name} value, {name} factor) {{"));
+                    program.top(format!("    return scale(value, ({name})(factor + 1));"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += outer(seed, {});", lit(ty, 9)));
+                    }
+                    60
+                }
+                "recursive" => {
+                    program.top(format!(
+                        "static {name} down({name} value, {name} factor, {name} depth) {{"
+                    ));
+                    program.top(format!("    if (depth == {}) {{", lit(ty, 0)));
+                    program.top("        return value * factor;".to_owned());
+                    program.top("    }".to_owned());
+                    program.top(format!("    return down(value, factor, ({name})(depth - 1));"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!(
+                            "total += down(seed, {}, {});",
+                            lit(ty, 10),
+                            lit(ty, 2)
+                        ));
+                    }
+                    60
+                }
+                "address-escapes" => {
+                    scale(&mut program, ty, "static ");
+                    program.top(format!("static {name} (*chosen)({name}, {name}) = scale;"));
+                    running_total(&mut program, ty);
+                    program.line(format!("total += scale(seed, {});", lit(ty, 10)));
+                    program.line(format!("total += chosen(seed, {});", lit(ty, 4)));
+                    42
+                }
+                "other-objects-call-it" => {
+                    scale(&mut program, ty, "");
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += scale(seed, {});", lit(ty, 10)));
+                    }
+                    60
+                }
+                _ => {
+                    program.include("stdarg.h");
+                    program.top(format!("static {name} pick({name} value, ...) {{"));
+                    program.top("    va_list rest;".to_owned());
+                    program.top(format!("    {name} factor;"));
+                    program.top("    va_start(rest, value);".to_owned());
+                    program.top(format!("    factor = va_arg(rest, {name});"));
+                    program.top("    va_end(rest);".to_owned());
+                    program.top("    return value * factor;".to_owned());
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += pick(seed, {});", lit(ty, 10)));
+                    }
+                    60
                 }
             };
             program.blank();
@@ -311,6 +408,24 @@ fn constant_args(sink: &mut Sink<'_>) {
             );
         }
     }
+}
+
+/// The multiplying helper every shape above leans on, at the linkage the shape wants.
+fn scale(program: &mut Program, ty: Ty, linkage: &str) {
+    let name = ty.c_name();
+    program.top(format!("{linkage}{name} scale({name} value, {name} factor) {{"));
+    program.top("    return value * factor;".to_owned());
+    program.top("}".to_owned());
+}
+
+/// The seed the helper is called with and the total the calls add up into.
+///
+/// The seed is read out of a volatile so the value the helper multiplies is not itself a
+/// constant. What the shapes are about is the other argument.
+fn running_total(program: &mut Program, ty: Ty) {
+    program.input(ty, "seed", 3);
+    program.blank();
+    program.line(format!("{} total = 0;", ty.c_name()));
 }
 
 /// Definitions nothing refers to.
@@ -856,6 +971,40 @@ mod tests {
             .unwrap();
         assert_eq!(output(agree), "90\n");
         assert_eq!(output(disagree), "72\n");
+    }
+
+    #[test]
+    fn the_shapes_a_propagation_reaches_through_and_the_ones_it_refuses_agree_on_the_total() {
+        // Every one of these prints the same number whether or not a constant was substituted, so
+        // a total that comes out wrong is a compiler that substituted where it should not have.
+        let cases = cases_for(Facet::ConstantArgs);
+        for shape in ["handed-on", "one-more-level", "recursive", "other-objects-call-it"] {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(shape) && c.axes.get("type") == Some("i32"))
+                .unwrap();
+            assert_eq!(output(case), "60\n", "{shape}");
+        }
+        let escaping = cases
+            .iter()
+            .find(|c| {
+                c.axes.get("shape") == Some("address-escapes") && c.axes.get("type") == Some("i32")
+            })
+            .unwrap();
+        assert_eq!(output(escaping), "42\n");
+    }
+
+    #[test]
+    fn the_varargs_shape_asks_for_the_header_that_makes_it_legal() {
+        let cases = cases_for(Facet::ConstantArgs);
+        let case = cases
+            .iter()
+            .find(|c| {
+                c.axes.get("shape") == Some("through-varargs") && c.axes.get("type") == Some("i64")
+            })
+            .unwrap();
+        assert!(case.source.contains("#include <stdarg.h>"));
+        assert_eq!(output(case), "60\n");
     }
 
     #[test]
