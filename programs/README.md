@@ -1,10 +1,10 @@
 # The corpus
 
-2497 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2529 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `ac5c035c8d001ef7f9d6d946c9ca014f33cbf351749863b44a9681b91cea84aa`.
+Corpus digest `d3e54f40a5d63d5a1d3fff92aeaf56adee3c8ac310610804f106f05575f2f9d6`.
 
 ## floor (118 programs)
 
@@ -73,7 +73,7 @@ Transformations that need loop structure, which is where most of the remaining t
 | [`loop-shape`](loops/loop-shape/README.md) | 64 | the shape a loop is left in, before any pass reads it |
 | [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
 
-## interprocedural (297 programs)
+## interprocedural (329 programs)
 
 Transformations that need to look at more than one function at a time.
 
@@ -85,6 +85,7 @@ Transformations that need to look at more than one function at a time.
 | [`constant-args`](interprocedural/constant-args/README.md) | 36 | specializing a function to a constant argument |
 | [`unused-params`](interprocedural/unused-params/README.md) | 44 | taking out a parameter nothing reads, and the argument with it |
 | [`unused-returns`](interprocedural/unused-returns/README.md) | 36 | taking out a return value no call reads, and the result with it |
+| [`declared-purity`](interprocedural/declared-purity/README.md) | 32 | believing a const or pure promise on a callee in another file |
 | [`reachability`](interprocedural/reachability/README.md) | 9 | removing what nothing references |
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
 | [`memory-effects`](interprocedural/memory-effects/README.md) | 24 | what a callee reads and writes, seen from its call sites |
