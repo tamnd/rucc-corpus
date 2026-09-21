@@ -174,9 +174,27 @@ fn tail_call(sink: &mut Sink<'_>) {
 /// Whether the compiler works that out from the body or is told with an attribute is the axis.
 /// The attribute shapes are tagged `gnu`, because they use a GCC extension and a run that is
 /// only checking standard C should be able to leave them out.
+///
+/// The last two shapes are about the other thing knowing a function is pure buys, which is
+/// deleting a call to it whose result nobody reads. `unused-result` throws one call away every
+/// time round the loop and keeps a second, so a compiler that deletes the first and keeps the
+/// second still prints the same total, and the instruction count says whether it did. That
+/// count is the whole point of the case: the output cannot tell a deleted call from a kept one
+/// and the counter can. `looping-const` is the same shape with a helper that reaches its answer
+/// with a loop rather than a multiply. Nothing about the loop stops the helper being `const`,
+/// but a compiler working from the shape of the control flow graph cannot see that it ends, and
+/// one that cannot see that has to keep the call. So the two shapes bracket the decision: the
+/// first is a call that may go, the second is the same call with one reason to stay.
 fn function_purity(sink: &mut Sink<'_>) {
-    const SHAPES: &[&str] =
-        &["inferred-const", "inferred-pure", "declared-const", "declared-pure", "impure"];
+    const SHAPES: &[&str] = &[
+        "inferred-const",
+        "inferred-pure",
+        "declared-const",
+        "declared-pure",
+        "impure",
+        "unused-result",
+        "looping-const",
+    ];
     for &ty in TYPES {
         for &shape in SHAPES {
             if !sink.wants(Facet::FunctionPurity) {
@@ -190,8 +208,16 @@ fn function_purity(sink: &mut Sink<'_>) {
                 "declared-pure" => "__attribute__((pure)) ",
                 _ => "",
             };
-            let reads_memory = matches!(shape, "inferred-pure" | "declared-pure");
-            if reads_memory {
+            let reads_memory = matches!(shape, "inferred-pure" | "declared-pure" | "unused-result");
+            if shape == "looping-const" {
+                program.top(format!("static {name} helper({name} value) {{"));
+                program.top(format!("    {name} sum = 0;"));
+                program.top(format!("    for ({name} i = 0; i < value; i++) {{"));
+                program.top(format!("        sum += {};", lit(ty, 2)));
+                program.top("    }".to_owned());
+                program.top("    return sum;".to_owned());
+                program.top("}".to_owned());
+            } else if reads_memory {
                 program.top(format!("static {name} table[4] = {{ 1, 2, 3, 4 }};"));
                 program.top(format!("static {attribute}{name} helper({name} value) {{"));
                 program.top("    return table[1] * value;".to_owned());
@@ -211,6 +237,9 @@ fn function_purity(sink: &mut Sink<'_>) {
             program.blank();
             program.line(format!("{name} total = 0;"));
             program.line("for (int i = 0; i < 5; i++) {");
+            if matches!(shape, "unused-result" | "looping-const") {
+                program.line_at(1, "helper(seed);");
+            }
             program.line_at(1, "total += helper(seed);");
             program.line("}");
             program.blank();
