@@ -22,6 +22,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     constant_args(sink);
     reachability(sink);
     devirtualize(sink);
+    memory_effects(sink);
 }
 
 /// Calls of every size, from every number of places.
@@ -410,6 +411,186 @@ fn devirtualize(sink: &mut Sink<'_>) {
     }
 }
 
+/// What a callee writes, and what the caller is allowed to do about it.
+///
+/// Purity answers this question with one bit for the whole function. These are the finer
+/// answers, and there are three of them here. A callee handed two pointers that writes through
+/// one of them and not the other. A callee that writes nothing at all. A callee lent the
+/// address of a local that does not keep it, so the call after it cannot reach that local. In
+/// each of those the caller may take a pair of loads of the object the call did not touch out
+/// of the loop, and the program prints the same number either way.
+///
+/// Beside each of them is the shape one line different where the same move is wrong. The
+/// callee writes through the second pointer as well, or it writes the global the loop is
+/// reading, or it keeps the address it was lent and the call after it writes through that. Each
+/// of those prints a different number, so every pair is a test of the answer and not only a
+/// measurement of it, and a compiler that gets the optimistic half by guessing gets the other
+/// half wrong.
+///
+/// The loop reads two elements rather than one, and that is on purpose. A single load that
+/// feeds an add folds into the add on x86 and costs nothing extra, so hoisting it changes the
+/// instruction count by zero and the evidence disappears. Two loads and the add between them do
+/// not fold, so the shape that hoists runs two fewer instructions a time round, which is two
+/// thousand over the loop and far above the few dozen that one run differs from the next.
+///
+/// Every helper is `noinline`, which is why these are tagged `gnu`. Without it a compiler with
+/// an inliner answers all of these by inlining the callee, and then the case says nothing about
+/// what the effects of that callee were worked out to be.
+fn memory_effects(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "writes-one-array",
+        "writes-both-arrays",
+        "reads-only",
+        "writes-what-is-read",
+        "lends-a-local",
+        "keeps-a-local",
+    ];
+    // A thousand times round, because the evidence here is the instruction count and a handful
+    // of saved loads does not show above the noise of starting a process.
+    const TRIPS: i128 = 1000;
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::MemoryEffects) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("{name} callee, {}", shape.replace('-', " ")));
+            let apart = "static __attribute__((noinline)) ";
+            let one = lit(ty, 1);
+            match shape {
+                "writes-one-array" | "writes-both-arrays" => {
+                    program.top(format!("static {name} left[4];"));
+                    program.top(format!("static {name} right[4];"));
+                    program.top(format!("{apart}void bump({name} *out, {name} *in) {{"));
+                    program.top("    out[0] = out[0] + in[1];".to_owned());
+                    if shape == "writes-one-array" {
+                        program.top(format!("    out[2] = out[2] + {one};"));
+                    } else {
+                        program.top(format!("    in[2] = in[2] + {one};"));
+                    }
+                    program.top("}".to_owned());
+                }
+                "reads-only" | "writes-what-is-read" => {
+                    program.top(format!("static {name} table[4];"));
+                    program.top(format!("static {name} watch[4];"));
+                    program.top(format!("{apart}{name} scan({name} *in) {{"));
+                    if shape == "writes-what-is-read" {
+                        program.top(format!("    watch[1] = watch[1] + {one};"));
+                    }
+                    program.top("    return in[0] + in[3];".to_owned());
+                    program.top("}".to_owned());
+                }
+                "lends-a-local" => {
+                    program.top(format!("static {name} anchor;"));
+                    program.top(format!("{apart}{name} sum_of({name} *of) {{"));
+                    program.top("    return of[0] + of[1];".to_owned());
+                    program.top("}".to_owned());
+                    program.top(format!("{apart}void tick(void) {{"));
+                    program.top(format!("    anchor = anchor + {one};"));
+                    program.top("}".to_owned());
+                }
+                _ => {
+                    program.top(format!("static {name} *kept;"));
+                    program.top(format!("{apart}{name} sum_of({name} *of) {{"));
+                    program.top("    kept = of;".to_owned());
+                    program.top("    return of[0] + of[1];".to_owned());
+                    program.top("}".to_owned());
+                    program.top(format!("{apart}void tick(void) {{"));
+                    program.top(format!("    *kept = *kept + {one};"));
+                    program.top("}".to_owned());
+                }
+            }
+            program.input(ty, "seed", 6);
+            program.blank();
+            match shape {
+                "writes-one-array" | "writes-both-arrays" => {
+                    program.line("left[0] = seed;");
+                    program.line(format!("right[1] = seed + {};", lit(ty, 1)));
+                    program.line(format!("right[2] = seed + {};", lit(ty, 2)));
+                    program.line(format!("right[3] = seed + {};", lit(ty, 3)));
+                }
+                "reads-only" | "writes-what-is-read" => {
+                    program.line("table[0] = seed;");
+                    program.line(format!("table[3] = seed + {};", lit(ty, 1)));
+                    program.line(format!("watch[1] = seed + {};", lit(ty, 2)));
+                    program.line(format!("watch[2] = seed + {};", lit(ty, 3)));
+                }
+                _ => {
+                    program.line(format!("{name} local[3];"));
+                    program.line("local[0] = seed;");
+                    program.line(format!("local[1] = seed + {};", lit(ty, 1)));
+                    program.line(format!("local[2] = seed + {};", lit(ty, 2)));
+                }
+            }
+            program.line(format!("{name} total = 0;"));
+            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            match shape {
+                "writes-one-array" | "writes-both-arrays" => {
+                    program.line_at(1, "bump(left, right);");
+                    program.line_at(1, "total += right[2] + right[3];");
+                }
+                "reads-only" | "writes-what-is-read" => {
+                    program.line_at(1, "total += scan(table);");
+                    program.line_at(1, "total += watch[1] + watch[2];");
+                }
+                _ => {
+                    program.line_at(1, "total += sum_of(local);");
+                    program.line_at(1, "tick();");
+                    program.line_at(1, "total += local[0] + local[2];");
+                }
+            }
+            program.line("}");
+            program.blank();
+            // Every number here is worked out from a seed of six. The checks after the total
+            // are what says the calls really ran, since the total on its own cannot tell a loop
+            // that called a thousand times from one that called once and kept the answer. They
+            // are also what keeps the write inside the callee alive: a store to a static
+            // nothing ever reads is a store a whole program pass is entitled to throw away, and
+            // then there would be no call left to reason about.
+            let climb = TRIPS * (TRIPS - 1) / 2;
+            match shape {
+                "writes-one-array" => {
+                    program.check(ty.promoted(), "total", 17 * TRIPS);
+                    program.check(ty.promoted(), "left[0]", 6 + 7 * TRIPS);
+                    program.check(ty.promoted(), "left[2]", TRIPS);
+                }
+                "writes-both-arrays" => {
+                    program.check(ty.promoted(), "total", 18 * TRIPS + climb);
+                    program.check(ty.promoted(), "left[0]", 6 + 7 * TRIPS);
+                    program.check(ty.promoted(), "right[2]", 8 + TRIPS);
+                }
+                "reads-only" => {
+                    program.check(ty.promoted(), "total", 30 * TRIPS);
+                    program.check(ty.promoted(), "table[0]", 6);
+                    program.check(ty.promoted(), "watch[1]", 8);
+                }
+                "writes-what-is-read" => {
+                    program.check(ty.promoted(), "total", 31 * TRIPS + climb);
+                    program.check(ty.promoted(), "table[0]", 6);
+                    program.check(ty.promoted(), "watch[1]", 8 + TRIPS);
+                }
+                "lends-a-local" => {
+                    program.check(ty.promoted(), "total", 27 * TRIPS);
+                    program.check(ty.promoted(), "local[0]", 6);
+                    program.check(ty.promoted(), "anchor", TRIPS);
+                }
+                _ => {
+                    program.check(ty.promoted(), "total", 28 * TRIPS + 2 * climb);
+                    program.check(ty.promoted(), "local[0]", 6 + TRIPS);
+                    program.check(ty.promoted(), "local[2]", 8);
+                }
+            }
+            sink.push_tagged(
+                Facet::MemoryEffects,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+                &["gnu"],
+            );
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -537,6 +718,42 @@ mod tests {
         assert_eq!(output(direct), "14\n");
         for case in &cases {
             assert!(case.source.contains("call(seed)"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn each_memory_effect_pair_prints_a_different_total() {
+        let cases = cases_for(Facet::MemoryEffects);
+        let shape = |want: &str| {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(want) && c.axes.get("type") == Some("i32"))
+                .unwrap();
+            output(case).to_owned()
+        };
+        // The loop reads right[2] and right[3] a thousand times over. The callee that leaves
+        // that array alone sees eight and nine every time round, and the one that adds to it
+        // sees nine and upwards.
+        assert_eq!(shape("writes-one-array"), "17000\n7006\n1000\n");
+        assert_eq!(shape("writes-both-arrays"), "517500\n7006\n1008\n");
+        // The callee that writes nothing leaves the watched pair at eight and nine. The one
+        // that writes the first of them walks it up to a thousand and eight.
+        assert_eq!(shape("reads-only"), "30000\n6\n8\n");
+        assert_eq!(shape("writes-what-is-read"), "530500\n6\n1008\n");
+        // The callee that keeps the address it was lent gives the tick beside it something to
+        // write, so the local goes up by one a time round instead of staying at the seed.
+        assert_eq!(shape("lends-a-local"), "27000\n6\n1000\n");
+        assert_eq!(shape("keeps-a-local"), "1027000\n1006\n8\n");
+    }
+
+    #[test]
+    fn every_memory_effect_callee_is_kept_out_of_line_and_says_so() {
+        let cases = cases_for(Facet::MemoryEffects);
+        assert_eq!(cases.len(), 24);
+        for case in &cases {
+            assert!(case.source.contains("__attribute__((noinline))"), "{}", case.id);
+            assert!(case.has_tag("gnu"), "{}", case.id);
+            assert_eq!(output(case).lines().count(), 3, "{}", case.id);
         }
     }
 }

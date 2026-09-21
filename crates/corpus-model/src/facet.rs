@@ -126,6 +126,14 @@ pub enum Facet {
     Reachability,
     /// Turning an indirect call into a direct one.
     Devirtualize,
+    /// What a callee reads and writes, as seen from its call sites.
+    ///
+    /// Purity is the coarse version of this question, and it only has three answers. This one
+    /// is the fine version: a callee that writes through one of its two pointer arguments and
+    /// not the other, or that reads a local it was lent without keeping the address. Both are
+    /// things a caller can act on, and neither shows up in the output, so the evidence is the
+    /// instruction count.
+    MemoryEffects,
     /// An optimization that cannot happen until the compiler has seen more than one file.
     ///
     /// Every other facet is one translation unit, and that is the right default, because a
@@ -376,6 +384,7 @@ impl Facet {
         Self::ConstantArgs,
         Self::Reachability,
         Self::Devirtualize,
+        Self::MemoryEffects,
         Self::LinkTimeOptimization,
         Self::Selection,
         Self::RegisterPressure,
@@ -454,6 +463,7 @@ impl Facet {
             Self::ConstantArgs => "constant-args",
             Self::Reachability => "reachability",
             Self::Devirtualize => "devirtualize",
+            Self::MemoryEffects => "memory-effects",
             Self::LinkTimeOptimization => "link-time-optimization",
             Self::Selection => "selection",
             Self::RegisterPressure => "register-pressure",
@@ -537,6 +547,7 @@ impl Facet {
             Self::ConstantArgs => "specializing a function to a constant argument",
             Self::Reachability => "removing what nothing references",
             Self::Devirtualize => "turning an indirect call into a direct one",
+            Self::MemoryEffects => "what a callee reads and writes, seen from its call sites",
             Self::LinkTimeOptimization => "optimizing across a translation unit boundary",
             Self::Selection => "choosing the machine instruction for an operation",
             Self::RegisterPressure => "how many values are live at once, and what that costs",
@@ -628,6 +639,7 @@ impl Facet {
             | Self::ConstantArgs
             | Self::Reachability
             | Self::Devirtualize
+            | Self::MemoryEffects
             | Self::LinkTimeOptimization => Phase::Interprocedural,
             Self::Selection
             | Self::RegisterPressure
