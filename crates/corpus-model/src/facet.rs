@@ -134,6 +134,13 @@ pub enum Facet {
     /// things a caller can act on, and neither shows up in the output, so the evidence is the
     /// instruction count.
     MemoryEffects,
+    /// Whether a call came out of a loop.
+    ///
+    /// The loop facets can say whether a load was hoisted. This one asks the same question
+    /// about the call itself, which is only answerable once the compiler knows what the
+    /// callee does to memory. A call to a callee that reads a table nothing in the loop
+    /// writes may come out. The same call may not, once the loop writes that table.
+    CallMotion,
     /// An optimization that cannot happen until the compiler has seen more than one file.
     ///
     /// Every other facet is one translation unit, and that is the right default, because a
@@ -385,6 +392,7 @@ impl Facet {
         Self::Reachability,
         Self::Devirtualize,
         Self::MemoryEffects,
+        Self::CallMotion,
         Self::LinkTimeOptimization,
         Self::Selection,
         Self::RegisterPressure,
@@ -464,6 +472,7 @@ impl Facet {
             Self::Reachability => "reachability",
             Self::Devirtualize => "devirtualize",
             Self::MemoryEffects => "memory-effects",
+            Self::CallMotion => "call-motion",
             Self::LinkTimeOptimization => "link-time-optimization",
             Self::Selection => "selection",
             Self::RegisterPressure => "register-pressure",
@@ -548,6 +557,7 @@ impl Facet {
             Self::Reachability => "removing what nothing references",
             Self::Devirtualize => "turning an indirect call into a direct one",
             Self::MemoryEffects => "what a callee reads and writes, seen from its call sites",
+            Self::CallMotion => "whether a call came out of a loop",
             Self::LinkTimeOptimization => "optimizing across a translation unit boundary",
             Self::Selection => "choosing the machine instruction for an operation",
             Self::RegisterPressure => "how many values are live at once, and what that costs",
@@ -640,6 +650,7 @@ impl Facet {
             | Self::Reachability
             | Self::Devirtualize
             | Self::MemoryEffects
+            | Self::CallMotion
             | Self::LinkTimeOptimization => Phase::Interprocedural,
             Self::Selection
             | Self::RegisterPressure
