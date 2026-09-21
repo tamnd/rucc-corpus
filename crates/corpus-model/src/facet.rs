@@ -122,6 +122,8 @@ pub enum Facet {
     FunctionPurity,
     /// Specializing a function to a constant argument.
     ConstantArgs,
+    /// Removing a parameter nothing reads, and the argument at every call with it.
+    UnusedParams,
     /// Removing a function or a variable that nothing references.
     Reachability,
     /// Turning an indirect call into a direct one.
@@ -389,6 +391,7 @@ impl Facet {
         Self::TailCall,
         Self::FunctionPurity,
         Self::ConstantArgs,
+        Self::UnusedParams,
         Self::Reachability,
         Self::Devirtualize,
         Self::MemoryEffects,
@@ -469,6 +472,7 @@ impl Facet {
             Self::TailCall => "tail-call",
             Self::FunctionPurity => "function-purity",
             Self::ConstantArgs => "constant-args",
+            Self::UnusedParams => "unused-params",
             Self::Reachability => "reachability",
             Self::Devirtualize => "devirtualize",
             Self::MemoryEffects => "memory-effects",
@@ -554,6 +558,7 @@ impl Facet {
             Self::TailCall => "turning a call in tail position into a jump",
             Self::FunctionPurity => "proving purity and using it at the call sites",
             Self::ConstantArgs => "specializing a function to a constant argument",
+            Self::UnusedParams => "taking out a parameter nothing reads, and the argument with it",
             Self::Reachability => "removing what nothing references",
             Self::Devirtualize => "turning an indirect call into a direct one",
             Self::MemoryEffects => "what a callee reads and writes, seen from its call sites",
@@ -647,6 +652,7 @@ impl Facet {
             | Self::TailCall
             | Self::FunctionPurity
             | Self::ConstantArgs
+            | Self::UnusedParams
             | Self::Reachability
             | Self::Devirtualize
             | Self::MemoryEffects
