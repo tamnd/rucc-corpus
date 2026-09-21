@@ -21,6 +21,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     function_purity(sink);
     constant_args(sink);
     unused_params(sink);
+    unused_returns(sink);
     reachability(sink);
     devirtualize(sink);
     memory_effects(sink);
@@ -614,6 +615,177 @@ fn ignores(program: &mut Program, ty: Ty, linkage: &str) {
     let name = ty.c_name();
     program.top(format!("{linkage}{name} keep({name} value, {name} ignored) {{"));
     program.top(format!("    return ({name})(value + 1);"));
+    program.top("}".to_owned());
+}
+
+/// Return values no call reads, and the results the calls were producing.
+///
+/// The sibling of `unused-params` asked the other way round. A parameter is dead because of what
+/// the callee does not do, and a return value is dead because of what the callers do not do, so
+/// every shape here is about the call sites rather than about the body.
+///
+/// The helper marks a global on its way past, which is the point. Whether the value it hands back
+/// is read has nothing to do with whether the call has to happen, and a compiler that takes the
+/// return away and takes the mark with it is caught by the check on the global rather than by the
+/// check on the total.
+///
+/// Three shapes are the removal: both calls ignoring the value, a helper reached through a second
+/// helper where the outer return has to go before the inner one can, and a helper handing back a
+/// pointer into a table it just wrote, where the write has to survive.
+///
+/// Four shapes keep the return value, and they are what the facet is for. One call reading it is
+/// enough, whether the reader is an addition or the condition of an if. A helper whose address the
+/// unit hands out keeps it, and so does a helper another object can call. The recursive one is
+/// here to be watched: its own call reads what it hands back, so the answer depends on whether the
+/// compiler works round a cycle or stops at it.
+///
+/// The last shape has two helpers side by side, one read and one not, so the report says the
+/// decision is per function and not per file.
+fn unused_returns(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "result-ignored",
+        "one-call-reads",
+        "read-in-a-condition",
+        "through-a-helper",
+        "returns-a-pointer",
+        "recursive",
+        "address-escapes",
+        "other-objects-call-it",
+        "one-helper-of-two",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::UnusedReturns) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program =
+                Program::new(format!("a {} return value no call reads, {shape}", ty.c_name()));
+            let total: i128 = match shape {
+                "result-ignored" => {
+                    noting(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
+                    program.line("note(seed);".to_owned());
+                    program.line(format!("note(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    0
+                }
+                "one-call-reads" => {
+                    noting(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
+                    program.line("total += note(seed);".to_owned());
+                    program.line(format!("note(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    9
+                }
+                "read-in-a-condition" => {
+                    noting(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
+                    program.line("if (note(seed)) {".to_owned());
+                    program.line(format!("    total += {};", lit(ty, 5)));
+                    program.line("}".to_owned());
+                    program.line(format!("note(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    5
+                }
+                "through-a-helper" => {
+                    noting(&mut program, ty, "static ");
+                    program.top(format!("static {name} outer({name} value) {{"));
+                    program.top("    return note(value);".to_owned());
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program.line("outer(seed);".to_owned());
+                    program.line(format!("outer(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    0
+                }
+                "returns-a-pointer" => {
+                    program.top(format!("static {name} table[4] = {{ 0, 0, 0, 0 }};"));
+                    program.top(format!("static {name} *slot({name} at) {{"));
+                    program.top(format!("    table[at] = ({name})(table[at] + 1);"));
+                    program.top("    return &table[at];".to_owned());
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program.line(format!("slot(({name})(seed - 2));"));
+                    program.line(format!("slot(({name})(seed - 2));"));
+                    program.blank();
+                    program.check(ty.promoted(), "table[1]", 2);
+                    0
+                }
+                "recursive" => {
+                    program.top(format!("static {name} seen = {};", lit(ty, 0)));
+                    program.top(format!("static {name} walk({name} value) {{"));
+                    program.top(format!("    seen = ({name})(seen + value);"));
+                    program.top(format!("    if (value == {}) {{", lit(ty, 0)));
+                    program.top(format!("        return {};", lit(ty, 0)));
+                    program.top("    }".to_owned());
+                    program.top(format!("    return walk(({name})(value - 1));"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program.line("walk(seed);".to_owned());
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 6);
+                    0
+                }
+                "address-escapes" => {
+                    noting(&mut program, ty, "static ");
+                    program.top(format!("static {name} (*chosen)({name}) = note;"));
+                    running_total(&mut program, ty);
+                    program.line("note(seed);".to_owned());
+                    program.line(format!("chosen(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    0
+                }
+                "other-objects-call-it" => {
+                    noting(&mut program, ty, "");
+                    running_total(&mut program, ty);
+                    program.line("note(seed);".to_owned());
+                    program.line(format!("note(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    0
+                }
+                _ => {
+                    noting(&mut program, ty, "static ");
+                    program.top(format!("static {name} lift({name} value) {{"));
+                    program.top(format!("    seen = ({name})(seen + value);"));
+                    program.top(format!("    return ({name})(value + 100);"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program.line("total += lift(seed);".to_owned());
+                    program.line(format!("note(({name})(seed + 1));"));
+                    program.blank();
+                    program.check(ty.promoted(), "seen", 7);
+                    103
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+            sink.push(
+                Facet::UnusedReturns,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The helper most of the shapes above lean on: a mark on a global, and a value handed back.
+///
+/// The mark is what says the call happened. Taking the return value away must not take it with it,
+/// and the check on `seen` is what would notice if it did.
+fn noting(program: &mut Program, ty: Ty, linkage: &str) {
+    let name = ty.c_name();
+    program.top(format!("static {name} seen = {};", lit(ty, 0)));
+    program.top(format!("{linkage}{name} note({name} value) {{"));
+    program.top(format!("    seen = ({name})(seen + value);"));
+    program.top(format!("    return ({name})(value * value);"));
     program.top("}".to_owned());
 }
 
