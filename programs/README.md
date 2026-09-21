@@ -1,10 +1,10 @@
 # The corpus
 
-2345 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2369 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `f0476504a0d2739e24414a1eda9ea69d5d3accaf8769221b4e309a636a721ed4`.
+Corpus digest `c3b5b2957d74a22c905d5ed3b14b56c92db8699dbbc9258745c598f9b479b2fd`.
 
 ## floor (118 programs)
 
@@ -73,7 +73,7 @@ Transformations that need loop structure, which is where most of the remaining t
 | [`loop-shape`](loops/loop-shape/README.md) | 64 | the shape a loop is left in, before any pass reads it |
 | [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
 
-## interprocedural (145 programs)
+## interprocedural (169 programs)
 
 Transformations that need to look at more than one function at a time.
 
@@ -85,6 +85,7 @@ Transformations that need to look at more than one function at a time.
 | [`constant-args`](interprocedural/constant-args/README.md) | 12 | specializing a function to a constant argument |
 | [`reachability`](interprocedural/reachability/README.md) | 9 | removing what nothing references |
 | [`devirtualize`](interprocedural/devirtualize/README.md) | 4 | turning an indirect call into a direct one |
+| [`memory-effects`](interprocedural/memory-effects/README.md) | 24 | what a callee reads and writes, seen from its call sites |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
 ## backend (791 programs)
