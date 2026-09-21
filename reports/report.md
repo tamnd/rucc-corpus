@@ -9,7 +9,7 @@ That is 71,024 lines of C, 2.3 MiB, in 2,361 files, and it is the denominator fo
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.10.68 | under test |
+| `rucc` | rucc 0.10.70 | under test |
 
 ## Did it meet the targets
 
@@ -700,27 +700,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `bit-builtins` | backend | 22 | 83 percent more | not measured | inside the noise | 42 percent less |
-| `register-alloc` | backend | 40 | 62 percent more | not measured | inside the noise | 46 percent less |
-| `long-double` | backend | 10 | 58 percent more | not measured | inside the noise | 42 percent less |
-| `scheduling` | backend | 20 | 44 percent more | not measured | inside the noise | 47 percent less |
+| `bit-builtins` | backend | 22 | 83 percent more | not measured | inside the noise | 47 percent less |
+| `register-alloc` | backend | 40 | 62 percent more | not measured | inside the noise | 45 percent less |
+| `long-double` | backend | 10 | 58 percent more | not measured | inside the noise | 44 percent less |
+| `scheduling` | backend | 20 | 44 percent more | not measured | inside the noise | 48 percent less |
 | `register-pressure` | backend | 60 | 36 percent more | not measured | inside the noise | 44 percent less |
 | `loop-restructure` | loops | 48 | 34 percent more | not measured | inside the noise | 44 percent less |
 | `computed-goto` | floor | 25 | 19 percent more | not measured | inside the noise | 48 percent less |
-| `calling-convention` | backend | 10 | 18 percent more | not measured | inside the noise | 43 percent less |
+| `calling-convention` | backend | 10 | 18 percent more | not measured | inside the noise | 47 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `conditional-store` | local | 16 | 35 percent less | not measured | level | 54 percent less |
-| `short-circuit` | local | 22 | 31 percent less | not measured | level | 54 percent less |
-| `prune` | global | 15 | 26 percent less | not measured | inside the noise | 49 percent less |
-| `value-settled` | local | 13 | 22 percent less | not measured | inside the noise | 51 percent less |
-| `vla-and-alloca` | floor | 9 | 21 percent less | not measured | inside the noise | 58 percent less |
-| `iv-selection` | loops | 36 | 20 percent less | not measured | inside the noise | 54 percent less |
-| `store-fold` | backend | 56 | 13 percent less | not measured | level | 47 percent less |
-| `load-fold` | backend | 40 | 13 percent less | not measured | inside the noise | 46 percent less |
+| `conditional-store` | local | 16 | 35 percent less | not measured | inside the noise | 58 percent less |
+| `short-circuit` | local | 22 | 31 percent less | not measured | inside the noise | 54 percent less |
+| `prune` | global | 15 | 26 percent less | not measured | level | 53 percent less |
+| `value-settled` | local | 13 | 22 percent less | not measured | inside the noise | 53 percent less |
+| `vla-and-alloca` | floor | 9 | 21 percent less | not measured | inside the noise | 60 percent less |
+| `iv-selection` | loops | 36 | 20 percent less | not measured | inside the noise | 56 percent less |
+| `store-fold` | backend | 56 | 13 percent less | not measured | inside the noise | 50 percent less |
+| `load-fold` | backend | 40 | 13 percent less | not measured | inside the noise | 49 percent less |
 
 ## What `-Os` does
 
