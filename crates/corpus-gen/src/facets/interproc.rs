@@ -1,9 +1,13 @@
 //! The transformations that need more than one function.
 //!
-//! Everything here is a whole program in one translation unit, with the helpers marked
-//! `static` so the compiler is allowed to reason about all of their call sites. That is the
-//! setting these optimizations were designed for, and it is also the setting most C programs
-//! are actually compiled in once the headers are expanded.
+//! Most of it is a whole program in one translation unit, with the helpers marked `static` so
+//! the compiler is allowed to reason about all of their call sites. That is the setting these
+//! optimizations were designed for, and it is also the setting most C programs are actually
+//! compiled in once the headers are expanded.
+//!
+//! The exceptions are the few shapes that are only a question when the body is somewhere the
+//! compiler cannot see it, which is `declared_purity` and the last three shapes of
+//! `call_motion`. Those build their cases out of more than one unit, the way `link.rs` does.
 
 use super::lit;
 use crate::Sink;
@@ -27,6 +31,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     devirtualize(sink);
     memory_effects(sink);
     call_motion(sink);
+    calls_across_units(sink);
 }
 
 /// Calls of every size, from every number of places.
@@ -1366,6 +1371,114 @@ fn call_motion(sink: &mut Sink<'_>) {
     }
 }
 
+/// A call in a loop whose callee is in another translation unit.
+///
+/// The six shapes above all put the callee in the same file, so the compiler can work out what it
+/// does and the question is only whether it acted on the answer. This is the other half. The
+/// helper is compiled on its own and the main unit holds nothing but a declaration of it, so there
+/// is nothing to work out. The only summary the compiler can have is the one the declaration
+/// gives it, and when the declaration gives it none, leaving the call in the loop is the only
+/// right answer.
+///
+/// Three shapes, and the three are meant to be read next to each other.
+///
+/// `another-unit-writes-a-counter` is the one the output catches. The helper counts its own calls
+/// in a `static` of its own, and the main unit asks for the count after the loop. A compiler that
+/// takes the call out prints one rather than a thousand, so this shape fails loudly rather than
+/// quietly costing something.
+///
+/// `another-unit-is-silent` and `another-unit-promises-const` are the same program twice, over a
+/// helper that genuinely touches nothing, with `__attribute__((const))` written on the
+/// declaration in the second. Both print the same number. The difference between the two rows is
+/// what the promise was worth, and it is the loop shaped version of what `declared_purity` asks
+/// about two calls standing next to each other.
+///
+/// A thousand times round, as above, for the same reason.
+fn calls_across_units(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] =
+        &["another-unit-writes-a-counter", "another-unit-is-silent", "another-unit-promises-const"];
+    // A thousand times round, matching the shapes above so the rows are comparable.
+    const TRIPS: i128 = 1000;
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::CallMotion) {
+                return;
+            }
+            let name = ty.c_name();
+            let counting = shape == "another-unit-writes-a-counter";
+            let helper = match counting {
+                true => unit(
+                    "helper",
+                    "A callee that counts its own calls, so the caller can say how many there were.",
+                    &format!(
+                        "static {name} made = {};\n\n\
+                         {name} corpus_step({name} of)\n{{\n    \
+                         made = ({name})(made + 1);\n    return ({name})(of * 2);\n}}\n\n\
+                         {name} corpus_calls(void)\n{{\n    return made;\n}}\n",
+                        lit(ty, 0)
+                    ),
+                ),
+                false => unit(
+                    "helper",
+                    "A callee that works its answer out from its argument and touches nothing.",
+                    &format!(
+                        "{name} corpus_weigh({name} of)\n{{\n    return ({name})(of * 3 + 1);\n}}\n"
+                    ),
+                ),
+            };
+            let mut program =
+                Program::new(format!("{name} call in a loop, {}", shape.replace('-', " ")));
+            if counting {
+                program.top(format!("{name} corpus_step({name} of);"));
+                program.top(format!("{name} corpus_calls(void);"));
+            } else {
+                let attribute = match shape == "another-unit-promises-const" {
+                    true => "__attribute__((const)) ",
+                    false => "",
+                };
+                program.top(format!("{attribute}{name} corpus_weigh({name} of);"));
+                program.top(format!("static {name} scratch[4];"));
+            }
+            program.input(ty, "seed", 6);
+            program.blank();
+            program.line(format!("{name} total = 0;"));
+            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            if counting {
+                program.line_at(1, "total += corpus_step(seed);");
+            } else {
+                program.line_at(1, "total += corpus_weigh(seed);");
+                // The same write the shapes above use, so that the loop does something the call
+                // has to be weighed against rather than being the only thing in it.
+                program.line_at(1, format!("scratch[i & 3] = scratch[i & 3] + {};", lit(ty, 1)));
+            }
+            program.line("}".to_owned());
+            program.blank();
+            if counting {
+                program.check(ty.promoted(), "total", 12 * TRIPS);
+                // The line that says whether the call came out. Nothing else in the program can.
+                program.check(ty.promoted(), "corpus_calls()", TRIPS);
+            } else {
+                program.check(ty.promoted(), "total", 19 * TRIPS);
+                program.check(ty.promoted(), "scratch[3]", TRIPS / 4);
+            }
+            let (source, expected) = program.finish();
+            let mut case = Case::linked(
+                Facet::CallMotion,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                source,
+                vec![helper],
+                Vec::new(),
+                Expect::Output(expected),
+            );
+            if shape == "another-unit-promises-const" {
+                case = case.tagged(&["gnu"]);
+            }
+            sink.push_case(case);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -1592,12 +1705,46 @@ mod tests {
     }
 
     #[test]
-    fn every_call_motion_callee_is_kept_out_of_line_and_says_so() {
+    fn every_call_motion_callee_the_case_can_see_is_kept_out_of_line_and_says_so() {
         let cases = cases_for(Facet::CallMotion);
-        assert_eq!(cases.len(), 24);
-        for case in &cases {
+        assert_eq!(cases.len(), 36);
+        let (together, apart): (Vec<_>, Vec<_>) =
+            cases.iter().partition(|case| case.units.is_empty());
+        assert_eq!(together.len(), 24);
+        for case in together {
             assert!(case.source.contains("__attribute__((noinline))"), "{}", case.id);
             assert!(case.has_tag("gnu"), "{}", case.id);
         }
+        // The other twelve do not need `noinline`, because a body in another translation unit
+        // cannot be inlined into this one without a flag no run here passes. Only the shape that
+        // writes an attribute on its declaration is a gnu case.
+        assert_eq!(apart.len(), 12);
+        for case in apart {
+            assert_eq!(case.units.len(), 1, "{}", case.id);
+            assert!(!case.source.contains("noinline"), "{}", case.id);
+            let promises = case.axes.get("shape") == Some("another-unit-promises-const");
+            assert_eq!(case.has_tag("gnu"), promises, "{}", case.id);
+            assert_eq!(case.source.contains("__attribute__"), promises, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_shapes_across_units_print_the_same_answer_whatever_the_compiler_believes() {
+        let cases = cases_for(Facet::CallMotion);
+        let shape = |want: &str| {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(want) && c.axes.get("type") == Some("i32"))
+                .unwrap();
+            output(case).to_owned()
+        };
+        // Twice six a thousand times, and then the count the helper kept of its own calls. That
+        // second number is the only thing in the program that can say whether the call came out
+        // of the loop, and a compiler that took it out with no summary to go on prints one.
+        assert_eq!(shape("another-unit-writes-a-counter"), "12000\n1000\n");
+        // Nineteen a thousand times either way. The pair is not about the number, which is why
+        // both halves print the same one. It is about what the promise cost to leave out.
+        assert_eq!(shape("another-unit-is-silent"), "19000\n250\n");
+        assert_eq!(shape("another-unit-promises-const"), "19000\n250\n");
     }
 }
