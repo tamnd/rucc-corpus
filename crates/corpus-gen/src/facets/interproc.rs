@@ -9,7 +9,7 @@ use super::lit;
 use crate::Sink;
 use crate::emit::Program;
 use crate::lang::Ty;
-use corpus_model::{Axes, Dialect, Facet};
+use corpus_model::{Axes, Case, Dialect, Expect, Facet, Unit};
 
 /// The types used here.
 const TYPES: &[Ty] = Ty::WIDE;
@@ -22,6 +22,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     constant_args(sink);
     unused_params(sink);
     unused_returns(sink);
+    declared_purity(sink);
     reachability(sink);
     devirtualize(sink);
     memory_effects(sink);
@@ -787,6 +788,139 @@ fn noting(program: &mut Program, ty: Ty, linkage: &str) {
     program.top(format!("    seen = ({name})(seen + value);"));
     program.top(format!("    return ({name})(value * value);"));
     program.top("}".to_owned());
+}
+
+/// A callee in another file, and what its declaration promised about memory.
+///
+/// Everything else in this phase is one translation unit, because a compiler that can see a body
+/// does not have to be told anything about it. This is the case where it cannot see one. The
+/// helper is compiled on its own and the main unit holds nothing but a declaration of it, so the
+/// only thing in the program that can say whether two calls are one call is
+/// `__attribute__((const))` or `__attribute__((pure))` written on that declaration.
+///
+/// Each shape is generated twice, once with the attribute written and once without, which is the
+/// pair `link-time-optimization` uses and is here for the same reason. One case that passes says
+/// the compiler accepted the attribute, which is worth knowing and is not what this is about. The
+/// pair says what believing the promise was worth, and the two rows sit next to each other in the
+/// report so the size and instruction columns can be subtracted.
+///
+/// Both promises are true of the helper, so neither half of any pair is a program with undefined
+/// behaviour in it. `corpus_weigh` works its answer out from its argument and touches nothing at
+/// all, and `corpus_look` reads the array it is handed and writes nothing.
+///
+/// The last shape is the one that keeps the facet honest. A write lands between the two reads, so
+/// `pure` does not make the two calls one and a compiler that merged them anyway would print the
+/// wrong number rather than a smaller one.
+fn declared_purity(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "the-same-argument-twice",
+        "a-result-nothing-reads",
+        "an-array-read-twice",
+        "a-write-between-two-reads",
+    ];
+    /// Whether the declaration in the main unit carries the attribute.
+    const PROMISE: &[(&str, bool)] = &[("written", true), ("silent", false)];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            for &(point, written) in PROMISE {
+                if !sink.wants(Facet::DeclaredPurity) {
+                    return;
+                }
+                let name = ty.c_name();
+                let reads = matches!(shape, "an-array-read-twice" | "a-write-between-two-reads");
+                let attribute = match (written, reads) {
+                    (false, _) => "",
+                    (true, false) => "__attribute__((const)) ",
+                    (true, true) => "__attribute__((pure)) ",
+                };
+                let helper = if reads {
+                    unit(
+                        "helper",
+                        "A callee that reads the array it is handed and writes nothing.",
+                        &format!(
+                            "{name} corpus_look(const {name} *at)\n{{\n    return ({name})(at[0] + at[2]);\n}}\n"
+                        ),
+                    )
+                } else {
+                    unit(
+                        "helper",
+                        "A callee that works its answer out from its argument and touches nothing.",
+                        &format!(
+                            "{name} corpus_weigh({name} of)\n{{\n    return ({name})(of * 3 + 1);\n}}\n"
+                        ),
+                    )
+                };
+                let mut program = Program::new(format!(
+                    "a {name} callee in another file, {}, promise {point}",
+                    shape.replace('-', " ")
+                ));
+                if reads {
+                    program.top(format!("{attribute}{name} corpus_look(const {name} *at);"));
+                } else {
+                    program.top(format!("{attribute}{name} corpus_weigh({name} of);"));
+                }
+                running_total(&mut program, ty);
+                let total: i128 = match shape {
+                    "the-same-argument-twice" => {
+                        program.line("total += corpus_weigh(seed);".to_owned());
+                        program.line("total += corpus_weigh(seed);".to_owned());
+                        20
+                    }
+                    "a-result-nothing-reads" => {
+                        program.line("corpus_weigh(seed);".to_owned());
+                        program.line("total += corpus_weigh(seed);".to_owned());
+                        10
+                    }
+                    "an-array-read-twice" => {
+                        table(&mut program, ty);
+                        program.line("total += corpus_look(table);".to_owned());
+                        program.line("total += corpus_look(table);".to_owned());
+                        16
+                    }
+                    _ => {
+                        table(&mut program, ty);
+                        program.line("total += corpus_look(table);".to_owned());
+                        program.line(format!("table[2] = ({name})(seed + 10);"));
+                        program.line("total += corpus_look(table);".to_owned());
+                        24
+                    }
+                };
+                program.blank();
+                program.check(ty.promoted(), "total", total);
+                let (source, expected) = program.finish();
+                sink.push_case(Case::linked(
+                    Facet::DeclaredPurity,
+                    Axes::of([("type", ty.name()), ("shape", shape), ("promise", point)]),
+                    Dialect::C17,
+                    source,
+                    vec![helper],
+                    Vec::new(),
+                    Expect::Output(expected),
+                ));
+            }
+        }
+    }
+}
+
+/// The four values the reading shapes hand to the callee.
+///
+/// A local rather than a global, and filled from the seed rather than written as literals, so that
+/// a compiler cannot work the answer out without believing something about the call.
+fn table(program: &mut Program, ty: Ty) {
+    let name = ty.c_name();
+    program.line(format!("{name} table[4] = {{"));
+    program.line_at(1, format!("seed, ({name})(seed + 1), ({name})(seed + 2), ({name})(seed + 3)"));
+    program.line("};".to_owned());
+}
+
+/// One translation unit with no `main` in it, written the way the generated ones are.
+fn unit(name: &str, purpose: &str, body: &str) -> Unit {
+    Unit::new(
+        name,
+        format!(
+            "// {purpose}\n// Generated by rucc-corpus. Edit the generator, not this file.\n\n{body}"
+        ),
+    )
 }
 
 /// Definitions nothing refers to.

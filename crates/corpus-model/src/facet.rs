@@ -126,6 +126,9 @@ pub enum Facet {
     UnusedParams,
     /// Removing a return value no call reads, and the result at every call with it.
     UnusedReturns,
+    /// What a declaration of a callee in another file promised about memory, and what
+    /// believing it is worth.
+    DeclaredPurity,
     /// Removing a function or a variable that nothing references.
     Reachability,
     /// Turning an indirect call into a direct one.
@@ -395,6 +398,7 @@ impl Facet {
         Self::ConstantArgs,
         Self::UnusedParams,
         Self::UnusedReturns,
+        Self::DeclaredPurity,
         Self::Reachability,
         Self::Devirtualize,
         Self::MemoryEffects,
@@ -477,6 +481,7 @@ impl Facet {
             Self::ConstantArgs => "constant-args",
             Self::UnusedParams => "unused-params",
             Self::UnusedReturns => "unused-returns",
+            Self::DeclaredPurity => "declared-purity",
             Self::Reachability => "reachability",
             Self::Devirtualize => "devirtualize",
             Self::MemoryEffects => "memory-effects",
@@ -566,6 +571,7 @@ impl Facet {
             Self::UnusedReturns => {
                 "taking out a return value no call reads, and the result with it"
             }
+            Self::DeclaredPurity => "believing a const or pure promise on a callee in another file",
             Self::Reachability => "removing what nothing references",
             Self::Devirtualize => "turning an indirect call into a direct one",
             Self::MemoryEffects => "what a callee reads and writes, seen from its call sites",
@@ -661,6 +667,7 @@ impl Facet {
             | Self::ConstantArgs
             | Self::UnusedParams
             | Self::UnusedReturns
+            | Self::DeclaredPurity
             | Self::Reachability
             | Self::Devirtualize
             | Self::MemoryEffects
