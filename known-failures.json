@@ -42,20 +42,6 @@
       "verdict": "rejected",
       "issue": "tamnd/rucc#1009",
       "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "setjmp-longjmp.a-retry-loop.c17",
-      "verdict": "crashed",
-      "issue": "tamnd/rucc#652",
-      "why": "rucc compiles the library setjmp and longjmp and then gets the program wrong, because nothing tells the optimizer that the call can come back a second time"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "setjmp-longjmp.volatile-survives.c17",
-      "verdict": "wrong",
-      "issue": "tamnd/rucc#652",
-      "why": "rucc compiles the library setjmp and longjmp and then gets the program wrong, because nothing tells the optimizer that the call can come back a second time"
     }
   ]
 }

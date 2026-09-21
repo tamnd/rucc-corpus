@@ -20,6 +20,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     tail_call(sink);
     function_purity(sink);
     constant_args(sink);
+    unused_params(sink);
     reachability(sink);
     devirtualize(sink);
     memory_effects(sink);
@@ -426,6 +427,194 @@ fn running_total(program: &mut Program, ty: Ty) {
     program.input(ty, "seed", 3);
     program.blank();
     program.line(format!("{} total = 0;", ty.c_name()));
+}
+
+/// Parameters the body never names, and the arguments the calls were passing to them.
+///
+/// The shapes are the two halves of what the transformation has to get right. One half is the
+/// removal itself, where the parameter goes, the argument goes with it, and the answer does not
+/// move: a parameter in the middle of the list, every parameter at once, a parameter that only
+/// became unread because the propagation put a constant in its place, and a parameter reached
+/// through a second helper, which is the case where two locals the caller was only adding
+/// together go as well.
+///
+/// The other half is what has to be left alone, and it is the half worth measuring, because the
+/// cost of getting it wrong is a program that stops working rather than a program that is
+/// slower. A function whose address the unit hands out, a function another object can call and a
+/// variadic function all keep every parameter they have. So does a parameter only the recursive
+/// call hands on, which is a real limitation rather than a rule, and it is here so that the
+/// report says whether it is still one.
+///
+/// Two shapes watch what has to survive the argument going away. One passes a call that bumps a
+/// counter, and the counter has to end up bumped. One passes the address of a local, and the
+/// local has to keep the value it was given.
+fn unused_params(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "one-unread",
+        "middle-unread",
+        "all-unread",
+        "transitive-sum",
+        "constant-then-unread",
+        "argument-has-a-side-effect",
+        "argument-is-an-address",
+        "recursive-only",
+        "address-escapes",
+        "other-objects-call-it",
+        "variadic",
+    ];
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::UnusedParams) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program =
+                Program::new(format!("a {} parameter nothing reads, {shape}", ty.c_name()));
+            let total: i128 = match shape {
+                "one-unread" => {
+                    ignores(&mut program, ty, "static ");
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += keep(seed, ({name})(seed * 5));"));
+                    }
+                    8
+                }
+                "middle-unread" => {
+                    program.top(format!(
+                        "static {name} pick({name} first, {name} ignored, {name} last) {{"
+                    ));
+                    program.top(format!("    return ({name})(first * 10 + last);"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program.line(format!(
+                        "total += pick(seed, ({name})(seed + 7), ({name})(seed + 1));"
+                    ));
+                    program.line(format!("total += pick(seed, seed, ({name})(seed + 2));"));
+                    69
+                }
+                "all-unread" => {
+                    program.top(format!("static {name} fixed({name} one, {name} two) {{"));
+                    program.top(format!("    return {};", lit(ty, 7)));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += fixed(seed, ({name})(seed + 1));"));
+                    }
+                    14
+                }
+                "transitive-sum" => {
+                    ignores(&mut program, ty, "static ");
+                    program.top(format!(
+                        "static {name} outer({name} value, {name} left, {name} right) {{"
+                    ));
+                    program.top(format!("    return keep(value, ({name})(left + right));"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!(
+                            "total += outer(seed, ({name})(seed * 2), ({name})(seed + 5));"
+                        ));
+                    }
+                    8
+                }
+                "constant-then-unread" => {
+                    program.top(format!("static {name} scaled({name} value, {name} factor) {{"));
+                    program.top(format!("    return ({name})(value * factor);"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line(format!("total += scaled(seed, {});", lit(ty, 10)));
+                    }
+                    60
+                }
+                "argument-has-a-side-effect" => {
+                    ignores(&mut program, ty, "static ");
+                    program.top(format!("static {name} counter = {};", lit(ty, 0)));
+                    program.top(format!("static {name} bump(void) {{"));
+                    program.top(format!("    counter = ({name})(counter + 1);"));
+                    program.top("    return counter;".to_owned());
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line("total += keep(seed, bump());".to_owned());
+                    }
+                    program.blank();
+                    program.check(ty.promoted(), "counter", 2);
+                    8
+                }
+                "argument-is-an-address" => {
+                    program.top(format!("static {name} note({name} value, {name} *ignored) {{"));
+                    program.top(format!("    return ({name})(value + 1);"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program.line(format!("{name} spot = ({name})(seed * 3);"));
+                    program.line("total += note(seed, &spot);".to_owned());
+                    program.blank();
+                    program.check(ty.promoted(), "spot", 9);
+                    4
+                }
+                "recursive-only" => {
+                    program.top(format!(
+                        "static {name} walk({name} value, {name} carried, {name} depth) {{"
+                    ));
+                    program.top(format!("    if (depth == {}) {{", lit(ty, 0)));
+                    program.top("        return value;".to_owned());
+                    program.top("    }".to_owned());
+                    program.top(format!(
+                        "    return walk(({name})(value + 1), carried, ({name})(depth - 1));"
+                    ));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    program
+                        .line(format!("total += walk(seed, ({name})(seed * 4), {});", lit(ty, 3)));
+                    6
+                }
+                "address-escapes" => {
+                    ignores(&mut program, ty, "static ");
+                    program.top(format!("static {name} (*chosen)({name}, {name}) = keep;"));
+                    running_total(&mut program, ty);
+                    program.line("total += keep(seed, seed);".to_owned());
+                    program.line("total += chosen(seed, seed);".to_owned());
+                    8
+                }
+                "other-objects-call-it" => {
+                    ignores(&mut program, ty, "");
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line("total += keep(seed, seed);".to_owned());
+                    }
+                    8
+                }
+                _ => {
+                    program.include("stdarg.h");
+                    program.top(format!("static {name} first({name} value, ...) {{"));
+                    program.top(format!("    return ({name})(value + 1);"));
+                    program.top("}".to_owned());
+                    running_total(&mut program, ty);
+                    for _ in 0..2 {
+                        program.line("total += first(seed, seed);".to_owned());
+                    }
+                    8
+                }
+            };
+            program.blank();
+            program.check(ty.promoted(), "total", total);
+            sink.push(
+                Facet::UnusedParams,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// The helper most of the shapes above lean on: two parameters, and a body that only names one.
+fn ignores(program: &mut Program, ty: Ty, linkage: &str) {
+    let name = ty.c_name();
+    program.top(format!("{linkage}{name} keep({name} value, {name} ignored) {{"));
+    program.top(format!("    return ({name})(value + 1);"));
+    program.top("}".to_owned());
 }
 
 /// Definitions nothing refers to.
