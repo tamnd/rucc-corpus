@@ -442,9 +442,11 @@ fn hoisted(ty: Ty, shape: &str) -> Option<Program> {
         }
         "a-call-with-nothing-in-it" => {
             // A call to a function that reads nothing and writes nothing, on an argument the
-            // loop does not change. rucc will not move this yet, because a pass is handed a
-            // function and the purity of another one is not in it. The case is here to say
-            // what the gap costs and to have something to measure the day it closes.
+            // loop does not change. rucc moves this now, since tamnd/rucc#1576 taught loop
+            // invariant code motion to read the mod and ref summaries. The callee here is
+            // small and `static`, so every compiler with an inliner gets to the same answer by
+            // inlining, and what this case measures is really the inliner. The `call-motion`
+            // facet asks the question of a callee the inliner has been told to leave alone.
             program.top("static int square(int of) {");
             program.top("    return of * of;");
             program.top("}");

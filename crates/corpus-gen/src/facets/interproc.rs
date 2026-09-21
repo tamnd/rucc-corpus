@@ -23,6 +23,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     reachability(sink);
     devirtualize(sink);
     memory_effects(sink);
+    call_motion(sink);
 }
 
 /// Calls of every size, from every number of places.
@@ -591,6 +592,170 @@ fn memory_effects(sink: &mut Sink<'_>) {
     }
 }
 
+/// Whether a call came out of a loop.
+///
+/// `memory_effects` asks what a callee does to memory, and reads the answer off the loads
+/// around the call. This asks the next question, which is what the caller may do with the call
+/// itself. A call to a callee that reads a table the loop never writes may be taken out of the
+/// loop and run once. A call to a callee that touches no memory at all may be taken out on the
+/// strength of its argument alone. Neither move shows in the output when it is right, so every
+/// shape here comes in a pair with the one line that makes the move wrong.
+///
+/// The pairs are a callee reading a table nothing writes against the same callee where the loop
+/// writes that table every time round, and a callee touching no memory on an argument the loop
+/// leaves alone against the same callee on an argument that changes. After them come the two
+/// shapes where the output does say the answer. A callee that writes through the pointer it was
+/// handed loses every write but the first if the call comes out, and the count at the end says
+/// so. A call under a test that is false is handed a zero to divide by, so a compiler that puts
+/// it in front of the loop faults rather than prints.
+///
+/// The loop runs a thousand times, as in `memory_effects`, because the evidence for the half
+/// that should move is what the call costs, and one call of a few instructions does not show
+/// above the noise of starting a process.
+///
+/// Every callee is `noinline`, which is why these are tagged `gnu`. Without it a compiler with
+/// an inliner answers all of these by inlining, and the case then measures the inliner rather
+/// than what the callee was worked out to do.
+fn call_motion(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &[
+        "reads-a-table-nothing-writes",
+        "reads-a-table-the-loop-writes",
+        "touches-nothing",
+        "an-argument-the-loop-changes",
+        "writes-through-an-argument",
+        "a-call-under-a-false-test",
+    ];
+    // A thousand times round, for the same reason as in `memory_effects`.
+    const TRIPS: i128 = 1000;
+    for &ty in TYPES {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::CallMotion) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!("{name} call, {}", shape.replace('-', " ")));
+            let apart = "static __attribute__((noinline)) ";
+            let one = lit(ty, 1);
+            match shape {
+                "reads-a-table-nothing-writes" | "reads-a-table-the-loop-writes" => {
+                    program.top(format!("static {name} table[4];"));
+                    if shape == "reads-a-table-nothing-writes" {
+                        program.top(format!("static {name} scratch[4];"));
+                    }
+                    program.top(format!("{apart}{name} scan({name} *in) {{"));
+                    program.top("    return in[0] + in[3];".to_owned());
+                    program.top("}".to_owned());
+                }
+                "touches-nothing" | "an-argument-the-loop-changes" => {
+                    program.top(format!("static {name} scratch[4];"));
+                    program.top(format!("{apart}{name} square({name} of) {{"));
+                    program.top("    return of * of;".to_owned());
+                    program.top("}".to_owned());
+                }
+                "writes-through-an-argument" => {
+                    program.top(format!("static {name} counter[2];"));
+                    program.top(format!("{apart}{name} bump({name} *out) {{"));
+                    program.top(format!("    out[0] = out[0] + {one};"));
+                    program.top("    return out[1];".to_owned());
+                    program.top("}".to_owned());
+                }
+                _ => {
+                    program.top(format!("{apart}{name} divide({name} top, {name} bottom) {{"));
+                    program.top("    return top / bottom;".to_owned());
+                    program.top("}".to_owned());
+                }
+            }
+            program.input(ty, "seed", 6);
+            if shape == "a-call-under-a-false-test" {
+                // Two zeroes and not one. Inside the test the compiler knows the gate was not
+                // zero, so a divisor named there would be a divisor it could prove safe, and
+                // the shape would stop asking anything.
+                program.input(ty, "gate", 0);
+                program.input(ty, "bottom", 0);
+            }
+            program.blank();
+            match shape {
+                "reads-a-table-nothing-writes" | "reads-a-table-the-loop-writes" => {
+                    program.line("table[0] = seed;");
+                    program.line(format!("table[3] = seed + {one};"));
+                }
+                "writes-through-an-argument" => program.line("counter[1] = seed;"),
+                _ => (),
+            }
+            program.line(format!("{name} total = 0;"));
+            program.line(format!("for (int i = 0; i < {TRIPS}; i++) {{"));
+            // The write to `scratch` is what makes these loops write memory at all. Without it
+            // there is nothing for the call to be weighed against and the move is free.
+            let stir = format!("scratch[i & 3] = scratch[i & 3] + {one};");
+            match shape {
+                "reads-a-table-nothing-writes" => {
+                    program.line_at(1, "total += scan(table);");
+                    program.line_at(1, stir);
+                }
+                "reads-a-table-the-loop-writes" => {
+                    program.line_at(1, "total += scan(table);");
+                    program.line_at(1, format!("table[3] = table[3] + {one};"));
+                }
+                "touches-nothing" => {
+                    program.line_at(1, "total += square(seed);");
+                    program.line_at(1, stir);
+                }
+                "an-argument-the-loop-changes" => {
+                    program.line_at(1, format!("total += square(seed + ({name})i);"));
+                    program.line_at(1, stir);
+                }
+                "writes-through-an-argument" => program.line_at(1, "total += bump(counter);"),
+                _ => {
+                    program.line_at(1, "if (gate) {");
+                    program.line_at(2, "total += divide(seed, bottom);");
+                    program.line_at(1, "}");
+                    program.line_at(1, format!("total += {one};"));
+                }
+            }
+            program.line("}");
+            program.blank();
+            // Every number here is worked out from a seed of six. The checks after the total
+            // are what tells a loop that called a thousand times from one that called once and
+            // kept the answer, which is the whole question this facet asks.
+            let climb = TRIPS * (TRIPS - 1) / 2;
+            match shape {
+                "reads-a-table-nothing-writes" => {
+                    program.check(ty.promoted(), "total", 13 * TRIPS);
+                    program.check(ty.promoted(), "table[3]", 7);
+                    program.check(ty.promoted(), "scratch[3]", TRIPS / 4);
+                }
+                "reads-a-table-the-loop-writes" => {
+                    program.check(ty.promoted(), "total", 13 * TRIPS + climb);
+                    program.check(ty.promoted(), "table[0]", 6);
+                    program.check(ty.promoted(), "table[3]", 7 + TRIPS);
+                }
+                "touches-nothing" => {
+                    program.check(ty.promoted(), "total", 36 * TRIPS);
+                    program.check(ty.promoted(), "scratch[3]", TRIPS / 4);
+                }
+                "an-argument-the-loop-changes" => {
+                    let squares: i128 = (0..TRIPS).map(|at| (6 + at) * (6 + at)).sum();
+                    program.check(ty.promoted(), "total", squares);
+                    program.check(ty.promoted(), "scratch[3]", TRIPS / 4);
+                }
+                "writes-through-an-argument" => {
+                    program.check(ty.promoted(), "total", 6 * TRIPS);
+                    program.check(ty.promoted(), "counter[0]", TRIPS);
+                    program.check(ty.promoted(), "counter[1]", 6);
+                }
+                _ => program.check(ty.promoted(), "total", TRIPS),
+            }
+            sink.push_tagged(
+                Facet::CallMotion,
+                Axes::of([("type", ty.name()), ("shape", shape)]),
+                Dialect::C17,
+                program,
+                &["gnu"],
+            );
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -754,6 +919,41 @@ mod tests {
             assert!(case.source.contains("__attribute__((noinline))"), "{}", case.id);
             assert!(case.has_tag("gnu"), "{}", case.id);
             assert_eq!(output(case).lines().count(), 3, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn each_call_motion_pair_agrees_on_the_total_or_disagrees_on_the_count() {
+        let cases = cases_for(Facet::CallMotion);
+        let shape = |want: &str| {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(want) && c.axes.get("type") == Some("i32"))
+                .unwrap();
+            output(case).to_owned()
+        };
+        // Thirteen a thousand times over when the loop leaves the table alone, and thirteen
+        // climbing by one a time round when it does not. The second number of each pair is the
+        // element the loop either wrote or did not.
+        assert_eq!(shape("reads-a-table-nothing-writes"), "13000\n7\n250\n");
+        assert_eq!(shape("reads-a-table-the-loop-writes"), "512500\n6\n1007\n");
+        // Six squared a thousand times, against the squares of six upwards.
+        assert_eq!(shape("touches-nothing"), "36000\n250\n");
+        assert_eq!(shape("an-argument-the-loop-changes"), "338863500\n250\n");
+        // The total is the same whether the call ran once or a thousand times. The count after
+        // it is the only thing that can tell, which is what this shape is for.
+        assert_eq!(shape("writes-through-an-argument"), "6000\n1000\n6\n");
+        // The gate is zero, so the divide never runs and the total is one per trip.
+        assert_eq!(shape("a-call-under-a-false-test"), "1000\n");
+    }
+
+    #[test]
+    fn every_call_motion_callee_is_kept_out_of_line_and_says_so() {
+        let cases = cases_for(Facet::CallMotion);
+        assert_eq!(cases.len(), 24);
+        for case in &cases {
+            assert!(case.source.contains("__attribute__((noinline))"), "{}", case.id);
+            assert!(case.has_tag("gnu"), "{}", case.id);
         }
     }
 }
