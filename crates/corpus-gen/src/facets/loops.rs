@@ -1473,7 +1473,7 @@ fn unrolled(ty: Ty, shape: &str) -> Option<Program> {
 fn loop_idiom(sink: &mut Sink<'_>) {
     const KINDS: &[&str] = &["fill", "copy", "sum", "count"];
     for &ty in TYPES {
-        for &trips in &[4i64, 7, 16, 100] {
+        for &trips in &[4i64, 7, 16, 100, 100_000] {
             for &kind in KINDS {
                 if !sink.wants(Facet::LoopIdiom) {
                     return;
@@ -1542,57 +1542,90 @@ fn loop_idiom(sink: &mut Sink<'_>) {
     }
 }
 
-/// Loops whose result nobody reads.
+/// The same loop twice, once with its total read afterwards and once without.
 ///
 /// A loop that computes into a local nothing uses can be deleted outright, provided the
 /// compiler can see the loop terminates. A loop whose bound is unknown can still be deleted
 /// for the same reason, and a compiler that deletes only the first is leaving work on the
-/// table. Both are emitted next to a live loop so the case still has an answer to check.
+/// table. That is the `unread` shape.
+///
+/// `read-back` is the same loop with the total printed. Now the loop cannot go until the
+/// compiler writes down what it would have left behind, which is the step times the number of
+/// times round, so the shape asks whether a compiler does that rather than whether it deletes
+/// loops that were already empty. The two shapes differ in exactly one thing, the read, which
+/// is what makes the pair evidence rather than two programs that happen to sit together.
+///
+/// Both carry a second loop of a fixed eight iterations whose answer the case checks. Fixed
+/// rather than on the trips axis on purpose: it is there so that a compiler which deletes the
+/// loop under test still has to get something right, and if it grew with the axis it would
+/// become the thing the instruction count was measuring.
+///
+/// A million is on the axis because that is where the answer stops being a rounding error. At
+/// a hundred times round, a loop left in place costs a few hundred instructions against the
+/// hundred thousand or so a process spends starting up and printing, and the row that says one
+/// compiler kept a loop the other deleted reads as noise. At a million it is about 5,800,000
+/// against about 830,000 and the row says what happened.
 fn loop_deletion(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &["unread", "read-back"];
+    const STEP: i128 = 3;
+    const ASIDE: i64 = 8;
     for &ty in TYPES {
-        for &trips in &[4i64, 16, 100] {
+        for &trips in &[4i64, 16, 100, 1_000_000] {
             for &bound in &["known", "unknown"] {
-                if !sink.wants(Facet::LoopDeletion) {
-                    return;
+                for &shape in SHAPES {
+                    if !sink.wants(Facet::LoopDeletion) {
+                        return;
+                    }
+                    let trips128 = i128::from(trips);
+                    let total = trips128 * STEP;
+                    let aside: i128 = (0..i128::from(ASIDE)).sum();
+                    if !fits(ty, total) || !fits(ty, aside) {
+                        continue;
+                    }
+                    let read = if shape == "read-back" {
+                        "whose total is read afterwards"
+                    } else {
+                        "whose total nothing reads"
+                    };
+                    let article = if bound == "known" { "a" } else { "an" };
+                    let mut program = Program::new(format!(
+                        "a {trips} iteration {} loop with {article} {bound} bound {read}",
+                        ty.c_name()
+                    ));
+                    let name = ty.c_name();
+                    let limit = if bound == "known" {
+                        trips.to_string()
+                    } else {
+                        program.input(Ty::I32, "limit", trips128);
+                        "limit".to_owned()
+                    };
+                    program.blank();
+                    program.line(format!("{name} total = 0;"));
+                    program.line(format!("for (int i = 0; i < {limit}; i++) {{"));
+                    program.line_at(1, format!("total += {};", lit(ty, STEP)));
+                    program.line("}");
+                    program.blank();
+                    program.line(format!("{name} aside = 0;"));
+                    program.line(format!("for (int i = 0; i < {ASIDE}; i++) {{"));
+                    program.line_at(1, format!("aside += ({name})i;"));
+                    program.line("}");
+                    program.blank();
+                    program.check(ty.promoted(), "aside", aside);
+                    if shape == "read-back" {
+                        program.check(ty.promoted(), "total", total);
+                    }
+                    sink.push(
+                        Facet::LoopDeletion,
+                        Axes::of([
+                            ("type", ty.name()),
+                            ("trips", &trips.to_string()),
+                            ("bound", bound),
+                            ("shape", shape),
+                        ]),
+                        Dialect::C17,
+                        program,
+                    );
                 }
-                let trips128 = i128::from(trips);
-                let live: i128 = (0..trips128).sum();
-                if !fits(ty, live) {
-                    continue;
-                }
-                let mut program = Program::new(format!(
-                    "a dead {trips} iteration {} loop with an {bound} bound",
-                    ty.c_name()
-                ));
-                let name = ty.c_name();
-                let limit = if bound == "known" {
-                    trips.to_string()
-                } else {
-                    program.input(Ty::I32, "limit", trips128);
-                    "limit".to_owned()
-                };
-                program.blank();
-                program.line(format!("{name} unread = 0;"));
-                program.line(format!("for (int i = 0; i < {limit}; i++) {{"));
-                program.line_at(1, format!("unread += ({name})(i * 7 + 1);"));
-                program.line("}");
-                program.blank();
-                program.line(format!("{name} total = 0;"));
-                program.line(format!("for (int i = 0; i < {limit}; i++) {{"));
-                program.line_at(1, format!("total += ({name})i;"));
-                program.line("}");
-                program.blank();
-                program.check(ty.promoted(), "total", live);
-                sink.push(
-                    Facet::LoopDeletion,
-                    Axes::of([
-                        ("type", ty.name()),
-                        ("trips", &trips.to_string()),
-                        ("bound", bound),
-                    ]),
-                    Dialect::C17,
-                    program,
-                );
             }
         }
     }
@@ -2219,12 +2252,53 @@ mod tests {
     }
 
     #[test]
-    fn a_deleted_loop_and_a_live_loop_sit_in_the_same_program() {
+    fn the_loop_under_test_and_the_loop_that_checks_sit_in_the_same_program() {
         for case in cases_for(Facet::LoopDeletion) {
-            assert!(case.source.contains("unread"), "{}", case.id);
             assert!(case.source.contains("total"), "{}", case.id);
+            assert!(case.source.contains("aside"), "{}", case.id);
             assert_eq!(case.source.matches("for (int i").count(), 2, "{}", case.id);
         }
+    }
+
+    /// The pair is only evidence if the read is the one thing that changed between them, so
+    /// the test that says so is worth more than the two cases are on their own.
+    #[test]
+    fn the_two_shapes_differ_in_nothing_but_the_read() {
+        let cases = cases_for(Facet::LoopDeletion);
+        let body = |source: &str| {
+            source
+                .lines()
+                .filter(|line| !line.starts_with("//"))
+                .map(str::to_owned)
+                .collect::<Vec<String>>()
+        };
+        for unread in cases.iter().filter(|c| c.axes.get("shape") == Some("unread")) {
+            let mate = cases
+                .iter()
+                .find(|c| {
+                    c.axes.get("shape") == Some("read-back")
+                        && c.axes.get("type") == unread.axes.get("type")
+                        && c.axes.get("trips") == unread.axes.get("trips")
+                        && c.axes.get("bound") == unread.axes.get("bound")
+                })
+                .expect("every unread case has a read-back case beside it");
+            let had = body(&unread.source);
+            let added: Vec<String> =
+                body(&mate.source).into_iter().filter(|line| !had.contains(line)).collect();
+            assert_eq!(added.len(), 1, "{}", mate.id);
+            assert!(added[0].contains("total"), "{}", mate.id);
+        }
+    }
+
+    /// Small counts say the answer is right at a size a person can check by hand. The large
+    /// one is the only reason the instruction count for this facet means anything, because
+    /// below it a loop left in place costs less than the noise around starting a process.
+    #[test]
+    fn the_trips_axis_reaches_a_size_where_a_loop_left_in_place_shows() {
+        let cases = cases_for(Facet::LoopDeletion);
+        let trips: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("trips")).collect();
+        assert!(trips.contains(&"4"), "the small counts are gone");
+        assert!(trips.contains(&"1000000"), "nothing here is big enough to measure");
     }
 
     #[test]

@@ -1,10 +1,10 @@
 # The corpus
 
-2541 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2595 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `bb137ada990f7bd7748aa9690e2b7925c66732a3b2498406a741babe5a0b67a4`.
+Corpus digest `fe8ee2ec9504a841e6f470397bdd961072279234610a2e9a91d8cff7e262aab1`.
 
 ## floor (118 programs)
 
@@ -54,7 +54,7 @@ Transformations across the blocks of one function, which need dataflow rather th
 | [`memory-ssa`](global/memory-ssa/README.md) | 28 | walking back from a load to the store that answers it |
 | [`scalar-replacement`](global/scalar-replacement/README.md) | 20 | turning a non-escaping local back into a value |
 
-## loops (646 programs)
+## loops (700 programs)
 
 Transformations that need loop structure, which is where most of the remaining time in real programs goes.
 
@@ -67,8 +67,8 @@ Transformations that need loop structure, which is where most of the remaining t
 | [`loop-unswitch`](loops/loop-unswitch/README.md) | 64 | removing a test the loop guard already decided |
 | [`loop-unroll`](loops/loop-unroll/README.md) | 64 | unrolling a loop body, known trip count or not |
 | [`loop-unroll-shape`](loops/loop-unroll-shape/README.md) | 80 | the loop shapes an unroller has to count or refuse |
-| [`loop-idiom`](loops/loop-idiom/README.md) | 64 | recognizing a loop the runtime already implements |
-| [`loop-deletion`](loops/loop-deletion/README.md) | 24 | deleting a loop whose body nobody reads |
+| [`loop-idiom`](loops/loop-idiom/README.md) | 78 | recognizing a loop the runtime already implements |
+| [`loop-deletion`](loops/loop-deletion/README.md) | 64 | deleting a loop whose body nobody reads |
 | [`loop-rotate`](loops/loop-rotate/README.md) | 64 | rotating a loop so the test lands at the bottom |
 | [`loop-shape`](loops/loop-shape/README.md) | 64 | the shape a loop is left in, before any pass reads it |
 | [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
