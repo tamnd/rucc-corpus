@@ -110,6 +110,8 @@ pub fn classify(message: &str) -> &'static str {
         ("interchang", "loop-restructure"),
         ("distribut", "loop-restructure"),
         ("loop turned into non-loop", "loop-deletion"),
+        ("loop taken out", "loop-deletion"),
+        ("leave behind", "loop-deletion"),
         ("basic block part vectorized", "loop-idiom"),
         ("converted to a builtin", "loop-idiom"),
         ("memset", "loop-idiom"),

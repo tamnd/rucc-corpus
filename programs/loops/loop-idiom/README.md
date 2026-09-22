@@ -2,7 +2,7 @@
 
 recognizing a loop the runtime already implements. Part of the loops phase of the M4 plan.
 
-64 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+78 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -10,6 +10,9 @@ recognizing a loop the runtime already implements. Part of the loops phase of th
 | [`loop-idiom.i32.100.count.c17.e22bdfce`](loop-idiom.i32.100.count.c17.e22bdfce.c) | type=i32, trips=100, kind=count | c17 | `33` |
 | [`loop-idiom.i32.100.fill.c17.6854d658`](loop-idiom.i32.100.fill.c17.6854d658.c) | type=i32, trips=100, kind=fill | c17 | `0 0` |
 | [`loop-idiom.i32.100.sum.c17.3d9f15d0`](loop-idiom.i32.100.sum.c17.3d9f15d0.c) | type=i32, trips=100, kind=sum | c17 | `5050` |
+| [`loop-idiom.i32.100000.copy.c17.085e3808`](loop-idiom.i32.100000.copy.c17.085e3808.c) | type=i32, trips=100000, kind=copy | c17 | `1 100000` |
+| [`loop-idiom.i32.100000.count.c17.63a45be6`](loop-idiom.i32.100000.count.c17.63a45be6.c) | type=i32, trips=100000, kind=count | c17 | `33333` |
+| [`loop-idiom.i32.100000.fill.c17.c1a47f22`](loop-idiom.i32.100000.fill.c17.c1a47f22.c) | type=i32, trips=100000, kind=fill | c17 | `0 0` |
 | [`loop-idiom.i32.16.copy.c17.da9d0b3b`](loop-idiom.i32.16.copy.c17.da9d0b3b.c) | type=i32, trips=16, kind=copy | c17 | `1 16` |
 | [`loop-idiom.i32.16.count.c17.9867715b`](loop-idiom.i32.16.count.c17.9867715b.c) | type=i32, trips=16, kind=count | c17 | `5` |
 | [`loop-idiom.i32.16.fill.c17.9fc9e5b6`](loop-idiom.i32.16.fill.c17.9fc9e5b6.c) | type=i32, trips=16, kind=fill | c17 | `0 0` |
@@ -26,6 +29,10 @@ recognizing a loop the runtime already implements. Part of the loops phase of th
 | [`loop-idiom.i64.100.count.c17.a39ccb2a`](loop-idiom.i64.100.count.c17.a39ccb2a.c) | type=i64, trips=100, kind=count | c17 | `33` |
 | [`loop-idiom.i64.100.fill.c17.25464313`](loop-idiom.i64.100.fill.c17.25464313.c) | type=i64, trips=100, kind=fill | c17 | `0 0` |
 | [`loop-idiom.i64.100.sum.c17.bc61948f`](loop-idiom.i64.100.sum.c17.bc61948f.c) | type=i64, trips=100, kind=sum | c17 | `5050` |
+| [`loop-idiom.i64.100000.copy.c17.b868ed11`](loop-idiom.i64.100000.copy.c17.b868ed11.c) | type=i64, trips=100000, kind=copy | c17 | `1 100000` |
+| [`loop-idiom.i64.100000.count.c17.8d7c973e`](loop-idiom.i64.100000.count.c17.8d7c973e.c) | type=i64, trips=100000, kind=count | c17 | `33333` |
+| [`loop-idiom.i64.100000.fill.c17.5f357b7e`](loop-idiom.i64.100000.fill.c17.5f357b7e.c) | type=i64, trips=100000, kind=fill | c17 | `0 0` |
+| [`loop-idiom.i64.100000.sum.c17.7553f90a`](loop-idiom.i64.100000.sum.c17.7553f90a.c) | type=i64, trips=100000, kind=sum | c17 | `5000050000` |
 | [`loop-idiom.i64.16.copy.c17.ce6a9275`](loop-idiom.i64.16.copy.c17.ce6a9275.c) | type=i64, trips=16, kind=copy | c17 | `1 16` |
 | [`loop-idiom.i64.16.count.c17.23823c22`](loop-idiom.i64.16.count.c17.23823c22.c) | type=i64, trips=16, kind=count | c17 | `5` |
 | [`loop-idiom.i64.16.fill.c17.07d6c15c`](loop-idiom.i64.16.fill.c17.07d6c15c.c) | type=i64, trips=16, kind=fill | c17 | `0 0` |
@@ -42,6 +49,9 @@ recognizing a loop the runtime already implements. Part of the loops phase of th
 | [`loop-idiom.u32.100.count.c17.5023b0a0`](loop-idiom.u32.100.count.c17.5023b0a0.c) | type=u32, trips=100, kind=count | c17 | `33` |
 | [`loop-idiom.u32.100.fill.c17.880ac645`](loop-idiom.u32.100.fill.c17.880ac645.c) | type=u32, trips=100, kind=fill | c17 | `0 0` |
 | [`loop-idiom.u32.100.sum.c17.e1362fe4`](loop-idiom.u32.100.sum.c17.e1362fe4.c) | type=u32, trips=100, kind=sum | c17 | `5050` |
+| [`loop-idiom.u32.100000.copy.c17.84bf05e0`](loop-idiom.u32.100000.copy.c17.84bf05e0.c) | type=u32, trips=100000, kind=copy | c17 | `1 100000` |
+| [`loop-idiom.u32.100000.count.c17.cb236044`](loop-idiom.u32.100000.count.c17.cb236044.c) | type=u32, trips=100000, kind=count | c17 | `33333` |
+| [`loop-idiom.u32.100000.fill.c17.71887660`](loop-idiom.u32.100000.fill.c17.71887660.c) | type=u32, trips=100000, kind=fill | c17 | `0 0` |
 | [`loop-idiom.u32.16.copy.c17.31de058d`](loop-idiom.u32.16.copy.c17.31de058d.c) | type=u32, trips=16, kind=copy | c17 | `1 16` |
 | [`loop-idiom.u32.16.count.c17.757f9fe9`](loop-idiom.u32.16.count.c17.757f9fe9.c) | type=u32, trips=16, kind=count | c17 | `5` |
 | [`loop-idiom.u32.16.fill.c17.6b0980af`](loop-idiom.u32.16.fill.c17.6b0980af.c) | type=u32, trips=16, kind=fill | c17 | `0 0` |
@@ -58,6 +68,10 @@ recognizing a loop the runtime already implements. Part of the loops phase of th
 | [`loop-idiom.u64.100.count.c17.f4bef02f`](loop-idiom.u64.100.count.c17.f4bef02f.c) | type=u64, trips=100, kind=count | c17 | `33` |
 | [`loop-idiom.u64.100.fill.c17.8c61c692`](loop-idiom.u64.100.fill.c17.8c61c692.c) | type=u64, trips=100, kind=fill | c17 | `0 0` |
 | [`loop-idiom.u64.100.sum.c17.1f553fc5`](loop-idiom.u64.100.sum.c17.1f553fc5.c) | type=u64, trips=100, kind=sum | c17 | `5050` |
+| [`loop-idiom.u64.100000.copy.c17.4d35db9d`](loop-idiom.u64.100000.copy.c17.4d35db9d.c) | type=u64, trips=100000, kind=copy | c17 | `1 100000` |
+| [`loop-idiom.u64.100000.count.c17.6cfe66bc`](loop-idiom.u64.100000.count.c17.6cfe66bc.c) | type=u64, trips=100000, kind=count | c17 | `33333` |
+| [`loop-idiom.u64.100000.fill.c17.248c6766`](loop-idiom.u64.100000.fill.c17.248c6766.c) | type=u64, trips=100000, kind=fill | c17 | `0 0` |
+| [`loop-idiom.u64.100000.sum.c17.f88a098d`](loop-idiom.u64.100000.sum.c17.f88a098d.c) | type=u64, trips=100000, kind=sum | c17 | `5000050000` |
 | [`loop-idiom.u64.16.copy.c17.b31e8e9f`](loop-idiom.u64.16.copy.c17.b31e8e9f.c) | type=u64, trips=16, kind=copy | c17 | `1 16` |
 | [`loop-idiom.u64.16.count.c17.e0496fc0`](loop-idiom.u64.16.count.c17.e0496fc0.c) | type=u64, trips=16, kind=count | c17 | `5` |
 | [`loop-idiom.u64.16.fill.c17.1ec8b0a3`](loop-idiom.u64.16.fill.c17.1ec8b0a3.c) | type=u64, trips=16, kind=fill | c17 | `0 0` |
