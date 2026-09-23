@@ -1207,7 +1207,19 @@ const SHAPES: &[Shape] = &[
     Shape { name: "below-zero", base: -8, labels: 16, span: 20 },
     Shape { name: "near-the-edge", base: 2_147_483_627, labels: 16, span: 20 },
     Shape { name: "shared-default", base: 0, labels: 16, span: 20 },
+    Shape { name: "five-labels", base: 0, labels: 5, span: 7 },
+    Shape { name: "six-labels", base: 0, labels: 6, span: 8 },
+    Shape { name: "seven-labels", base: 0, labels: 7, span: 9 },
+    Shape { name: "eight-labels", base: 0, labels: 8, span: 10 },
 ];
+
+/// The shapes that ask where a jump table starts to pay.
+///
+/// Dense, with answers no line fits, so the only question left is whether the switch is a table
+/// or a set of comparisons. gcc 16 builds a table from five labels on x86-64 and rucc from eight,
+/// and neither number was measured on the machine it runs on. Four sizes either side of both, on
+/// a stream nothing predicts, is the measurement tamnd/rucc#1759 asks for.
+const SMALL: &[&str] = &["five-labels", "six-labels", "seven-labels", "eight-labels"];
 
 /// The shapes that are also dispatched on a stream a branch predictor can guess.
 const PAIRED: &[&str] = &["affine", "scattered"];
@@ -1284,6 +1296,7 @@ fn dispatch_answer(shape: &Shape, value: i128) -> i128 {
         "near-the-edge" => 3 * step + 1,
         "constant-arms" => 1,
         "scattered" => SCATTER[step as usize],
+        name if SMALL.contains(&name) => SCATTER[step as usize],
         // The last label has no arm of its own, so it goes wherever the default goes.
         "shared-default" => {
             if step == shape.labels - 1 {
@@ -3450,6 +3463,9 @@ mod tests {
             "interpreter",
         ] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
+        }
+        for wanted in super::SMALL {
+            assert!(shapes.contains(wanted), "no case for {wanted}");
         }
         for paired in super::PAIRED {
             let both = cases
