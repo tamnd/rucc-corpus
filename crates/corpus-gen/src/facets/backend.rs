@@ -1211,7 +1211,20 @@ const SHAPES: &[Shape] = &[
     Shape { name: "six-labels", base: 0, labels: 6, span: 8 },
     Shape { name: "seven-labels", base: 0, labels: 7, span: 9 },
     Shape { name: "eight-labels", base: 0, labels: 8, span: 10 },
+    Shape { name: "holes", base: 0, labels: 16, span: 36 },
+    Shape { name: "wide-answers", base: 0, labels: 16, span: 20 },
+    Shape { name: "negative-answers", base: 0, labels: 16, span: 20 },
 ];
+
+/// The shapes that ask whether a switch becomes a table of its answers, and how wide the cells are.
+///
+/// Their answers are no line, so the only conversion left is a load from a table. `holes` has a
+/// label at every other value, so a table has a cell nothing reads between each pair and a value
+/// in a hole still has to reach the default. `wide-answers` needs four bytes a cell and
+/// `negative-answers` fits a signed byte, which is what gcc 16 narrows a cell to at `-Os` and not
+/// at `-O2`, so the pair says whether a compiler narrowed a cell it could and left alone one it
+/// could not.
+const TABLED: &[&str] = &["holes", "wide-answers", "negative-answers"];
 
 /// The shapes that ask where a jump table starts to pay.
 ///
@@ -1281,9 +1294,23 @@ fn dispatch_name(shape: &Shape) -> String {
     shape.name.replace('-', "_")
 }
 
+/// The label a shape's arm at `step` answers for.
+///
+/// One apart for every shape but `holes`, whose labels are two apart so that every other value
+/// in the range is a hole.
+fn dispatch_label(shape: &Shape, step: i128) -> i128 {
+    if shape.name == "holes" { shape.base + 2 * step } else { shape.base + step }
+}
+
 /// The answer one of these switches gives for a value, with zero for the default.
 fn dispatch_answer(shape: &Shape, value: i128) -> i128 {
-    let step = value - shape.base;
+    let mut step = value - shape.base;
+    if shape.name == "holes" {
+        if step % 2 != 0 {
+            return 0;
+        }
+        step /= 2;
+    }
     if step < 0 || step >= shape.labels {
         return 0;
     }
@@ -1297,6 +1324,14 @@ fn dispatch_answer(shape: &Shape, value: i128) -> i128 {
         "constant-arms" => 1,
         "scattered" => SCATTER[step as usize],
         name if SMALL.contains(&name) => SCATTER[step as usize],
+        name if TABLED.contains(&name) => match name {
+            // Every answer over a million, so no cell narrower than four bytes holds them.
+            "wide-answers" => SCATTER[step as usize] * 1_000_003,
+            // Every answer below zero and above minus a hundred and twenty eight, so a byte holds
+            // each one only if it is widened back with its sign.
+            "negative-answers" => -SCATTER[step as usize],
+            _ => SCATTER[step as usize],
+        },
         // The last label has no arm of its own, so it goes wherever the default goes.
         "shared-default" => {
             if step == shape.labels - 1 {
@@ -1314,7 +1349,7 @@ fn dispatch_switch(program: &mut Program, shape: &Shape) {
     program.top(format!("static int {}(int value) {{", dispatch_name(shape)));
     program.top("    switch (value) {");
     for step in 0..shape.labels {
-        let label = shape.base + step;
+        let label = dispatch_label(shape, step);
         if shape.name == "shared-default" && step == shape.labels - 1 {
             // No body and no `break`, so this label falls into the default and the block the
             // default runs is also the block this label goes to. That is the shape that makes a
@@ -3450,6 +3485,21 @@ mod tests {
     }
 
     #[test]
+    fn a_value_in_a_hole_goes_to_the_default_and_a_label_gets_its_answer() {
+        let holes = super::SHAPES.iter().find(|shape| shape.name == "holes").expect("holes");
+        assert_eq!(super::dispatch_answer(holes, 0), super::SCATTER[0]);
+        assert_eq!(super::dispatch_answer(holes, 1), 0);
+        assert_eq!(super::dispatch_answer(holes, 30), super::SCATTER[15]);
+        assert_eq!(super::dispatch_answer(holes, 31), 0);
+        assert_eq!(super::dispatch_answer(holes, 32), 0);
+        let wide = super::SHAPES.iter().find(|shape| shape.name == "wide-answers").expect("wide");
+        assert!(super::dispatch_answer(wide, 1) > i128::from(i16::MAX));
+        let below =
+            super::SHAPES.iter().find(|shape| shape.name == "negative-answers").expect("neg");
+        assert!((i128::from(i8::MIN)..0).contains(&super::dispatch_answer(below, 2)));
+    }
+
+    #[test]
     fn every_dispatch_shape_is_generated() {
         let cases = cases_for(Facet::SwitchDispatch);
         let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
@@ -3464,7 +3514,7 @@ mod tests {
         ] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
         }
-        for wanted in super::SMALL {
+        for wanted in super::SMALL.iter().chain(super::TABLED) {
             assert!(shapes.contains(wanted), "no case for {wanted}");
         }
         for paired in super::PAIRED {
