@@ -7,41 +7,6 @@
       "verdict": "unimplemented",
       "issue": "tamnd/rucc#1008",
       "why": "rucc has no lowering for __atomic_signal_fence, the one atomic builtin that was left behind when the rest got theirs"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "computed-goto.dispatch-in-loop.16.c17",
-      "verdict": "rejected",
-      "issue": "tamnd/rucc#1009",
-      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "computed-goto.dispatch-in-loop.2.c17",
-      "verdict": "rejected",
-      "issue": "tamnd/rucc#1009",
-      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "computed-goto.dispatch-in-loop.32.c17",
-      "verdict": "rejected",
-      "issue": "tamnd/rucc#1009",
-      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "computed-goto.dispatch-in-loop.4.c17",
-      "verdict": "rejected",
-      "issue": "tamnd/rucc#1009",
-      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "computed-goto.dispatch-in-loop.8.c17",
-      "verdict": "rejected",
-      "issue": "tamnd/rucc#1009",
-      "why": "rucc reports invalid IR on a computed goto whose arms sit inside the loop body, because the value on a latch phi arrives from a block the indirect edge did not come through"
     }
   ]
 }
