@@ -1214,6 +1214,8 @@ const SHAPES: &[Shape] = &[
     Shape { name: "holes", base: 0, labels: 16, span: 36 },
     Shape { name: "wide-answers", base: 0, labels: 16, span: 20 },
     Shape { name: "negative-answers", base: 0, labels: 16, span: 20 },
+    Shape { name: "masked", base: 0, labels: 16, span: 20 },
+    Shape { name: "masked-four", base: 0, labels: 4, span: 20 },
 ];
 
 /// The shapes that ask whether a switch becomes a table of its answers, and how wide the cells are.
@@ -1225,6 +1227,15 @@ const SHAPES: &[Shape] = &[
 /// at `-O2`, so the pair says whether a compiler narrowed a cell it could and left alone one it
 /// could not.
 const TABLED: &[&str] = &["holes", "wide-answers", "negative-answers"];
+
+/// The shapes whose switch is on the value masked to its labels, so the default is dead code.
+///
+/// Every value the mask can give is a label, and a compiler that can see that has no range check
+/// to write and no default to keep. gcc 16 leaves both out. A compiler that cannot see it keeps a
+/// compare in front of a table that every value is inside of, which is what tamnd/rucc#400 calls
+/// removing an unreachable default. The stream still draws from a span wider than the labels, so
+/// the values past the last label wrap round to the first ones rather than going anywhere new.
+const MASKED: &[&str] = &["masked", "masked-four"];
 
 /// The shapes that ask where a jump table starts to pay.
 ///
@@ -1304,6 +1315,9 @@ fn dispatch_label(shape: &Shape, step: i128) -> i128 {
 
 /// The answer one of these switches gives for a value, with zero for the default.
 fn dispatch_answer(shape: &Shape, value: i128) -> i128 {
+    if MASKED.contains(&shape.name) {
+        return SCATTER[((value - shape.base) & (shape.labels - 1)) as usize];
+    }
     let mut step = value - shape.base;
     if shape.name == "holes" {
         if step % 2 != 0 {
@@ -1347,7 +1361,11 @@ fn dispatch_answer(shape: &Shape, value: i128) -> i128 {
 /// Writes the switch a dispatch case calls, one arm per label.
 fn dispatch_switch(program: &mut Program, shape: &Shape) {
     program.top(format!("static int {}(int value) {{", dispatch_name(shape)));
-    program.top("    switch (value) {");
+    if MASKED.contains(&shape.name) {
+        program.top(format!("    switch (value & {}) {{", shape.labels - 1));
+    } else {
+        program.top("    switch (value) {");
+    }
     for step in 0..shape.labels {
         let label = dispatch_label(shape, step);
         if shape.name == "shared-default" && step == shape.labels - 1 {
@@ -3500,6 +3518,21 @@ mod tests {
     }
 
     #[test]
+    fn a_masked_switch_has_a_label_for_every_value_the_mask_gives() {
+        for shape in super::SHAPES.iter().filter(|shape| super::MASKED.contains(&shape.name)) {
+            assert_eq!(shape.labels.count_ones(), 1, "the {} mask leaves a value out", shape.name);
+            for value in 0..shape.span {
+                let answer = super::dispatch_answer(shape, value);
+                assert_ne!(answer, 0, "{} at {value} reaches the default", shape.name);
+                assert_eq!(answer, super::dispatch_answer(shape, value & (shape.labels - 1)));
+            }
+        }
+        let cases = cases_for(Facet::SwitchDispatch);
+        let masked = cases.iter().find(|c| c.axes.get("shape") == Some("masked")).expect("masked");
+        assert!(masked.source.contains("switch (value & 15)"), "{}", masked.source);
+    }
+
+    #[test]
     fn every_dispatch_shape_is_generated() {
         let cases = cases_for(Facet::SwitchDispatch);
         let shapes: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("shape")).collect();
@@ -3514,7 +3547,7 @@ mod tests {
         ] {
             assert!(shapes.contains(&wanted), "no case for {wanted}");
         }
-        for wanted in super::SMALL.iter().chain(super::TABLED) {
+        for wanted in super::SMALL.iter().chain(super::TABLED).chain(super::MASKED) {
             assert!(shapes.contains(wanted), "no case for {wanted}");
         }
         for paired in super::PAIRED {
@@ -3564,6 +3597,9 @@ mod tests {
             for step in 0..shape.labels {
                 let label = shape.base + step;
                 assert!(stream.contains(&label), "the {} stream misses {label}", shape.name);
+            }
+            if super::MASKED.contains(&shape.name) {
+                continue;
             }
             let misses = stream.iter().filter(|&&v| v >= shape.base + shape.labels).count();
             assert!(misses > 0, "the {} stream never takes the default", shape.name);

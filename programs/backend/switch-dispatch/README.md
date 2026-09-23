@@ -2,7 +2,7 @@
 
 a switch dispatched often enough to time how it was lowered. Part of the backend phase of the M4 plan.
 
-16 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+18 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -14,6 +14,8 @@ a switch dispatched often enough to time how it was lowered. Part of the backend
 | [`switch-dispatch.five-labels.unpredictable.c17.912748f9`](switch-dispatch.five-labels.unpredictable.c17.912748f9.c) | shape=five-labels, stream=unpredictable | c17 | `222220000` |
 | [`switch-dispatch.holes.unpredictable.c17.343584c6`](switch-dispatch.holes.unpredictable.c17.343584c6.c) | shape=holes, stream=unpredictable | c17 | `122850000` |
 | [`switch-dispatch.interpreter.unpredictable.c17.2c27825f`](switch-dispatch.interpreter.unpredictable.c17.2c27825f.c) | shape=interpreter, stream=unpredictable | c17 | `5598638839280509662` |
+| [`switch-dispatch.masked-four.unpredictable.c17.cfa9add2`](switch-dispatch.masked-four.unpredictable.c17.cfa9add2.c) | shape=masked-four, stream=unpredictable | c17 | `257705000` |
+| [`switch-dispatch.masked.unpredictable.c17.fcb9805f`](switch-dispatch.masked.unpredictable.c17.fcb9805f.c) | shape=masked, stream=unpredictable | c17 | `270977500` |
 | [`switch-dispatch.near-the-edge.unpredictable.c17.f7a7f236`](switch-dispatch.near-the-edge.unpredictable.c17.f7a7f236.c) | shape=near-the-edge, stream=unpredictable | c17 | `192075000` |
 | [`switch-dispatch.negative-answers.unpredictable.c17.45c3408b`](switch-dispatch.negative-answers.unpredictable.c17.45c3408b.c) | shape=negative-answers, stream=unpredictable | c17 | `-218070000` |
 | [`switch-dispatch.scattered.in-order.c17.0eea8687`](switch-dispatch.scattered.in-order.c17.0eea8687.c) | shape=scattered, stream=in-order | c17 | `219695000` |
