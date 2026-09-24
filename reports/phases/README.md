@@ -4,12 +4,12 @@ The phases are the ones in the M4 plan, in the order the plan does them, because
 
 | phase | facets | cases | lines | `rucc` passed | `rucc` code |
 |---|---|---|---|---|---|
-| [floor](floor.md) | 6 | 118 | 3,458 | 533 of 558 | 2% less |
-| [local](local.md) | 11 | 369 | 19,362 | 1845 of 1845 | 4% less |
+| [floor](floor.md) | 6 | 118 | 3,458 | 558 of 558 | 2% less |
+| [local](local.md) | 11 | 409 | 20,476 | 2045 of 2045 | 4% less |
 | [global](global.md) | 10 | 224 | 5,210 | 1120 of 1120 | 4% less |
 | [loops](loops.md) | 12 | 700 | 14,151 | 3500 of 3500 | 3% less |
 | [interprocedural](interprocedural.md) | 12 | 341 | 8,867 in 409 files | 1705 of 1705 | 1% less |
-| [backend](backend.md) | 23 | 791 | 24,586 | 3955 of 3955 | 1% less |
-| [correctness](correctness.md) | 3 | 52 | 1,794 | 255 of 260 | 2% less |
+| [backend](backend.md) | 23 | 800 | 24,968 | 4000 of 4000 | 1% less |
+| [correctness](correctness.md) | 3 | 52 | 1,794 | 255 of 260 | 3% less |
 
 Each phase has a page of its own with its facets on it, and each facet links to the programs it was generated for.
