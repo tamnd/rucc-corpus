@@ -1298,6 +1298,154 @@ fn switch_dispatch(sink: &mut Sink<'_>) {
         }
     }
     interpreter(sink);
+    addresses(sink);
+}
+
+/// The words the `names` shapes return, one per label, and the one the default returns.
+///
+/// Each is at least four bytes long, so reading any of the first four is inside the string.
+const WORDS: &[&str] = &[
+    "hydrogen",
+    "helium",
+    "lithium",
+    "beryllium",
+    "boron",
+    "carbon",
+    "nitrogen",
+    "oxygen",
+    "fluorine",
+    "neon",
+    "sodium",
+    "magnesium",
+    "aluminium",
+    "silicon",
+    "phosphorus",
+    "sulfur",
+];
+
+/// What the default of a `names` shape returns.
+const NO_WORD: &str = "none";
+
+/// The characters the `into-letters` shape returns pointers into.
+const LETTERS: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+/// How far into [`LETTERS`] the `into-letters` arm for a step points, with the default last.
+///
+/// Scattered, so no multiple and offset gives them all and the only lowering left is a table.
+/// Every one is at least four short of the end, so the four bytes a dispatch reads are inside.
+fn letter_offset(step: i128) -> i128 {
+    if step < 0 { 58 } else { SCATTER[step as usize] * 5 % 56 }
+}
+
+/// The shapes whose arms return addresses rather than numbers.
+///
+/// Their spans, as in [`SHAPES`], are wider than their labels so the default is reached.
+/// `names-with-holes` has a label at every other value, the way `holes` does.
+const ADDRESSED: &[Shape] = &[
+    Shape { name: "names", base: 0, labels: 16, span: 20 },
+    Shape { name: "names-with-holes", base: 0, labels: 16, span: 36 },
+    Shape { name: "into-letters", base: 0, labels: 16, span: 20 },
+];
+
+/// Which arm a value reaches in one of the [`ADDRESSED`] shapes, or `None` for the default.
+fn addressed_step(shape: &Shape, value: i128) -> Option<i128> {
+    let mut step = value - shape.base;
+    if shape.name == "names-with-holes" {
+        if step % 2 != 0 {
+            return None;
+        }
+        step /= 2;
+    }
+    (0..shape.labels).contains(&step).then_some(step)
+}
+
+/// The byte `at` into the string one of the [`ADDRESSED`] shapes returns for a value.
+fn addressed_byte(shape: &Shape, value: i128, at: usize) -> i128 {
+    let step = addressed_step(shape, value);
+    let text = if shape.name == "into-letters" {
+        let from = letter_offset(step.unwrap_or(-1)) as usize;
+        &LETTERS[from..]
+    } else {
+        step.map_or(NO_WORD, |step| WORDS[step as usize])
+    };
+    i128::from(text.as_bytes()[at])
+}
+
+/// Switches whose arms return the address of read only data, dispatched on a stream nothing
+/// predicts.
+///
+/// A switch like this is how C names things: an error code to its message, an opcode to its
+/// mnemonic, a state to its label. Its answers are no line and they are not numbers, so the only
+/// table that can replace it is a table of addresses. gcc 16 builds one only with `-fno-pic`,
+/// because anywhere else each cell is a relocation the loader has to fill in, and so in the
+/// position independent executables every distribution builds by default it keeps the compares.
+/// The other answer, which clang takes and tamnd/rucc#1775 asks for, is a table of how far each
+/// answer is from the table, which is four bytes a cell, needs no relocation at load time, and
+/// can stay in `.rodata`.
+///
+/// Each dispatch reads one of the first four bytes of what came back, picked by where the loop
+/// is, so the address is really used. A dispatch that only ever read the first byte would let a
+/// compiler turn the table of addresses into a table of characters, and then the case would be
+/// about something else.
+fn addresses(sink: &mut Sink<'_>) {
+    for shape in ADDRESSED {
+        if !sink.wants(Facet::SwitchDispatch) {
+            return;
+        }
+        let mut program =
+            Program::new(format!("the {} shape dispatched on unpredictable values", shape.name));
+        let name = dispatch_name(shape);
+        if shape.name == "into-letters" {
+            program.top(format!("static const char letters[] = \"{LETTERS}\";"));
+        }
+        program.top(format!("static const char *{name}(int value) {{"));
+        program.top("    switch (value) {");
+        for step in 0..shape.labels {
+            let label = if shape.name == "names-with-holes" { 2 * step } else { step };
+            let answer = if shape.name == "into-letters" {
+                format!("letters + {}", letter_offset(step))
+            } else {
+                format!("\"{}\"", WORDS[step as usize])
+            };
+            program.top(format!("    case {}: return {answer};", shape.base + label));
+        }
+        if shape.name == "into-letters" {
+            program.top(format!("    default: return letters + {};", letter_offset(-1)));
+        } else {
+            program.top(format!("    default: return \"{NO_WORD}\";"));
+        }
+        program.top("    }");
+        program.top("}");
+
+        let values = dispatch_stream(shape, false);
+        let per_pass: i128 = values
+            .iter()
+            .enumerate()
+            .map(|(at, &value)| addressed_byte(shape, value, at & 3))
+            .sum();
+        program.input(Ty::I32, "seed", super::SEED);
+        program.input(Ty::I32, "count", DISPATCHES);
+        program.blank();
+        program.line(format!("int stream[{STREAM}];"));
+        program.line("unsigned int state = (unsigned int)seed;");
+        program.line(format!("for (int at = 0; at < {STREAM}; at++) {{"));
+        program.line_at(1, format!("state = state * {LCG_MUL}u + {LCG_ADD}u;"));
+        program.line_at(1, format!("stream[at] = (int)((state >> 16) % {}u);", shape.span));
+        program.line("}");
+        program.blank();
+        program.line("long long total = 0;");
+        program.line("for (int at = 0; at < count; at++) {");
+        program.line_at(1, format!("total += {name}(stream[at & {}])[at & 3];", STREAM - 1));
+        program.line("}");
+        program.blank();
+        program.check(Ty::I64, "total", per_pass * (DISPATCHES / STREAM));
+        sink.push(
+            Facet::SwitchDispatch,
+            Axes::of([("shape", shape.name), ("stream", "unpredictable")]),
+            Dialect::C17,
+            program,
+        );
+    }
 }
 
 /// The C name of a shape's function.
@@ -3530,6 +3678,29 @@ mod tests {
         let cases = cases_for(Facet::SwitchDispatch);
         let masked = cases.iter().find(|c| c.axes.get("shape") == Some("masked")).expect("masked");
         assert!(masked.source.contains("switch (value & 15)"), "{}", masked.source);
+    }
+
+    #[test]
+    fn an_address_switch_reads_inside_every_string_it_returns() {
+        assert!(super::WORDS.iter().chain([&super::NO_WORD]).all(|word| word.len() >= 4));
+        for step in -1..16 {
+            assert!(super::letter_offset(step) + 4 <= super::LETTERS.len() as i128, "{step}");
+        }
+        let holes = &super::ADDRESSED[1];
+        assert_eq!(super::addressed_step(holes, 30), Some(15));
+        assert_eq!(super::addressed_step(holes, 31), None);
+        assert_eq!(super::addressed_step(holes, 32), None);
+        assert_eq!(super::addressed_byte(holes, 2, 1), i128::from(b'e'));
+        assert_eq!(super::addressed_byte(holes, 3, 0), i128::from(b'n'));
+        let into = &super::ADDRESSED[2];
+        assert_eq!(super::addressed_byte(into, 0, 0), i128::from(b'J'));
+        let cases = cases_for(Facet::SwitchDispatch);
+        for shape in super::ADDRESSED {
+            let case = cases.iter().find(|c| c.axes.get("shape") == Some(shape.name));
+            let case = case.unwrap_or_else(|| panic!("no case for {}", shape.name));
+            assert!(case.source.contains("static const char *"), "{}", case.source);
+            assert!(case.source.contains("[at & 3]"), "{}", case.source);
+        }
     }
 
     #[test]
