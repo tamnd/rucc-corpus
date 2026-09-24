@@ -2,7 +2,7 @@
 
 moving a store below a branch whose arms wrote the same place. Part of the local phase of the M4 plan.
 
-16 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+20 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -17,9 +17,13 @@ moving a store below a branch whose arms wrote the same place. Part of the local
 | [`conditional-store.one-armed.i32.c17.7c08b1fa`](conditional-store.one-armed.i32.c17.7c08b1fa.c) | shape=one-armed, width=i32 | c17 | `17152` |
 | [`conditional-store.one-armed.i64.c17.a9e5131b`](conditional-store.one-armed.i64.c17.a9e5131b.c) | shape=one-armed, width=i64 | c17 | `17152` |
 | [`conditional-store.one-armed.i8.c17.29adb408`](conditional-store.one-armed.i8.c17.29adb408.c) | shape=one-armed, width=i8 | c17 | `512` |
+| [`conditional-store.read-first-escaped.c17.0e59e042`](conditional-store.read-first-escaped.c17.0e59e042.c) | shape=read-first-escaped | c17 | `30882 5198` |
+| [`conditional-store.read-first-global.c17.b270efe2`](conditional-store.read-first-global.c17.b270efe2.c) | shape=read-first-global | c17 | `30882 5198` |
+| [`conditional-store.read-first-local.c17.b4867872`](conditional-store.read-first-local.c17.b4867872.c) | shape=read-first-local | c17 | `30882 5198` |
 | [`conditional-store.same-value.c17.0c99f680`](conditional-store.same-value.c17.0c99f680.c) | shape=same-value | c17 | `33408` |
 | [`conditional-store.struct-field.c17.e4c755b8`](conditional-store.struct-field.c17.e4c755b8.c) | shape=struct-field | c17 | `32768` |
 | [`conditional-store.two-addresses.c17.e4626938`](conditional-store.two-addresses.c17.e4626938.c) | shape=two-addresses | c17 | `34048` |
 | [`conditional-store.unhoisted-address.c17.db791149`](conditional-store.unhoisted-address.c17.db791149.c) | shape=unhoisted-address | c17 | `32768` |
+| [`conditional-store.unread-local.c17.07d57dc5`](conditional-store.unread-local.c17.07d57dc5.c) | shape=unread-local | c17 | `896 5198` |
 | [`conditional-store.volatile-arms.c17.92fe807f`](conditional-store.volatile-arms.c17.92fe807f.c) | shape=volatile-arms | c17 | `32768` |
 
