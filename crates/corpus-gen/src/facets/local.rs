@@ -488,6 +488,7 @@ fn simplify(sink: &mut Sink<'_>) {
     one_bit_results(sink);
     compare_edge(sink);
     widened_boolean(sink);
+    select_neighbours(sink);
 }
 
 /// Comparing a value against the first or the last value its own type can hold.
@@ -630,6 +631,115 @@ fn widened_boolean(sink: &mut Sink<'_>) {
             program,
         );
     }
+}
+
+/// One select whose arms are close to each other, and what it does to a running value.
+struct Select {
+    /// The shape axis.
+    name: &'static str,
+    /// What the loop body does with the condition `v < k`.
+    body: &'static str,
+    /// The same step in Rust, taking the condition and the running value.
+    step: fn(bool, i128) -> i128,
+}
+
+/// The selects that tier six of rucc's rewrite rules is written for, and one it must leave alone.
+///
+/// A select between one and zero is the condition widened, and a select between a value and the
+/// value one step away is the value moved by the condition widened. Each of those is written with
+/// the arms both ways round, because a rule about `c ? x + 1 : x` is a different rule from one
+/// about `c ? x : x + 1`. The last shape moves by two, which is not the condition at all, and it
+/// is here so that a rule matching too much fails rather than scores.
+const SELECTS: &[Select] = &[
+    Select { name: "one-zero", body: "acc += v < k ? 1 : 0;", step: |c, a| a + i128::from(c) },
+    Select { name: "zero-one", body: "acc += v < k ? 0 : 1;", step: |c, a| a + i128::from(!c) },
+    Select {
+        name: "minus-one-zero",
+        body: "acc += v < k ? -1 : 0;",
+        step: |c, a| a - i128::from(c),
+    },
+    Select {
+        name: "zero-minus-one",
+        body: "acc += v < k ? 0 : -1;",
+        step: |c, a| a - i128::from(!c),
+    },
+    Select { name: "up", body: "acc = v < k ? acc + 1 : acc;", step: |c, a| a + i128::from(c) },
+    Select {
+        name: "up-mirrored",
+        body: "acc = v < k ? acc : acc + 1;",
+        step: |c, a| a + i128::from(!c),
+    },
+    Select { name: "down", body: "acc = v < k ? acc - 1 : acc;", step: |c, a| a - i128::from(c) },
+    Select {
+        name: "down-mirrored",
+        body: "acc = v < k ? acc : acc - 1;",
+        step: |c, a| a - i128::from(!c),
+    },
+    Select {
+        name: "two-apart",
+        body: "acc = v < k ? acc + 2 : acc;",
+        step: |c, a| a + 2 * i128::from(c),
+    },
+];
+
+/// The types the select shapes are written at, one of each width and both signs between them.
+const SELECT_TYPES: &[Ty] = &[Ty::I8, Ty::U16, Ty::I32, Ty::U64];
+
+/// How many times the select loop walks the samples, each time against a higher threshold.
+const SELECT_ROUNDS: i128 = 64;
+
+/// A running value moved by a select on a comparison, in a loop that runs long enough to time.
+///
+/// Every shape here is a branch in C that `phiopt` turns into a select, and the select is what
+/// the rules then rewrite. The threshold climbs by four each round, so over the whole run the
+/// comparison is true about half the time and never in a pattern a predictor can learn, which
+/// is when a branch costs the most and when doing the arithmetic instead pays.
+///
+/// The running value is kept in the type under test. A narrow one wraps as it is stored back,
+/// which both compilers do the same way and [`Ty::convert`] models, so the answer is exact even
+/// where the count goes past what the type holds.
+fn select_neighbours(sink: &mut Sink<'_>) {
+    for &ty in SELECT_TYPES {
+        for shape in SELECTS {
+            if !sink.wants(Facet::Simplify) {
+                return;
+            }
+            let name = ty.c_name();
+            let mut program = Program::new(format!(
+                "a select moving a running {name} by its condition, {}",
+                shape.name
+            ));
+            sample_data(&mut program);
+            program.blank();
+            program.line(format!("{name} acc = 0;"));
+            program.line(format!("for (int r = 0; r < {SELECT_ROUNDS}; r++) {{"));
+            program.line_at(1, "int k = r * 4;");
+            program.line_at(1, format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+            program.line_at(2, "int v = data[i];");
+            program.line_at(2, shape.body);
+            program.line_at(1, "}");
+            program.line("}");
+            program.blank();
+            program.check(ty, "acc", select_answer(ty, shape.step));
+            sink.push(
+                Facet::Simplify,
+                Axes::of([("type", ty.name()), ("group", "select"), ("shape", shape.name)]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
+/// What a select program prints: the running value after every round.
+fn select_answer(ty: Ty, step: fn(bool, i128) -> i128) -> i128 {
+    let mut acc = 0;
+    for round in 0..SELECT_ROUNDS {
+        for index in 0..SAMPLES {
+            acc = ty.convert(step(sample(index) < round * 4, acc));
+        }
+    }
+    acc
 }
 
 /// The families the identities fall into, one program each.
@@ -2220,6 +2330,37 @@ mod tests {
             assert!(case.source.contains("eq != 0"), "{}", case.source);
             assert!(case.source.contains("eq == 0"), "{}", case.source);
         }
+    }
+
+    #[test]
+    fn every_select_shape_is_written_at_every_select_type() {
+        let cases = cases_for(Facet::Simplify);
+        for &ty in super::SELECT_TYPES {
+            for shape in super::SELECTS {
+                let case = cases
+                    .iter()
+                    .find(|c| {
+                        c.axes.get("type") == Some(ty.name())
+                            && c.axes.get("group") == Some("select")
+                            && c.axes.get("shape") == Some(shape.name)
+                    })
+                    .unwrap_or_else(|| panic!("no {} select at {}", shape.name, ty.name()));
+                assert!(case.source.contains(shape.body), "{}", case.source);
+            }
+        }
+    }
+
+    #[test]
+    fn the_mirrored_selects_add_up_to_the_number_of_steps() {
+        // Moving up when the condition holds and moving up when it does not between them move
+        // once a step, so at a type wide enough not to wrap the two answers add up to the steps.
+        let steps = super::SELECT_ROUNDS * super::SAMPLES;
+        let up = super::select_answer(crate::lang::Ty::I64, super::SELECTS[4].step);
+        let mirrored = super::select_answer(crate::lang::Ty::I64, super::SELECTS[5].step);
+        assert_eq!(up + mirrored, steps);
+        assert!(up > 0 && mirrored > 0, "{up} {mirrored}");
+        let two = super::select_answer(crate::lang::Ty::I64, super::SELECTS[8].step);
+        assert_eq!(two, 2 * up);
     }
 
     #[test]

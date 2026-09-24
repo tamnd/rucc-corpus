@@ -2,7 +2,7 @@
 
 algebraic identities and the local peephole rules. Part of the local phase of the M4 plan.
 
-78 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+114 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -25,6 +25,15 @@ algebraic identities and the local peephole rules. Part of the local phase of th
 | [`simplify.i32.involution.c17.d3542390`](simplify.i32.involution.c17.d3542390.c) | type=i32, group=involution | c17 | `-2147483648 1 0 ...` and 44 more lines |
 | [`simplify.i32.least.c17.587efa4d`](simplify.i32.least.c17.587efa4d.c) | type=i32, edge=least | c17 | `0 1 1 ...` and 21 more lines |
 | [`simplify.i32.multiplicative.c17.f33a52c9`](simplify.i32.multiplicative.c17.f33a52c9.c) | type=i32, group=multiplicative | c17 | `-2147483648 -2147483648 0 ...` and 33 more lines |
+| [`simplify.i32.select.down-mirrored.c17.21ebe0a4`](simplify.i32.select.down-mirrored.c17.21ebe0a4.c) | type=i32, group=select, shape=down-mirrored | c17 | `-8320` |
+| [`simplify.i32.select.down.c17.c9c631ff`](simplify.i32.select.down.c17.c9c631ff.c) | type=i32, group=select, shape=down | c17 | `-8064` |
+| [`simplify.i32.select.minus-one-zero.c17.84b860af`](simplify.i32.select.minus-one-zero.c17.84b860af.c) | type=i32, group=select, shape=minus-one-zero | c17 | `-8064` |
+| [`simplify.i32.select.one-zero.c17.96615477`](simplify.i32.select.one-zero.c17.96615477.c) | type=i32, group=select, shape=one-zero | c17 | `8064` |
+| [`simplify.i32.select.two-apart.c17.e0f6d513`](simplify.i32.select.two-apart.c17.e0f6d513.c) | type=i32, group=select, shape=two-apart | c17 | `16128` |
+| [`simplify.i32.select.up-mirrored.c17.37ce77ad`](simplify.i32.select.up-mirrored.c17.37ce77ad.c) | type=i32, group=select, shape=up-mirrored | c17 | `8320` |
+| [`simplify.i32.select.up.c17.7940c478`](simplify.i32.select.up.c17.7940c478.c) | type=i32, group=select, shape=up | c17 | `8064` |
+| [`simplify.i32.select.zero-minus-one.c17.15fb72fb`](simplify.i32.select.zero-minus-one.c17.15fb72fb.c) | type=i32, group=select, shape=zero-minus-one | c17 | `-8320` |
+| [`simplify.i32.select.zero-one.c17.67c3a7fc`](simplify.i32.select.zero-one.c17.67c3a7fc.c) | type=i32, group=select, shape=zero-one | c17 | `8320` |
 | [`simplify.i32.shift.c17.87d2e87f`](simplify.i32.shift.c17.87d2e87f.c) | type=i32, group=shift | c17 | `1 1 7 ...` and 5 more lines |
 | [`simplify.i32.widened-boolean.c17.b4c63689`](simplify.i32.widened-boolean.c17.b4c63689.c) | type=i32, group=widened-boolean | c17 | `1 0 0 ...` and 26 more lines |
 | [`simplify.i64.additive.c17.d41e2f60`](simplify.i64.additive.c17.d41e2f60.c) | type=i64, group=additive | c17 | `-9223372036854775808 -9223372036854775808 -9223372036854775808 ...` and 21 more lines |
@@ -44,6 +53,15 @@ algebraic identities and the local peephole rules. Part of the local phase of th
 | [`simplify.i8.involution.c17.444afe1d`](simplify.i8.involution.c17.444afe1d.c) | type=i8, group=involution | c17 | `-128 -128 1 ...` and 45 more lines |
 | [`simplify.i8.multiplicative.c17.1f3c2659`](simplify.i8.multiplicative.c17.1f3c2659.c) | type=i8, group=multiplicative | c17 | `-128 -128 0 ...` and 33 more lines |
 | [`simplify.i8.narrowed.c17.4250b3b0`](simplify.i8.narrowed.c17.4250b3b0.c) | type=i8, group=narrowed | c17 | `-128 -128 -128 ...` and 123 more lines |
+| [`simplify.i8.select.down-mirrored.c17.a56ef22e`](simplify.i8.select.down-mirrored.c17.a56ef22e.c) | type=i8, group=select, shape=down-mirrored | c17 | `-128` |
+| [`simplify.i8.select.down.c17.47203089`](simplify.i8.select.down.c17.47203089.c) | type=i8, group=select, shape=down | c17 | `-128` |
+| [`simplify.i8.select.minus-one-zero.c17.a6a586ba`](simplify.i8.select.minus-one-zero.c17.a6a586ba.c) | type=i8, group=select, shape=minus-one-zero | c17 | `-128` |
+| [`simplify.i8.select.one-zero.c17.255d0568`](simplify.i8.select.one-zero.c17.255d0568.c) | type=i8, group=select, shape=one-zero | c17 | `-128` |
+| [`simplify.i8.select.two-apart.c17.8003613d`](simplify.i8.select.two-apart.c17.8003613d.c) | type=i8, group=select, shape=two-apart | c17 | `0` |
+| [`simplify.i8.select.up-mirrored.c17.c7b19678`](simplify.i8.select.up-mirrored.c17.c7b19678.c) | type=i8, group=select, shape=up-mirrored | c17 | `-128` |
+| [`simplify.i8.select.up.c17.899cdd4c`](simplify.i8.select.up.c17.899cdd4c.c) | type=i8, group=select, shape=up | c17 | `-128` |
+| [`simplify.i8.select.zero-minus-one.c17.47210ac4`](simplify.i8.select.zero-minus-one.c17.47210ac4.c) | type=i8, group=select, shape=zero-minus-one | c17 | `-128` |
+| [`simplify.i8.select.zero-one.c17.f7f92e4e`](simplify.i8.select.zero-one.c17.f7f92e4e.c) | type=i8, group=select, shape=zero-one | c17 | `-128` |
 | [`simplify.i8.shift.c17.f0619d0f`](simplify.i8.shift.c17.f0619d0f.c) | type=i8, group=shift | c17 | `0 0 2 ...` and 5 more lines |
 | [`simplify.i8.widened-boolean.c17.252887ef`](simplify.i8.widened-boolean.c17.252887ef.c) | type=i8, group=widened-boolean | c17 | `1 0 0 ...` and 26 more lines |
 | [`simplify.u16.additive.c17.d5e616db`](simplify.u16.additive.c17.d5e616db.c) | type=u16, group=additive | c17 | `0 0 0 ...` and 21 more lines |
@@ -53,6 +71,15 @@ algebraic identities and the local peephole rules. Part of the local phase of th
 | [`simplify.u16.involution.c17.69f4f927`](simplify.u16.involution.c17.69f4f927.c) | type=u16, group=involution | c17 | `0 0 1 ...` and 45 more lines |
 | [`simplify.u16.multiplicative.c17.24d34d8c`](simplify.u16.multiplicative.c17.24d34d8c.c) | type=u16, group=multiplicative | c17 | `0 0 0 ...` and 33 more lines |
 | [`simplify.u16.narrowed.c17.27ad2f2a`](simplify.u16.narrowed.c17.27ad2f2a.c) | type=u16, group=narrowed | c17 | `0 0 0 ...` and 119 more lines |
+| [`simplify.u16.select.down-mirrored.c17.6607b0a0`](simplify.u16.select.down-mirrored.c17.6607b0a0.c) | type=u16, group=select, shape=down-mirrored | c17 | `57216` |
+| [`simplify.u16.select.down.c17.3447b8a7`](simplify.u16.select.down.c17.3447b8a7.c) | type=u16, group=select, shape=down | c17 | `57472` |
+| [`simplify.u16.select.minus-one-zero.c17.466684a1`](simplify.u16.select.minus-one-zero.c17.466684a1.c) | type=u16, group=select, shape=minus-one-zero | c17 | `57472` |
+| [`simplify.u16.select.one-zero.c17.30db5f2f`](simplify.u16.select.one-zero.c17.30db5f2f.c) | type=u16, group=select, shape=one-zero | c17 | `8064` |
+| [`simplify.u16.select.two-apart.c17.e13950b8`](simplify.u16.select.two-apart.c17.e13950b8.c) | type=u16, group=select, shape=two-apart | c17 | `16128` |
+| [`simplify.u16.select.up-mirrored.c17.0a78d3ca`](simplify.u16.select.up-mirrored.c17.0a78d3ca.c) | type=u16, group=select, shape=up-mirrored | c17 | `8320` |
+| [`simplify.u16.select.up.c17.5fcb407d`](simplify.u16.select.up.c17.5fcb407d.c) | type=u16, group=select, shape=up | c17 | `8064` |
+| [`simplify.u16.select.zero-minus-one.c17.26c0b8a8`](simplify.u16.select.zero-minus-one.c17.26c0b8a8.c) | type=u16, group=select, shape=zero-minus-one | c17 | `57216` |
+| [`simplify.u16.select.zero-one.c17.cbc4c3c8`](simplify.u16.select.zero-one.c17.cbc4c3c8.c) | type=u16, group=select, shape=zero-one | c17 | `8320` |
 | [`simplify.u16.shift.c17.ad9ec013`](simplify.u16.shift.c17.ad9ec013.c) | type=u16, group=shift | c17 | `0 0 2 ...` and 9 more lines |
 | [`simplify.u16.widened-boolean.c17.d5947555`](simplify.u16.widened-boolean.c17.d5947555.c) | type=u16, group=widened-boolean | c17 | `1 0 0 ...` and 26 more lines |
 | [`simplify.u32.additive.c17.c90b534b`](simplify.u32.additive.c17.c90b534b.c) | type=u32, group=additive | c17 | `0 0 0 ...` and 21 more lines |
@@ -73,6 +100,15 @@ algebraic identities and the local peephole rules. Part of the local phase of th
 | [`simplify.u64.involution.c17.7aac3d7e`](simplify.u64.involution.c17.7aac3d7e.c) | type=u64, group=involution | c17 | `0 0 1 ...` and 45 more lines |
 | [`simplify.u64.least.c17.e236c8b1`](simplify.u64.least.c17.e236c8b1.c) | type=u64, edge=least | c17 | `0 1 1 ...` and 21 more lines |
 | [`simplify.u64.multiplicative.c17.7c9152e3`](simplify.u64.multiplicative.c17.7c9152e3.c) | type=u64, group=multiplicative | c17 | `0 0 0 ...` and 33 more lines |
+| [`simplify.u64.select.down-mirrored.c17.dda855f8`](simplify.u64.select.down-mirrored.c17.dda855f8.c) | type=u64, group=select, shape=down-mirrored | c17 | `18446744073709543296` |
+| [`simplify.u64.select.down.c17.2cf83999`](simplify.u64.select.down.c17.2cf83999.c) | type=u64, group=select, shape=down | c17 | `18446744073709543552` |
+| [`simplify.u64.select.minus-one-zero.c17.fcec4bed`](simplify.u64.select.minus-one-zero.c17.fcec4bed.c) | type=u64, group=select, shape=minus-one-zero | c17 | `18446744073709543552` |
+| [`simplify.u64.select.one-zero.c17.9e38ddcd`](simplify.u64.select.one-zero.c17.9e38ddcd.c) | type=u64, group=select, shape=one-zero | c17 | `8064` |
+| [`simplify.u64.select.two-apart.c17.b864aeeb`](simplify.u64.select.two-apart.c17.b864aeeb.c) | type=u64, group=select, shape=two-apart | c17 | `16128` |
+| [`simplify.u64.select.up-mirrored.c17.e4b0f038`](simplify.u64.select.up-mirrored.c17.e4b0f038.c) | type=u64, group=select, shape=up-mirrored | c17 | `8320` |
+| [`simplify.u64.select.up.c17.a9014d5e`](simplify.u64.select.up.c17.a9014d5e.c) | type=u64, group=select, shape=up | c17 | `8064` |
+| [`simplify.u64.select.zero-minus-one.c17.e89a6b3e`](simplify.u64.select.zero-minus-one.c17.e89a6b3e.c) | type=u64, group=select, shape=zero-minus-one | c17 | `18446744073709543296` |
+| [`simplify.u64.select.zero-one.c17.5d2042a9`](simplify.u64.select.zero-one.c17.5d2042a9.c) | type=u64, group=select, shape=zero-one | c17 | `8320` |
 | [`simplify.u64.shift.c17.afa752f1`](simplify.u64.shift.c17.afa752f1.c) | type=u64, group=shift | c17 | `0 0 2 ...` and 9 more lines |
 | [`simplify.u64.widened-boolean.c17.0a366699`](simplify.u64.widened-boolean.c17.0a366699.c) | type=u64, group=widened-boolean | c17 | `1 0 0 ...` and 26 more lines |
 | [`simplify.u8.additive.c17.88c93d56`](simplify.u8.additive.c17.88c93d56.c) | type=u8, group=additive | c17 | `0 0 0 ...` and 21 more lines |
