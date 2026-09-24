@@ -1272,6 +1272,7 @@ fn conditional_store(sink: &mut Sink<'_>) {
     atomic_arms(sink);
     both_arms_at_each_width(sink);
     a_call_beside_the_store(sink);
+    read_first(sink);
 }
 
 /// Both arms storing through a pointer worked out once, which is the case that folds.
@@ -1554,6 +1555,121 @@ fn a_call_beside_the_store(sink: &mut Sink<'_>) {
         Dialect::C17,
         program,
     );
+}
+
+/// Where the slots of a read first shape live, and whether the loop reads one before it may write it.
+struct ReadFirst {
+    /// The shape axis.
+    name: &'static str,
+    /// What the program is.
+    title: &'static str,
+    /// Written above `main`.
+    top: &'static [&'static str],
+    /// Written at the top of `main`, before the samples.
+    local: &'static [&'static str],
+    /// Whether the loop reads the slot ahead of the branch.
+    reads: bool,
+}
+
+/// The one armed stores that come with a read of the same slot ahead of them, and the three ways
+/// of breaking the proof that makes the fold safe.
+const READ_FIRST: &[ReadFirst] = &[
+    ReadFirst {
+        name: "read-first-local",
+        title: "one arm storing to a local slot the loop has just read",
+        top: &[],
+        local: &["int slot[8] = {0};"],
+        reads: true,
+    },
+    ReadFirst {
+        name: "read-first-global",
+        title: "one arm storing to a global slot the loop has just read",
+        top: &["static int slot[8];"],
+        local: &[],
+        reads: true,
+    },
+    ReadFirst {
+        name: "read-first-escaped",
+        title: "one arm storing to a local slot whose address was handed out",
+        top: &["static int *volatile shown;"],
+        local: &["int slot[8] = {0};", "shown = slot;"],
+        reads: true,
+    },
+    ReadFirst {
+        name: "unread-local",
+        title: "one arm storing to a local slot nothing read first",
+        top: &[],
+        local: &["int slot[8] = {0};"],
+        reads: false,
+    },
+];
+
+/// One arm storing to a slot, with the loop reading that slot first or not.
+///
+/// This is the one armed store with its proof, which is what GCC folds and what `if (v >
+/// best[k]) best[k] = v;` is. Storing on the path that did not store is safe when two things
+/// hold: nothing outside the function can name the slot, so no other thread can be writing it,
+/// and the path that did not store touched the slot anyway, so the address is one the program
+/// really reaches. `read-first-local` has both and is the one that may become a load, a select
+/// and a store. The other three each break one: a global anybody can name, a local whose address
+/// went out through a `volatile` pointer, and a local the loop never reads, where nothing says the
+/// other path reached the slot at all. Those three have to keep their branch.
+///
+/// The running sum of what the loop read is checked as well as what the slots end up holding,
+/// so a compiler that stores the wrong value on the path that did not store shows it twice.
+fn read_first(sink: &mut Sink<'_>) {
+    for shape in READ_FIRST {
+        if !sink.wants(Facet::ConditionalStore) {
+            return;
+        }
+        let mut program = Program::new(shape.title);
+        for line in shape.top {
+            program.top(*line);
+        }
+        for line in shape.local {
+            program.line(*line);
+        }
+        sample_data(&mut program);
+        program.line("long long seen = 0;");
+        store_walk(&mut program);
+        program.line_at(1, "int k = (v >> 2) & 7;");
+        program.line_at(1, if shape.reads { "seen += slot[k];" } else { "seen += k;" });
+        program.line_at(1, "if (v & 1) {");
+        program.line_at(2, "slot[k] = v;");
+        program.line_at(1, "}");
+        program.line("}");
+        program.blank();
+        program.line("long long total = 0;");
+        program.line("for (int k = 0; k < 8; k++) {");
+        program.line_at(1, "total += (long long)slot[k] * (k + 1);");
+        program.line("}");
+        program.blank();
+        let (seen, total) = read_first_answer(shape.reads);
+        program.check(Ty::I64, "seen", seen);
+        program.check(Ty::I64, "total", total);
+        sink.push(
+            Facet::ConditionalStore,
+            Axes::of([("shape", shape.name)]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
+/// What a read first shape prints: the sum the loop read and the weighted sum of the slots.
+fn read_first_answer(reads: bool) -> (i128, i128) {
+    let mut slots = [0i128; 8];
+    let mut seen = 0;
+    for index in 0..SAMPLES {
+        let v = sample(index);
+        let k = usize::try_from((v >> 2) & 7).expect("three bits");
+        seen += if reads { slots[k] } else { (v >> 2) & 7 };
+        if v & 1 != 0 {
+            slots[k] = v;
+        }
+    }
+    let total = slots.iter().zip(1..).map(|(slot, weight)| slot * weight).sum();
+    (seen, total)
 }
 
 /// How often the partner value is made equal to the sample, as one in this many.
@@ -2522,11 +2638,41 @@ mod tests {
             "atomic-arms",
             "both-arms",
             "call-on-one-arm",
+            "read-first-local",
+            "read-first-global",
+            "read-first-escaped",
+            "unread-local",
         ] {
             assert!(shapes.contains(&wanted), "no {wanted}");
         }
-        // Ten shapes, two of which are generated once per width.
-        assert_eq!(cases.len(), 8 + super::WIDTHS.len() * 2);
+        // Fourteen shapes, two of which are generated once per width.
+        assert_eq!(cases.len(), 12 + super::WIDTHS.len() * 2);
+    }
+
+    #[test]
+    fn the_read_first_shapes_differ_only_in_the_one_thing_each_breaks() {
+        // The local one has both halves of the proof. Each of the others takes one away, and
+        // the three that read first print what the local one prints.
+        let cases = cases_for(Facet::ConditionalStore);
+        let find = |shape: &str| {
+            cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(shape))
+                .unwrap_or_else(|| panic!("no {shape}"))
+        };
+        let local = find("read-first-local");
+        assert!(local.source.contains("int slot[8] = {0};"), "{}", local.source);
+        assert!(local.source.contains("seen += slot[k];"), "{}", local.source);
+        for (shape, needle) in
+            [("read-first-global", "static int slot[8];"), ("read-first-escaped", "shown = slot;")]
+        {
+            let case = find(shape);
+            assert!(case.source.contains(needle), "{}", case.source);
+            assert_eq!(output(case), output(local), "{shape}");
+        }
+        let unread = find("unread-local");
+        assert!(unread.source.contains("seen += k;"), "{}", unread.source);
+        assert!(!unread.source.contains("seen += slot[k];"), "{}", unread.source);
     }
 
     #[test]
