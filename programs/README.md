@@ -1,10 +1,10 @@
 # The corpus
 
-2647 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2652 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `847548116bfeacb878f1dfa4753a2535f9df61800e6e78588756d5a23beb4ce6`.
+Corpus digest `6aeeb4bffea7f11fcfed92b8b712e6f0b05e4ec0ae51a22aa1e670923bdb4d14`.
 
 ## floor (118 programs)
 
@@ -37,7 +37,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |
 | [`unreachable-code`](local/unreachable-code/README.md) | 8 | removing a branch with a known condition and its dead arm |
 
-## global (224 programs)
+## global (229 programs)
 
 Transformations across the blocks of one function, which need dataflow rather than a peephole.
 
@@ -50,6 +50,7 @@ Transformations across the blocks of one function, which need dataflow rather th
 | [`constant-propagation`](global/constant-propagation/README.md) | 16 | propagating a value constant on every reaching path |
 | [`value-range`](global/value-range/README.md) | 13 | narrowing an integer to the range it can hold |
 | [`prune`](global/prune/README.md) | 15 | a branch or a switch case a condition above it has settled |
+| [`jump-threading`](global/jump-threading/README.md) | 5 | sending an edge that decides a branch below straight to its arm |
 | [`alias-analysis`](global/alias-analysis/README.md) | 36 | proving two references cannot name the same object |
 | [`memory-ssa`](global/memory-ssa/README.md) | 28 | walking back from a load to the store that answers it |
 | [`scalar-replacement`](global/scalar-replacement/README.md) | 20 | turning a non-escaping local back into a value |

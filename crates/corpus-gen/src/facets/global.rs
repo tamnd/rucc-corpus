@@ -22,6 +22,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     value_range(sink);
     value_range_places(sink);
     prune(sink);
+    jump_threading(sink);
     alias_analysis(sink);
     alias_layers(sink);
     memory_ssa(sink);
@@ -992,6 +993,215 @@ fn tally(counts: fn(i128) -> (i128, i128)) -> (i128, i128) {
     })
 }
 
+/// One edge that already knows which way a branch below it goes.
+struct Threaded {
+    /// The axis value, which is also the name of the shape.
+    name: &'static str,
+    /// One line saying what the compiler has to work out.
+    purpose: &'static str,
+    /// The body of the walk, each line with the depth to write it at.
+    body: &'static [(usize, &'static str)],
+    /// What the sample at an index adds to `above`, `below`, `low` and `high`.
+    counts: fn(i128) -> [i128; 4],
+}
+
+/// The value the long join works out, the same twenty operations the C does.
+fn churn(x: i128) -> i128 {
+    let mut y = x;
+    for (times, plus, shift) in [(3, 1, 3), (5, 7, 2), (9, 11, 4), (7, 3, 1), (3, 5, 5)] {
+        y = y * times + plus;
+        y ^= y >> shift;
+    }
+    y
+}
+
+/// Every shape the jump threading facet asks about.
+///
+/// Every arm bumps a slot in `hist` as well as a local, and the two arms of a branch bump
+/// different slots, so no branch here can be turned into a select. That matters on both sides of
+/// the join. Above it, a select would leave no join for the flag to arrive through. Below it, a
+/// select would leave no branch for the flag to decide. The first shape is the free one, where the join does nothing and the edge can be pointed
+/// at the arm with no copy. The next two put work in the join that the arms below read, which is
+/// the case that needs the join copied, once small enough to copy and once too large. The last two
+/// are the flag tested a second time further down, and the flag a search loop sets on its way out.
+const THREADED: &[Threaded] = &[
+    Threaded {
+        name: "empty-join",
+        purpose: "a flag set in two arms and tested straight after the join",
+        body: &[
+            (1, "int flag;"),
+            (1, "if (x > 100) {"),
+            (2, "flag = 1;"),
+            (2, "hist[x & 3] += 1;"),
+            (1, "} else {"),
+            (2, "flag = 0;"),
+            (2, "hist[4 + (x & 3)] += 2;"),
+            (1, "}"),
+            (1, "if (flag) {"),
+            (2, "above += x;"),
+            (2, "hist[x & 3] += 4;"),
+            (1, "} else {"),
+            (2, "below += x;"),
+            (2, "hist[4 + (x & 3)] += 8;"),
+            (1, "}"),
+        ],
+        counts: |i| {
+            let x = sample(i);
+            if x > 100 { [x, 0, 5, 0] } else { [0, x, 0, 10] }
+        },
+    },
+    Threaded {
+        name: "read-below",
+        purpose: "a flag tested after a join that works out a value both arms below read",
+        body: &[
+            (1, "int flag;"),
+            (1, "if (x > 100) {"),
+            (2, "flag = 1;"),
+            (2, "hist[x & 3] += 1;"),
+            (1, "} else {"),
+            (2, "flag = 0;"),
+            (2, "hist[4 + (x & 3)] += 2;"),
+            (1, "}"),
+            (1, "int y = x * 3 + 1;"),
+            (1, "if (flag) {"),
+            (2, "above += y;"),
+            (2, "hist[x & 3] += 4;"),
+            (1, "} else {"),
+            (2, "below += y;"),
+            (2, "hist[4 + (x & 3)] += 8;"),
+            (1, "}"),
+        ],
+        counts: |i| {
+            let x = sample(i);
+            let y = x * 3 + 1;
+            if x > 100 { [y, 0, 5, 0] } else { [0, y, 0, 10] }
+        },
+    },
+    Threaded {
+        name: "read-below-long",
+        purpose: "the same test after a join of twenty operations, more than a copy is worth",
+        body: &[
+            (1, "int flag;"),
+            (1, "if (x > 100) {"),
+            (2, "flag = 1;"),
+            (2, "hist[x & 3] += 1;"),
+            (1, "} else {"),
+            (2, "flag = 0;"),
+            (2, "hist[4 + (x & 3)] += 2;"),
+            (1, "}"),
+            (1, "int y = x;"),
+            (1, "y = y * 3 + 1;"),
+            (1, "y ^= y >> 3;"),
+            (1, "y = y * 5 + 7;"),
+            (1, "y ^= y >> 2;"),
+            (1, "y = y * 9 + 11;"),
+            (1, "y ^= y >> 4;"),
+            (1, "y = y * 7 + 3;"),
+            (1, "y ^= y >> 1;"),
+            (1, "y = y * 3 + 5;"),
+            (1, "y ^= y >> 5;"),
+            (1, "if (flag) {"),
+            (2, "above += y;"),
+            (2, "hist[x & 3] += 4;"),
+            (1, "} else {"),
+            (2, "below += y;"),
+            (2, "hist[4 + (x & 3)] += 8;"),
+            (1, "}"),
+        ],
+        counts: |i| {
+            let x = sample(i);
+            let y = churn(x);
+            if x > 100 { [y, 0, 5, 0] } else { [0, y, 0, 10] }
+        },
+    },
+    Threaded {
+        name: "tested-twice",
+        purpose: "a flag tested once, then again after work that does not change it",
+        body: &[
+            (1, "int flag = 0;"),
+            (1, "if (x > 100) {"),
+            (2, "flag = 1;"),
+            (2, "hist[x & 3] += 1;"),
+            (1, "}"),
+            (1, "if (flag) {"),
+            (2, "above += x;"),
+            (2, "hist[x & 3] += 4;"),
+            (1, "}"),
+            (1, "below += x * 3 + 1;"),
+            (1, "if (flag) {"),
+            (2, "hist[4 + (x & 3)] += 2;"),
+            (1, "}"),
+        ],
+        counts: |i| {
+            let x = sample(i);
+            let y = x * 3 + 1;
+            if x > 100 { [x, y, 5, 2] } else { [0, y, 0, 0] }
+        },
+    },
+    Threaded {
+        name: "found-in-loop",
+        purpose: "a flag a search loop sets on the way out, tested after the loop",
+        body: &[
+            (1, "int found = 0;"),
+            (1, "for (int k = 0; k < 8; k++) {"),
+            (2, "if (data[(i + k) & 255] < 16) {"),
+            (3, "found = 1;"),
+            (3, "break;"),
+            (2, "}"),
+            (1, "}"),
+            (1, "if (found) {"),
+            (2, "above += x;"),
+            (2, "hist[x & 3] += 4;"),
+            (1, "} else {"),
+            (2, "below += x;"),
+            (2, "hist[4 + (x & 3)] += 8;"),
+            (1, "}"),
+        ],
+        counts: |i| {
+            let x = sample(i);
+            if (0..8).any(|k| sample((i + k) & 255) < 16) { [x, 0, 4, 0] } else { [0, x, 0, 8] }
+        },
+    },
+];
+
+/// A flag that decides a branch, set on the edges that reach it.
+///
+/// Each program walks the samples once. `above` and `below` add up what the tested branch did
+/// and the two halves of `hist` count what the arms that set the flag did, so a thread that sent
+/// an edge to the wrong arm moves a number between the first two, and one that lost an arm on the
+/// way changes a total in the second two.
+fn jump_threading(sink: &mut Sink<'_>) {
+    for shape in THREADED {
+        if !sink.wants(Facet::JumpThreading) {
+            return;
+        }
+        let mut program = Program::new(shape.purpose);
+        sample_data(&mut program);
+        program.blank();
+        program.line("int hist[8] = { 0 };");
+        program.line("int above = 0;");
+        program.line("int below = 0;");
+        program.line(format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+        program.line_at(1, "int x = data[i];");
+        for &(depth, text) in shape.body {
+            program.line_at(depth, text);
+        }
+        program.line("}");
+        program.blank();
+        let total = (0..SAMPLES).fold([0; 4], |mut total, index| {
+            for (sum, add) in total.iter_mut().zip((shape.counts)(index)) {
+                *sum += add;
+            }
+            total
+        });
+        program.check(Ty::I32, "above", total[0]);
+        program.check(Ty::I32, "below", total[1]);
+        program.check(Ty::I32, "hist[0] + hist[1] + hist[2] + hist[3]", total[2]);
+        program.check(Ty::I32, "hist[4] + hist[5] + hist[6] + hist[7]", total[3]);
+        sink.push(Facet::JumpThreading, Axes::of([("shape", shape.name)]), Dialect::C17, program);
+    }
+}
+
 /// Two references that either can or cannot name the same object.
 ///
 /// The `restrict` and distinct type shapes are the ones where a wrong answer is a real
@@ -1372,6 +1582,25 @@ mod tests {
         let mut sink = Sink::new(&opts);
         super::generate(&mut sink);
         sink.into_cases()
+    }
+
+    #[test]
+    fn every_jump_threading_shape_is_one_program_that_checks_all_four_counts() {
+        let cases = cases_for(Facet::JumpThreading);
+        assert_eq!(cases.len(), super::THREADED.len());
+        for case in &cases {
+            assert!(case.source.contains("hist[4] + hist[5] + hist[6] + hist[7]"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_long_join_is_worked_out_the_way_the_c_works_it_out() {
+        let mut y: i32 = 200;
+        for (times, plus, shift) in [(3, 1, 3), (5, 7, 2), (9, 11, 4), (7, 3, 1), (3, 5, 5)] {
+            y = y * times + plus;
+            y ^= y >> shift;
+        }
+        assert_eq!(i128::from(y), super::churn(200));
     }
 
     #[test]
