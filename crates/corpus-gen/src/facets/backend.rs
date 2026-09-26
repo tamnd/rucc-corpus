@@ -27,6 +27,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     block_layout(sink);
     expect_layout(sink);
     if_conversion(sink);
+    if_conversion_rate(sink);
     switch_lowering(sink);
     switch_runs(sink);
     switch_dispatch(sink);
@@ -671,6 +672,78 @@ fn expect_layout(sink: &mut Sink<'_>) {
                 sink.push(Facet::BlockLayout, axes, Dialect::C17, program);
             } else {
                 sink.push_tagged(Facet::BlockLayout, axes, Dialect::C17, program, &["gnu"]);
+            }
+        }
+    }
+}
+
+/// How often the diamond in the rate shapes goes the first way, in percent.
+const RATES: &[u32] = &[50, 75, 90, 95, 99];
+
+/// How many times the rate shapes go round, which is enough for the time to be the measurement.
+const ROLLS: u32 = 20_000_000;
+
+/// What one of the rate shapes adds up, worked out the way the C works it out.
+fn rolled(seed: u32, rate: u32) -> u64 {
+    let mut state = seed;
+    let mut total: u64 = 0;
+    for _ in 0..ROLLS {
+        state = state.wrapping_mul(1_103_515_245).wrapping_add(12_345);
+        let x = state >> 24;
+        let v = if (state >> 16) % 100 < rate { x * 3 } else { x + 7 };
+        total = total.wrapping_add(u64::from(v));
+    }
+    total
+}
+
+/// A diamond with work in both arms, on a condition that holds a known share of the time.
+///
+/// Section 22.2 of the rucc plan converts a diamond whose arms do work only when the branch is
+/// close enough to even that the machine will miss it, and a branch is only known to be one sided
+/// when the program says so with `__builtin_expect`. These are the cases that decide how close to
+/// even is close enough. The condition comes from a linear congruential generator, so the only
+/// thing a predictor can learn about it is how often it holds, and that is the `rate` axis. Each
+/// rate is written with no hint, with the hint that agrees with the rate, and with the hint that
+/// does not. Timing the three against each other at each rate shows where a branch starts beating
+/// a conditional move, which is the number the margin in the cost rule is meant to be.
+fn if_conversion_rate(sink: &mut Sink<'_>) {
+    for &rate in RATES {
+        for &hint in &["none", "right", "wrong"] {
+            if !sink.wants(Facet::IfConversion) {
+                return;
+            }
+            let mut program = Program::new(format!(
+                "a diamond with work in both arms, taken {rate} times in a hundred, with {hint} hint"
+            ));
+            program.input(Ty::U32, "seed", 7);
+            program.blank();
+            program.line("unsigned state = seed;");
+            program.line("unsigned long long total = 0;");
+            program.line(format!("for (int i = 0; i < {ROLLS}; i++) {{"));
+            program.line_at(1, "state = state * 1103515245u + 12345u;");
+            program.line_at(1, "unsigned x = state >> 24;");
+            program.line_at(1, format!("int taken = (state >> 16) % 100u < {rate}u;"));
+            program.line_at(1, "unsigned v;");
+            let test = match hint {
+                "right" => "__builtin_expect(taken, 1)",
+                "wrong" => "__builtin_expect(taken, 0)",
+                _ => "taken",
+            };
+            program.line_at(1, format!("if ({test}) {{"));
+            program.line_at(2, "v = x * 3u;");
+            program.line_at(1, "} else {");
+            program.line_at(2, "v = x + 7u;");
+            program.line_at(1, "}");
+            program.line_at(1, "total += v;");
+            program.line("}");
+            program.blank();
+            program.check(Ty::U64, "total", i128::from(rolled(7, rate)));
+            let rate = rate.to_string();
+            let axes = Axes::of([("shape", "at-a-rate"), ("rate", rate.as_str()), ("hint", hint)]);
+            if hint == "none" {
+                sink.push(Facet::IfConversion, axes, Dialect::C17, program);
+            } else {
+                sink.push_tagged(Facet::IfConversion, axes, Dialect::C17, program, &["gnu"]);
             }
         }
     }
@@ -3480,6 +3553,27 @@ mod tests {
     }
 
     #[test]
+    fn the_three_hints_at_one_rate_print_the_same_number_and_a_higher_rate_prints_more() {
+        // The hint may move the branch, but it must never move the answer, and since the taken
+        // arm triples a byte where the other adds seven, taking it more often has to add up to
+        // more. A rate axis that printed the same total at every rate would not be a rate.
+        let cases = cases_for(Facet::IfConversion);
+        let mut last = 0u64;
+        for rate in super::RATES {
+            let rate = rate.to_string();
+            let totals: Vec<u64> = cases
+                .iter()
+                .filter(|c| c.axes.get("rate") == Some(rate.as_str()))
+                .map(|c| output(c).trim().parse().unwrap())
+                .collect();
+            assert_eq!(totals.len(), 3, "rate {rate} has {} cases", totals.len());
+            assert!(totals.iter().all(|&t| t == totals[0]), "rate {rate} disagrees: {totals:?}");
+            assert!(totals[0] > last, "rate {rate} adds up to no more than the rate below it");
+            last = totals[0];
+        }
+    }
+
+    #[test]
     fn register_pressure_goes_past_the_register_file_of_every_target_rucc_has() {
         let cases = cases_for(Facet::RegisterAlloc);
         let live: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("live")).collect();
@@ -3934,7 +4028,11 @@ mod tests {
 
     #[test]
     fn the_if_conversion_cases_run_a_condition_that_flips_every_iteration() {
+        // Except the rate shapes, whose condition holds as often as their rate says.
         for case in cases_for(Facet::IfConversion) {
+            if case.axes.get("shape") == Some("at-a-rate") {
+                continue;
+            }
             assert!(case.source.contains("int odd = i & 1;"), "{}", case.id);
         }
     }
