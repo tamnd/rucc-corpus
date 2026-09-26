@@ -1,10 +1,10 @@
 # The corpus
 
-2695 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2767 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `fb054108564c31939778d888f341d39c1b275cadf3df13653c33b4661cebfdb5`.
+Corpus digest `2a883e74b5e7492776205fb1898ac334012452acfbb06bf4b0b4d8838ae6ae63`.
 
 ## floor (118 programs)
 
@@ -94,7 +94,7 @@ Transformations that need to look at more than one function at a time.
 | [`call-motion`](interprocedural/call-motion/README.md) | 36 | whether a call came out of a loop |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (833 programs)
+## backend (905 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -109,6 +109,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`switch-lowering`](backend/switch-lowering/README.md) | 27 | choosing how to lower a switch |
 | [`switch-runs`](backend/switch-runs/README.md) | 15 | stretches of consecutive labels that share one arm |
 | [`switch-dispatch`](backend/switch-dispatch/README.md) | 21 | a switch dispatched often enough to time how it was lowered |
+| [`division`](backend/division/README.md) | 72 | a division by a constant done often enough to time how it was lowered |
 | [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
 | [`bit-liveness`](backend/bit-liveness/README.md) | 28 | a widening whose upper bits nothing reads, across a block boundary |
