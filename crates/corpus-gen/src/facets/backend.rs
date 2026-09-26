@@ -33,6 +33,8 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     switch_hot_case(sink);
     switch_runs(sink);
     switch_dispatch(sink);
+    division(sink);
+    exact_division(sink);
     calling_convention(sink);
     machine_peephole(sink);
     bit_liveness(sink);
@@ -3720,6 +3722,231 @@ fn stack_slots(sink: &mut Sink<'_>) {
     }
 }
 
+/// How many generator states a division case draws before it starts dividing, which stays in the
+/// first level cache.
+const DIVISION_STREAM: u32 = 2048;
+
+/// How many times a division case walks its states, so that it does two million divisions and a
+/// `div` against a multiply is milliseconds apart.
+const DIVISION_ROUNDS: u32 = 1024;
+
+/// The generator the division cases draw their dividends from, Knuth's MMIX constants.
+fn next_state(state: u64) -> u64 {
+    state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1_442_695_040_888_963_407)
+}
+
+/// The seed the division cases start from, read through a `volatile` so nothing folds.
+const DIVISION_SEED: u64 = 7;
+
+/// A type a program divides at, and how its dividend is drawn from the generator.
+struct Dividend {
+    /// The axis value.
+    name: &'static str,
+    /// The C that declares `x` from `state`.
+    declare: &'static str,
+    /// Whether a negative divisor means anything for it.
+    signed: bool,
+    /// The value `x` gets from a state, as C works it out.
+    value: fn(u64) -> i128,
+}
+
+/// Every width a division happens at, with both signs.
+///
+/// The narrow ones are divided as `int`, which is how C promotes them, so a compiler that knows
+/// the value came from sixteen bits can use a smaller magic number. The widened ones are sixty
+/// four bit divisions of a value that fits in thirty two, which is what `size_t` arithmetic on an
+/// `unsigned` often is. The last two could be anything, and a compiler without a high multiply
+/// has to keep the `div` for them.
+const DIVIDENDS: &[Dividend] = &[
+    Dividend {
+        name: "u8",
+        declare: "unsigned char x = (unsigned char)(state >> 33);",
+        signed: false,
+        value: |state| i128::from((state >> 33) as u8),
+    },
+    Dividend {
+        name: "i8",
+        declare: "signed char x = (signed char)(state >> 33);",
+        signed: true,
+        value: |state| i128::from((state >> 33) as u8 as i8),
+    },
+    Dividend {
+        name: "u16",
+        declare: "unsigned short x = (unsigned short)(state >> 33);",
+        signed: false,
+        value: |state| i128::from((state >> 33) as u16),
+    },
+    Dividend {
+        name: "i16",
+        declare: "short x = (short)(state >> 33);",
+        signed: true,
+        value: |state| i128::from((state >> 33) as u16 as i16),
+    },
+    Dividend {
+        name: "u32",
+        declare: "unsigned x = (unsigned)(state >> 32);",
+        signed: false,
+        value: |state| i128::from((state >> 32) as u32),
+    },
+    Dividend {
+        name: "i32",
+        declare: "int x = (int)(state >> 32);",
+        signed: true,
+        value: |state| i128::from((state >> 32) as u32 as i32),
+    },
+    Dividend {
+        name: "u32-widened",
+        declare: "unsigned long long x = (unsigned)(state >> 32);",
+        signed: false,
+        value: |state| i128::from((state >> 32) as u32),
+    },
+    Dividend {
+        name: "i32-widened",
+        declare: "long long x = (int)(state >> 32);",
+        signed: true,
+        value: |state| i128::from((state >> 32) as u32 as i32),
+    },
+    Dividend {
+        name: "u64",
+        declare: "unsigned long long x = state;",
+        signed: false,
+        value: i128::from,
+    },
+    Dividend {
+        name: "i64",
+        declare: "long long x = (long long)state;",
+        signed: true,
+        value: |state| i128::from(state as i64),
+    },
+];
+
+/// The divisors, with the axis value each is written as.
+///
+/// Seven needs the extra add at thirty two bits and ten does not, eight is a shift, with a bias
+/// when the division is signed, and minus seven is the signed rewrite with the answer negated.
+const DIVISORS: &[(&str, i128)] = &[("7", 7), ("10", 10), ("8", 8), ("minus-7", -7)];
+
+/// What a division case adds up, worked out the way the C works it out.
+///
+/// Every round walks the same states, so one walk times the rounds is the answer.
+fn divided(dividend: &Dividend, divisor: i128, remainder: bool) -> u64 {
+    let mut state = DIVISION_SEED;
+    let mut pass = 0u64;
+    for _ in 0..DIVISION_STREAM {
+        state = next_state(state);
+        let x = (dividend.value)(state);
+        // Rust's `/` and `%` on a signed integer truncate towards zero, as C's do, and the cast
+        // keeps the low sixty four bits, which is what C's conversion to unsigned does.
+        let answer = if remainder { x % divisor } else { x / divisor };
+        pass = pass.wrapping_add(answer as u64);
+    }
+    pass.wrapping_mul(u64::from(DIVISION_ROUNDS))
+}
+
+/// Writes the part every division case shares: the states drawn from the seed, and the rounds
+/// that walk them with `state` holding the one this step divides.
+fn division_walk(program: &mut Program) {
+    program.input(Ty::U64, "seed", i128::from(DIVISION_SEED));
+    program.blank();
+    program.line(format!("static unsigned long long states[{DIVISION_STREAM}];"));
+    program.line("unsigned long long drawn = seed;");
+    program.line(format!("for (int i = 0; i < {DIVISION_STREAM}; i++) {{"));
+    program.line_at(1, "drawn = drawn * 6364136223846793005ull + 1442695040888963407ull;");
+    program.line_at(1, "states[i] = drawn;");
+    program.line("}");
+    program.line(format!("for (int round = 0; round < {DIVISION_ROUNDS}; round++) {{"));
+    program.line_at(1, format!("for (int i = 0; i < {DIVISION_STREAM}; i++) {{"));
+    program.line_at(2, "unsigned long long state = states[i];");
+}
+
+/// A division or a remainder by a constant, done two million times over values nothing can see.
+///
+/// Section 19.5 of the rucc plan turns a division by a constant into a multiply by a magic number
+/// and a few shifts, which is three or four cycles where the `div` it replaces is twenty to forty.
+/// Whether a compiler does that, at which widths and for which signs, shows up in the clock and
+/// in the count of `div` instructions, and that is what these are for. Every width C divides at is
+/// here, each with a divisor that needs the extra add, one that does not, a power of two and a
+/// negative one for the signed types. Each is a quotient and a remainder apart, since a remainder
+/// is the quotient multiplied back and taken off, and that is more to get right.
+fn division(sink: &mut Sink<'_>) {
+    for dividend in DIVIDENDS {
+        for &(name, divisor) in DIVISORS {
+            if divisor < 0 && !dividend.signed {
+                continue;
+            }
+            for (op, spelling, remainder) in [("quotient", "/", false), ("remainder", "%", true)] {
+                if !sink.wants(Facet::Division) {
+                    return;
+                }
+                let mut program = Program::new(format!(
+                    "the {op} of {} values by {divisor}, done many times",
+                    dividend.name
+                ));
+                program.line("unsigned long long total = 0;");
+                division_walk(&mut program);
+                program.line_at(2, dividend.declare);
+                program.line_at(
+                    2,
+                    format!("total += (unsigned long long)(x {spelling} ({divisor}));"),
+                );
+                program.line_at(1, "}");
+                program.line("}");
+                program.blank();
+                program.check(Ty::U64, "total", i128::from(divided(dividend, divisor, remainder)));
+                let axes = Axes::of([("type", dividend.name), ("divisor", name), ("op", op)]);
+                sink.push(Facet::Division, axes, Dialect::C17, program);
+            }
+        }
+    }
+}
+
+/// The sizes of the structures the exact division cases subtract pointers into.
+const EXACT_SIZES: &[u32] = &[12, 7];
+
+/// How many elements the exact division cases have to point at.
+const EXACT_SLOTS: u64 = 1024;
+
+/// What picks an element, which is one less than the count since the count is a power of two.
+const EXACT_MASK: u64 = EXACT_SLOTS - 1;
+
+/// A pointer subtraction over structures whose size is not a power of two.
+///
+/// C promises the two pointers are into the same array, so the byte difference is a multiple of
+/// the size and the division has no remainder. A compiler that knows that multiplies by the
+/// inverse of the odd part of the size and shifts, which is cheaper than a magic number.
+fn exact_division(sink: &mut Sink<'_>) {
+    for &size in EXACT_SIZES {
+        if !sink.wants(Facet::Division) {
+            return;
+        }
+        let mut program =
+            Program::new(format!("pointers subtracted in an array of {size} byte structures"));
+        program.line(format!("static struct {{ char bytes[{size}]; }} items[{EXACT_SLOTS}];"));
+        program.line("long long total = 0;");
+        division_walk(&mut program);
+        // Both indexes are masks rather than remainders, so the only division is the one the
+        // subtraction makes.
+        program.line_at(2, format!("int from = (int)((state >> 33) & {EXACT_MASK}u);"));
+        program.line_at(2, format!("int to = (int)((state >> 13) & {EXACT_MASK}u);"));
+        program.line_at(2, "total += &items[to] - &items[from];");
+        program.line_at(1, "}");
+        program.line("}");
+        program.blank();
+        let mut state = DIVISION_SEED;
+        let mut pass = 0i64;
+        for _ in 0..DIVISION_STREAM {
+            state = next_state(state);
+            let from = i64::try_from((state >> 33) & EXACT_MASK).expect("a masked index");
+            let to = i64::try_from((state >> 13) & EXACT_MASK).expect("a masked index");
+            pass += to - from;
+        }
+        program.check(Ty::I64, "total", i128::from(pass) * i128::from(DIVISION_ROUNDS));
+        let size = size.to_string();
+        let axes = Axes::of([("type", "pointer"), ("divisor", size.as_str()), ("op", "exact")]);
+        sink.push(Facet::Division, axes, Dialect::C17, program);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -4867,5 +5094,39 @@ mod tests {
             seen += 1;
         }
         assert_eq!(seen, 4, "one per type");
+    }
+
+    #[test]
+    fn a_division_case_covers_every_width_sign_and_divisor() {
+        let cases = cases_for(Facet::Division);
+        // Ten widths, three divisors each and a fourth for the five signed ones, a quotient and a
+        // remainder of every one, and the two pointer subtractions.
+        assert_eq!(cases.len(), (10 * 3 + 5) * 2 + 2);
+        for case in &cases {
+            let divisor = case.axes.get("divisor").expect("a divisor");
+            if divisor == "minus-7" {
+                assert!(case.source.contains("(-7)"), "{}", case.id);
+                assert!(case.axes.get("type").is_some_and(|ty| ty.starts_with('i')), "{}", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn a_division_answer_is_what_the_type_itself_gives() {
+        let find = |name: &str| super::DIVIDENDS.iter().find(|one| one.name == name).expect(name);
+        // The same walk done in the type's own arithmetic rather than in `i128`, so a slip in
+        // how a value is drawn or how a negative answer is widened shows up as a difference.
+        let mut state = super::DIVISION_SEED;
+        let (mut narrow, mut signed, mut wide) = (0u64, 0u64, 0u64);
+        for _ in 0..super::DIVISION_STREAM {
+            state = super::next_state(state);
+            narrow = narrow.wrapping_add(u64::from((state >> 33) as u16 / 10));
+            signed = signed.wrapping_add(i64::from((state >> 32) as u32 as i32 % -7) as u64);
+            wide = wide.wrapping_add(state / 7);
+        }
+        let rounds = u64::from(super::DIVISION_ROUNDS);
+        assert_eq!(super::divided(find("u16"), 10, false), narrow.wrapping_mul(rounds));
+        assert_eq!(super::divided(find("i32"), -7, true), signed.wrapping_mul(rounds));
+        assert_eq!(super::divided(find("u64"), 7, false), wide.wrapping_mul(rounds));
     }
 }

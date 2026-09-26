@@ -182,6 +182,8 @@ pub enum Facet {
     SwitchRuns,
     /// A switch dispatched enough times that how it was lowered shows up in the clock.
     SwitchDispatch,
+    /// A division or a remainder by a constant, done enough times to time how it was lowered.
+    Division,
     /// Deciding what a call has to save and restore.
     CallingConvention,
     /// The peephole rules that only make sense on machine instructions.
@@ -419,6 +421,7 @@ impl Facet {
         Self::SwitchLowering,
         Self::SwitchRuns,
         Self::SwitchDispatch,
+        Self::Division,
         Self::CallingConvention,
         Self::MachinePeephole,
         Self::BitLiveness,
@@ -504,6 +507,7 @@ impl Facet {
             Self::SwitchLowering => "switch-lowering",
             Self::SwitchRuns => "switch-runs",
             Self::SwitchDispatch => "switch-dispatch",
+            Self::Division => "division",
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
             Self::BitLiveness => "bit-liveness",
@@ -598,6 +602,9 @@ impl Facet {
             Self::SwitchLowering => "choosing how to lower a switch",
             Self::SwitchRuns => "stretches of consecutive labels that share one arm",
             Self::SwitchDispatch => "a switch dispatched often enough to time how it was lowered",
+            Self::Division => {
+                "a division by a constant done often enough to time how it was lowered"
+            }
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
             Self::BitLiveness => {
@@ -696,6 +703,7 @@ impl Facet {
             | Self::SwitchLowering
             | Self::SwitchRuns
             | Self::SwitchDispatch
+            | Self::Division
             | Self::CallingConvention
             | Self::MachinePeephole
             | Self::BitLiveness
