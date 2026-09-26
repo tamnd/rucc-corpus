@@ -28,6 +28,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     expect_layout(sink);
     if_conversion(sink);
     if_conversion_rate(sink);
+    if_conversion_chain(sink);
     switch_lowering(sink);
     switch_runs(sink);
     switch_dispatch(sink);
@@ -746,6 +747,99 @@ fn if_conversion_rate(sink: &mut Sink<'_>) {
                 sink.push_tagged(Facet::IfConversion, axes, Dialect::C17, program, &["gnu"]);
             }
         }
+    }
+}
+
+/// A diamond whose two arms end in the same operations, one of the chain shapes.
+struct Chained {
+    /// The axis value, which is also the name of the shape.
+    name: &'static str,
+    /// One line saying what the compiler has to see.
+    purpose: &'static str,
+    /// What the arm taken when the condition holds adds to the total, as C over `x` and `mask`.
+    then: &'static str,
+    /// What the other arm adds.
+    other: &'static str,
+    /// Both of those in Rust, given whether the condition held, `x` and `mask`.
+    step: fn(bool, i64, i64) -> i64,
+}
+
+/// The value `mask` has in the chain shapes.
+const CHAIN_MASK: i64 = 85;
+
+/// Arms that share more than the operation the join reads.
+///
+/// Each arm adds a widened `int` to a `long long`, so both end in an add of a widening and only
+/// what is widened differs. Factoring only the add leaves a widening in each arm, and one level
+/// more leaves a mask as well, which is past what an arm may keep and still become a select.
+const CHAINED: &[Chained] = &[
+    Chained {
+        name: "shared-widening",
+        purpose: "arms that both add a widened int, differing only in what is widened",
+        then: "(long long)(x * 3)",
+        other: "(long long)(x + 7)",
+        step: |taken, x, _| if taken { x * 3 } else { x + 7 },
+    },
+    Chained {
+        name: "shared-mask",
+        purpose: "arms that both add a widened masked int, differing only in what is masked",
+        then: "(long long)((x * 3) ^ mask)",
+        other: "(long long)((x + 7) ^ mask)",
+        step: |taken, x, mask| if taken { (x * 3) ^ mask } else { (x + 7) ^ mask },
+    },
+    Chained {
+        name: "different-widening",
+        purpose: "arms that both add, one widening with a sign and one without",
+        then: "(long long)(x * 3)",
+        other: "(long long)(unsigned)(x + 7)",
+        step: |taken, x, _| if taken { x * 3 } else { x + 7 },
+    },
+];
+
+/// What one of the chain shapes adds up, worked out the way the C works it out.
+fn chained(seed: u32, step: fn(bool, i64, i64) -> i64) -> i64 {
+    let mut state = seed;
+    let mut total: i64 = 0;
+    for _ in 0..ROLLS {
+        state = state.wrapping_mul(1_103_515_245).wrapping_add(12_345);
+        let x = i64::from(state >> 24);
+        let taken = (state >> 16) % 100 < 50;
+        total = total.wrapping_add(step(taken, x, CHAIN_MASK));
+    }
+    total
+}
+
+/// Diamonds whose arms share a chain of operations and differ only at the bottom of it.
+///
+/// Section 22.2 of the rucc plan factors an operation both arms do out from under the branch, and
+/// gcc does it to a fixed point, so a chain both arms share is written once and the select is
+/// between the two things at the bottom. The condition is the rate shapes' generator at an even
+/// rate, so the branch is one no predictor can learn and turning it into a select is the right
+/// answer whenever what is left in the arms is small. The last shape is the control, where the two
+/// widenings differ and only the add can be shared.
+fn if_conversion_chain(sink: &mut Sink<'_>) {
+    for shape in CHAINED {
+        if !sink.wants(Facet::IfConversion) {
+            return;
+        }
+        let mut program = Program::new(shape.purpose);
+        program.input(Ty::U32, "seed", 7);
+        program.input(Ty::I32, "mask", CHAIN_MASK.into());
+        program.blank();
+        program.line("unsigned state = seed;");
+        program.line("long long total = 0;");
+        program.line(format!("for (int i = 0; i < {ROLLS}; i++) {{"));
+        program.line_at(1, "state = state * 1103515245u + 12345u;");
+        program.line_at(1, "int x = (int)(state >> 24);");
+        program.line_at(1, "if ((state >> 16) % 100u < 50u) {");
+        program.line_at(2, format!("total += {};", shape.then));
+        program.line_at(1, "} else {");
+        program.line_at(2, format!("total += {};", shape.other));
+        program.line_at(1, "}");
+        program.line("}");
+        program.blank();
+        program.check(Ty::I64, "total", i128::from(chained(7, shape.step)));
+        sink.push(Facet::IfConversion, Axes::of([("shape", shape.name)]), Dialect::C17, program);
     }
 }
 
@@ -3574,6 +3668,20 @@ mod tests {
     }
 
     #[test]
+    fn the_chain_shapes_with_the_same_widening_add_up_what_the_control_does() {
+        // The control widens one arm without a sign, which is the same number for a byte, so it
+        // has to print what the plain shape prints. The masked one prints something else, or the
+        // mask did nothing.
+        let cases = cases_for(Facet::IfConversion);
+        let total = |name: &str| {
+            let case = cases.iter().find(|c| c.axes.get("shape") == Some(name)).unwrap();
+            output(case)
+        };
+        assert_eq!(total("shared-widening"), total("different-widening"));
+        assert_ne!(total("shared-widening"), total("shared-mask"));
+    }
+
+    #[test]
     fn register_pressure_goes_past_the_register_file_of_every_target_rucc_has() {
         let cases = cases_for(Facet::RegisterAlloc);
         let live: Vec<&str> = cases.iter().filter_map(|c| c.axes.get("live")).collect();
@@ -4030,7 +4138,8 @@ mod tests {
     fn the_if_conversion_cases_run_a_condition_that_flips_every_iteration() {
         // Except the rate shapes, whose condition holds as often as their rate says.
         for case in cases_for(Facet::IfConversion) {
-            if case.axes.get("shape") == Some("at-a-rate") {
+            let shape = case.axes.get("shape").unwrap_or_default();
+            if shape == "at-a-rate" || super::CHAINED.iter().any(|one| one.name == shape) {
                 continue;
             }
             assert!(case.source.contains("int odd = i & 1;"), "{}", case.id);
