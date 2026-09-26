@@ -1,10 +1,10 @@
 # The corpus
 
-2652 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2667 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `6aeeb4bffea7f11fcfed92b8b712e6f0b05e4ec0ae51a22aa1e670923bdb4d14`.
+Corpus digest `98dbd84e7163de9f432ac446de588701a89c94dfe3f948f3c0614a3ace4fa015`.
 
 ## floor (118 programs)
 
@@ -93,7 +93,7 @@ Transformations that need to look at more than one function at a time.
 | [`call-motion`](interprocedural/call-motion/README.md) | 36 | whether a call came out of a loop |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (803 programs)
+## backend (818 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -104,7 +104,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`register-alloc`](backend/register-alloc/README.md) | 40 | assigning registers and deciding what to spill |
 | [`scheduling`](backend/scheduling/README.md) | 20 | ordering instructions within a block |
 | [`block-layout`](backend/block-layout/README.md) | 16 | laying out blocks so the common path falls through |
-| [`if-conversion`](backend/if-conversion/README.md) | 20 | turning a short branch into branchless code |
+| [`if-conversion`](backend/if-conversion/README.md) | 35 | turning a short branch into branchless code |
 | [`switch-lowering`](backend/switch-lowering/README.md) | 15 | choosing how to lower a switch |
 | [`switch-runs`](backend/switch-runs/README.md) | 15 | stretches of consecutive labels that share one arm |
 | [`switch-dispatch`](backend/switch-dispatch/README.md) | 21 | a switch dispatched often enough to time how it was lowered |
