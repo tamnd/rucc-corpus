@@ -30,6 +30,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     if_conversion_rate(sink);
     if_conversion_chain(sink);
     switch_lowering(sink);
+    switch_hot_case(sink);
     switch_runs(sink);
     switch_dispatch(sink);
     calling_convention(sink);
@@ -968,6 +969,114 @@ fn switch_lowering(sink: &mut Sink<'_>) {
                 Dialect::C17,
                 program,
             );
+        }
+    }
+}
+
+/// How many labels the hot case shapes have, past the point where rucc searches the clusters.
+const HOT_LABELS: i128 = 40;
+
+/// Which label the hot case shapes take most of the time, one in the middle so that a balanced
+/// search reaches it last rather than first.
+const HOT_LABEL: i128 = 23;
+
+/// Which label the wrong hint in the hot case shapes names.
+const COLD_LABEL: i128 = 5;
+
+/// What the arm for this label returns, which is not a line through the labels so that nothing can
+/// replace the switch with arithmetic.
+fn hot_arm(label: i128) -> i128 {
+    label * 7919 % 1000 + 1
+}
+
+/// Where the draw in the hot case shapes has to fall under for the hot label, out of 128, for a
+/// rate in percent. Out of 128 and not 100 so that the draw is a mask rather than a division.
+fn hot_bar(rate: u32) -> u32 {
+    (rate * 128 + 50) / 100
+}
+
+/// What one of the hot case shapes adds up, worked out the way the C works it out.
+fn hot_rolled(seed: u32, rate: u32, stride: i128) -> u64 {
+    let mut state = seed;
+    let mut total: u64 = 0;
+    for _ in 0..ROLLS {
+        state = state.wrapping_mul(1_103_515_245).wrapping_add(12_345);
+        let label = if (state >> 16) & 127 < hot_bar(rate) {
+            HOT_LABEL
+        } else {
+            i128::from(((state >> 24) * 40) >> 8)
+        };
+        let value = label * stride;
+        let found = (0..HOT_LABELS).find(|&at| at * stride == value).map_or(0, hot_arm);
+        total = total.wrapping_add(u64::try_from(found).expect("a positive arm"));
+    }
+    total
+}
+
+/// A switch on a value that is one case most of the time, with and without a hint saying which.
+///
+/// Section 24.5 of the rucc plan tests a case a hint makes hot on its own, ahead of the search or
+/// the table, so the common value is one compare and a taken branch. These are the cases that show
+/// whether that pays. The value comes from a linear congruential generator and is the hot label
+/// `rate` times in a hundred and any label the rest of the time. Each is written with no hint, with
+/// `__builtin_expect` naming the hot label, and with it naming a label that is rarely there, and
+/// for a dense switch and a sparse one, since a dense one is a table either way.
+///
+/// The labels are drawn with a mask and a multiply rather than with `%`, because a division in the
+/// loop costs more than the whole switch and a compiler that does not turn it into a multiply
+/// would be timed on that instead.
+fn switch_hot_case(sink: &mut Sink<'_>) {
+    const DENSITIES: &[(&str, i128)] = &[("dense", 1), ("sparse", 17)];
+    for &(density, stride) in DENSITIES {
+        for &rate in &[75u32, 95] {
+            for &hint in &["none", "right", "wrong"] {
+                if !sink.wants(Facet::SwitchLowering) {
+                    return;
+                }
+                let mut program = Program::new(format!(
+                    "a {density} switch on a value that is one case {rate} times in a hundred, with {hint} hint"
+                ));
+                let operand = match hint {
+                    "right" => format!("__builtin_expect(value, {})", HOT_LABEL * stride),
+                    "wrong" => format!("__builtin_expect(value, {})", COLD_LABEL * stride),
+                    _ => "value".to_owned(),
+                };
+                program.top("static int classify(int value) {".to_owned());
+                program.top(format!("    switch ({operand}) {{"));
+                for label in 0..HOT_LABELS {
+                    program.top(format!("    case {}: return {};", label * stride, hot_arm(label)));
+                }
+                program.top("    default: return 0;".to_owned());
+                program.top("    }".to_owned());
+                program.top("}".to_owned());
+                program.input(Ty::U32, "seed", 7);
+                program.input(Ty::I32, "step", stride);
+                program.blank();
+                program.line("unsigned state = seed;");
+                program.line("unsigned long long total = 0;");
+                program.line(format!("for (int i = 0; i < {ROLLS}; i++) {{"));
+                program.line_at(1, "state = state * 1103515245u + 12345u;");
+                let bar = hot_bar(rate);
+                program.line_at(1, format!(
+                    "int label = ((state >> 16) & 127u) < {bar}u ? {HOT_LABEL} : (int)(((state >> 24) * 40u) >> 8);"
+                ));
+                program.line_at(1, "total += (unsigned long long)classify(label * step);");
+                program.line("}");
+                program.blank();
+                program.check(Ty::U64, "total", i128::from(hot_rolled(7, rate, stride)));
+                let rate = rate.to_string();
+                let axes = Axes::of([
+                    ("density", density),
+                    ("shape", "hot-case"),
+                    ("rate", rate.as_str()),
+                    ("hint", hint),
+                ]);
+                if hint == "none" {
+                    sink.push(Facet::SwitchLowering, axes, Dialect::C17, program);
+                } else {
+                    sink.push_tagged(Facet::SwitchLowering, axes, Dialect::C17, program, &["gnu"]);
+                }
+            }
         }
     }
 }
@@ -3808,11 +3917,43 @@ mod tests {
 
     #[test]
     fn every_switch_case_visits_every_label_and_the_default() {
+        // Except the hot case shapes, which draw their labels at random.
         for case in cases_for(Facet::SwitchLowering) {
+            if case.axes.get("shape") == Some("hot-case") {
+                continue;
+            }
             let labels: i128 = case.axes.get("labels").unwrap().parse().unwrap();
             let expected: i128 = (1..=labels).sum();
             assert_eq!(output(&case), format!("{expected}\n"), "{}", case.id);
             assert!(case.source.contains("classify(-1)"), "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn a_hot_case_hint_names_the_hot_label_or_a_cold_one_and_leaves_the_total_alone() {
+        let cases = cases_for(Facet::SwitchLowering);
+        let hot: Vec<&Case> =
+            cases.iter().filter(|c| c.axes.get("shape") == Some("hot-case")).collect();
+        assert_eq!(hot.len(), 12);
+        for case in &hot {
+            let stride = if case.axes.get("density") == Some("dense") { 1 } else { 17 };
+            let named = |label: i128| format!("__builtin_expect(value, {})", label * stride);
+            let hot_named = case.source.contains(&named(super::HOT_LABEL));
+            let cold_named = case.source.contains(&named(super::COLD_LABEL));
+            match case.axes.get("hint") {
+                Some("right") => assert!(hot_named && !cold_named, "{}", case.id),
+                Some("wrong") => assert!(cold_named && !hot_named, "{}", case.id),
+                _ => assert!(!case.source.contains("__builtin_expect"), "{}", case.id),
+            }
+            let twin = hot
+                .iter()
+                .find(|c| {
+                    c.axes.get("hint") == Some("none")
+                        && c.axes.get("density") == case.axes.get("density")
+                        && c.axes.get("rate") == case.axes.get("rate")
+                })
+                .unwrap();
+            assert_eq!(output(case), output(twin), "{}", case.id);
         }
     }
 
