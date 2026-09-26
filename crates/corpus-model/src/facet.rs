@@ -84,6 +84,8 @@ pub enum Facet {
     Prune,
     /// Sending an edge that decides a branch below it straight to the arm it takes.
     JumpThreading,
+    /// A branch whose condition already says what one of its arms works out.
+    ValueReplacement,
     /// Proving that two memory references cannot be the same object.
     AliasAnalysis,
     /// Walking back from a load to the store that last wrote what it reads.
@@ -380,6 +382,7 @@ impl Facet {
         Self::ValueRange,
         Self::Prune,
         Self::JumpThreading,
+        Self::ValueReplacement,
         Self::AliasAnalysis,
         Self::MemorySsa,
         Self::ScalarReplacement,
@@ -464,6 +467,7 @@ impl Facet {
             Self::ValueRange => "value-range",
             Self::Prune => "prune",
             Self::JumpThreading => "jump-threading",
+            Self::ValueReplacement => "value-replacement",
             Self::AliasAnalysis => "alias-analysis",
             Self::MemorySsa => "memory-ssa",
             Self::ScalarReplacement => "scalar-replacement",
@@ -555,6 +559,7 @@ impl Facet {
             Self::JumpThreading => {
                 "sending an edge that decides a branch below straight to its arm"
             }
+            Self::ValueReplacement => "a branch whose condition already settles its value",
             Self::AliasAnalysis => "proving two references cannot name the same object",
             Self::MemorySsa => "walking back from a load to the store that answers it",
             Self::ScalarReplacement => "turning a non-escaping local back into a value",
@@ -654,6 +659,7 @@ impl Facet {
             | Self::ValueRange
             | Self::Prune
             | Self::JumpThreading
+            | Self::ValueReplacement
             | Self::AliasAnalysis
             | Self::MemorySsa
             | Self::ScalarReplacement => Phase::Global,

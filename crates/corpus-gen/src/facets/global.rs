@@ -23,6 +23,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     value_range_places(sink);
     prune(sink);
     jump_threading(sink);
+    value_replacement(sink);
     alias_analysis(sink);
     alias_layers(sink);
     memory_ssa(sink);
@@ -1202,6 +1203,162 @@ fn jump_threading(sink: &mut Sink<'_>) {
     }
 }
 
+/// How many times the value replacement shapes walk the samples, so the time is worth reading.
+const SETTLED_ROUNDS: u32 = 4096;
+
+/// A test whose outcome already says what one arm of it works out.
+struct Settled {
+    /// The axis value, which is also the name of the shape.
+    name: &'static str,
+    /// One line saying what the compiler has to see.
+    purpose: &'static str,
+    /// The body of the walk, each line with the depth to write it at.
+    body: &'static [(usize, &'static str)],
+    /// What one step does to `acc`, given the sample `v` and its low three bits `x`.
+    step: fn(u32, u32, u32) -> u32,
+}
+
+/// The redundant test, the ways people write it.
+///
+/// The first three are the plain form, where the arm that runs when the test holds carries the
+/// constant the value was tested against. The rest are gcc's neutral and absorbing elements, where
+/// the other arm works out an operation that gives the first arm's value at that constant. The
+/// last two are the operation read through a widening and the operation on the side the test holds
+/// on, where the other side's value serves for both.
+const SETTLED: &[Settled] = &[
+    Settled {
+        name: "constant-on-equal",
+        purpose: "a value tested against zero, and zero when it is",
+        body: &[(2, "acc += x == 0 ? 0 : x;")],
+        step: |acc, _, x| acc.wrapping_add(x),
+    },
+    Settled {
+        name: "value-on-not-equal",
+        purpose: "a value tested against five, and five when it is",
+        body: &[(2, "acc += x != 5 ? x : 5;")],
+        step: |acc, _, x| acc.wrapping_add(x),
+    },
+    Settled {
+        name: "statement",
+        purpose: "the same test written as an if and an else",
+        body: &[
+            (2, "unsigned y;"),
+            (2, "if (x == 3) {"),
+            (3, "y = 3;"),
+            (2, "} else {"),
+            (3, "y = x;"),
+            (2, "}"),
+            (2, "acc += y;"),
+        ],
+        step: |acc, _, x| acc.wrapping_add(x),
+    },
+    Settled {
+        name: "add-zero",
+        purpose: "adding a value only when it is not zero",
+        body: &[(2, "acc = x == 0 ? acc : acc + x;")],
+        step: |acc, _, x| acc.wrapping_add(x),
+    },
+    Settled {
+        name: "subtract-zero",
+        purpose: "subtracting a value only when it is not zero",
+        body: &[(2, "acc = x == 0 ? acc : acc - x;")],
+        step: |acc, _, x| acc.wrapping_sub(x),
+    },
+    Settled {
+        name: "xor-zero",
+        purpose: "mixing a value in only when it is not zero",
+        body: &[(2, "acc = x == 0 ? acc : acc ^ x;")],
+        step: |acc, _, x| acc ^ x,
+    },
+    Settled {
+        name: "or-zero",
+        purpose: "setting bits only when there are bits to set",
+        body: &[(2, "acc += x == 0 ? v : v | x;")],
+        step: |acc, v, x| acc.wrapping_add(v | x),
+    },
+    Settled {
+        name: "shift-zero",
+        purpose: "shifting only when the shift is not zero",
+        body: &[(2, "acc += x == 0 ? v : v >> x;")],
+        step: |acc, v, x| acc.wrapping_add(v >> x),
+    },
+    Settled {
+        name: "multiply-one",
+        purpose: "multiplying only when the factor is not one",
+        body: &[(2, "acc += x == 1 ? v : v * x;")],
+        step: |acc, v, x| acc.wrapping_add(v.wrapping_mul(x)),
+    },
+    Settled {
+        name: "multiply-zero",
+        purpose: "multiplying only when the factor is not zero, and zero when it is",
+        body: &[(2, "acc += x != 0 ? v * x : 0;")],
+        step: |acc, v, x| acc.wrapping_add(v.wrapping_mul(x)),
+    },
+    Settled {
+        name: "and-zero",
+        purpose: "masking only when the mask is not zero, and zero when it is",
+        body: &[(2, "acc += x == 0 ? 0 : v & x;")],
+        step: |acc, v, x| acc.wrapping_add(v & x),
+    },
+    Settled {
+        name: "widened",
+        purpose: "adding a narrower value only when it is not zero",
+        body: &[
+            (2, "int s = (int)x;"),
+            (2, "long long w = v;"),
+            (2, "long long y = s == 0 ? w : w + s;"),
+            (2, "acc += (unsigned)y;"),
+        ],
+        step: |acc, v, x| acc.wrapping_add(v + x),
+    },
+    Settled {
+        name: "operation-on-equal",
+        purpose: "an add on the side where it adds zero",
+        body: &[(2, "acc += x == 0 ? v + x : v;")],
+        step: |acc, v, _| acc.wrapping_add(v),
+    },
+];
+
+/// Diamonds a comparison already settles, each walked many times over the samples.
+///
+/// Every shape keeps one running total, so an arm that went missing or a select that picked the
+/// wrong side changes the number printed.
+fn value_replacement(sink: &mut Sink<'_>) {
+    for shape in SETTLED {
+        if !sink.wants(Facet::ValueReplacement) {
+            return;
+        }
+        let mut program = Program::new(shape.purpose);
+        sample_data(&mut program);
+        program.blank();
+        program.line("unsigned acc = 0;");
+        program.line(format!("for (int round = 0; round < {SETTLED_ROUNDS}; round++) {{"));
+        program.line_at(1, format!("for (int i = 0; i < {SAMPLES}; i++) {{"));
+        program.line_at(2, "unsigned v = data[i];");
+        program.line_at(2, "unsigned x = v & 7;");
+        for &(depth, text) in shape.body {
+            program.line_at(depth, text);
+        }
+        program.line_at(1, "}");
+        program.line("}");
+        program.blank();
+        let mut acc = 0u32;
+        for _ in 0..SETTLED_ROUNDS {
+            for index in 0..SAMPLES {
+                let v = u32::try_from(sample(index)).expect("a sample is a byte");
+                acc = (shape.step)(acc, v, v & 7);
+            }
+        }
+        program.check(Ty::U32, "acc", i128::from(acc));
+        sink.push(
+            Facet::ValueReplacement,
+            Axes::of([("shape", shape.name)]),
+            Dialect::C17,
+            program,
+        );
+    }
+}
+
 /// Two references that either can or cannot name the same object.
 ///
 /// The `restrict` and distinct type shapes are the ones where a wrong answer is a real
@@ -1591,6 +1748,24 @@ mod tests {
         for case in &cases {
             assert!(case.source.contains("hist[4] + hist[5] + hist[6] + hist[7]"), "{}", case.id);
         }
+    }
+
+    #[test]
+    fn the_plain_value_replacement_shapes_all_add_up_the_low_bits() {
+        // Four ways of writing the same sum, which is what makes them the same question put four
+        // ways. A compiler that answers one and not another is reading the spelling.
+        let cases = cases_for(Facet::ValueReplacement);
+        let plain = ["constant-on-equal", "value-on-not-equal", "statement", "add-zero"];
+        let totals: Vec<&str> = plain
+            .iter()
+            .map(|&name| {
+                let case = cases.iter().find(|c| c.axes.get("shape") == Some(name)).unwrap();
+                let Expect::Output(text) = &case.expect else { panic!("{name} should run") };
+                text.as_str()
+            })
+            .collect();
+        assert!(totals.iter().all(|&t| t == totals[0]), "{totals:?}");
+        assert_eq!(cases.len(), super::SETTLED.len());
     }
 
     #[test]
