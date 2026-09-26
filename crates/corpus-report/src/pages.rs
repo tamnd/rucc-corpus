@@ -603,11 +603,40 @@ fn phase_page(phase: Phase, summary: &Summary) -> String {
             "\nThe reference compiler said it took {optimized} transformations in this phase and wanted {missed} more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.\n"
         );
     }
+    switch_note(&mut out, phase, summary);
     let _ = write!(
         out,
         "\nBack to [the hub](../README.md), or across to [what it cost](../cost.md).\n"
     );
     out
+}
+
+/// The cases in this phase with a switch a compiler under test lowered into a different shape
+/// from the reference's, or nothing when there are none.
+fn switch_note(out: &mut String, phase: Phase, summary: &Summary) {
+    let mut rows = String::new();
+    for shapes in &summary.switch_shapes {
+        for one in shapes.disagreements.iter().filter(|one| one.facet.phase() == phase) {
+            let _ = writeln!(
+                rows,
+                "| `{}` | {} | `{}` | {} | {} |",
+                shapes.toolchain,
+                shapes.level.name(),
+                one.case,
+                one.mine,
+                one.reference
+            );
+        }
+    }
+    if rows.is_empty() {
+        return;
+    }
+    let reference = &summary.reference;
+    let _ = write!(
+        out,
+        "\n## Switches lowered differently\n\nEach of these cases has a `switch` that a compiler under test lowered into a different shape from the one `{reference}` used: a jump table, a bit test, a lookup table of answers, or compares when it was none of the three. It is a lead to read the assembly for rather than a failure. The run's `report.md` says how many cases agreed.\n\n| compiler | level | case | it used | `{reference}` used |\n|---|---|---|---|---|\n"
+    );
+    out.push_str(&rows);
 }
 
 /// The facets of one phase, in the order the summary has them.
@@ -758,6 +787,8 @@ mod tests {
         let mut verdicts = BTreeMap::new();
         for (id, text, peak) in [("gcc-16", 1000u64, 100u64 << 20), ("rucc", 1400, 180u64 << 20)] {
             let mut record = RunRecord::skipped(&case, id, Level::O2);
+            let switch = if id == "rucc" { "main: walk" } else { "main: table" };
+            record.switches = vec![switch.to_owned()];
             record.compile = Compile {
                 ok: true,
                 status: 0,
@@ -800,6 +831,21 @@ mod tests {
         };
         let summary = summarise(&run, "d".repeat(64).as_str(), 1);
         (run, summary)
+    }
+
+    #[test]
+    fn a_switch_lowered_differently_is_listed_on_the_page_of_its_phase_and_nowhere_else() {
+        let (run, summary) = a_run();
+        let pages = generate(&run, &summary);
+        let with: Vec<&str> = pages
+            .iter()
+            .filter(|page| page.text.contains("## Switches lowered differently"))
+            .map(|page| page.path.as_str())
+            .collect();
+        assert_eq!(with, ["reports/phases/loops.md"]);
+        let loops = pages.iter().find(|page| page.path == "reports/phases/loops.md").unwrap();
+        assert!(loops.text.contains("| `rucc` | O2 | `loop-unroll"), "{}", loops.text);
+        assert!(loops.text.contains("| compares | table |"), "{}", loops.text);
     }
 
     #[test]

@@ -34,6 +34,7 @@ pub fn report_md(run: &Run, summary: &Summary) -> String {
     size_model(&mut out, summary);
     by_phase(&mut out, summary);
     reference_opinion(&mut out, summary);
+    switch_shapes(&mut out, summary);
     reused(&mut out, run);
     reproducing(&mut out, summary);
     out
@@ -466,6 +467,68 @@ fn reference_opinion(out: &mut String, summary: &Summary) {
     out.push('\n');
 }
 
+/// What each switch became, next to what the reference made of it.
+fn switch_shapes(out: &mut String, summary: &Summary) {
+    if summary.switch_shapes.is_empty() {
+        return;
+    }
+    out.push_str(
+        "## What each switch became
+
+",
+    );
+    out.push_str(&format!(
+        "Every case with a `switch` in it is compiled once more with `-S` to see what its switches were lowered as. rucc says so under `-fopt-info`, and {}'s assembly is read for a jump table, a bit test or a lookup table of answers, with compares meaning none of the three. A case agrees when both compilers used the same of those. The two do not have to inline the same functions, so a disagreement is a lead to read the assembly for and not a verdict.\n\n",
+        summary.reference
+    ));
+    out.push_str("| compiler | level | cases | same | different |\n|---|---|---|---|---|\n");
+    for shapes in &summary.switch_shapes {
+        out.push_str(&format!(
+            "| {} | {} | {} | {} | {} |\n",
+            shapes.toolchain,
+            shapes.level.name(),
+            shapes.compared,
+            shapes.agreed(),
+            shapes.disagreements.len()
+        ));
+    }
+    out.push('\n');
+    for shapes in summary.switch_shapes.iter().filter(|shapes| !shapes.disagreements.is_empty()) {
+        out.push_str(&format!(
+            "### {} at {} against {}\n\n| {} | {} | cases |\n|---|---|---|\n",
+            shapes.toolchain,
+            shapes.level.name(),
+            summary.reference,
+            shapes.toolchain,
+            summary.reference
+        ));
+        for ((mine, theirs), count) in shapes.by_pair() {
+            out.push_str(&format!("| {mine} | {theirs} | {count} |\n"));
+        }
+        out.push_str("\n| case | facet | ");
+        out.push_str(&format!(
+            "{} | {} |\n|---|---|---|---|\n",
+            shapes.toolchain, summary.reference
+        ));
+        for one in shapes.disagreements.iter().take(LISTED) {
+            out.push_str(&format!(
+                "| `{}` | `{}` | {} | {} |\n",
+                one.case,
+                one.facet.name(),
+                one.mine,
+                one.reference
+            ));
+        }
+        if shapes.disagreements.len() > LISTED {
+            out.push_str(&format!(
+                "\nAnd {} more, all in `reports/report.json`.\n",
+                shapes.disagreements.len() - LISTED
+            ));
+        }
+        out.push('\n');
+    }
+}
+
 /// How to get this report again.
 fn reproducing(out: &mut String, summary: &Summary) {
     out.push_str("## Running this yourself\n\n");
@@ -614,9 +677,13 @@ mod tests {
                 line: 7,
                 message: "loop unrolled 4 times".to_owned(),
             });
+            reference.switches = vec!["main: table".to_owned()];
             records.push(reference);
             let bigger = if case.facet == Facet::LoopUnroll { 250 } else { 95 };
-            records.push(record_for(case, "rucc", bigger));
+            let mut mine = record_for(case, "rucc", bigger);
+            let shape = if case.facet == Facet::LoopUnroll { "step: walk" } else { "main: table" };
+            mine.switches = vec![shape.to_owned()];
+            records.push(mine);
         }
         let verdicts: BTreeMap<String, Verdict> =
             records.iter().map(|r| (r.key(), Verdict::Pass)).collect();
@@ -656,6 +723,15 @@ mod tests {
         assert!(opening.contains("Every case in the corpus produced the answer"));
         assert!(text.contains("gcc (GCC) 16.1.0"));
         assert!(text.contains("rucc 0.4.0"));
+    }
+
+    #[test]
+    fn a_switch_lowered_differently_is_counted_and_named_with_both_shapes() {
+        let text = rendered(Vec::new());
+        let section = &text[text.find("## What each switch became").expect("no switch section")..];
+        assert!(section.contains("| rucc | O2 | 2 | 1 | 1 |"), "{section}");
+        assert!(section.contains("| compares | table | 1 |"), "{section}");
+        assert!(section.contains("`loop-unroll` | compares | table |"), "{section}");
     }
 
     #[test]

@@ -18,7 +18,7 @@
 //! runs that found the same thing produce byte identical files and a diff shows what changed
 //! rather than where the whitespace moved.
 
-use crate::summary::{FacetSummary, SizeModel, Summary, Tally, Target};
+use crate::summary::{FacetSummary, SizeModel, Summary, SwitchShapes, Tally, Target};
 use corpus_model::{Finding, Json, RunRecord, SCHEMA_VERSION};
 use corpus_run::Run;
 
@@ -75,6 +75,7 @@ pub fn report_json(run: &Run, summary: &Summary) -> String {
                     .map(|model| size_model_json(model, summary.ignoring_size(&model.toolchain))),
             ),
         ),
+        ("switch_shapes", Json::array(summary.switch_shapes.iter().map(switch_shapes_json))),
         ("findings", Json::array(run.findings.iter().map(Finding::to_json))),
         ("measured", measured_json(run)),
     ]);
@@ -196,6 +197,27 @@ fn size_model_json(model: &SizeModel, ignoring: bool) -> Json {
                     ("facet", Json::string(facet.name())),
                     ("cases", Json::int(*cases as i64)),
                     ("against_o2", Json::Number(*ratio)),
+                ])
+            })),
+        ),
+    ])
+}
+
+/// One compiler's switches against the reference's at one level.
+fn switch_shapes_json(shapes: &SwitchShapes) -> Json {
+    Json::object([
+        ("toolchain", Json::string(shapes.toolchain.clone())),
+        ("level", Json::string(shapes.level.name())),
+        ("compared", Json::int(shapes.compared as i64)),
+        ("agreed", Json::int(shapes.agreed() as i64)),
+        (
+            "disagreements",
+            Json::array(shapes.disagreements.iter().map(|one| {
+                Json::object([
+                    ("case", Json::string(one.case.clone())),
+                    ("facet", Json::string(one.facet.name())),
+                    ("mine", Json::string(one.mine.clone())),
+                    ("reference", Json::string(one.reference.clone())),
                 ])
             })),
         ),
@@ -419,6 +441,14 @@ mod tests {
             &report.get("size_model").unwrap().as_array().unwrap()[0],
             "size model",
         );
+        let shapes = &report.get("switch_shapes").unwrap().as_array().unwrap()[0];
+        keys_agree(&schema, &["$defs", "switch_shapes"], shapes, "switch shapes");
+        keys_agree(
+            &schema,
+            &["$defs", "switch_disagreement"],
+            &shapes.get("disagreements").unwrap().as_array().unwrap()[0],
+            "switch disagreement",
+        );
 
         let facet = &report.get("facets").unwrap().as_array().unwrap()[0];
         keys_agree(
@@ -446,8 +476,9 @@ mod tests {
             Expect::Output("42\n".to_owned()),
         );
         let mut records = Vec::new();
-        for (id, text) in [("gcc-16", 100u64), ("rucc", 130)] {
+        for (id, text, switch) in [("gcc-16", 100u64, "main: table"), ("rucc", 130, "step: walk")] {
             let mut record = RunRecord::skipped(&case, id, Level::O2);
+            record.switches = vec![switch.to_owned()];
             record.compile = Compile {
                 ok: true,
                 status: 0,
@@ -502,6 +533,20 @@ mod tests {
             verdicts,
             findings,
         }
+    }
+
+    #[test]
+    fn a_switch_the_two_compilers_lowered_differently_is_named_with_both_shapes() {
+        let run = sample_run(false);
+        let summary = summarise(&run, "digest", 1);
+        let report = json::parse(&report_json(&run, &summary)).unwrap();
+        let shapes = &report.get("switch_shapes").unwrap().as_array().unwrap()[0];
+        assert_eq!(shapes.get("toolchain").unwrap().as_str(), Some("rucc"));
+        assert_eq!(shapes.get("compared").unwrap().as_f64(), Some(1.0));
+        assert_eq!(shapes.get("agreed").unwrap().as_f64(), Some(0.0));
+        let one = &shapes.get("disagreements").unwrap().as_array().unwrap()[0];
+        assert_eq!(one.get("mine").unwrap().as_str(), Some("compares"));
+        assert_eq!(one.get("reference").unwrap().as_str(), Some("table"));
     }
 
     #[test]
