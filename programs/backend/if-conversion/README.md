@@ -2,7 +2,7 @@
 
 turning a short branch into branchless code. Part of the backend phase of the M4 plan.
 
-35 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+38 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -21,6 +21,7 @@ turning a short branch into branchless code. Part of the backend phase of the M4
 | [`if-conversion.at-a-rate.99.none.c17.bb342fc1`](if-conversion.at-a-rate.99.none.c17.bb342fc1.c) | shape=at-a-rate, rate=99, hint=none | c17 | `7598329638` |
 | [`if-conversion.at-a-rate.99.right.c17.65b20377`](if-conversion.at-a-rate.99.right.c17.65b20377.c) | shape=at-a-rate, rate=99, hint=right | c17 | `7598329638` |
 | [`if-conversion.at-a-rate.99.wrong.c17.3354b0c9`](if-conversion.at-a-rate.99.wrong.c17.3354b0c9.c) | shape=at-a-rate, rate=99, hint=wrong | c17 | `7598329638` |
+| [`if-conversion.different-widening.c17.af2f9dae`](if-conversion.different-widening.c17.af2f9dae.c) | shape=different-widening | c17 | `5170132077` |
 | [`if-conversion.i32.abs.c17.4fb723f5`](if-conversion.i32.abs.c17.4fb723f5.c) | type=i32, shape=abs | c17 | `16000` |
 | [`if-conversion.i32.clamp.c17.a1d174d0`](if-conversion.i32.clamp.c17.a1d174d0.c) | type=i32, shape=clamp | c17 | `16500` |
 | [`if-conversion.i32.conditional-add.c17.4e310e10`](if-conversion.i32.conditional-add.c17.4e310e10.c) | type=i32, shape=conditional-add | c17 | `10000` |
@@ -31,6 +32,8 @@ turning a short branch into branchless code. Part of the backend phase of the M4
 | [`if-conversion.i64.conditional-add.c17.51fb0879`](if-conversion.i64.conditional-add.c17.51fb0879.c) | type=i64, shape=conditional-add | c17 | `10000` |
 | [`if-conversion.i64.min.c17.9a0c96e2`](if-conversion.i64.min.c17.9a0c96e2.c) | type=i64, shape=min | c17 | `12000` |
 | [`if-conversion.i64.select.c17.1ce50553`](if-conversion.i64.select.c17.1ce50553.c) | type=i64, shape=select | c17 | `16000` |
+| [`if-conversion.shared-mask.c17.ed706b00`](if-conversion.shared-mask.c17.ed706b00.c) | shape=shared-mask | c17 | `5170769571` |
+| [`if-conversion.shared-widening.c17.903e1aee`](if-conversion.shared-widening.c17.903e1aee.c) | shape=shared-widening | c17 | `5170132077` |
 | [`if-conversion.u32.abs.c17.fd4ca49f`](if-conversion.u32.abs.c17.fd4ca49f.c) | type=u32, shape=abs | c17 | `16000` |
 | [`if-conversion.u32.clamp.c17.219bf747`](if-conversion.u32.clamp.c17.219bf747.c) | type=u32, shape=clamp | c17 | `16500` |
 | [`if-conversion.u32.conditional-add.c17.f035ec4b`](if-conversion.u32.conditional-add.c17.f035ec4b.c) | type=u32, shape=conditional-add | c17 | `10000` |
