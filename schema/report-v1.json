@@ -77,6 +77,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/size_model" }
     },
+    "switch_shapes": {
+      "description": "What each compiler under test made of the switches in the corpus against the reference, one entry per compiler and level. A case is compared over the shapes each compiler used other than compares: rucc says what it did under -fopt-info and the reference's assembly is read. Empty when no case with a switch was built by both.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/switch_shapes" }
+    },
     "findings": {
       "description": "Every result that was not what the generator said it would be. Empty is the good case.",
       "type": "array",
@@ -95,6 +100,31 @@
     }
   },
   "$defs": {
+    "switch_shapes": {
+      "description": "One compiler's switches against the reference's, at one level.",
+      "type": "object",
+      "required": ["toolchain", "level", "compared", "agreed", "disagreements"],
+      "additionalProperties": false,
+      "properties": {
+        "toolchain": { "type": "string" },
+        "level": { "enum": ["O0", "O1", "O2", "O3", "Os"] },
+        "compared": { "description": "How many cases both compilers said something about.", "type": "integer", "minimum": 0 },
+        "agreed": { "description": "How many of those used the same shapes.", "type": "integer", "minimum": 0 },
+        "disagreements": { "type": "array", "items": { "$ref": "#/$defs/switch_disagreement" } }
+      }
+    },
+    "switch_disagreement": {
+      "description": "One case whose switches the two compilers made something different of.",
+      "type": "object",
+      "required": ["case", "facet", "mine", "reference"],
+      "additionalProperties": false,
+      "properties": {
+        "case": { "type": "string" },
+        "facet": { "type": "string" },
+        "mine": { "description": "The shapes the compiler under test used, joined with a comma: table, bit-test, lookup, or compares when it used none of them.", "type": "string" },
+        "reference": { "description": "The shapes the reference used, in the same words.", "type": "string" }
+      }
+    },
     "toolchain": {
       "type": "object",
       "required": ["id", "program", "version", "reference"],

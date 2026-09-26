@@ -39,7 +39,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// A file written by a harness that spelled its keys differently is not a file this one can
 /// read, and a stale hit is the one failure mode a cache must not have. So the number is part
 /// of every key, and raising it retires every entry at once.
-pub const FORMAT: u32 = 1;
+pub const FORMAT: u32 = 2;
 
 /// How many entries a cache file is allowed to keep.
 ///

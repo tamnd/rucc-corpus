@@ -20,7 +20,7 @@
 //! enormous facet is carrying the number, but nothing is gated on them.
 
 use corpus_model::{Facet, Level, Phase, RunRecord, Source, Verdict};
-use corpus_run::{Run, compare};
+use corpus_run::{Run, compare, shape};
 use std::collections::BTreeMap;
 
 /// How many cases came out each way.
@@ -303,6 +303,60 @@ pub struct Summary {
     pub size_model: Vec<SizeModel>,
     /// The claims, and whether this run supports them.
     pub targets: Vec<Target>,
+    /// What each compiler under test made of its switches against the reference, per level.
+    pub switch_shapes: Vec<SwitchShapes>,
+}
+
+/// One compiler's switches against the reference's, at one level.
+///
+/// Per case, over the shapes each used other than compares, which is what `corpus_run::shape`
+/// can say for both of them. Two compilers that inline differently put the same switch in
+/// different functions, so a comparison per function would count that as a disagreement about
+/// switches when it is one about inlining.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SwitchShapes {
+    /// The compiler under test.
+    pub toolchain: String,
+    /// The level.
+    pub level: Level,
+    /// How many cases both compilers said something about.
+    pub compared: usize,
+    /// The cases where they used different shapes, in case order.
+    pub disagreements: Vec<SwitchDisagreement>,
+}
+
+impl SwitchShapes {
+    /// How many cases came out the same.
+    #[must_use]
+    pub fn agreed(&self) -> usize {
+        self.compared - self.disagreements.len()
+    }
+
+    /// How many cases went each way, most first, as the shapes the compiler under test used and
+    /// the ones the reference used.
+    #[must_use]
+    pub fn by_pair(&self) -> Vec<((&str, &str), usize)> {
+        let mut pairs: BTreeMap<(&str, &str), usize> = BTreeMap::new();
+        for one in &self.disagreements {
+            *pairs.entry((one.mine.as_str(), one.reference.as_str())).or_default() += 1;
+        }
+        let mut ranked: Vec<((&str, &str), usize)> = pairs.into_iter().collect();
+        ranked.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        ranked
+    }
+}
+
+/// One case where the two compilers made something different of its switches.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SwitchDisagreement {
+    /// The case.
+    pub case: String,
+    /// What it is about.
+    pub facet: Facet,
+    /// What the compiler under test used.
+    pub mine: String,
+    /// What the reference used.
+    pub reference: String,
 }
 
 impl Summary {
@@ -404,6 +458,7 @@ pub fn summarise(run: &Run, corpus_digest: &str, cases: usize) -> Summary {
     let facets = summarise_facets(run, &toolchains, &reference);
     let size_model = size_models(run, &toolchains);
     let targets = check_targets(&totals, &facets, &size_model, &reference, &toolchains);
+    let switch_shapes = switch_shapes(run, &toolchains, &reference, &levels);
 
     Summary {
         corpus_digest: corpus_digest.to_owned(),
@@ -416,7 +471,48 @@ pub fn summarise(run: &Run, corpus_digest: &str, cases: usize) -> Summary {
         facets,
         size_model,
         targets,
+        switch_shapes,
     }
+}
+
+/// Every compiler under test's switches against the reference's, at every level either said
+/// anything about them.
+fn switch_shapes(
+    run: &Run,
+    toolchains: &[String],
+    reference: &str,
+    levels: &[Level],
+) -> Vec<SwitchShapes> {
+    let mut all = Vec::new();
+    for toolchain in toolchains.iter().filter(|id| *id != reference) {
+        for &level in levels {
+            let mut shapes = SwitchShapes {
+                toolchain: toolchain.clone(),
+                level,
+                compared: 0,
+                disagreements: Vec::new(),
+            };
+            let mine = run.records.iter().filter(|r| r.toolchain == *toolchain && r.level == level);
+            for record in mine.filter(|record| !record.switches.is_empty()) {
+                let Some(theirs) = run.record(&record.case, reference, level) else { continue };
+                if theirs.switches.is_empty() {
+                    continue;
+                }
+                shapes.compared += 1;
+                let (mine, reference) =
+                    (shape::used(&record.switches), shape::used(&theirs.switches));
+                if mine != reference {
+                    let case = record.case.clone();
+                    let facet = record.facet;
+                    shapes.disagreements.push(SwitchDisagreement { case, facet, mine, reference });
+                }
+            }
+            if shapes.compared > 0 {
+                all.push(shapes);
+            }
+        }
+    }
+    all
 }
 
 /// How much C a set of records is, counting each case once.

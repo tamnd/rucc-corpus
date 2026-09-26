@@ -9,6 +9,7 @@ use crate::counter;
 use crate::exec;
 use crate::insight;
 use crate::object;
+use crate::shape;
 use crate::toolchain::Spec;
 use corpus_model::{Case, Compile, Execute, Expect, Insight, Level, RunRecord};
 use std::path::{Path, PathBuf};
@@ -60,6 +61,8 @@ pub struct Built {
     pub execute: Execute,
     /// What the compiler said about its own decisions.
     pub insights: Vec<Insight>,
+    /// What each `switch` became, as `function: shape`, when the case has one.
+    pub switches: Vec<String>,
 }
 
 /// Builds a case and runs it, unless it was not supposed to build.
@@ -139,6 +142,17 @@ pub fn build_and_run(
         Vec::new()
     };
 
+    // After the timed compile and before the run, so that the binary being run is the one the
+    // timed compile wrote. `-S` writes somewhere else.
+    let switches = if produced && shape::wanted(case) {
+        let mut asked = vec![case.dialect.std_flag().to_owned(), level.flag().to_owned()];
+        asked.extend(case.flags.iter().cloned());
+        asked.extend(spec.extra.iter().cloned());
+        shape::shapes(spec, asked, dir)
+    } else {
+        Vec::new()
+    };
+
     let should_run = produced && matches!(case.expect, Expect::Output(_));
     let execute = if should_run {
         // With a dot and a slash on the front, because a bare name would be looked for on the
@@ -174,7 +188,7 @@ pub fn build_and_run(
         Execute::skipped()
     };
 
-    Ok(Built { compile, execute, insights })
+    Ok(Built { compile, execute, insights, switches })
 }
 
 /// Turns a build into the record that goes in the JSON Lines file.
@@ -191,6 +205,7 @@ pub fn record(case: &Case, toolchain: &str, level: Level, built: Built) -> RunRe
         compile: built.compile,
         execute: built.execute,
         insights: built.insights,
+        switches: built.switches,
         // This one was built here, just now. Only the cache sets the flag, on the way out.
         reused: false,
     }

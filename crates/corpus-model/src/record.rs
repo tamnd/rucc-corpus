@@ -541,6 +541,12 @@ pub struct RunRecord {
     pub execute: Execute,
     /// What the compiler said about its own optimization decisions, when it was asked.
     pub insights: Vec<Insight>,
+    /// What each `switch` in the case became, as `function: shape`.
+    ///
+    /// Empty when the case has no switch or the compiler was not asked. rucc's shapes are the ones
+    /// it names under `-fopt-info`, and gcc's are read off its assembly, which is why the two
+    /// lists do not use quite the same words. See `corpus_run::shape`.
+    pub switches: Vec<String>,
     /// Whether this record was read out of the cache rather than measured today.
     ///
     /// An outcome keeps. A timing does not. A record that says the program printed the wrong
@@ -565,6 +571,7 @@ impl RunRecord {
             compile: Compile::skipped(),
             execute: Execute::skipped(),
             insights: Vec::new(),
+            switches: Vec::new(),
             reused: false,
         }
     }
@@ -594,6 +601,12 @@ impl RunRecord {
             ("execute".to_owned(), self.execute.to_json()),
             ("insights".to_owned(), Json::array(self.insights.iter().map(Insight::to_json))),
         ];
+        // Only when there is something in it, so that a record of a case with no switch is the
+        // line it was before the field existed.
+        if !self.switches.is_empty() {
+            let switches = self.switches.iter().map(|one| Json::string(one.clone()));
+            fields.push(("switches".to_owned(), Json::array(switches)));
+        }
         if self.reused {
             fields.push(("reused".to_owned(), Json::Bool(true)));
         }
@@ -626,6 +639,13 @@ impl RunRecord {
                 .unwrap_or_default()
                 .iter()
                 .map(Insight::from_json)
+                .collect(),
+            switches: value
+                .get("switches")
+                .and_then(Json::as_array)
+                .unwrap_or_default()
+                .iter()
+                .filter_map(|one| one.as_str().map(str::to_owned))
                 .collect(),
             reused: value.get("reused").and_then(Json::as_bool).unwrap_or(false),
         })
@@ -899,6 +919,7 @@ mod tests {
             line: 9,
             message: "not vectorized".to_owned(),
         }];
+        record.switches = vec!["step: walk".to_owned(), "main: table".to_owned()];
         let read = RunRecord::from_json(&crate::json::parse(&record.to_json().to_line()).unwrap());
         assert_eq!(read, Some(record));
     }

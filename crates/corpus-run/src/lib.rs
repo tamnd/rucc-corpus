@@ -21,6 +21,7 @@ pub mod insight;
 pub mod known;
 pub mod memory;
 pub mod object;
+pub mod shape;
 pub mod toolchain;
 
 use corpus_model::{Case, Finding, Level, Manifest, RunRecord, Toolchain, Verdict};
