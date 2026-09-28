@@ -188,6 +188,12 @@ pub enum Facet {
     SwitchDispatch,
     /// A division or a remainder by a constant, done enough times to time how it was lowered.
     Division,
+    /// A shift or a rotate of an 8 or 16 bit value by a count known to be below its width.
+    ///
+    /// C promotes both operands to `int`, so the shift is written at 32 bits, but when the count
+    /// is masked below the narrow width the answer is the same done at 8 or 16 bits, and a byte
+    /// sized instruction can work on memory or rotate in place where the widened one cannot.
+    NarrowShift,
     /// Deciding what a call has to save and restore.
     CallingConvention,
     /// The peephole rules that only make sense on machine instructions.
@@ -449,6 +455,7 @@ impl Facet {
         Self::SwitchRuns,
         Self::SwitchDispatch,
         Self::Division,
+        Self::NarrowShift,
         Self::CallingConvention,
         Self::MachinePeephole,
         Self::BitLiveness,
@@ -539,6 +546,7 @@ impl Facet {
             Self::SwitchRuns => "switch-runs",
             Self::SwitchDispatch => "switch-dispatch",
             Self::Division => "division",
+            Self::NarrowShift => "narrow-shift",
             Self::CallingConvention => "calling-convention",
             Self::MachinePeephole => "machine-peephole",
             Self::BitLiveness => "bit-liveness",
@@ -641,6 +649,9 @@ impl Facet {
             Self::SwitchDispatch => "a switch dispatched often enough to time how it was lowered",
             Self::Division => {
                 "a division by a constant done often enough to time how it was lowered"
+            }
+            Self::NarrowShift => {
+                "a shift or rotate of a byte or a short by a count below its width"
             }
             Self::CallingConvention => "deciding what a call saves and restores",
             Self::MachinePeephole => "the rules that only make sense on machine instructions",
@@ -747,6 +758,7 @@ impl Facet {
             | Self::SwitchRuns
             | Self::SwitchDispatch
             | Self::Division
+            | Self::NarrowShift
             | Self::CallingConvention
             | Self::MachinePeephole
             | Self::BitLiveness

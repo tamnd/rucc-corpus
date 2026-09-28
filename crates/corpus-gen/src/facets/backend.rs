@@ -35,6 +35,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     switch_dispatch(sink);
     division(sink);
     exact_division(sink);
+    narrow_shift(sink);
     calling_convention(sink);
     machine_peephole(sink);
     bit_liveness(sink);
@@ -3947,6 +3948,142 @@ fn exact_division(sink: &mut Sink<'_>) {
     }
 }
 
+/// A width a narrow shift case works at.
+struct NarrowWidth {
+    /// The axis value.
+    name: &'static str,
+    /// The C type of the buffer.
+    ty: &'static str,
+    /// How many bits the type has.
+    bits: u32,
+}
+
+/// The two widths below `int`, which C promotes before it shifts.
+const NARROW_WIDTHS: &[NarrowWidth] = &[
+    NarrowWidth { name: "u8", ty: "unsigned char", bits: 8 },
+    NarrowWidth { name: "u16", ty: "unsigned short", bits: 16 },
+];
+
+/// The shapes a narrow shift case comes in.
+const NARROW_SHAPES: &[&str] = &["rotate", "shift-xor", "bitset-flip", "bitset-test"];
+
+/// The C for one step of a narrow shift shape, run for every `i` in every `round`.
+fn narrow_step(shape: &str, width: &NarrowWidth) -> Vec<String> {
+    let bits = width.bits;
+    let ty = width.ty;
+    // The bitset is the buffer itself, so it has as many bits as the buffer has.
+    let every_bit = DIVISION_STREAM * bits - 1;
+    let log = bits.trailing_zeros();
+    let pick =
+        format!("unsigned j = ((unsigned)(states[i] >> 40) + (unsigned)round) & {every_bit}u;");
+    match shape {
+        "rotate" => vec![
+            format!("unsigned n = (unsigned)(i + round) & {}u;", bits - 1),
+            format!("b[i] = ({ty})((b[i] << n) | (b[i] >> ({bits}u - n)));"),
+        ],
+        "shift-xor" => vec![
+            format!("unsigned n = ((unsigned)(i + round) & {}u) + 1u;", bits - 2),
+            format!("b[i] ^= ({ty})(b[i] << n);"),
+        ],
+        "bitset-flip" => vec![pick, format!("b[j >> {log}] ^= ({ty})(1u << (j & {}u));", bits - 1)],
+        "bitset-test" => {
+            vec![pick, format!("total += (b[j >> {log}] >> (j & {}u)) & 1u;", bits - 1)]
+        }
+        _ => unreachable!("a narrow shift shape"),
+    }
+}
+
+/// What a narrow shift case adds up, worked out the way the C works it out.
+fn narrow_shifted(shape: &str, width: &NarrowWidth) -> u64 {
+    let bits = width.bits;
+    let mask = (1u32 << bits) - 1;
+    let every_bit = DIVISION_STREAM * bits - 1;
+    let log = bits.trailing_zeros();
+    let mut state = DIVISION_SEED;
+    let mut states = Vec::new();
+    let mut b = Vec::new();
+    for _ in 0..DIVISION_STREAM {
+        state = next_state(state);
+        states.push(state);
+        b.push(u32::try_from(state >> 33).expect("a 31 bit value") & mask);
+    }
+    let mut total = 0u64;
+    for round in 0..DIVISION_ROUNDS {
+        for i in 0..DIVISION_STREAM {
+            let at = i as usize;
+            let j = (u32::try_from(states[at] >> 40).expect("a 24 bit value").wrapping_add(round))
+                & every_bit;
+            match shape {
+                "rotate" => {
+                    let n = (i + round) & (bits - 1);
+                    b[at] = ((b[at] << n) | (b[at] >> (bits - n))) & mask;
+                }
+                "shift-xor" => {
+                    let n = ((i + round) & (bits - 2)) + 1;
+                    b[at] ^= (b[at] << n) & mask;
+                }
+                "bitset-flip" => b[(j >> log) as usize] ^= 1 << (j & (bits - 1)),
+                "bitset-test" => {
+                    total += u64::from((b[(j >> log) as usize] >> (j & (bits - 1))) & 1)
+                }
+                _ => unreachable!("a narrow shift shape"),
+            }
+        }
+    }
+    for (i, &value) in b.iter().enumerate() {
+        total = total.wrapping_add(u64::from(value) * (i as u64 + 1));
+    }
+    total
+}
+
+/// A shift or a rotate of a byte or a short by a count the program has masked below its width.
+///
+/// C promotes a narrow value to `int` before shifting it, so the shift is written at 32 bits.
+/// When the count is known to be below the narrow width the low bits come out the same done at
+/// the narrow width, and gcc then rotates a byte with `rolb`, shifts one in memory with `salb`
+/// and sets a bit of a bitset with `orb` straight to memory. Section 20 of the rucc plan narrows
+/// arithmetic whose upper bits nothing reads, and these are the shapes where the count decides
+/// it: a rotate in place, a value xored with itself shifted, and a bitset whose bits are flipped
+/// or tested. The last part of every case adds the buffer up so that each value is read.
+fn narrow_shift(sink: &mut Sink<'_>) {
+    for width in NARROW_WIDTHS {
+        for &shape in NARROW_SHAPES {
+            if !sink.wants(Facet::NarrowShift) {
+                return;
+            }
+            let mut program = Program::new(format!(
+                "a {shape} of {} values by a count below {}, done many times",
+                width.name, width.bits
+            ));
+            program.line("unsigned long long total = 0;");
+            program.input(Ty::U64, "seed", i128::from(DIVISION_SEED));
+            program.blank();
+            program.line(format!("static {} b[{DIVISION_STREAM}];", width.ty));
+            program.line(format!("static unsigned long long states[{DIVISION_STREAM}];"));
+            program.line("unsigned long long drawn = seed;");
+            program.line(format!("for (int i = 0; i < {DIVISION_STREAM}; i++) {{"));
+            program.line_at(1, "drawn = drawn * 6364136223846793005ull + 1442695040888963407ull;");
+            program.line_at(1, "states[i] = drawn;");
+            program.line_at(1, format!("b[i] = ({})(drawn >> 33);", width.ty));
+            program.line("}");
+            program.line(format!("for (int round = 0; round < {DIVISION_ROUNDS}; round++) {{"));
+            program.line_at(1, format!("for (int i = 0; i < {DIVISION_STREAM}; i++) {{"));
+            for line in narrow_step(shape, width) {
+                program.line_at(2, line);
+            }
+            program.line_at(1, "}");
+            program.line("}");
+            program.line(format!("for (int i = 0; i < {DIVISION_STREAM}; i++) {{"));
+            program.line_at(1, "total += (unsigned long long)b[i] * (unsigned long long)(i + 1);");
+            program.line("}");
+            program.blank();
+            program.check(Ty::U64, "total", i128::from(narrow_shifted(shape, width)));
+            let axes = Axes::of([("type", width.name), ("shape", shape)]);
+            sink.push(Facet::NarrowShift, axes, Dialect::C17, program);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -5128,5 +5265,49 @@ mod tests {
         assert_eq!(super::divided(find("u16"), 10, false), narrow.wrapping_mul(rounds));
         assert_eq!(super::divided(find("i32"), -7, true), signed.wrapping_mul(rounds));
         assert_eq!(super::divided(find("u64"), 7, false), wide.wrapping_mul(rounds));
+    }
+    #[test]
+    fn a_narrow_shift_case_covers_every_shape_at_both_widths() {
+        let cases = cases_for(Facet::NarrowShift);
+        assert_eq!(cases.len(), super::NARROW_WIDTHS.len() * super::NARROW_SHAPES.len());
+        for width in super::NARROW_WIDTHS {
+            for &shape in super::NARROW_SHAPES {
+                let found = cases.iter().find(|case| {
+                    case.axes.get("type") == Some(width.name)
+                        && case.axes.get("shape") == Some(shape)
+                });
+                let case = found.unwrap_or_else(|| panic!("no {shape} case at {}", width.name));
+                let masked = format!("{}u", width.bits - 1);
+                let masked_less = format!("{}u", width.bits - 2);
+                assert!(
+                    case.source.contains(&masked) || case.source.contains(&masked_less),
+                    "the count in {} is not masked below the width",
+                    case.id
+                );
+                assert!(
+                    case.source.contains(width.ty),
+                    "{} does not work at {}",
+                    case.id,
+                    width.ty
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_narrow_shift_answer_matches_one_worked_by_hand() {
+        let byte = &super::NARROW_WIDTHS[0];
+        // A rotate by eight in a row of rounds puts every byte back, and each round here rotates
+        // by one more, so 1024 rounds is 128 full turns of 0 to 7 and the buffer is unchanged.
+        let mut state = super::DIVISION_SEED;
+        let mut sum = 0u64;
+        for i in 0..u64::from(super::DIVISION_STREAM) {
+            state = super::next_state(state);
+            sum += ((state >> 33) & 0xff) * (i + 1);
+        }
+        assert_eq!(super::narrow_shifted("rotate", byte), sum);
+        // Flipping each picked bit an even number of times leaves the buffer as it was.
+        assert_ne!(super::narrow_shifted("bitset-flip", byte), 0);
+        assert!(super::narrow_shifted("bitset-test", byte) > sum);
     }
 }
