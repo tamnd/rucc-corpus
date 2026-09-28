@@ -1,10 +1,10 @@
 # The corpus
 
-3033 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3041 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `3134fdb449ad79974c6b5014813ae6e8aae3c9a31b6fd07e999535c6e108aa3d`.
+Corpus digest `3387432072409fb27be109d173ac340d409b38feb52e8d0fba52d4488312b413`.
 
 ## floor (118 programs)
 
@@ -96,7 +96,7 @@ Transformations that need to look at more than one function at a time.
 | [`call-motion`](interprocedural/call-motion/README.md) | 36 | whether a call came out of a loop |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (905 programs)
+## backend (913 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -112,6 +112,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`switch-runs`](backend/switch-runs/README.md) | 15 | stretches of consecutive labels that share one arm |
 | [`switch-dispatch`](backend/switch-dispatch/README.md) | 21 | a switch dispatched often enough to time how it was lowered |
 | [`division`](backend/division/README.md) | 72 | a division by a constant done often enough to time how it was lowered |
+| [`narrow-shift`](backend/narrow-shift/README.md) | 8 | a shift or rotate of a byte or a short by a count below its width |
 | [`calling-convention`](backend/calling-convention/README.md) | 10 | deciding what a call saves and restores |
 | [`machine-peephole`](backend/machine-peephole/README.md) | 22 | the rules that only make sense on machine instructions |
 | [`bit-liveness`](backend/bit-liveness/README.md) | 28 | a widening whose upper bits nothing reads, across a block boundary |
