@@ -7,6 +7,510 @@
       "verdict": "unimplemented",
       "issue": "tamnd/rucc#1008",
       "why": "rucc has no lowering for __atomic_signal_fence, the one atomic builtin that was left behind when the rest got theirs"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.0.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.0.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.1.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.1.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.3.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.3.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.7.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.aligned.7.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.0.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.0.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.1.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.1.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.3.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.3.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.7.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u32.7.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.0.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.0.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.1.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.1.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.3.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.3.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.7.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u64.7.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.0.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.0.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.1.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.1.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.3.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.3.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.7.pieces.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crc32c.u8.7.whole.builtin.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the SSE4.2 CRC-32C path does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.crc32.builtin.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the crc32 kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.crc32.builtin.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the crc32 kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.crc32.builtin.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the crc32 kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.crc32.builtin.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the crc32 kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.popcnt.builtin.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the popcnt kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.popcnt.builtin.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the popcnt kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.popcnt.builtin.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the popcnt kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.popcnt.builtin.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2044",
+      "why": "rucc does not know __builtin_cpu_init or __builtin_cpu_supports, so the check before the popcnt kernel does not compile"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.builtin.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.builtin.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.builtin.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.builtin.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.cpuid.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.cpuid.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.cpuid.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse3.cpuid.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.builtin.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.builtin.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.builtin.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.builtin.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.cpuid.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.cpuid.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.cpuid.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-1.cpuid.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.1 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.builtin.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.builtin.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.builtin.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.builtin.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.cpuid.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.cpuid.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.cpuid.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.sse4-2.cpuid.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSE4.2 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.builtin.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.builtin.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.builtin.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.builtin.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel, and the __builtin_cpu_supports check needs tamnd/rucc#2044 as well"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.cpuid.direct.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.cpuid.direct.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.cpuid.pointer.inside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "target-attribute.ssse3.cpuid.pointer.outside.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#2045",
+      "why": "rucc has no header or intrinsics for the SSSE3 kernel"
     }
   ]
 }
