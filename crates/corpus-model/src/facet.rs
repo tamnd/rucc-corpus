@@ -321,6 +321,16 @@ pub enum Facet {
     /// after the name went out of use, and giving its bytes to something else there is a
     /// miscompilation rather than a frame that came out too big.
     StackSlots,
+    /// Functions with a large frame, many locals, arrays, structs and calls, and a simple answer.
+    ///
+    /// A back end facet whose number is the frame rather than the time. Postgres has functions
+    /// with dozens of locals and buffers of several kilobytes on the stack, and a back end that
+    /// gives every local its own slot, or keeps a slot for a value that never needed one, takes
+    /// a frame several times the size GCC does. That costs stack depth in a server that recurses
+    /// through its planner and executor, and it is only visible next to what GCC reports with
+    /// `-fstack-usage`. So these programs print one simple checksum, which keeps them honest,
+    /// and the axes are the things that make a frame large.
+    FrameSize,
     /// The bit counting builtins, which a back end has to have an instruction for.
     BitBuiltins,
     /// Conversions between the floating types and the integer ones, in both directions.
@@ -377,6 +387,34 @@ pub enum Facet {
     /// a flag gets wrong. Postgres checks every integer it parses and every sum it accumulates
     /// this way, through `common/int.h`.
     OverflowBuiltins,
+
+    /// Functions compiled for an instruction set extension the rest of the program may not have.
+    ///
+    /// A correctness facet because the promise runs both ways. `__attribute__((target("sse4.2")))`
+    /// lets one function use SSE4.2 and nothing else, so its instructions have to be the ones
+    /// the attribute allows, and the code around it has to run on a machine that never had the
+    /// extension, because the program only calls the function after asking the processor.
+    /// Postgres chooses its CRC-32C and popcount this way, through `__builtin_cpu_supports` or
+    /// `cpuid`, with a portable version for the machines that say no.
+    TargetAttribute,
+
+    /// CRC-32C through the SSE4.2 instructions, against a table-driven software version.
+    ///
+    /// Postgres checksums every WAL record and, when asked, every page with CRC-32C, and on
+    /// x86-64 it computes it with `_mm_crc32_u8`, `_mm_crc32_u32` and `_mm_crc32_u64` after a
+    /// check that the processor has them, and with slicing by eight when it does not. The two
+    /// have to agree on every length and every alignment, or a checksum written by one build is
+    /// rejected by another.
+    Crc32c,
+
+    /// The SSE2 search loops from `port/simd.h` and `port/pg_lfind.h`, against scalar loops.
+    ///
+    /// Postgres searches arrays of transaction ids and scans strings for special bytes with
+    /// sixteen bytes at a time and a scalar loop for the tail. The questions for the compiler
+    /// are the vector intrinsics themselves, unsigned byte comparison built out of the signed
+    /// and saturating ones, and the tail, which is where a length that is not a multiple of the
+    /// vector width goes wrong.
+    SimdLfind,
 
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
@@ -467,6 +505,7 @@ impl Facet {
         Self::CompareFold,
         Self::FrameAddress,
         Self::StackSlots,
+        Self::FrameSize,
         Self::BitBuiltins,
         Self::FloatConversion,
         Self::LongDouble,
@@ -475,6 +514,9 @@ impl Facet {
         Self::SetjmpLongjmp,
         Self::Sigsetjmp,
         Self::OverflowBuiltins,
+        Self::TargetAttribute,
+        Self::Crc32c,
+        Self::SimdLfind,
         Self::Frontend,
     ];
 
@@ -558,6 +600,7 @@ impl Facet {
             Self::CompareFold => "compare-fold",
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
+            Self::FrameSize => "frame-size",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
             Self::LongDouble => "long-double",
@@ -566,6 +609,9 @@ impl Facet {
             Self::SetjmpLongjmp => "setjmp-longjmp",
             Self::Sigsetjmp => "sigsetjmp",
             Self::OverflowBuiltins => "overflow-builtins",
+            Self::TargetAttribute => "target-attribute",
+            Self::Crc32c => "crc32c",
+            Self::SimdLfind => "simd-lfind",
             Self::Frontend => "frontend",
         }
     }
@@ -670,6 +716,9 @@ impl Facet {
             }
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::StackSlots => "two things in the frame that may be the same bytes",
+            Self::FrameSize => {
+                "large frames with a simple answer, to hold against gcc -fstack-usage"
+            }
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
             Self::LongDouble => {
@@ -682,6 +731,11 @@ impl Facet {
             Self::OverflowBuiltins => {
                 "the checked add, subtract and multiply builtins over mixed integer types"
             }
+            Self::TargetAttribute => {
+                "functions built for an extension and called only after asking the processor"
+            }
+            Self::Crc32c => "CRC-32C through the SSE4.2 instructions against slicing by eight",
+            Self::SimdLfind => "the SSE2 search loops from port/simd.h and pg_lfind.h",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -770,6 +824,7 @@ impl Facet {
             | Self::CompareFold
             | Self::FrameAddress
             | Self::StackSlots
+            | Self::FrameSize
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,
@@ -777,7 +832,10 @@ impl Facet {
             | Self::Atomics
             | Self::SetjmpLongjmp
             | Self::Sigsetjmp
-            | Self::OverflowBuiltins => Phase::Correctness,
+            | Self::OverflowBuiltins
+            | Self::TargetAttribute
+            | Self::Crc32c
+            | Self::SimdLfind => Phase::Correctness,
         }
     }
 
@@ -898,9 +956,10 @@ mod tests {
             let name = facet.name();
             assert!(!name.is_empty());
             assert!(
-                name.bytes().all(|b| b.is_ascii_lowercase() || b == b'-'),
+                name.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-'),
                 "{name} has a character that would need quoting"
             );
+            assert!(name.starts_with(|c: char| c.is_ascii_lowercase()), "{name}");
             assert!(!name.starts_with('-') && !name.ends_with('-'), "{name}");
         }
     }
