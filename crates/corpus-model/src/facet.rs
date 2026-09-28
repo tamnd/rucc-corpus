@@ -124,6 +124,8 @@ pub enum Facet {
     TailCall,
     /// Calls in tail position made often enough to time whether they became jumps.
     TailDispatch,
+    /// A `static` function called from one place in a hot loop, timed whether it was inlined.
+    CalledOnce,
     /// Proving a function pure, const or neither, and using that at its call sites.
     FunctionPurity,
     /// Specializing a function to a constant argument.
@@ -405,6 +407,7 @@ impl Facet {
         Self::Inline,
         Self::TailCall,
         Self::TailDispatch,
+        Self::CalledOnce,
         Self::FunctionPurity,
         Self::ConstantArgs,
         Self::UnusedParams,
@@ -492,6 +495,7 @@ impl Facet {
             Self::Inline => "inline",
             Self::TailCall => "tail-call",
             Self::TailDispatch => "tail-dispatch",
+            Self::CalledOnce => "called-once",
             Self::FunctionPurity => "function-purity",
             Self::ConstantArgs => "constant-args",
             Self::UnusedParams => "unused-params",
@@ -588,6 +592,7 @@ impl Facet {
             Self::TailDispatch => {
                 "calls in tail position made often enough to time whether they became jumps"
             }
+            Self::CalledOnce => "a static function called from one place, timed in a hot loop",
             Self::FunctionPurity => "proving purity and using it at the call sites",
             Self::ConstantArgs => "specializing a function to a constant argument",
             Self::UnusedParams => "taking out a parameter nothing reads, and the argument with it",
@@ -692,6 +697,7 @@ impl Facet {
             Self::Inline
             | Self::TailCall
             | Self::TailDispatch
+            | Self::CalledOnce
             | Self::FunctionPurity
             | Self::ConstantArgs
             | Self::UnusedParams
