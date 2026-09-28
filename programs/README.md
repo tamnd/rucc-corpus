@@ -1,10 +1,10 @@
 # The corpus
 
-2777 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3033 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `9ff9a42bd25fae104d8ea1b87f09c51e5efe16b72d2920c6fb7f900b15794c89`.
+Corpus digest `3134fdb449ad79974c6b5014813ae6e8aae3c9a31b6fd07e999535c6e108aa3d`.
 
 ## floor (118 programs)
 
@@ -127,7 +127,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (52 programs)
+## correctness (308 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -136,4 +136,6 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`barrier`](correctness/barrier/README.md) | 13 | programs where the compiler must not act, and a firing is a bug |
 | [`atomics`](correctness/atomics/README.md) | 31 | the atomic builtins at every ordering, and the header over them |
 | [`setjmp-longjmp`](correctness/setjmp-longjmp/README.md) | 8 | the jump that leaves a function without returning from it |
+| [`sigsetjmp`](correctness/sigsetjmp/README.md) | 112 | locals live across a sigsetjmp the way PG_TRY and PG_CATCH use it |
+| [`overflow-builtins`](correctness/overflow-builtins/README.md) | 144 | the checked add, subtract and multiply builtins over mixed integer types |
 

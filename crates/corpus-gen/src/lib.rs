@@ -237,6 +237,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::surface::float_conversion(&mut sink);
     facets::special::barrier(&mut sink);
     facets::surface::atomics(&mut sink);
+    facets::postgres::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }

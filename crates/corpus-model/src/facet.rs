@@ -351,6 +351,27 @@ pub enum Facet {
     /// ladder unwinds its errors this way, so it is the frame rule those projects lean on.
     SetjmpLongjmp,
 
+    /// Locals that live across a `sigsetjmp` and are read after the `siglongjmp` back to it.
+    ///
+    /// A correctness facet with a narrower question than `setjmp-longjmp`. Postgres builds its
+    /// whole error handling out of `PG_TRY`, `PG_CATCH` and `PG_RE_THROW`, which are a
+    /// `sigsetjmp` on a buffer the function owns and a `siglongjmp` from wherever the error was
+    /// raised. What that asks of the back end is that a value set before the save is where the
+    /// second return expects to find it, however many other values there were and whatever the
+    /// arm that ran first did with the registers and the frame in the meantime.
+    Sigsetjmp,
+
+    /// The checked arithmetic builtins, over mixed operand and result types.
+    ///
+    /// A correctness facet because a wrong answer here is not a slow program, it is an overflow
+    /// check that let an overflow through. `__builtin_add_overflow` and its two siblings take
+    /// the mathematically exact result, store it wrapped into whatever type the third argument
+    /// points at, and say whether it fitted. The operand types and the result type are
+    /// independent, which is exactly the part a compiler that lowered them as a plain add with
+    /// a flag gets wrong. Postgres checks every integer it parses and every sum it accumulates
+    /// this way, through `common/int.h`.
+    OverflowBuiltins,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -445,6 +466,8 @@ impl Facet {
         Self::Barrier,
         Self::Atomics,
         Self::SetjmpLongjmp,
+        Self::Sigsetjmp,
+        Self::OverflowBuiltins,
         Self::Frontend,
     ];
 
@@ -533,6 +556,8 @@ impl Facet {
             Self::Barrier => "barrier",
             Self::Atomics => "atomics",
             Self::SetjmpLongjmp => "setjmp-longjmp",
+            Self::Sigsetjmp => "sigsetjmp",
+            Self::OverflowBuiltins => "overflow-builtins",
             Self::Frontend => "frontend",
         }
     }
@@ -642,6 +667,10 @@ impl Facet {
             Self::Barrier => "programs where the compiler must not act, and a firing is a bug",
             Self::Atomics => "the atomic builtins at every ordering, and the header over them",
             Self::SetjmpLongjmp => "the jump that leaves a function without returning from it",
+            Self::Sigsetjmp => "locals live across a sigsetjmp the way PG_TRY and PG_CATCH use it",
+            Self::OverflowBuiltins => {
+                "the checked add, subtract and multiply builtins over mixed integer types"
+            }
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -732,7 +761,11 @@ impl Facet {
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,
-            Self::Barrier | Self::Atomics | Self::SetjmpLongjmp => Phase::Correctness,
+            Self::Barrier
+            | Self::Atomics
+            | Self::SetjmpLongjmp
+            | Self::Sigsetjmp
+            | Self::OverflowBuiltins => Phase::Correctness,
         }
     }
 

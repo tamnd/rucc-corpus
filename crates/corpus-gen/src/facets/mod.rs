@@ -11,6 +11,7 @@ pub(crate) mod interproc;
 pub(crate) mod link;
 pub(crate) mod local;
 pub(crate) mod loops;
+pub(crate) mod postgres;
 pub(crate) mod runtime;
 pub(crate) mod special;
 pub(crate) mod surface;
