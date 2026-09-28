@@ -22,6 +22,7 @@ const TYPES: &[Ty] = Ty::WIDE;
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     inline(sink);
     tail_call(sink);
+    tail_dispatch(sink);
     function_purity(sink);
     constant_args(sink);
     unused_params(sink);
@@ -1479,6 +1480,192 @@ fn calls_across_units(sink: &mut Sink<'_>) {
     }
 }
 
+/// How many bytes a dispatch case walks, one call per byte, which stays in the first level cache.
+const DISPATCH_TEXT: usize = 2048;
+
+/// How many times a dispatch case walks its bytes, so that it makes two million calls and a call
+/// against a jump is milliseconds apart.
+const DISPATCH_ROUNDS: u64 = 1024;
+
+/// The seed the dispatch bytes are drawn from, read through a `volatile` so nothing folds.
+const DISPATCH_SEED: u64 = 7;
+
+/// The multiplier the many state machines mix with, which is the 64 bit FNV prime.
+const DISPATCH_PRIME: u64 = 0x0100_0000_01b3;
+
+/// The shapes a dispatch case takes, and how many functions call each other in it.
+///
+/// Two states that alternate, four and sixteen that pick the next one with a `switch`, one
+/// function of six arguments that calls itself with them rotated, and four states that pick the
+/// next one out of a table of pointers, which is the one a compiler has to jump through a register
+/// for.
+const DISPATCH_SHAPES: &[(&str, usize)] =
+    &[("alternate", 2), ("switch", 4), ("switch", 16), ("rotate", 1), ("table", 4)];
+
+/// The bytes a dispatch case walks, drawn the way the C draws them.
+fn dispatch_text() -> Vec<u8> {
+    let mut drawn = DISPATCH_SEED;
+    (0..DISPATCH_TEXT)
+        .map(|_| {
+            drawn = drawn
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            (drawn >> 33) as u8
+        })
+        .collect()
+}
+
+/// What one walk of a dispatch case gives back, started from `round`, worked out the way the C
+/// works it out.
+fn dispatched(shape: &str, states: usize, text: &[u8], round: u64) -> u64 {
+    let mut acc = round;
+    let mut state = 0usize;
+    if shape == "rotate" {
+        let (mut a, mut b, mut c, mut d) = (round, 1u64, 2u64, 3u64);
+        for &byte in text {
+            (a, b, c, d) = (b, c, d, a.wrapping_add(u64::from(byte)));
+        }
+        return a
+            .wrapping_add(b.wrapping_mul(3))
+            .wrapping_add(c.wrapping_mul(5))
+            .wrapping_add(d.wrapping_mul(7));
+    }
+    for &byte in text {
+        let byte64 = u64::from(byte);
+        match shape {
+            "alternate" if state == 0 => acc = acc.wrapping_mul(31).wrapping_add(byte64),
+            "alternate" => acc ^= byte64 << 3,
+            "switch" => {
+                acc = acc
+                    .wrapping_mul(DISPATCH_PRIME)
+                    .wrapping_add(byte64)
+                    .wrapping_add(state as u64);
+            }
+            _ => acc = acc.wrapping_mul(31).wrapping_add(byte64).wrapping_add(state as u64),
+        }
+        state = if shape == "alternate" {
+            (state + 1) % states
+        } else {
+            (usize::from(byte) + state) % states
+        };
+    }
+    acc
+}
+
+/// The C of a dispatch case's functions, each of which does one byte's work and calls the next in
+/// tail position.
+fn dispatch_functions(program: &mut Program, shape: &str, states: usize) {
+    const RETURNS: &str = "static __attribute__((noinline)) unsigned long long";
+    const PARAMS: &str = "const unsigned char *p, const unsigned char *end, unsigned long long acc";
+    if shape == "rotate" {
+        program.top(format!(
+            "{RETURNS} rotate(const unsigned char *p, const unsigned char *end, unsigned long long              a, unsigned long long b, unsigned long long c, unsigned long long d) {{"
+        ));
+        program.top("    if (p == end) {".to_owned());
+        program.top("        return a + 3 * b + 5 * c + 7 * d;".to_owned());
+        program.top("    }".to_owned());
+        program.top("    return rotate(p + 1, end, b, c, d, a + *p);".to_owned());
+        program.top("}".to_owned());
+        return;
+    }
+    for state in 0..states {
+        program.top(format!("{RETURNS} s{state}({PARAMS});"));
+    }
+    if shape == "table" {
+        let names: Vec<String> = (0..states).map(|state| format!("s{state}")).collect();
+        program.top(format!(
+            "static unsigned long long (*const table[{states}])(const unsigned char *, const              unsigned char *, unsigned long long) = {{{}}};",
+            names.join(", ")
+        ));
+    }
+    for state in 0..states {
+        program.top(format!("{RETURNS} s{state}({PARAMS}) {{"));
+        program.top("    if (p == end) {".to_owned());
+        program.top("        return acc;".to_owned());
+        program.top("    }".to_owned());
+        match shape {
+            "alternate" => {
+                let next = (state + 1) % states;
+                let step = if state == 0 {
+                    "acc * 31 + *p"
+                } else {
+                    "acc ^ ((unsigned long long)*p << 3)"
+                };
+                program.top(format!("    return s{next}(p + 1, end, {step});"));
+            }
+            "switch" => {
+                program.top(format!(
+                    "    unsigned long long next = acc * {DISPATCH_PRIME}ull + *p + {state};"
+                ));
+                program.top(format!("    switch ((*p + {state}) % {states}) {{"));
+                for next in 0..states {
+                    let label = if next + 1 == states {
+                        "default:".to_owned()
+                    } else {
+                        format!("case {next}:")
+                    };
+                    program.top(format!("    {label}"));
+                    program.top(format!("        return s{next}(p + 1, end, next);"));
+                }
+                program.top("    }".to_owned());
+            }
+            _ => {
+                program.top(format!(
+                    "    return table[(*p + {state}) % {states}](p + 1, end, acc * 31 + *p +                      {state});"
+                ));
+            }
+        }
+        program.top("}".to_owned());
+    }
+}
+
+/// State machines whose states call each other in tail position, walked over two thousand bytes a
+/// thousand times.
+///
+/// The `tail-call` facet above says whether the answer is right. These say what the calls cost,
+/// which is where turning a call into a jump shows: a lexer or an interpreter written as functions
+/// calling each other makes one call per byte, and a call and a return per byte is most of what it
+/// does. Every function is `noinline`, so the calls are still calls when the back end sees them,
+/// and a walk is two thousand deep, which fits in any stack at `-O0`.
+fn tail_dispatch(sink: &mut Sink<'_>) {
+    let text = dispatch_text();
+    for &(shape, states) in DISPATCH_SHAPES {
+        if !sink.wants(Facet::TailDispatch) {
+            return;
+        }
+        let mut program = Program::new(format!(
+            "{shape} dispatch between {states} functions in tail position, done many times"
+        ));
+        dispatch_functions(&mut program, shape, states);
+        program.line("unsigned long long total = 0;");
+        program.input(Ty::U64, "seed", i128::from(DISPATCH_SEED));
+        program.blank();
+        program.line(format!("static unsigned char text[{DISPATCH_TEXT}];"));
+        program.line("unsigned long long drawn = seed;");
+        program.line(format!("for (int i = 0; i < {DISPATCH_TEXT}; i++) {{"));
+        program.line_at(1, "drawn = drawn * 6364136223846793005ull + 1442695040888963407ull;");
+        program.line_at(1, "text[i] = (unsigned char)(drawn >> 33);");
+        program.line("}");
+        program.line(format!("for (int round = 0; round < {DISPATCH_ROUNDS}; round++) {{"));
+        let end = format!("text + {DISPATCH_TEXT}");
+        if shape == "rotate" {
+            program.line_at(
+                1,
+                format!("total += rotate(text, {end}, (unsigned long long)round, 1, 2, 3);"),
+            );
+        } else {
+            program.line_at(1, format!("total += s0(text, {end}, (unsigned long long)round);"));
+        }
+        program.line("}");
+        program.blank();
+        let expected = (0..DISPATCH_ROUNDS)
+            .fold(0u64, |total, round| total.wrapping_add(dispatched(shape, states, &text, round)));
+        program.check(Ty::U64, "total", i128::from(expected));
+        let axes = Axes::of([("shape", shape), ("states", &states.to_string())]);
+        sink.push_tagged(Facet::TailDispatch, axes, Dialect::C17, program, &["gnu"]);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -1533,6 +1720,38 @@ mod tests {
             let deep = case.axes.get("depth") == Some("5000");
             assert_eq!(case.has_tag("needs-tail-calls"), deep, "{}", case.id);
         }
+    }
+
+    #[test]
+    fn a_dispatch_case_is_every_shape_and_calls_the_next_state_in_tail_position() {
+        let cases = cases_for(Facet::TailDispatch);
+        assert_eq!(cases.len(), super::DISPATCH_SHAPES.len());
+        for case in &cases {
+            assert!(case.has_tag("gnu"), "{}", case.id);
+            assert!(
+                case.source.contains("return s0(p + 1")
+                    || case.source.contains("return rotate(p + 1")
+                    || case.source.contains("return s1(p + 1")
+                    || case.source.contains("return table["),
+                "{}",
+                case.id
+            );
+        }
+    }
+
+    #[test]
+    fn a_dispatch_answer_is_the_state_machine_run_by_hand() {
+        // Three bytes through the two states and through the table, written out step by step so a
+        // slip in the walk shows up as a difference.
+        let text = [5u8, 250, 3];
+        let alternate = (((9u64 * 31 + 5) ^ (250 << 3)) * 31) + 3;
+        assert_eq!(super::dispatched("alternate", 2, &text, 9), alternate);
+        // State 0 reads 5 and goes to 5 % 4 = 1, state 1 reads 250 and goes to 251 % 4 = 3.
+        let table = ((9u64 * 31 + 5) * 31 + 250 + 1) * 31 + 3 + 3;
+        assert_eq!(super::dispatched("table", 4, &text, 9), table);
+        // The rotation moves a to the end with the byte added, so after three bytes d is b + 3.
+        let (a, b, c, d) = (3u64, 9 + 5, 1 + 250, 2 + 3);
+        assert_eq!(super::dispatched("rotate", 1, &text, 9), a + 3 * b + 5 * c + 7 * d);
     }
 
     #[test]

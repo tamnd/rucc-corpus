@@ -122,6 +122,8 @@ pub enum Facet {
     Inline,
     /// Turning a call in tail position into a jump.
     TailCall,
+    /// Calls in tail position made often enough to time whether they became jumps.
+    TailDispatch,
     /// Proving a function pure, const or neither, and using that at its call sites.
     FunctionPurity,
     /// Specializing a function to a constant argument.
@@ -402,6 +404,7 @@ impl Facet {
         Self::LoopRestructure,
         Self::Inline,
         Self::TailCall,
+        Self::TailDispatch,
         Self::FunctionPurity,
         Self::ConstantArgs,
         Self::UnusedParams,
@@ -488,6 +491,7 @@ impl Facet {
             Self::LoopRestructure => "loop-restructure",
             Self::Inline => "inline",
             Self::TailCall => "tail-call",
+            Self::TailDispatch => "tail-dispatch",
             Self::FunctionPurity => "function-purity",
             Self::ConstantArgs => "constant-args",
             Self::UnusedParams => "unused-params",
@@ -581,6 +585,9 @@ impl Facet {
             Self::LoopRestructure => "exchanging or fusing loops for locality",
             Self::Inline => "replacing a call with the body of what it called",
             Self::TailCall => "turning a call in tail position into a jump",
+            Self::TailDispatch => {
+                "calls in tail position made often enough to time whether they became jumps"
+            }
             Self::FunctionPurity => "proving purity and using it at the call sites",
             Self::ConstantArgs => "specializing a function to a constant argument",
             Self::UnusedParams => "taking out a parameter nothing reads, and the argument with it",
@@ -684,6 +691,7 @@ impl Facet {
             | Self::LoopRestructure => Phase::Loops,
             Self::Inline
             | Self::TailCall
+            | Self::TailDispatch
             | Self::FunctionPurity
             | Self::ConstantArgs
             | Self::UnusedParams
