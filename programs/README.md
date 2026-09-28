@@ -1,10 +1,10 @@
 # The corpus
 
-2772 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+2777 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `806b6d68c625cc0090475b153fbe7597855b4246fa2eb2bb3e1f46ee807894f1`.
+Corpus digest `9ff9a42bd25fae104d8ea1b87f09c51e5efe16b72d2920c6fb7f900b15794c89`.
 
 ## floor (118 programs)
 
@@ -75,7 +75,7 @@ Transformations that need loop structure, which is where most of the remaining t
 | [`loop-shape`](loops/loop-shape/README.md) | 64 | the shape a loop is left in, before any pass reads it |
 | [`loop-restructure`](loops/loop-restructure/README.md) | 48 | exchanging or fusing loops for locality |
 
-## interprocedural (346 programs)
+## interprocedural (351 programs)
 
 Transformations that need to look at more than one function at a time.
 
@@ -84,6 +84,7 @@ Transformations that need to look at more than one function at a time.
 | [`inline`](interprocedural/inline/README.md) | 36 | replacing a call with the body of what it called |
 | [`tail-call`](interprocedural/tail-call/README.md) | 36 | turning a call in tail position into a jump |
 | [`tail-dispatch`](interprocedural/tail-dispatch/README.md) | 5 | calls in tail position made often enough to time whether they became jumps |
+| [`called-once`](interprocedural/called-once/README.md) | 5 | a static function called from one place, timed in a hot loop |
 | [`function-purity`](interprocedural/function-purity/README.md) | 28 | proving purity and using it at the call sites |
 | [`constant-args`](interprocedural/constant-args/README.md) | 36 | specializing a function to a constant argument |
 | [`unused-params`](interprocedural/unused-params/README.md) | 44 | taking out a parameter nothing reads, and the argument with it |

@@ -23,6 +23,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     inline(sink);
     tail_call(sink);
     tail_dispatch(sink);
+    called_once(sink);
     function_purity(sink);
     constant_args(sink);
     unused_params(sink);
@@ -1666,6 +1667,148 @@ fn tail_dispatch(sink: &mut Sink<'_>) {
     }
 }
 
+/// How many values a called once case draws, which stays in the first level cache.
+const ONCE_VALUES: usize = 4096;
+
+/// How many calls a called once case makes, so that a call against no call is milliseconds apart.
+const ONCE_CALLS: u64 = 1 << 22;
+
+/// The shapes a called once case takes, and how many mixing steps its helper does.
+///
+/// Two steps is mostly the call, eight is about the size anything is inlined at, and ninety six is
+/// over what a compiler inlines for a function declared `inline` but well under what it inlines for
+/// one called once. A chain is three helpers that each do the steps and call the next one once,
+/// and a loop is a helper that goes round a few times before it mixes.
+const ONCE_SHAPES: &[(&str, usize)] =
+    &[("mix", 2), ("mix", 8), ("mix", 96), ("chain", 8), ("loop", 4)];
+
+/// The names of the helpers in a chain, the first of which the loop calls.
+const ONCE_CHAIN: [&str; 3] = ["first", "second", "third"];
+
+/// The multiplier and the addend of mixing step `step`. The multiplier is odd, so every step is a
+/// permutation of the values and none of them collapses to a constant.
+fn once_step(step: usize) -> (u32, u32) {
+    let step = step as u32;
+    (step.wrapping_mul(2_654_435_761) | 1, step.wrapping_mul(40_503).wrapping_add(17))
+}
+
+/// What `steps` mixing steps from `first` on do to a value, the way the C does them.
+fn once_mix(mut value: u32, first: usize, steps: usize) -> u32 {
+    for step in first..first + steps {
+        let (mul, add) = once_step(step);
+        value = value.wrapping_mul(mul).wrapping_add(add);
+        value ^= value >> 13;
+    }
+    value
+}
+
+/// What the helper a case calls gives back for one value, the way the C works it out.
+fn once_answer(shape: &str, steps: usize, mut value: u32) -> u32 {
+    match shape {
+        "chain" => once_mix(value, 0, steps * ONCE_CHAIN.len()),
+        "loop" => {
+            let rounds = value & 7;
+            for round in 0..rounds {
+                value = value.wrapping_mul(3).wrapping_add(round);
+            }
+            once_mix(value, 0, steps)
+        }
+        _ => once_mix(value, 0, steps),
+    }
+}
+
+/// The C of the mixing steps from `first` on, one statement per line at the body's indent.
+fn once_lines(program: &mut Program, first: usize, steps: usize) {
+    for step in first..first + steps {
+        let (mul, add) = once_step(step);
+        program.top(format!("    value = value * {mul}u + {add}u;"));
+        program.top("    value ^= value >> 13;".to_owned());
+    }
+}
+
+/// The C of a case's helpers, each `static`, none declared `inline`, and each called from one
+/// place. What the loop calls is the first of them.
+fn once_functions(program: &mut Program, shape: &str, steps: usize) -> &'static str {
+    const RETURNS: &str = "static unsigned int";
+    match shape {
+        "chain" => {
+            for (at, name) in ONCE_CHAIN.iter().enumerate().rev() {
+                program.top(format!("{RETURNS} {name}(unsigned int value) {{"));
+                once_lines(program, at * steps, steps);
+                match ONCE_CHAIN.get(at + 1) {
+                    Some(next) => program.top(format!("    return {next}(value);")),
+                    None => program.top("    return value;".to_owned()),
+                }
+                program.top("}".to_owned());
+            }
+            ONCE_CHAIN[0]
+        }
+        "loop" => {
+            program.top(format!("{RETURNS} spin(unsigned int value) {{"));
+            program.top("    unsigned int rounds = value & 7u;".to_owned());
+            program.top("    for (unsigned int round = 0; round < rounds; round++) {".to_owned());
+            program.top("        value = value * 3u + round;".to_owned());
+            program.top("    }".to_owned());
+            once_lines(program, 0, steps);
+            program.top("    return value;".to_owned());
+            program.top("}".to_owned());
+            "spin"
+        }
+        _ => {
+            program.top(format!("{RETURNS} mix(unsigned int value) {{"));
+            once_lines(program, 0, steps);
+            program.top("    return value;".to_owned());
+            program.top("}".to_owned());
+            "mix"
+        }
+    }
+}
+
+/// A `static` helper called from one place in a loop that runs four million times.
+///
+/// The `inline` facet above says whether the answer is right when a helper is inlined. These say
+/// what leaving the call costs. gcc inlines a `static` function called from one place at `-O1` and
+/// up whatever its size, since its out of line copy goes away and the program only loses the call,
+/// and this is the shape that is everywhere in C: a helper written to name a step, called from the
+/// one loop that needs it. Nothing here is declared `inline` and nothing needs an extension.
+fn called_once(sink: &mut Sink<'_>) {
+    let mut drawn = 7u32;
+    let values: Vec<u32> = (0..ONCE_VALUES)
+        .map(|_| {
+            drawn = drawn.wrapping_mul(1_103_515_245).wrapping_add(12_345);
+            drawn >> 8
+        })
+        .collect();
+    for &(shape, steps) in ONCE_SHAPES {
+        if !sink.wants(Facet::CalledOnce) {
+            return;
+        }
+        let mut program = Program::new(format!(
+            "a static {shape} helper of {steps} steps called from one place in a hot loop"
+        ));
+        let helper = once_functions(&mut program, shape, steps);
+        program.line("unsigned long long total = 0;");
+        program.input(Ty::U32, "seed", 7);
+        program.blank();
+        program.line(format!("static unsigned int values[{ONCE_VALUES}];"));
+        program.line("unsigned int drawn = seed;");
+        program.line(format!("for (int i = 0; i < {ONCE_VALUES}; i++) {{"));
+        program.line_at(1, "drawn = drawn * 1103515245u + 12345u;");
+        program.line_at(1, "values[i] = drawn >> 8;");
+        program.line("}");
+        program.line(format!("for (unsigned int at = 0; at < {ONCE_CALLS}u; at++) {{"));
+        program.line_at(1, format!("total += {helper}(values[at & {}u]);", ONCE_VALUES - 1));
+        program.line("}");
+        program.blank();
+        let once: u64 =
+            values.iter().map(|&value| u64::from(once_answer(shape, steps, value))).sum();
+        let expected = once * (ONCE_CALLS / ONCE_VALUES as u64);
+        program.check(Ty::U64, "total", i128::from(expected));
+        let axes = Axes::of([("shape", shape), ("steps", &steps.to_string())]);
+        sink.push(Facet::CalledOnce, axes, Dialect::C17, program);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -1737,6 +1880,34 @@ mod tests {
                 case.id
             );
         }
+    }
+
+    #[test]
+    fn a_called_once_case_is_every_shape_and_calls_each_helper_from_one_place() {
+        let cases = cases_for(Facet::CalledOnce);
+        assert_eq!(cases.len(), super::ONCE_SHAPES.len());
+        for case in &cases {
+            assert!(!case.source.contains("inline"), "{}", case.id);
+            for name in ["mix", "spin", "first", "second", "third"] {
+                let named = case.source.matches(&format!(" {name}(")).count();
+                assert!(named == 0 || named == 2, "{} names {name} {named} times", case.id);
+            }
+        }
+    }
+
+    #[test]
+    fn a_called_once_answer_is_the_mixing_done_by_hand() {
+        // Step zero multiplies by one and adds seventeen, and nothing that small has a bit at
+        // thirteen for the shift to bring down.
+        assert_eq!(super::once_mix(5, 0, 1), 22);
+        let (mul, add) = super::once_step(1);
+        let mut step = 22u32.wrapping_mul(mul).wrapping_add(add);
+        step ^= step >> 13;
+        assert_eq!(super::once_mix(5, 0, 2), step);
+        // A chain of three helpers of one step each is three steps in a row.
+        assert_eq!(super::once_answer("chain", 1, 5), super::once_mix(5, 0, 3));
+        // Nine has one round in it, which makes it twenty seven before it mixes.
+        assert_eq!(super::once_answer("loop", 1, 9), super::once_mix(27, 0, 1));
     }
 
     #[test]
