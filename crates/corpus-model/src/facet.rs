@@ -331,6 +331,17 @@ pub enum Facet {
     /// `-fstack-usage`. So these programs print one simple checksum, which keeps them honest,
     /// and the axes are the things that make a frame large.
     FrameSize,
+    /// A bytecode interpreter that dispatches through label addresses, with many values alive.
+    ///
+    /// A back end facet, because what it asks is how values live across an indirect jump.
+    /// `ExecInterpExpr` in Postgres is a loop of handlers reached through `goto *`, either
+    /// through a table of label addresses or through the address each step was threaded with,
+    /// and a dozen values stay alive across every one of those jumps and every call a handler
+    /// makes. A back end that loses one across the jump gets the wrong answer, and one that
+    /// spills all of them at every jump is slow at the one loop every query runs. The same
+    /// interpreter is built a second time over a `switch`, the way Postgres builds it for a
+    /// compiler without computed goto, and the two have to agree.
+    InterpreterDispatch,
     /// The bit counting builtins, which a back end has to have an instruction for.
     BitBuiltins,
     /// Conversions between the floating types and the integer ones, in both directions.
@@ -506,6 +517,7 @@ impl Facet {
         Self::FrameAddress,
         Self::StackSlots,
         Self::FrameSize,
+        Self::InterpreterDispatch,
         Self::BitBuiltins,
         Self::FloatConversion,
         Self::LongDouble,
@@ -601,6 +613,7 @@ impl Facet {
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
             Self::FrameSize => "frame-size",
+            Self::InterpreterDispatch => "interpreter-dispatch",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
             Self::LongDouble => "long-double",
@@ -719,6 +732,9 @@ impl Facet {
             Self::FrameSize => {
                 "large frames with a simple answer, to hold against gcc -fstack-usage"
             }
+            Self::InterpreterDispatch => {
+                "a threaded bytecode interpreter with many values alive across every dispatch"
+            }
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
             Self::LongDouble => {
@@ -825,6 +841,7 @@ impl Facet {
             | Self::FrameAddress
             | Self::StackSlots
             | Self::FrameSize
+            | Self::InterpreterDispatch
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,

@@ -32,6 +32,11 @@
 //! frame, and calls out of it, with an answer simple enough to check, to hold the frame layout
 //! against what `gcc -fstack-usage` reports for the same code.
 //!
+//! `interpreter-dispatch` is the other back end one. `ExecInterpExpr` runs every expression a
+//! query evaluates as a loop of handlers reached through `goto *`, with the state, the step and
+//! a dozen more values alive across every jump and every call a handler makes. The same
+//! interpreter built over a `switch` sits beside it in each program and has to agree with it.
+//!
 //! Every case here carries the `provenance:postgres` tag, so a run can pick them out. The ones
 //! that only build on x86-64 also carry `x86-64`, so a run elsewhere can leave them out.
 
@@ -39,6 +44,7 @@ use crate::Sink;
 use crate::emit::Program;
 use crate::lang::Ty;
 use corpus_model::{Axes, Dialect, Facet};
+use std::fmt::Write as _;
 
 /// The tag every case in this module carries.
 const PROVENANCE: &str = "provenance:postgres";
@@ -51,6 +57,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     crc32c_facet(sink);
     simd_lfind(sink);
     frame_size(sink);
+    interpreter_dispatch(sink);
 }
 
 /// The opaque number every value in a `sigsetjmp` case is computed from.
@@ -2040,9 +2047,580 @@ fn frame_program(frame: Frame) -> Program {
     program
 }
 
+/// What one opcode of an `interpreter-dispatch` program does, handed out in turn.
+///
+/// They are the shapes of the handlers in `ExecInterpExpr`: arithmetic on the value being
+/// built, a call out to a function the step names, a conditional jump forward, a jump back
+/// that `loops` bounds, and a store through the state pointer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Handler {
+    Accum,
+    Call,
+    Branch,
+    Xor,
+    Loop,
+    Store,
+}
+
+const HANDLERS: [Handler; 6] =
+    [Handler::Accum, Handler::Call, Handler::Branch, Handler::Xor, Handler::Loop, Handler::Store];
+
+impl Handler {
+    const fn name(self) -> &'static str {
+        match self {
+            Self::Accum => "ACCUM",
+            Self::Call => "CALL",
+            Self::Branch => "BRANCH",
+            Self::Xor => "XOR",
+            Self::Loop => "LOOP",
+            Self::Store => "STORE",
+        }
+    }
+}
+
+/// How many values `data` holds, which the pointer values index into.
+const DISPATCH_DATA: usize = 64;
+
+/// What `data` holds.
+fn dispatch_data() -> [u64; DISPATCH_DATA] {
+    std::array::from_fn(|i| {
+        let x = (i as u64 + 1).wrapping_mul(0x9e37_79b9_7f4a_7c15);
+        x ^ (x >> 31)
+    })
+}
+
+/// The bound `main` puts on the jumps back, read out of a `volatile`.
+const DISPATCH_LOOPS: u32 = 200;
+
+/// One step of an `interpreter-dispatch` program.
+#[derive(Debug, Clone, Copy)]
+struct Step {
+    /// An index into the opcodes, where `ops` is `EEOP_AGAIN` and `ops + 1` is `EEOP_DONE`.
+    opcode: usize,
+    arg: u64,
+    jump: usize,
+}
+
+/// What one run of the model saw.
+struct Dispatched {
+    hash: u64,
+    /// How many handlers ran, `EEOP_DONE` included.
+    dispatches: usize,
+    /// Whether each opcode ran at least once.
+    seen: Vec<bool>,
+}
+
+/// The shape of one `interpreter-dispatch` case.
+#[derive(Debug, Clone, Copy)]
+struct Interp {
+    /// How many values are alive across every dispatch, besides the accumulator, the loop
+    /// bound, the state and the step pointer, which every case has.
+    live: usize,
+    /// How many opcodes there are besides `EEOP_AGAIN` and `EEOP_DONE`.
+    ops: usize,
+    /// `table` or `threaded`.
+    dispatch: &'static str,
+    /// `none`, `direct` or `pointer`.
+    calls: &'static str,
+}
+
+impl Interp {
+    fn handler(k: usize) -> Handler {
+        HANDLERS[k % HANDLERS.len()]
+    }
+
+    /// The name of an opcode in the enum and, with `CASE_` in front, of its label.
+    fn opcode(self, k: usize) -> String {
+        if k == self.ops {
+            "EEOP_AGAIN".to_owned()
+        } else if k == self.ops + 1 {
+            "EEOP_DONE".to_owned()
+        } else {
+            format!("EEOP_{}_{k}", Self::handler(k).name())
+        }
+    }
+
+    /// The value opcode `k` reads.
+    const fn reads(self, k: usize) -> usize {
+        (k * 7 + 3) % self.live
+    }
+
+    /// The value opcode `k` writes, if it writes one.
+    ///
+    /// Only the even ones are ever written, so half the values are set once at the top and
+    /// read at the bottom, and have to come through every jump and every call untouched.
+    fn writes(self, k: usize) -> Option<usize> {
+        match Self::handler(k) {
+            Handler::Loop | Handler::Store => None,
+            _ => Some(2 * ((k * 5 + 1) % (self.live / 2))),
+        }
+    }
+
+    fn shift(k: usize) -> u32 {
+        (k % 13 + 1) as u32
+    }
+
+    fn multiplier(k: usize) -> u64 {
+        2 * k as u64 + 3
+    }
+
+    /// The program: every opcode twice over, then a jump back to the start and the end.
+    fn steps(self) -> Vec<Step> {
+        let body = 2 * self.ops;
+        let mut steps: Vec<Step> = (0..body)
+            .map(|p| {
+                let opcode = (p * 5 + 3) % self.ops;
+                // A branch in the first pass lands on the next step either way, and a loop only
+                // ever jumps back, so the first pass runs every handler whatever the seed. The
+                // second pass skips ahead for real.
+                let jump = match Self::handler(opcode) {
+                    Handler::Branch if p < self.ops => p + 1,
+                    Handler::Branch => (p + 2 + p % 3).min(body),
+                    Handler::Loop => p.saturating_sub(1 + p % 4),
+                    _ => 0,
+                };
+                Step { opcode, arg: ((p * 37 + opcode * 11 + 5) % 997) as u64, jump }
+            })
+            .collect();
+        steps.push(Step { opcode: self.ops, arg: 0, jump: 0 });
+        steps.push(Step { opcode: self.ops + 1, arg: 0, jump: 0 });
+        steps
+    }
+
+    /// What `run(interp, seed, loops)` returns, worked out the way either interpreter does it.
+    fn model(self, seed: u64, loops: u32) -> Dispatched {
+        let data = dispatch_data();
+        let steps = self.steps();
+        // A pointer value is held as its index into `data`, and an `unsigned int` one as its
+        // value widened.
+        let mut values: Vec<u64> = (0..self.live)
+            .map(|i| match i % 3 {
+                0 => seed.wrapping_mul(2 * i as u64 + 3).wrapping_add(i as u64),
+                1 => u64::from(((seed >> (i % 29)) as u32).wrapping_add(i as u32)),
+                _ => seed.wrapping_add(i as u64) & 63,
+            })
+            .collect();
+        let read = |values: &[u64], i: usize| {
+            if i % 3 == 2 { data[values[i] as usize] } else { values[i] }
+        };
+        let mut acc = seed;
+        let mut loops = loops;
+        let mut out: [u64; 8] = std::array::from_fn(|i| i as u64);
+        let mut seen = vec![false; self.ops + 2];
+        let mut dispatches = 0;
+        let mut pc = 0;
+        loop {
+            let step = steps[pc];
+            dispatches += 1;
+            seen[step.opcode] = true;
+            if step.opcode == self.ops + 1 {
+                break;
+            }
+            if step.opcode == self.ops {
+                if loops != 0 {
+                    loops -= 1;
+                    pc = step.jump;
+                } else {
+                    pc += 1;
+                }
+                continue;
+            }
+            let k = step.opcode;
+            let arg = step.arg;
+            let r = read(&values, self.reads(k));
+            let mut next = pc + 1;
+            let mut write = true;
+            match Self::handler(k) {
+                Handler::Accum => acc = acc.wrapping_mul(31).wrapping_add(r).wrapping_add(arg),
+                Handler::Call => {
+                    acc = (acc ^ (r >> (arg & 31)))
+                        .wrapping_mul(Self::multiplier(k))
+                        .wrapping_add(arg);
+                }
+                Handler::Branch => {
+                    if (acc >> (arg & 31)) & 1 == 1 {
+                        next = step.jump;
+                        write = false;
+                    }
+                }
+                Handler::Xor => acc = (acc ^ (r << Self::shift(k))).wrapping_add(arg),
+                Handler::Loop => {
+                    if loops != 0 {
+                        loops -= 1;
+                        acc = acc.wrapping_add(r);
+                        next = step.jump;
+                    }
+                }
+                Handler::Store => {
+                    let at = (arg & 7) as usize;
+                    out[at] = out[at].wrapping_mul(5).wrapping_add(acc ^ r);
+                }
+            }
+            if let Some(w) = self.writes(k).filter(|_| write) {
+                values[w] = match w % 3 {
+                    0 => values[w].wrapping_mul(3).wrapping_add(acc),
+                    1 => u64::from((values[w] as u32).wrapping_add(acc as u32)),
+                    _ => (values[w] + (acc & 7) + 1) & 63,
+                };
+            }
+            pc = next;
+        }
+        let mut hash = acc;
+        for i in 0..self.live {
+            hash = hash.wrapping_mul(1_000_003).wrapping_add(read(&values, i));
+        }
+        hash = hash.wrapping_mul(1_000_003).wrapping_add(u64::from(loops));
+        for value in out {
+            hash = hash.wrapping_mul(31).wrapping_add(value);
+        }
+        Dispatched { hash, dispatches, seen }
+    }
+
+    /// A value read as an `unsigned long long`.
+    fn read_expr(i: usize) -> String {
+        match i % 3 {
+            0 => format!("v{i}"),
+            1 => format!("(unsigned long long)v{i}"),
+            _ => format!("*v{i}"),
+        }
+    }
+
+    /// The statement that writes a value from `acc`.
+    fn write_stmt(w: usize) -> String {
+        match w % 3 {
+            0 => format!("v{w} = v{w} * 3ull + acc;"),
+            1 => format!("v{w} = v{w} + (unsigned int)acc;"),
+            _ => format!("v{w} = &data[(v{w} - data + (long long)(acc & 7ull) + 1) & 63];"),
+        }
+    }
+
+    /// The body of the interpreter, the same text for both builds of it, in terms of the
+    /// `EEO_` macros the way `execExprInterp.c` is written.
+    fn body(self) -> Vec<String> {
+        let mut lines = Vec::new();
+        lines.push("    unsigned long long acc = state->seed;".to_owned());
+        lines.push("    unsigned int loops = state->loops;".to_owned());
+        for i in 0..self.live {
+            lines.push(match i % 3 {
+                0 => format!(
+                    "    unsigned long long v{i} = state->seed * {}ull + {i}ull;",
+                    2 * i + 3
+                ),
+                1 => format!(
+                    "    unsigned int v{i} = (unsigned int)(state->seed >> {}) + {i}u;",
+                    i % 29
+                ),
+                _ => format!(
+                    "    const unsigned long long *v{i} = &data[(state->seed + {i}ull) & 63];"
+                ),
+            });
+        }
+        lines.push("    struct step *op = steps;".to_owned());
+        lines.push(String::new());
+        lines.push("    EEO_DISPATCH();".to_owned());
+        lines.push("    EEO_SWITCH()".to_owned());
+        lines.push("    {".to_owned());
+        for k in 0..self.ops {
+            let read = Self::read_expr(self.reads(k));
+            let write = self.writes(k).map(Self::write_stmt);
+            lines.push(format!("        EEO_CASE({})", self.opcode(k)));
+            lines.push("        {".to_owned());
+            match Self::handler(k) {
+                Handler::Accum => lines.push(format!(
+                    "            acc = acc * 31ull + {read} + (unsigned long long)op->arg;"
+                )),
+                Handler::Call => lines.push(match self.calls {
+                    "none" => format!(
+                        "            acc = (acc ^ ({read} >> (op->arg & 31))) * {}ull + (unsigned long long)op->arg;",
+                        Self::multiplier(k)
+                    ),
+                    "direct" => format!("            acc = fn_{k}(acc, {read}, op->arg);"),
+                    _ => format!("            acc = op->fn(acc, {read}, op->arg);"),
+                }),
+                Handler::Branch => {
+                    lines.push("            if ((acc >> (op->arg & 31)) & 1ull)".to_owned());
+                    lines.push("                EEO_JUMP(op->jump);".to_owned());
+                }
+                Handler::Xor => lines.push(format!(
+                    "            acc = (acc ^ ({read} << {})) + (unsigned long long)op->arg;",
+                    Self::shift(k)
+                )),
+                Handler::Loop => {
+                    lines.push("            if (loops != 0) {".to_owned());
+                    lines.push("                loops = loops - 1;".to_owned());
+                    lines.push(format!("                acc = acc + {read};"));
+                    lines.push("                EEO_JUMP(op->jump);".to_owned());
+                    lines.push("            }".to_owned());
+                }
+                Handler::Store => lines.push(if self.calls == "none" {
+                    format!(
+                        "            state->out[op->arg & 7] = state->out[op->arg & 7] * 5ull + (acc ^ {read});"
+                    )
+                } else {
+                    format!("            note(state, op->arg & 7, acc ^ {read});")
+                }),
+            }
+            if let Some(write) = write {
+                lines.push(format!("            {write}"));
+            }
+            lines.push("            EEO_NEXT();".to_owned());
+            lines.push("        }".to_owned());
+        }
+        lines.push("        EEO_CASE(EEOP_AGAIN)".to_owned());
+        lines.push("        {".to_owned());
+        lines.push("            if (loops != 0) {".to_owned());
+        lines.push("                loops = loops - 1;".to_owned());
+        lines.push("                EEO_JUMP(op->jump);".to_owned());
+        lines.push("            }".to_owned());
+        lines.push("            EEO_NEXT();".to_owned());
+        lines.push("        }".to_owned());
+        lines.push("        EEO_CASE(EEOP_DONE)".to_owned());
+        lines.push("        {".to_owned());
+        lines.push("            goto out;".to_owned());
+        lines.push("        }".to_owned());
+        lines.push("    }".to_owned());
+        lines.push(String::new());
+        lines.push("out:".to_owned());
+        lines.push("    {".to_owned());
+        lines.push("        unsigned long long h = acc;".to_owned());
+        for i in 0..self.live {
+            lines.push(format!("        h = h * 1000003ull + {};", Self::read_expr(i)));
+        }
+        lines.push("        return h * 1000003ull + loops;".to_owned());
+        lines.push("    }".to_owned());
+        lines
+    }
+}
+
+/// A bytecode interpreter that jumps through label addresses, checked against itself over a
+/// `switch`.
+///
+/// The axes are the ones `ExecInterpExpr` varies on. `live` is how many values the handlers
+/// keep alive across every dispatch on top of the accumulator, the loop bound, the state and
+/// the step pointer: four fit in registers anywhere, twelve is about what x86-64 keeps across a
+/// call, and twenty four is more than it has. Values of three kinds, `unsigned long long` like a
+/// `Datum`, `unsigned int` like a flag, and a pointer like a slot, and only some handlers write
+/// some of them, so the rest are set once and must come through every jump unchanged.
+/// `dispatch` is `goto *` through the table of label addresses, or through the address each
+/// step was threaded with before the first run, which is what `ExecReadyInterpretedExpr` does
+/// to every step Postgres builds. `calls` is whether the handlers compute everything inline,
+/// call out to functions that are not inlined, or call through a function pointer the step
+/// carries, the way `EEOP_FUNCEXPR` calls `fn_addr`. `ops` is how many handlers there are.
+///
+/// Every program builds the same body twice with different `EEO_` macros, once over computed
+/// goto and once over a `switch` the way Postgres builds it where `EEO_USE_COMPUTED_GOTO` is
+/// off, and prints what both return for three seeds. Both have to print the answer the model
+/// works out.
+fn interpreter_dispatch(sink: &mut Sink<'_>) {
+    const LIVE: &[usize] = &[4, 12, 24];
+    const DISPATCHES: &[&str] = &["table", "threaded"];
+    const CALLS: &[&str] = &["none", "direct", "pointer"];
+    const OPS: &[usize] = &[8, 32];
+    for &live in LIVE {
+        for &dispatch in DISPATCHES {
+            for &calls in CALLS {
+                for &ops in OPS {
+                    if !sink.wants(Facet::InterpreterDispatch) {
+                        return;
+                    }
+                    let axes = Axes::of([
+                        ("live", &live.to_string()),
+                        ("dispatch", dispatch),
+                        ("calls", calls),
+                        ("ops", &ops.to_string()),
+                    ]);
+                    sink.push_tagged(
+                        Facet::InterpreterDispatch,
+                        axes,
+                        Dialect::C17,
+                        dispatch_program(Interp { live, ops, dispatch, calls }),
+                        &["gnu", PROVENANCE],
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// One `interpreter-dispatch` case.
+fn dispatch_program(interp: Interp) -> Program {
+    let Interp { live, ops, dispatch, calls } = interp;
+    let mut program = Program::new(format!(
+        "an interpreter of {ops} opcodes with {live} values alive, dispatched through the {} and \
+         checked against a switch",
+        if dispatch == "table" { "label table" } else { "threaded steps" }
+    ));
+    let threaded = dispatch == "threaded";
+    let pointer = calls == "pointer";
+
+    program.top("struct exprstate {");
+    program.top("    unsigned long long seed;");
+    program.top("    unsigned int loops;");
+    program.top("    unsigned long long out[8];");
+    program.top("};");
+    program.top("");
+    program.top("struct step {");
+    program.top("    int opcode;");
+    program.top("    int arg;");
+    program.top("    int jump;");
+    if pointer {
+        program.top("    unsigned long long (*fn)(unsigned long long, unsigned long long, int);");
+    }
+    if threaded {
+        program.top("    void *code;");
+    }
+    program.top("};");
+    program.top("");
+    program.top(format!("static const unsigned long long data[{DISPATCH_DATA}] = {{"));
+    for row in dispatch_data().chunks(4) {
+        let row: Vec<String> = row.iter().map(|v| format!("0x{v:016x}ull")).collect();
+        program.top(format!("    {},", row.join(", ")));
+    }
+    program.top("};");
+    program.top("");
+
+    if calls != "none" {
+        for k in (0..ops).filter(|&k| Interp::handler(k) == Handler::Call) {
+            program.top("__attribute__((noinline))");
+            program.top(format!(
+                "static unsigned long long fn_{k}(unsigned long long x, unsigned long long y, int arg) {{"
+            ));
+            program.top(format!(
+                "    return (x ^ (y >> (arg & 31))) * {}ull + (unsigned long long)arg;",
+                Interp::multiplier(k)
+            ));
+            program.top("}");
+            program.top("");
+        }
+        program.top("__attribute__((noinline))");
+        program
+            .top("static void note(struct exprstate *state, int at, unsigned long long value) {");
+        program.top("    state->out[at] = state->out[at] * 5ull + value;");
+        program.top("}");
+        program.top("");
+    }
+
+    let names: Vec<String> = (0..ops + 2).map(|k| interp.opcode(k)).collect();
+    program.top("enum {");
+    for name in &names {
+        program.top(format!("    {name},"));
+    }
+    program.top("};");
+    program.top("");
+
+    let steps = interp.steps();
+    program.top(format!("static struct step steps[{}] = {{", steps.len()));
+    for step in &steps {
+        let mut fields =
+            format!(".opcode = {}, .arg = {}, .jump = {}", names[step.opcode], step.arg, step.jump);
+        if pointer && step.opcode < ops && Interp::handler(step.opcode) == Handler::Call {
+            let _ = write!(fields, ", .fn = fn_{}", step.opcode);
+        }
+        program.top(format!("    {{ {fields} }},"));
+    }
+    program.top("};");
+    program.top("");
+
+    if threaded {
+        // The table is only in scope inside the interpreter, so the interpreter hands it out
+        // when it is called with no steps, the way ExecInterpExpr does with no state.
+        program.top("static const void *const *thread_table;");
+        program.top("");
+    }
+    program.top("#define EEO_CASE(name) CASE_##name:");
+    program.top("#define EEO_SWITCH()");
+    if threaded {
+        program.top("#define EEO_DISPATCH() goto *op->code");
+    } else {
+        program.top("#define EEO_DISPATCH() goto *((void *) dispatch_table[op->opcode])");
+    }
+    program.top("#define EEO_NEXT() do { op++; EEO_DISPATCH(); } while (0)");
+    program.top("#define EEO_JUMP(to) do { op = steps + (to); EEO_DISPATCH(); } while (0)");
+    program.top("");
+    program.top("__attribute__((noinline))");
+    program.top(
+        "static unsigned long long interp_goto(struct step *steps, struct exprstate *state) {",
+    );
+    program.top("    static const void *const dispatch_table[] = {");
+    for name in &names {
+        program.top(format!("        &&CASE_{name},"));
+    }
+    program.top("    };");
+    if threaded {
+        program.top("    if (steps == 0) {");
+        program.top("        thread_table = dispatch_table;");
+        program.top("        return 0;");
+        program.top("    }");
+    }
+    for line in interp.body() {
+        program.top(line);
+    }
+    program.top("}");
+    program.top("");
+    program.top("#undef EEO_CASE");
+    program.top("#undef EEO_SWITCH");
+    program.top("#undef EEO_DISPATCH");
+    program.top("#define EEO_CASE(name) case name:");
+    program.top("#define EEO_SWITCH() starteval: switch (op->opcode)");
+    program.top("#define EEO_DISPATCH() goto starteval");
+    program.top("");
+    program.top("__attribute__((noinline))");
+    program.top(
+        "static unsigned long long interp_switch(struct step *steps, struct exprstate *state) {",
+    );
+    for line in interp.body() {
+        program.top(line);
+    }
+    program.top("}");
+    program.top("");
+
+    if threaded {
+        program.top("static void thread_steps(void) {");
+        program.top("    interp_goto(0, 0);");
+        program.top(format!("    for (int i = 0; i < {}; i++) {{", steps.len()));
+        program.top("        steps[i].code = (void *) thread_table[steps[i].opcode];");
+        program.top("    }");
+        program.top("}");
+        program.top("");
+    }
+    program.top("static unsigned long long run(");
+    program.top("    unsigned long long (*interp)(struct step *, struct exprstate *),");
+    program.top("    unsigned long long seed, unsigned int loops) {");
+    program.top("    struct exprstate state;");
+    program.top("    state.seed = seed;");
+    program.top("    state.loops = loops;");
+    program.top("    for (int i = 0; i < 8; i++) {");
+    program.top("        state.out[i] = (unsigned long long)i;");
+    program.top("    }");
+    program.top("    unsigned long long h = interp(steps, &state);");
+    program.top("    for (int i = 0; i < 8; i++) {");
+    program.top("        h = h * 31ull + state.out[i];");
+    program.top("    }");
+    program.top("    return h;");
+    program.top("}");
+
+    let seed = u64::from(PG_SEED);
+    program.input(Ty::U64, "seed", i128::from(seed));
+    program.input(Ty::U32, "loops", i128::from(DISPATCH_LOOPS));
+    if threaded {
+        program.line("thread_steps();");
+    }
+    for t in 0..3u64 {
+        let run = interp.model(seed + t, DISPATCH_LOOPS);
+        // A handler that never runs is a handler nobody checked, and a program that never went
+        // round has hardly dispatched at all.
+        debug_assert!(run.seen.iter().all(|&seen| seen), "{interp:?} leaves a handler dead");
+        debug_assert!(run.dispatches > 2 * steps.len(), "{interp:?} barely loops");
+        let expected = i128::from(run.hash);
+        program.check(Ty::U64, &format!("run(interp_goto, seed + {t}, loops)"), expected);
+        program.check(Ty::U64, &format!("run(interp_switch, seed + {t}, loops)"), expected);
+    }
+    program
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Exact, INTS, Int, crc32c, int_literal, operand_types};
+    use super::{Exact, INTS, Int, Interp, crc32c, int_literal, operand_types};
     use crate::{Options, Sink};
     use corpus_model::{Case, Facet};
 
@@ -2071,6 +2649,7 @@ mod tests {
             Facet::Crc32c,
             Facet::SimdLfind,
             Facet::FrameSize,
+            Facet::InterpreterDispatch,
         ] {
             assert!(cases.iter().any(|case| case.facet == facet), "nothing for {facet}");
         }
@@ -2230,5 +2809,78 @@ mod tests {
             })
             .count();
         assert!(crowded > 0);
+    }
+
+    /// Every shape the facet walks, whether or not the calls go out of line.
+    fn interpreters() -> Vec<Interp> {
+        let mut out = Vec::new();
+        for live in [4, 12, 24] {
+            for ops in [8, 32] {
+                for dispatch in ["table", "threaded"] {
+                    for calls in ["none", "direct", "pointer"] {
+                        out.push(Interp { live, ops, dispatch, calls });
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn every_interpreter_is_built_twice_and_both_builds_print_the_same_answer() {
+        let dispatch: Vec<Case> =
+            cases().into_iter().filter(|case| case.facet == Facet::InterpreterDispatch).collect();
+        assert_eq!(dispatch.len(), 36);
+        for case in &dispatch {
+            assert!(case.has_tag("gnu"), "{}", case.id);
+            assert!(case.source.contains("&&CASE_EEOP_DONE"), "{} has no label table", case.id);
+            assert!(case.source.contains("goto *"), "{} never jumps indirectly", case.id);
+            assert!(case.source.contains("switch (op->opcode)"), "{} has no switch", case.id);
+            let lines: Vec<&str> = case.expect.text().lines().collect();
+            assert_eq!(lines.len(), 6, "{}", case.id);
+            for pair in lines.chunks(2) {
+                assert_eq!(pair[0], pair[1], "{}", case.id);
+            }
+            assert_ne!(lines[0], lines[2], "{} prints the same for two seeds", case.id);
+        }
+    }
+
+    #[test]
+    fn only_the_threaded_cases_store_label_addresses_in_the_steps() {
+        for case in cases().iter().filter(|case| case.facet == Facet::InterpreterDispatch) {
+            let threaded = case.axes.get("dispatch") == Some("threaded");
+            assert_eq!(case.source.contains("steps[i].code = "), threaded, "{}", case.id);
+            assert_eq!(case.source.contains("goto *op->code"), threaded, "{}", case.id);
+            let calls = case.axes.get("calls") != Some("none");
+            assert_eq!(case.source.contains("__attribute__((noinline))\nstatic void note("), calls);
+            assert_eq!(case.source.contains("op->fn("), case.axes.get("calls") == Some("pointer"));
+        }
+    }
+
+    #[test]
+    fn every_handler_runs_and_the_program_goes_round_more_than_once() {
+        for interp in interpreters() {
+            let steps = interp.steps();
+            for seed in 0..3 {
+                let run = interp.model(u64::from(super::PG_SEED) + seed, super::DISPATCH_LOOPS);
+                assert!(run.seen.iter().all(|&seen| seen), "{interp:?} leaves a handler dead");
+                assert!(run.dispatches > 2 * steps.len(), "{interp:?} barely loops");
+            }
+        }
+    }
+
+    #[test]
+    fn some_values_are_written_by_some_handlers_and_the_rest_by_none() {
+        for interp in interpreters() {
+            let written: Vec<usize> = (0..interp.ops).filter_map(|k| interp.writes(k)).collect();
+            assert!(!written.is_empty(), "{interp:?}");
+            assert!((0..interp.live).any(|i| !written.contains(&i)), "{interp:?}");
+            // Every kind of value is written somewhere once there are enough of them.
+            if interp.live >= 12 {
+                for kind in 0..3 {
+                    assert!(written.iter().any(|w| w % 3 == kind), "{interp:?} kind {kind}");
+                }
+            }
+        }
     }
 }
