@@ -13,7 +13,9 @@
 //! nought. Two hundred lines of header reading is a better trade.
 //!
 //! ELF and Mach-O are both here because the corpus is developed on macOS and runs in CI on
-//! Linux, and a number that only exists on one of them is a number nobody trusts.
+//! Linux, and a number that only exists on one of them is a number nobody trusts. PE and COFF
+//! are here because it runs on Windows as well, where an executable that was not understood used
+//! to count as no code at all.
 //!
 //! The code is the headline, but it is not the only thing the compiler decided. Three numbers
 //! come back rather than one, because they answer different questions and adding them together
@@ -39,7 +41,7 @@ pub struct Sizes {
 
 /// The size of the executable code in an object file or an executable.
 ///
-/// Returns `None` when the format is not one of the two that are understood, or when the file
+/// Returns `None` when the format is not one of those that are understood, or when the file
 /// is truncated. The caller records nought and the report says the number is missing, which is
 /// better than reporting a wrong size confidently.
 #[must_use]
@@ -56,13 +58,72 @@ pub fn sizes(bytes: &[u8]) -> Option<Sizes> {
     if bytes.starts_with(b"\x7fELF") {
         return elf_sizes(bytes);
     }
+    if bytes.starts_with(b"MZ") {
+        return pe_sizes(bytes);
+    }
     match bytes.get(..4) {
         // Mach-O, sixty four bit, in both byte orders. Thirty two bit Mach-O is not handled
         // because no target we build for uses it.
         Some([0xcf, 0xfa, 0xed, 0xfe]) => macho_sizes(bytes, false),
         Some([0xfe, 0xed, 0xfa, 0xcf]) => macho_sizes(bytes, true),
+        // A COFF object has no magic number of its own and starts with the machine it is for,
+        // so the three machines Windows runs on are what it is recognised by.
+        Some([0x64, 0x86, ..] | [0x64, 0xaa, ..] | [0x4c, 0x01, ..]) => coff_sizes(bytes, 0, false),
         _ => None,
     }
+}
+
+/// Reads a PE image, which is a DOS stub, a signature and then a COFF header like an object's.
+fn pe_sizes(bytes: &[u8]) -> Option<Sizes> {
+    let read = Reader { bytes, big: false };
+    let header = read.u32(0x3c)? as usize;
+    if bytes.get(header..header.checked_add(4)?)? != b"PE\0\0" {
+        return None;
+    }
+    coff_sizes(bytes, header + 4, true)
+}
+
+/// Reads the section table that starts a COFF file at `at`, sorted into the three groups.
+///
+/// Grouped by the characteristics of each section rather than its name, for the reason the ELF
+/// reader gives. A section the linker drops or that is not loaded, which is the debug sections,
+/// `.reloc` and `.drectve`, holds nothing the program runs on and is left out, as ELF leaves out
+/// what is not `SHF_ALLOC`. An image says how much memory a section takes in its virtual size,
+/// and an object has no virtual size and says it in the size of its raw data, which for `.bss`
+/// is the size of what is zero filled rather than of anything in the file.
+fn coff_sizes(bytes: &[u8], at: usize, image: bool) -> Option<Sizes> {
+    const CODE: u32 = 0x20;
+    const ZEROED: u32 = 0x80;
+    const INFO: u32 = 0x200;
+    const REMOVE: u32 = 0x800;
+    const DISCARDABLE: u32 = 0x0200_0000;
+    const EXECUTE: u32 = 0x2000_0000;
+    const SECTION: usize = 40;
+
+    let read = Reader { bytes, big: false };
+    let count = read.u16(at + 2)? as usize;
+    let optional = read.u16(at + 16)? as usize;
+    let table = at.checked_add(20)?.checked_add(optional)?;
+    let mut total = Sizes::default();
+    for index in 0..count {
+        let section = table.checked_add(index.checked_mul(SECTION)?)?;
+        let virtual_size = u64::from(read.u32(section + 8)?);
+        let raw_size = u64::from(read.u32(section + 16)?);
+        let flags = read.u32(section + 36)?;
+        if flags & (INFO | REMOVE | DISCARDABLE) != 0 {
+            continue;
+        }
+        let size = if image { virtual_size } else { raw_size };
+        let bucket = if flags & (CODE | EXECUTE) != 0 {
+            &mut total.text
+        } else if flags & ZEROED != 0 {
+            &mut total.bss
+        } else {
+            &mut total.data
+        };
+        *bucket = bucket.checked_add(size)?;
+    }
+    Some(total)
 }
 
 /// Reads the size of every allocated section in an ELF file, sorted into the three groups.
@@ -194,7 +255,7 @@ impl Reader<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::{sizes, text_size};
+    use super::{Sizes, sizes, text_size};
 
     #[test]
     fn something_that_is_not_an_object_file_is_refused_rather_than_guessed_at() {
@@ -215,6 +276,65 @@ mod tests {
         assert_eq!(sizes(b"int main(void) { return 0; }"), None);
     }
 
+    /// A COFF header and section table, with the sections given as their size and their
+    /// characteristics.
+    fn coff(machine: u16, sections: &[(u32, u32)]) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend(machine.to_le_bytes());
+        bytes.extend(u16::try_from(sections.len()).unwrap().to_le_bytes());
+        bytes.resize(20, 0);
+        for (size, flags) in sections {
+            let start = bytes.len();
+            bytes.extend(b".section");
+            bytes.resize(start + 16, 0);
+            bytes.extend(size.to_le_bytes());
+            bytes.resize(start + 36, 0);
+            bytes.extend(flags.to_le_bytes());
+        }
+        bytes
+    }
+
+    #[test]
+    fn a_coff_object_is_read_by_its_characteristics_and_its_debug_sections_are_left_out() {
+        let bytes = coff(
+            0x8664,
+            &[
+                (100, 0x6050_0020), // .text
+                (40, 0x4030_0040),  // .rdata
+                (8, 0xc030_0040),   // .data
+                (16, 0xc030_0080),  // .bss
+                (12, 0x0010_0a00),  // .drectve
+                (500, 0x4210_0040), // .debug_info
+            ],
+        );
+        assert_eq!(sizes(&bytes), Some(Sizes { text: 100, data: 48, bss: 16 }));
+    }
+
+    #[test]
+    fn a_pe_image_is_read_through_its_stub_and_counts_what_is_loaded() {
+        let mut bytes = vec![b'M', b'Z'];
+        bytes.resize(0x3c, 0);
+        bytes.extend(0x80_u32.to_le_bytes());
+        bytes.resize(0x80, 0);
+        bytes.extend(b"PE\0\0");
+        // An image's sections carry their size in memory in the virtual size, at offset 8, and
+        // the size in the file at 16, which for `.bss` is nothing.
+        let mut table = coff(0x8664, &[(0, 0x6000_0020), (0, 0xc000_0080), (0, 0x4200_0040)]);
+        for (index, virtual_size) in [300_u32, 64, 20].into_iter().enumerate() {
+            let at = 20 + index * 40 + 8;
+            table[at..at + 4].copy_from_slice(&virtual_size.to_le_bytes());
+        }
+        bytes.extend(table);
+        assert_eq!(sizes(&bytes), Some(Sizes { text: 300, data: 0, bss: 64 }));
+    }
+
+    #[test]
+    fn a_truncated_coff_object_is_refused() {
+        let mut bytes = coff(0x8664, &[(100, 0x6050_0020)]);
+        bytes.truncate(40);
+        assert_eq!(sizes(&bytes), None);
+    }
+
     #[test]
     fn the_code_of_this_very_binary_can_be_measured() {
         // The test binary was built by the same rust toolchain that is running the test, so
@@ -223,7 +343,7 @@ mod tests {
         // amount of synthetic fixtures would have told us that.
         let path = std::env::current_exe().unwrap();
         let bytes = std::fs::read(path).unwrap();
-        let size = text_size(&bytes).expect("this platform is neither ELF nor Mach-O");
+        let size = text_size(&bytes).expect("this platform is none of ELF, Mach-O and PE");
         assert!(size > 4096, "the test binary claims to hold {size} bytes of code");
         assert!(size < bytes.len() as u64, "the code cannot be larger than the file it is in");
     }
@@ -234,7 +354,7 @@ mod tests {
         // is developed on is a grouping no fixture would have caught, because the fixture
         // would have been written from the same misreading of the format.
         let bytes = std::fs::read(std::env::current_exe().unwrap()).unwrap();
-        let parts = sizes(&bytes).expect("this platform is neither ELF nor Mach-O");
+        let parts = sizes(&bytes).expect("this platform is none of ELF, Mach-O and PE");
         assert_eq!(parts.text, text_size(&bytes).unwrap(), "the two readers disagree");
         assert!(parts.data > 0, "a rust binary holds string literals and a panic table");
         let image = parts.text + parts.data + parts.bss;

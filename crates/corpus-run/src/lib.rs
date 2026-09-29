@@ -10,7 +10,9 @@
 //! whether the numbers add up to a claim is the reporter's job, and keeping those two apart
 //! means a claim can be re-argued from a run that is already on disk.
 
-#![forbid(unsafe_code)]
+// Denied rather than forbidden, so that the one module that has to ask Windows for a number
+// can say so where it does it. Everything else in the crate is held to the same rule as before.
+#![deny(unsafe_code)]
 
 pub mod cache;
 pub mod compare;

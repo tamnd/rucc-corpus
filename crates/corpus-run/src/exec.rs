@@ -134,6 +134,11 @@ pub fn run<S: AsRef<OsStr>>(
         wait = (wait * 2).min(Duration::from_millis(5));
     }
     let micros = u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX);
+    // One more look after the exit where that is safe, because the child is still held and its
+    // number cannot have gone to anybody else, and its peak is final by now.
+    if memory::ASKABLE_AFTER_EXIT {
+        peak_bytes = peak_bytes.max(memory::high_water(group));
+    }
 
     let stdout = out_reader.join().unwrap_or_default();
     let stderr = err_reader.join().unwrap_or_default();

@@ -43,7 +43,9 @@ pub const SOURCE: &str = "case.c";
 pub const UNIT_PREFIX: &str = "unit-";
 
 /// What the compiler is asked to produce.
-pub const BINARY: &str = "case.bin";
+///
+/// With `.exe` on Windows, where a program is found by it.
+pub const BINARY: &str = if cfg!(windows) { "case.exe" } else { "case.bin" };
 
 /// Where the compiler is asked to write down what it thought.
 ///
