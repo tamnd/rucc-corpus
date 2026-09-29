@@ -27,10 +27,17 @@
 //! whether one translation unit fits in a machine of a given size, and a sum answers a
 //! different question.
 //!
-//! On anything that is not Linux there is no cheap way to ask, so the answer is `None` and the
-//! report says the number is missing. Reading it out of `ps` would mean spawning a process
-//! every few milliseconds, and the timing numbers this corpus publishes are worth more than the
-//! memory numbers would be.
+//! Windows keeps the same high water mark, as `PeakWorkingSetSize`, and hands it to anybody who
+//! can open the process, so the Windows answer is the same walk over the same kind of number.
+//! It needs two calls into the system, which is the one place this crate has unsafe code, and
+//! it gets one thing Linux cannot give: a process whose handle is still held can be asked after
+//! it has exited, so the last look at the one that was spawned is its real peak rather than the
+//! last sample before it.
+//!
+//! On anything else there is no cheap way to ask, so the answer is `None` and the report says
+//! the number is missing. Reading it out of `ps` would mean spawning a process every few
+//! milliseconds, and the timing numbers this corpus publishes are worth more than the memory
+//! numbers would be.
 
 use std::time::Duration;
 
@@ -46,8 +53,12 @@ pub const INTERVAL: Duration = Duration::from_millis(10);
 /// looked.
 #[must_use]
 pub const fn is_available() -> bool {
-    cfg!(target_os = "linux")
+    cfg!(any(target_os = "linux", windows))
 }
+
+/// Whether a process that has exited and not been dropped can still be asked, which is true
+/// where the parent holds a handle to it rather than a number the kernel may give away.
+pub const ASKABLE_AFTER_EXIT: bool = cfg!(windows);
 
 /// The largest high water mark, in bytes, of any process in the tree rooted at `pid`.
 ///
@@ -104,7 +115,116 @@ mod platform {
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(windows)]
+#[allow(unsafe_code)]
+mod platform {
+    use std::ffi::c_void;
+
+    const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
+    const TH32CS_SNAPPROCESS: u32 = 0x2;
+    const INVALID_HANDLE_VALUE: isize = -1;
+
+    #[repr(C)]
+    struct ProcessMemoryCounters {
+        cb: u32,
+        page_fault_count: u32,
+        peak_working_set_size: usize,
+        rest: [usize; 7],
+    }
+
+    #[repr(C)]
+    struct ProcessEntry {
+        size: u32,
+        usage: u32,
+        process_id: u32,
+        default_heap_id: usize,
+        module_id: u32,
+        threads: u32,
+        parent_process_id: u32,
+        priority: i32,
+        flags: u32,
+        exe_file: [u16; 260],
+    }
+
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn OpenProcess(access: u32, inherit: i32, pid: u32) -> *mut c_void;
+        fn CloseHandle(handle: *mut c_void) -> i32;
+        fn K32GetProcessMemoryInfo(
+            process: *mut c_void,
+            counters: *mut ProcessMemoryCounters,
+            size: u32,
+        ) -> i32;
+        fn CreateToolhelp32Snapshot(flags: u32, pid: u32) -> *mut c_void;
+        fn Process32FirstW(snapshot: *mut c_void, entry: *mut ProcessEntry) -> i32;
+        fn Process32NextW(snapshot: *mut c_void, entry: *mut ProcessEntry) -> i32;
+    }
+
+    /// Walks the tree and keeps the largest `PeakWorkingSetSize` found, the same walk the Linux
+    /// version makes over `VmHWM`.
+    pub(super) fn high_water(pid: u32) -> Option<u64> {
+        let pairs = parents();
+        let mut queue = vec![pid];
+        let mut seen = 0usize;
+        let mut largest = None;
+        while let Some(pid) = queue.pop() {
+            seen += 1;
+            if seen > 4096 {
+                break;
+            }
+            largest = largest.max(peak(pid));
+            queue.extend(pairs.iter().filter(|(_, parent)| *parent == pid).map(|(child, _)| child));
+        }
+        largest
+    }
+
+    /// The high water mark of one process in bytes, or `None` when it cannot be opened.
+    fn peak(pid: u32) -> Option<u64> {
+        // SAFETY: the handle is checked before it is used and closed on every path after it
+        // was opened, and the counters are a plain structure whose size is passed with it.
+        unsafe {
+            let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+            if process.is_null() {
+                return None;
+            }
+            let mut counters: ProcessMemoryCounters = std::mem::zeroed();
+            let size = size_of::<ProcessMemoryCounters>() as u32;
+            counters.cb = size;
+            let ok = K32GetProcessMemoryInfo(process, &mut counters, size);
+            CloseHandle(process);
+            (ok != 0).then_some(counters.peak_working_set_size as u64)
+        }
+    }
+
+    /// Every process on the machine with its parent, from one snapshot.
+    ///
+    /// Windows has no list of children, only each process's parent, so the tree is read the
+    /// other way round. A parent that has exited can have its number given to a new process,
+    /// which could put a stranger in the tree, but the walk starts from a process that is still
+    /// held open and the compilers measured here do not outlive their children.
+    fn parents() -> Vec<(u32, u32)> {
+        let mut pairs = Vec::new();
+        // SAFETY: the snapshot is checked before it is used and closed after, and each entry is
+        // a plain structure whose size is set before the call that fills it.
+        unsafe {
+            let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+            if snapshot.is_null() || snapshot as isize == INVALID_HANDLE_VALUE {
+                return pairs;
+            }
+            let mut entry: ProcessEntry = std::mem::zeroed();
+            entry.size = size_of::<ProcessEntry>() as u32;
+            let mut more = Process32FirstW(snapshot, &mut entry);
+            while more != 0 {
+                pairs.push((entry.process_id, entry.parent_process_id));
+                more = Process32NextW(snapshot, &mut entry);
+            }
+            CloseHandle(snapshot);
+        }
+        pairs
+    }
+}
+
+#[cfg(not(any(target_os = "linux", windows)))]
 mod platform {
     pub(super) const fn high_water(_pid: u32) -> Option<u64> {
         None

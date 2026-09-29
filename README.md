@@ -194,7 +194,7 @@ CI produces the rucc column. Locally, on anything that is not x86-64 Linux, leav
 
 ## No dependencies
 
-The whole thing is `std` and nothing else. The JSON writer, the JSON parser, the SHA-256, the process runner with its timeouts, and the ELF and Mach-O section reader are all in here and all tested.
+The whole thing is `std` and nothing else. The JSON writer, the JSON parser, the SHA-256, the process runner with its timeouts, and the ELF, Mach-O and COFF section reader are all in here and all tested. The one exception to `std` alone is six Win32 calls in `memory.rs` for the peak working set of a process tree on Windows, declared by hand rather than through a crate.
 
 That is not minimalism for its own sake. `report.json` is a contract other tools read and the corpus is evidence about a compiler, so the number of things between the measurement and the claim should be small enough to read. It also means this builds anywhere a Rust toolchain does, with no network.
 
