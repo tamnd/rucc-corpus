@@ -2,22 +2,22 @@
 
 Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
 
-The corpus holds 2767 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `2a883e74b5e74927`.
+The corpus holds 3241 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `e55eb59fd1fd2382`.
 
-That is 82,990 lines of C, 2.6 MiB, in 2,835 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 142,580 lines of C, 4.6 MiB, in 3,309 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.11.12 | under test |
+| `rucc` | rucc 0.14.1 | under test |
 
 ## Did it meet the targets
 
 | target | wanted | got | met |
 |---|---|---|---|
 | `correctness` | 0 failures | 0 failures | yes |
-| `code-quality:rucc` | within 10 percent | 4 percent more | yes |
-| `compile-throughput:rucc` | no worse | 48 percent less | yes |
+| `code-quality:rucc` | within 10 percent | 52 percent more | no |
+| `compile-throughput:rucc` | no worse | 37 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -29,8 +29,8 @@ That is 82,990 lines of C, 2.6 MiB, in 2,835 files, and it is the denominator fo
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 13803 | 13803 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `rucc` | 13803 | 13798 | 0 | 0 | 5 | 0 | 0 | 0 |
+| `gcc-16` | 16173 | 16173 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `rucc` | 16173 | 16168 | 0 | 0 | 5 | 0 | 0 | 0 |
 
 ## What is not built yet
 
@@ -50,33 +50,33 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces 4 percent more. The middle facet is 3 percent less, over 80 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces 52 percent more. The middle facet is 1 percent less, over 89 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `bit-builtins` | backend | 22 | 83 percent more | not measured | inside the noise | 43 percent less |
-| `register-alloc` | backend | 40 | 62 percent more | not measured | inside the noise | 44 percent less |
-| `long-double` | backend | 10 | 47 percent more | not measured | inside the noise | 47 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 47 percent less |
-| `loop-restructure` | loops | 48 | 39 percent more | not measured | level | 43 percent less |
-| `register-pressure` | backend | 60 | 34 percent more | not measured | inside the noise | 43 percent less |
-| `calling-convention` | backend | 10 | 17 percent more | not measured | inside the noise | 47 percent less |
-| `inline` | interprocedural | 36 | 15 percent more | not measured | inside the noise | 45 percent less |
+| `simd-lfind` | correctness | 30 | 188 percent more | not measured | inside the noise | 46 percent less |
+| `overflow-builtins` | correctness | 144 | 109 percent more | not measured | level | 42 percent less |
+| `bit-builtins` | backend | 22 | 83 percent more | not measured | inside the noise | 39 percent less |
+| `register-alloc` | backend | 40 | 64 percent more | not measured | inside the noise | 36 percent less |
+| `long-double` | backend | 10 | 49 percent more | not measured | inside the noise | 38 percent less |
+| `scheduling` | backend | 20 | 43 percent more | not measured | inside the noise | 37 percent less |
+| `loop-restructure` | loops | 48 | 41 percent more | not measured | inside the noise | 33 percent less |
+| `register-pressure` | backend | 60 | 30 percent more | not measured | inside the noise | 33 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `conditional-store` | local | 20 | 33 percent less | not measured | inside the noise | 57 percent less |
-| `short-circuit` | local | 22 | 32 percent less | not measured | inside the noise | 55 percent less |
-| `prune` | global | 15 | 27 percent less | not measured | inside the noise | 53 percent less |
-| `value-replacement` | global | 13 | 24 percent less | not measured | 98 percent more | 53 percent less |
-| `value-settled` | local | 13 | 22 percent less | not measured | inside the noise | 52 percent less |
-| `vla-and-alloca` | floor | 9 | 21 percent less | not measured | inside the noise | 59 percent less |
-| `iv-selection` | loops | 36 | 20 percent less | not measured | inside the noise | 53 percent less |
-| `computed-goto` | floor | 25 | 13 percent less | not measured | inside the noise | 50 percent less |
+| `narrow-shift` | backend | 8 | 33 percent less | not measured | inside the noise | 56 percent less |
+| `short-circuit` | local | 22 | 32 percent less | not measured | inside the noise | 45 percent less |
+| `conditional-store` | local | 20 | 31 percent less | not measured | inside the noise | 45 percent less |
+| `prune` | global | 15 | 28 percent less | not measured | inside the noise | 42 percent less |
+| `value-replacement` | global | 13 | 26 percent less | not measured | 96 percent more | 45 percent less |
+| `value-settled` | local | 13 | 21 percent less | not measured | inside the noise | 44 percent less |
+| `vla-and-alloca` | floor | 9 | 20 percent less | not measured | inside the noise | 49 percent less |
+| `iv-selection` | loops | 36 | 18 percent less | not measured | level | 44 percent less |
 
 ## What `-Os` does
 
@@ -84,8 +84,8 @@ Every other number in this report is one compiler against another at the same le
 
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
-| `gcc-16` | 2759 | 3 percent less | 1059 |
-| `rucc` | 2758 | level | 849 |
+| `gcc-16` | 3233 | 4 percent less | 1138 |
+| `rucc` | 3232 | level | 938 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -95,23 +95,23 @@ Where `-Os` saves the most:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `loop-restructure` | 48 | 27 percent less |
+| `loop-restructure` | 48 | 32 percent less |
 | `scheduling` | 20 | 18 percent less |
 | `stack-slots` | 6 | 17 percent less |
-| `compare-fold` | 118 | 7 percent less |
-| `load-fold` | 40 | 6 percent less |
-| `loop-hoist` | 64 | 6 percent less |
+| `simd-lfind` | 30 | 16 percent less |
+| `strength` | 24 | 7 percent less |
+| `crc32c` | 64 | 6 percent less |
 
 Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `induction-variable` | 42 | 2 percent more |
-| `loop-invariant` | 32 | 2 percent more |
-| `function-purity` | 28 | 5 percent more |
-| `loop-unroll-shape` | 80 | 6 percent more |
-| `loop-rotate` | 64 | 6 percent more |
-| `loop-deletion` | 64 | 7 percent more |
+| `loop-invariant` | 32 | 3 percent more |
+| `function-purity` | 28 | 4 percent more |
+| `tail-dispatch` | 5 | 8 percent more |
+| `loop-unroll-shape` | 80 | 8 percent more |
+| `loop-rotate` | 64 | 8 percent more |
+| `loop-deletion` | 64 | 9 percent more |
 
 ## By phase of the plan
 
@@ -119,13 +119,13 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | lines | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|---|
-| floor | 6 | 118 | 3,458 | 558 of 558 | 2 percent less |
-| local | 11 | 409 | 20,476 | 2045 of 2045 | 4 percent less |
-| global | 12 | 242 | 5,794 | 1210 of 1210 | 5 percent less |
-| loops | 12 | 700 | 14,151 | 3500 of 3500 | 3 percent less |
-| interprocedural | 12 | 341 | 8,867 in 409 files | 1705 of 1705 | 1 percent less |
-| backend | 24 | 905 | 28,450 | 4525 of 4525 | 2 percent less |
-| correctness | 3 | 52 | 1,794 | 255 of 260 | 3 percent less |
+| floor | 6 | 118 | 3,458 | 558 of 558 | 3 percent less |
+| local | 11 | 409 | 20,476 | 2045 of 2045 | 1 percent less |
+| global | 12 | 242 | 5,794 | 1210 of 1210 | 3 percent less |
+| loops | 12 | 700 | 14,151 | 3500 of 3500 | 1 percent less |
+| interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | level |
+| backend | 26 | 967 | 37,226 | 4835 of 4835 | 2 percent less |
+| correctness | 8 | 454 | 51,302 | 2265 of 2270 | 16 percent more |
 
 ## What gcc-16 said about these programs
 
@@ -133,8 +133,15 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 
 | facet | phase | it optimized | it says it missed |
 |---|---|---|---|
+| `crc32c` | correctness | 7840 | 61488 |
+| `sigsetjmp` | correctness | 1128 | 17244 |
+| `overflow-builtins` | correctness | 0 | 14400 |
+| `target-attribute` | correctness | 2505 | 7220 |
+| `frame-size` | backend | 2191 | 2163 |
 | `atomics` | correctness | 0 | 4026 |
 | `bit-builtins` | backend | 0 | 3352 |
+| `simd-lfind` | correctness | 1290 | 1386 |
+| `tail-dispatch` | interprocedural | 0 | 1792 |
 | `simplify` | local | 161 | 1135 |
 | `inline` | interprocedural | 900 | 372 |
 | `store-fold-constant` | backend | 444 | 820 |
@@ -146,13 +153,6 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `computed-goto` | floor | 32 | 600 |
 | `store-fold` | backend | 212 | 400 |
 | `switch-dispatch` | backend | 67 | 526 |
-| `loop-idiom` | loops | 449 | 100 |
-| `switch-lowering` | backend | 104 | 436 |
-| `narrowing` | local | 0 | 528 |
-| `iv-selection` | loops | 292 | 200 |
-| `loop-hoist` | loops | 117 | 372 |
-| `memory-effects` | interprocedural | 32 | 456 |
-| `unused-returns` | interprocedural | 204 | 253 |
 
 ## What each switch became
 
@@ -160,17 +160,17 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 
 | compiler | level | cases | same | different |
 |---|---|---|---|---|
-| rucc | O0 | 75 | 50 | 25 |
-| rucc | O1 | 73 | 66 | 7 |
-| rucc | O2 | 73 | 65 | 8 |
-| rucc | O3 | 73 | 65 | 8 |
-| rucc | Os | 73 | 66 | 7 |
+| rucc | O0 | 77 | 51 | 26 |
+| rucc | O1 | 75 | 68 | 7 |
+| rucc | O2 | 75 | 68 | 7 |
+| rucc | O3 | 75 | 68 | 7 |
+| rucc | Os | 75 | 69 | 6 |
 
 ### rucc at O0 against gcc-16
 
 | rucc | gcc-16 | cases |
 |---|---|---|
-| table | compares | 25 |
+| table | compares | 26 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -200,6 +200,8 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 | `switch-runs.several-runs.31.c17.02b4c07b` | `switch-runs` | table | compares |
 | `switch-runs.several-runs.33.c17.9b43c0a4` | `switch-runs` | table | compares |
 
+And 1 more, all in `reports/report.json`.
+
 ### rucc at O1 against gcc-16
 
 | rucc | gcc-16 | cases |
@@ -221,9 +223,7 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 | rucc | gcc-16 | cases |
 |---|---|---|
 | compares | table | 4 |
-| table | lookup | 2 |
-| compares | lookup | 1 |
-| table | compares | 1 |
+| lookup | compares | 3 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -231,19 +231,16 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | `switch-dispatch` | compares | table |
 | `switch-dispatch.names-with-holes.unpredictable.c17.64a0db1b` | `switch-dispatch` | compares | table |
 | `switch-dispatch.names.unpredictable.c17.cd05ba1f` | `switch-dispatch` | compares | table |
-| `switch-dispatch.shared-default.unpredictable.c17.e5a3b685` | `switch-dispatch` | table | compares |
-| `switch-runs.several-runs.31.c17.02b4c07b` | `switch-runs` | table | lookup |
-| `switch-runs.several-runs.33.c17.9b43c0a4` | `switch-runs` | table | lookup |
-| `switch-runs.several-runs.4.c17.09e48ba4` | `switch-runs` | compares | lookup |
+| `switch-runs.classifier.char.c17.b072f937` | `switch-runs` | lookup | compares |
+| `switch-runs.classifier.unsigned-char.c17.3ae9dc72` | `switch-runs` | lookup | compares |
+| `switch-runs.several-runs.2.c17.c52ca973` | `switch-runs` | lookup | compares |
 
 ### rucc at O3 against gcc-16
 
 | rucc | gcc-16 | cases |
 |---|---|---|
 | compares | table | 4 |
-| table | lookup | 2 |
-| compares | lookup | 1 |
-| table | compares | 1 |
+| lookup | compares | 3 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -251,28 +248,25 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | `switch-dispatch` | compares | table |
 | `switch-dispatch.names-with-holes.unpredictable.c17.64a0db1b` | `switch-dispatch` | compares | table |
 | `switch-dispatch.names.unpredictable.c17.cd05ba1f` | `switch-dispatch` | compares | table |
-| `switch-dispatch.shared-default.unpredictable.c17.e5a3b685` | `switch-dispatch` | table | compares |
-| `switch-runs.several-runs.31.c17.02b4c07b` | `switch-runs` | table | lookup |
-| `switch-runs.several-runs.33.c17.9b43c0a4` | `switch-runs` | table | lookup |
-| `switch-runs.several-runs.4.c17.09e48ba4` | `switch-runs` | compares | lookup |
+| `switch-runs.classifier.char.c17.b072f937` | `switch-runs` | lookup | compares |
+| `switch-runs.classifier.unsigned-char.c17.3ae9dc72` | `switch-runs` | lookup | compares |
+| `switch-runs.several-runs.2.c17.c52ca973` | `switch-runs` | lookup | compares |
 
 ### rucc at Os against gcc-16
 
 | rucc | gcc-16 | cases |
 |---|---|---|
-| compares | lookup | 3 |
 | compares | table | 3 |
-| table | compares | 1 |
+| lookup | compares | 3 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
 | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | `switch-dispatch` | compares | table |
 | `switch-dispatch.names-with-holes.unpredictable.c17.64a0db1b` | `switch-dispatch` | compares | table |
 | `switch-dispatch.names.unpredictable.c17.cd05ba1f` | `switch-dispatch` | compares | table |
-| `switch-dispatch.shared-default.unpredictable.c17.e5a3b685` | `switch-dispatch` | table | compares |
-| `switch-runs.several-runs.31.c17.02b4c07b` | `switch-runs` | compares | lookup |
-| `switch-runs.several-runs.33.c17.9b43c0a4` | `switch-runs` | compares | lookup |
-| `switch-runs.several-runs.4.c17.09e48ba4` | `switch-runs` | compares | lookup |
+| `switch-runs.classifier.char.c17.b072f937` | `switch-runs` | lookup | compares |
+| `switch-runs.classifier.unsigned-char.c17.3ae9dc72` | `switch-runs` | lookup | compares |
+| `switch-runs.several-runs.2.c17.c52ca973` | `switch-runs` | lookup | compares |
 
 ## Running this yourself
 
@@ -283,4 +277,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 2767 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3241 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
