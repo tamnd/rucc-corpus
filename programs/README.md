@@ -1,10 +1,10 @@
 # The corpus
 
-3479 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3489 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `a674cd30fe25cfcc4a64e44d4c0e71f1cb7763fe972e8c6e2a11ea19d649cf3f`.
+Corpus digest `3ee95ab6bbe179d672b87e3519176e801ec47f25d7a388637bbc4107b0193009`.
 
 ## floor (118 programs)
 
@@ -96,7 +96,7 @@ Transformations that need to look at more than one function at a time.
 | [`call-motion`](interprocedural/call-motion/README.md) | 36 | whether a call came out of a loop |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (1003 programs)
+## backend (1008 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -124,13 +124,13 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`compare-fold`](backend/compare-fold/README.md) | 118 | a load and a comparison that reads it, on either side and against a constant |
 | [`frame-address`](backend/frame-address/README.md) | 6 | one local, used at a counted number of offsets |
 | [`stack-slots`](backend/stack-slots/README.md) | 6 | two things in the frame that may be the same bytes |
-| [`frame-size`](backend/frame-size/README.md) | 54 | large frames with a simple answer, to hold against gcc -fstack-usage |
+| [`frame-size`](backend/frame-size/README.md) | 59 | large frames with a simple answer, to hold against gcc -fstack-usage |
 | [`interpreter-dispatch`](backend/interpreter-dispatch/README.md) | 36 | a threaded bytecode interpreter with many values alive across every dispatch |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (656 programs)
+## correctness (661 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -154,4 +154,5 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`constant-p-after-inline`](correctness/constant-p-after-inline/README.md) | 5 | __builtin_constant_p answered after inlining, with the other branch unlinkable |
 | [`mcmodel-kernel`](correctness/mcmodel-kernel/README.md) | 6 | programs built for the kernel code model and linked without PIE |
 | [`general-regs-only`](correctness/general-regs-only/README.md) | 5 | programs built with -mgeneral-regs-only that check no vector register moved |
+| [`objtool-shapes`](correctness/objtool-shapes/README.md) | 5 | the code shapes objtool follows through a kernel object |
 

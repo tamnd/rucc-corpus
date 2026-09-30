@@ -202,6 +202,8 @@ Two facets are the exception in the other direction. `crc32c-armv8` and `simd-lf
 
 `constant-p-after-inline`, `mcmodel-kernel` and `general-regs-only` are the way the kernel is built. The first pins `-O2`, since the promise it checks only holds once the optimizer has run, and the branch a wrong answer would take calls a function defined nowhere, so a wrong answer fails to link. `mcmodel-kernel` is linked without PIE, which puts the program where a sign extended 32 bit address means what it says, so its cases carry the `elf` tag as well. `general-regs-only` puts a marker in every vector register before the work and checks them all before it prints.
 
+`objtool-shapes` is the code objtool has to follow through a kernel object: a jump table, a call that does not return, a realigned stack, a function that ends in `__builtin_unreachable` and a sibling call. It is x86-64 only and pins `-O2`. The program only proves the code runs, and objtool from the pinned kernel is what checks the object. `frame-size` has five kernel cases next to the Postgres ones, with a `shape` axis, each with four 640 byte buffers whose lifetimes never overlap. GCC puts them in the same bytes and stays under the kernel's `FRAME_WARN` of 2048, and a compiler that gives each buffer its own slot goes over it. They are plain C and run anywhere.
+
 ## No dependencies
 
 The whole thing is `std` and nothing else. The JSON writer, the JSON parser, the SHA-256, the process runner with its timeouts, and the ELF, Mach-O and COFF section reader are all in here and all tested. The one exception to `std` alone is six Win32 calls in `memory.rs` for the peak working set of a process tree on Windows, declared by hand rather than through a crate.

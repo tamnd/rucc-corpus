@@ -330,6 +330,11 @@ pub enum Facet {
     /// through its planner and executor, and it is only visible next to what GCC reports with
     /// `-fstack-usage`. So these programs print one simple checksum, which keeps them honest,
     /// and the axes are the things that make a frame large.
+    ///
+    /// The kernel adds the other half. Its stack is a few pages and `FRAME_WARN` is 2048 bytes on
+    /// x86-64, and the frames that go over it are buffers in scopes that never overlap and
+    /// callees inlined one after another, which GCC puts in the same bytes. Those cases have a
+    /// `shape` axis instead.
     FrameSize,
     /// A bytecode interpreter that dispatches through label addresses, with many values alive.
     ///
@@ -508,6 +513,15 @@ pub enum Facet {
     /// else. Only builds and runs on x86-64.
     GeneralRegsOnly,
 
+    /// Programs with the code shapes objtool has to follow through a kernel object.
+    ///
+    /// objtool walks every function in every object and refuses one whose stack it cannot
+    /// account for. Each case is one of the shapes it found in rucc's objects: a jump table, a call
+    /// that does not return, a realigned stack, a function that ends in `__builtin_unreachable`
+    /// and a sibling call. The programs print a checksum, and objtool from the pinned kernel is
+    /// the checker for the object. Only builds and runs on x86-64.
+    ObjtoolShapes,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -620,6 +634,7 @@ impl Facet {
         Self::ConstantPAfterInline,
         Self::McmodelKernel,
         Self::GeneralRegsOnly,
+        Self::ObjtoolShapes,
         Self::Frontend,
     ];
 
@@ -726,6 +741,7 @@ impl Facet {
             Self::ConstantPAfterInline => "constant-p-after-inline",
             Self::McmodelKernel => "mcmodel-kernel",
             Self::GeneralRegsOnly => "general-regs-only",
+            Self::ObjtoolShapes => "objtool-shapes",
             Self::Frontend => "frontend",
         }
     }
@@ -877,6 +893,7 @@ impl Facet {
             Self::GeneralRegsOnly => {
                 "programs built with -mgeneral-regs-only that check no vector register moved"
             }
+            Self::ObjtoolShapes => "the code shapes objtool follows through a kernel object",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -987,7 +1004,8 @@ impl Facet {
             | Self::GasMacros
             | Self::ConstantPAfterInline
             | Self::McmodelKernel
-            | Self::GeneralRegsOnly => Phase::Correctness,
+            | Self::GeneralRegsOnly
+            | Self::ObjtoolShapes => Phase::Correctness,
         }
     }
 
