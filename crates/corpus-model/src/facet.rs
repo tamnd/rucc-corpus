@@ -463,6 +463,28 @@ pub enum Facet {
     /// and runs on x86-64.
     Mitigations,
 
+    /// `asm goto`, the statement that jumps to a C label.
+    ///
+    /// The kernel's static keys are a nop the kernel patches into a jump, with the rare code
+    /// behind a label, and its user copy routines use the form with outputs. A case jumps to one
+    /// label or another and prints where the jumps took it. Only builds and runs on x86-64.
+    AsmGoto,
+
+    /// Labels inside an `asm` template: numeric ones found with `1b` and `1f`, the `%=` number,
+    /// and a label another section names.
+    ///
+    /// These go wrong once a function with an `asm` in it is inlined more than once into the
+    /// same caller, which is how the kernel uses every accessor. Only builds and runs on x86-64,
+    /// and the case that writes into another section needs an ELF assembler too.
+    AsmLocalLabels,
+
+    /// The assembler's macro language used from C: macros defined in top level `asm` and called
+    /// from inline templates, and `.rept`, `.irp` and `.if` inside a template.
+    ///
+    /// A compiler that assembles each template on its own, without the rest of the file, gets
+    /// these wrong. Only builds and runs on x86-64.
+    GasMacros,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -569,6 +591,9 @@ impl Facet {
         Self::SimdLfindNeon,
         Self::Lkmm,
         Self::Mitigations,
+        Self::AsmGoto,
+        Self::AsmLocalLabels,
+        Self::GasMacros,
         Self::Frontend,
     ];
 
@@ -669,6 +694,9 @@ impl Facet {
             Self::SimdLfindNeon => "simd-lfind-neon",
             Self::Lkmm => "lkmm",
             Self::Mitigations => "mitigations",
+            Self::AsmGoto => "asm-goto",
+            Self::AsmLocalLabels => "asm-local-labels",
+            Self::GasMacros => "gas-macros",
             Self::Frontend => "frontend",
         }
     }
@@ -804,6 +832,13 @@ impl Facet {
             Self::Mitigations => {
                 "programs built with the kernel's thunk, trap and landing pad flags"
             }
+            Self::AsmGoto => {
+                "asm goto as static keys and user copies use it, with and without outputs"
+            }
+            Self::AsmLocalLabels => {
+                "numeric labels, the %= number and a label another section names"
+            }
+            Self::GasMacros => "assembler macros, .rept, .irp and .if used from inline asm",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -908,7 +943,10 @@ impl Facet {
             | Self::Crc32cArmv8
             | Self::SimdLfindNeon
             | Self::Lkmm
-            | Self::Mitigations => Phase::Correctness,
+            | Self::Mitigations
+            | Self::AsmGoto
+            | Self::AsmLocalLabels
+            | Self::GasMacros => Phase::Correctness,
         }
     }
 
