@@ -196,6 +196,8 @@ Two facets are the exception in the other direction. `crc32c-armv8` and `simd-lf
 
 `lkmm` needs a POSIX system rather than a particular processor. Its cases check the promises the Linux kernel memory model takes from a compiler, and most of those cannot change what a single threaded program prints, so a case puts the location a store must not reach on a page it made read only with `mprotect`, or shares a location with a second thread through `pthread_create`. A broken promise is a fault or a hang rather than a wrong number. The threaded cases carry the `threads` tag, for a run on a system without POSIX threads.
 
+`mitigations` is x86-64 only, like the Postgres SSE cases, and carries the `x86-64` tag. Its cases are built with the flags the kernel's speculation mitigations add, one mitigation at a time and then all of them together, and each program links the return and indirect branch thunks from a few lines of top level assembly in its own source.
+
 ## No dependencies
 
 The whole thing is `std` and nothing else. The JSON writer, the JSON parser, the SHA-256, the process runner with its timeouts, and the ELF, Mach-O and COFF section reader are all in here and all tested. The one exception to `std` alone is six Win32 calls in `memory.rs` for the peak working set of a process tree on Windows, declared by hand rather than through a crate.
