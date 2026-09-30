@@ -153,6 +153,23 @@ impl Expect {
     }
 }
 
+/// How one of the other translation units ends up in the program.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UnitKind {
+    /// Linked into the executable beside the unit with `main` in it, on one command line.
+    Linked,
+    /// Built on its own into a loadable module, which the executable opens with `dlopen`.
+    ///
+    /// The module is linked with the references it makes to the executable left undefined, so
+    /// they are resolved against the executable when it is loaded. That is how every Postgres
+    /// extension is built, and it takes a different link on every target, which is why the
+    /// harness rather than the case says how: `-shared -fPIC` for the module and `-rdynamic`
+    /// for the executable on ELF, and `-bundle -bundle_loader` naming the executable on
+    /// Mach-O. The module is written to the unit's name with `.so` on the end, beside the
+    /// executable, and that is the path the program opens.
+    Module,
+}
+
 /// One more translation unit that a case is linked with.
 ///
 /// Almost every case is a single file and that is the right default, because a failure in a
@@ -165,13 +182,33 @@ pub struct Unit {
     pub name: String,
     /// The complete translation unit. It has no `main` in it, since the case already has one.
     pub source: String,
+    /// Whether it is linked into the executable or built as a module the executable loads.
+    pub kind: UnitKind,
 }
 
 impl Unit {
-    /// A named unit.
+    /// A named unit, linked into the executable.
     #[must_use]
     pub fn new(name: impl Into<String>, source: impl Into<String>) -> Self {
-        Self { name: name.into(), source: source.into() }
+        Self { name: name.into(), source: source.into(), kind: UnitKind::Linked }
+    }
+
+    /// A named unit, built as a module the executable loads at run time.
+    #[must_use]
+    pub fn module(name: impl Into<String>, source: impl Into<String>) -> Self {
+        Self { name: name.into(), source: source.into(), kind: UnitKind::Module }
+    }
+
+    /// Whether the unit is a loadable module.
+    #[must_use]
+    pub fn is_module(&self) -> bool {
+        self.kind == UnitKind::Module
+    }
+
+    /// The file a module is built into, which is the name the program passes to `dlopen`.
+    #[must_use]
+    pub fn module_file_name(&self) -> String {
+        format!("{}.so", self.name)
     }
 }
 
@@ -295,6 +332,11 @@ impl Case {
             feed.push_str(&unit.name);
             feed.push('\0');
             feed.push_str(&unit.source);
+            // Only for a module, so that every linked unit fingerprints the way it did before
+            // modules existed and none of their ids moved.
+            if unit.is_module() {
+                feed.push_str("\0module");
+            }
         }
         for flag in &self.flags {
             feed.push('\0');
@@ -382,6 +424,15 @@ impl Case {
             ("expect", Json::string(self.expect.text().to_owned())),
             ("tags", Json::array(self.tags.iter().map(|t| Json::string(t.clone())))),
             ("units", Json::array(self.units.iter().map(|u| Json::string(u.name.clone())))),
+            (
+                "modules",
+                Json::array(
+                    self.units
+                        .iter()
+                        .filter(|u| u.is_module())
+                        .map(|u| Json::string(u.name.clone())),
+                ),
+            ),
             ("flags", Json::array(self.flags.iter().map(|f| Json::string(f.clone())))),
             ("source_sha256", Json::string(self.digest())),
         ])
@@ -563,6 +614,26 @@ mod tests {
         assert_ne!(linked.digest(), flagged.digest());
         assert_ne!(plain.id, linked.id);
         assert_eq!(linked.unit_file_name(&linked.units[0]), format!("{}.helper.c", linked.id));
+    }
+
+    #[test]
+    fn the_same_unit_built_as_a_module_is_a_different_case() {
+        let build = |unit: Unit| {
+            Case::linked(
+                Facet::ConstantFold,
+                Axes::default(),
+                Dialect::C17,
+                "int main(void) { return 0; }",
+                vec![unit],
+                Vec::new(),
+                Expect::Output("7\n".to_owned()),
+            )
+        };
+        let linked = build(Unit::new("helper", "int helper(void) { return 1; }\n"));
+        let module = build(Unit::module("helper", "int helper(void) { return 1; }\n"));
+        assert_ne!(linked.digest(), module.digest());
+        assert_ne!(linked.id, module.id);
+        assert_eq!(module.units[0].module_file_name(), "helper.so");
     }
 
     #[test]

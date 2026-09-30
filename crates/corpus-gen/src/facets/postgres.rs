@@ -41,11 +41,18 @@
 //! the ARMv8 CRC instructions from `arm_acle.h` and the NEON paths through `port/simd.h`. They
 //! live in [`arm`].
 //!
+//! `bundle` is the shape every extension has: an executable and the modules it opens with
+//! `dlopen`, which call back into it for functions, globals and hooks it defines. Its cases are
+//! more than one file, one executable and one or more modules, and carry the `dlopen` tag so a
+//! run on Windows, where a module is built another way, can leave them out. They live in
+//! [`bundle`].
+//!
 //! Every case here carries the `provenance:postgres` tag, so a run can pick them out. The ones
 //! that only build on x86-64 also carry `x86-64`, and the ones that only build on AArch64 carry
 //! `aarch64`, so a run elsewhere can leave them out.
 
 mod arm;
+mod bundle;
 
 use crate::Sink;
 use crate::emit::Program;
@@ -66,6 +73,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     arm::generate(sink);
     frame_size(sink);
     interpreter_dispatch(sink);
+    bundle::generate(sink);
 }
 
 /// The opaque number every value in a `sigsetjmp` case is computed from.

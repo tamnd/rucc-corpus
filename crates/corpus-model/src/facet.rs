@@ -522,6 +522,19 @@ pub enum Facet {
     /// the checker for the object. Only builds and runs on x86-64.
     ObjtoolShapes,
 
+    /// An executable and the modules it loads with `dlopen`, which call back into it.
+    ///
+    /// The shape of every Postgres extension. The server opens a module, the module calls
+    /// `palloc` and `elog` and reads GUC variables that are defined in the executable and left
+    /// undefined in the module, and the server calls the hooks and callbacks the module put in
+    /// its tables. The questions for the compiler are the code on both sides of that boundary:
+    /// references from a position independent module to data and functions in the executable,
+    /// the module's own globals reached through its own tables, variadic and wide calls in
+    /// both directions, constructors that run at load, and two modules with the same names in
+    /// them loaded at once. Does not build on Windows yet, where a module links against an
+    /// import library for the executable instead.
+    Bundle,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -635,6 +648,7 @@ impl Facet {
         Self::McmodelKernel,
         Self::GeneralRegsOnly,
         Self::ObjtoolShapes,
+        Self::Bundle,
         Self::Frontend,
     ];
 
@@ -742,6 +756,7 @@ impl Facet {
             Self::McmodelKernel => "mcmodel-kernel",
             Self::GeneralRegsOnly => "general-regs-only",
             Self::ObjtoolShapes => "objtool-shapes",
+            Self::Bundle => "bundle",
             Self::Frontend => "frontend",
         }
     }
@@ -894,6 +909,7 @@ impl Facet {
                 "programs built with -mgeneral-regs-only that check no vector register moved"
             }
             Self::ObjtoolShapes => "the code shapes objtool follows through a kernel object",
+            Self::Bundle => "modules loaded with dlopen that call back into the executable",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -1005,7 +1021,8 @@ impl Facet {
             | Self::ConstantPAfterInline
             | Self::McmodelKernel
             | Self::GeneralRegsOnly
-            | Self::ObjtoolShapes => Phase::Correctness,
+            | Self::ObjtoolShapes
+            | Self::Bundle => Phase::Correctness,
         }
     }
 
