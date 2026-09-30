@@ -19,13 +19,22 @@
 //! that reorders dependent loads, and no run of a program on one core pair can show that. It
 //! wants a pattern check on the assembly, which the corpus does not have yet.
 //!
+//! `mitigations` is the second. The kernel is built with the flags that route every indirect
+//! branch and every return through a thunk it links in, put a trap after every `ret` and every
+//! indirect jump, and mark every place an indirect branch may land. Each of those changes the
+//! instructions at the two ends of every function, so each is a new way for a back end to get
+//! the prologue, the epilogue or a tail call wrong. The cases are ordinary programs built with
+//! those flags, and they print what they would print without them. The thunks are in the
+//! program, as a few lines of top level assembly that do what the kernel's do without the
+//! speculation trap, so both compilers link the same ones.
+//!
 //! Each case names the kernel file whose idiom it has the shape of in its first line, and never
 //! copies code from it.
 
 use crate::Sink;
 use crate::emit::Program;
 use crate::lang::Ty;
-use corpus_model::{Axes, Dialect, Facet};
+use corpus_model::{Axes, Case, Dialect, Expect, Facet};
 
 /// The tag that says where a case came from.
 const PROVENANCE: &str = "provenance:linux";
@@ -42,6 +51,7 @@ const READS: i128 = 200_000;
 /// Emits every facet in this module.
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     lkmm(sink);
+    mitigations(sink);
 }
 
 /// One case per rule and access width.
@@ -246,10 +256,282 @@ fn sealed(program: &mut Program, shape: &str, ty: Ty) {
     program.check(ty, "p->field", field);
 }
 
+/// The mitigations the kernel builds with, and the flags that ask for each one.
+///
+/// `kernel` is all of them at once with `-fno-jump-tables`, which is what an x86-64 build with
+/// `CONFIG_MITIGATION_RETPOLINE`, `CONFIG_MITIGATION_RETHUNK`, `CONFIG_MITIGATION_SLS` and
+/// `CONFIG_X86_KERNEL_IBT` passes. `-fzero-call-used-regs` is not here yet, since rucc does not
+/// have it (tamnd/rucc#2281), and a facet that only says so would be a facet of one failure.
+const MITIGATIONS: &[(&str, &[&str])] = &[
+    ("retpoline", &["-mindirect-branch=thunk-extern", "-mindirect-branch-register"]),
+    ("rethunk", &["-mfunction-return=thunk-extern"]),
+    ("sls", &["-mharden-sls=all"]),
+    ("ibt", &["-fcf-protection=branch"]),
+    (
+        "kernel",
+        &[
+            "-mindirect-branch=thunk-extern",
+            "-mindirect-branch-register",
+            "-mfunction-return=thunk-extern",
+            "-mharden-sls=all",
+            "-fcf-protection=branch",
+            "-fno-jump-tables",
+        ],
+    ),
+];
+
+/// The registers an indirect branch thunk is named after, which is every one but `rsp`.
+const THUNK_REGISTERS: &[&str] = &[
+    "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14",
+    "r15",
+];
+
+/// How many times each case goes round its loop.
+const ROUNDS: u32 = 64;
+
+/// The four operations every table of function pointers in the facet holds.
+fn operation(op: u32, x: u32, i: u32) -> u32 {
+    match op & 3 {
+        0 => x.wrapping_add(i.wrapping_mul(3)).wrapping_add(1),
+        1 => x ^ i.wrapping_mul(0x9e37_79b9),
+        2 => x.wrapping_mul(33).wrapping_add(i),
+        _ => x.wrapping_sub(i),
+    }
+}
+
+/// What the `switch` in the `switch` shape gives for a key.
+fn switched(key: u32, x: u32) -> u32 {
+    match key & 7 {
+        0 => x.wrapping_add(11),
+        1 => x ^ 0x5a5a,
+        2 => x.wrapping_mul(5),
+        3 => x >> 1,
+        4 => x.wrapping_add(x >> 3),
+        5 => !x,
+        6 => x.wrapping_sub(7),
+        _ => x.rotate_left(3),
+    }
+}
+
+/// One case per mitigation and shape.
+///
+/// `indirect-call` calls through a table of function pointers, `indirect-tail` returns what a
+/// call through one returns, which is the one a thunk turns into a jump, and `ops-struct` calls
+/// through the members of a structure of them, the way the kernel calls a `file_operations`.
+/// `switch` is a switch big enough to be a jump table when the flags allow one, and
+/// `early-return` is a function with a return on every arm, each of which becomes a thunk or a
+/// trap.
+fn mitigations(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] =
+        &["indirect-call", "indirect-tail", "ops-struct", "switch", "early-return"];
+    for &(mitigation, flags) in MITIGATIONS {
+        for &shape in SHAPES {
+            if !sink.wants(Facet::Mitigations) {
+                return;
+            }
+            let program = mitigations_program(mitigation, flags, shape);
+            let axes = Axes::of([("mitigation", mitigation), ("shape", shape)]);
+            let (source, expected) = program.finish();
+            let case = Case::linked(
+                Facet::Mitigations,
+                axes,
+                Dialect::C17,
+                source,
+                Vec::new(),
+                flags.iter().map(|flag| (*flag).to_owned()).collect(),
+                Expect::Output(expected),
+            )
+            .tagged(&["gnu", "x86-64", PROVENANCE]);
+            sink.push_case(case);
+        }
+    }
+}
+
+/// One `mitigations` case.
+fn mitigations_program(mitigation: &str, flags: &[&str], shape: &str) -> Program {
+    let mut program = Program::new(format!(
+        "{shape} built with the {mitigation} mitigation, after arch/x86/Makefile in Linux 7.2"
+    ));
+    let thunks = flags.iter().any(|flag| flag.starts_with("-mindirect-branch="));
+    let returns = flags.iter().any(|flag| flag.starts_with("-mfunction-return="));
+    if thunks || returns {
+        program.top("__asm__(");
+        program.top("    \".text\\n\"");
+        if thunks {
+            for register in THUNK_REGISTERS {
+                program.top(format!("    \".globl __x86_indirect_thunk_{register}\\n\""));
+                program.top(format!("    \"__x86_indirect_thunk_{register}:\\n\""));
+                program.top(format!("    \"\\tjmp *%{register}\\n\""));
+            }
+        }
+        if returns {
+            program.top("    \".globl __x86_return_thunk\\n\"");
+            program.top("    \"__x86_return_thunk:\\n\"");
+            program.top("    \"\\tret\\n\"");
+        }
+        program.top(");");
+        program.top("");
+    }
+    program.top(format!("static volatile unsigned int seed_in = {SEED};"));
+    program.top("");
+    let ops = [
+        "return x + i * 3u + 1u;",
+        "return x ^ (i * 0x9e3779b9u);",
+        "return x * 33u + i;",
+        "return x - i;",
+    ];
+    if shape != "switch" && shape != "early-return" {
+        for (at, body) in ops.iter().enumerate() {
+            program.top("__attribute__((noinline))");
+            program.top(format!("static unsigned int op{at}(unsigned int x, unsigned int i) {{"));
+            program.top(format!("    {body}"));
+            program.top("}");
+        }
+        program.top("");
+    }
+    let seed = u32::try_from(SEED).unwrap_or(0);
+    let mut acc = seed;
+    match shape {
+        "indirect-call" => {
+            program.top("static unsigned int (*const table[4])(unsigned int, unsigned int) = {");
+            program.top("    op0, op1, op2, op3,");
+            program.top("};");
+            program.line("unsigned int acc = seed_in;");
+            program.line(format!("for (unsigned int i = 0; i < {ROUNDS}u; i++) {{"));
+            program.line_at(1, "acc = table[(acc + i) & 3](acc, i);");
+            program.line("}");
+            for i in 0..ROUNDS {
+                acc = operation(acc.wrapping_add(i), acc, i);
+            }
+        }
+        "indirect-tail" => {
+            program.top("static unsigned int (*table[4])(unsigned int, unsigned int) = {");
+            program.top("    op0, op1, op2, op3,");
+            program.top("};");
+            program.top("");
+            program.top("__attribute__((noinline))");
+            program.top(
+                "static unsigned int dispatch(unsigned int op, unsigned int x, unsigned int i) {",
+            );
+            program.top("    return table[op & 3](x, i);");
+            program.top("}");
+            program.line("unsigned int acc = seed_in;");
+            program.line(format!("for (unsigned int i = 0; i < {ROUNDS}u; i++) {{"));
+            program.line_at(1, "acc = dispatch(acc ^ i, acc, i);");
+            program.line("}");
+            for i in 0..ROUNDS {
+                acc = operation(acc ^ i, acc, i);
+            }
+        }
+        "ops-struct" => {
+            program.top("struct ops {");
+            program.top("    unsigned int (*open)(unsigned int, unsigned int);");
+            program.top("    unsigned int (*read)(unsigned int, unsigned int);");
+            program.top("};");
+            program.top("");
+            program.top("static const struct ops first = { op0, op1 };");
+            program.top("static const struct ops second = { op2, op3 };");
+            program.top("");
+            program.top("__attribute__((noinline))");
+            program.top(
+                "static unsigned int use(const struct ops *o, unsigned int x, unsigned int i) {",
+            );
+            program.top("    x = o->open(x, i);");
+            program.top("    return o->read(x, i + 1u);");
+            program.top("}");
+            program.line("unsigned int acc = seed_in;");
+            program.line(format!("for (unsigned int i = 0; i < {ROUNDS}u; i++) {{"));
+            program.line_at(1, "acc = use((acc & 1u) ? &second : &first, acc, i);");
+            program.line("}");
+            for i in 0..ROUNDS {
+                let base = if acc & 1 == 1 { 2 } else { 0 };
+                acc = operation(base, acc, i);
+                acc = operation(base + 1, acc, i + 1);
+            }
+        }
+        "switch" => {
+            program.top("__attribute__((noinline))");
+            program.top("static unsigned int pick(unsigned int key, unsigned int x) {");
+            program.top("    switch (key & 7u) {");
+            let arms = [
+                "return x + 11u;",
+                "return x ^ 0x5a5au;",
+                "return x * 5u;",
+                "return x >> 1;",
+                "return x + (x >> 3);",
+                "return ~x;",
+                "return x - 7u;",
+            ];
+            for (key, arm) in arms.iter().enumerate() {
+                program.top(format!("    case {key}:"));
+                program.top(format!("        {arm}"));
+            }
+            program.top("    default:");
+            program.top("        return (x << 3) | (x >> 29);");
+            program.top("    }");
+            program.top("}");
+            program.line("unsigned int acc = seed_in;");
+            program.line(format!("for (unsigned int i = 0; i < {ROUNDS}u; i++) {{"));
+            program.line_at(1, "acc = pick(acc + i, acc) + i;");
+            program.line("}");
+            for i in 0..ROUNDS {
+                acc = switched(acc.wrapping_add(i), acc).wrapping_add(i);
+            }
+        }
+        _ => {
+            program.top("__attribute__((noinline))");
+            program.top("static unsigned int settle(unsigned int x, unsigned int i) {");
+            program.top("    if (x < 1000u) {");
+            program.top("        return x * 3u + i;");
+            program.top("    }");
+            program.top("    if ((x & 15u) == 3u) {");
+            program.top("        return x >> 2;");
+            program.top("    }");
+            program.top("    if (i & 1u) {");
+            program.top("        return x - i;");
+            program.top("    }");
+            program.top("    return (x >> 1) + i;");
+            program.top("}");
+            program.line("unsigned int acc = seed_in;");
+            program.line(format!("for (unsigned int i = 0; i < {ROUNDS}u; i++) {{"));
+            program.line_at(1, "acc = settle(acc, i);");
+            program.line("}");
+            for i in 0..ROUNDS {
+                acc = if acc < 1000 {
+                    acc.wrapping_mul(3).wrapping_add(i)
+                } else if acc & 15 == 3 {
+                    acc >> 2
+                } else if i & 1 == 1 {
+                    acc.wrapping_sub(i)
+                } else {
+                    (acc >> 1).wrapping_add(i)
+                };
+            }
+        }
+    }
+    program.blank();
+    program.check(Ty::U32, "acc", i128::from(acc));
+    program
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, generate};
     use corpus_model::Facet;
+
+    #[test]
+    fn every_mitigation_has_every_shape_and_carries_its_flags() {
+        let manifest = generate(&Options::all()).unwrap();
+        let cases: Vec<_> =
+            manifest.cases.iter().filter(|case| case.facet == Facet::Mitigations).collect();
+        assert_eq!(cases.len(), 25);
+        for case in cases {
+            assert!(!case.flags.is_empty(), "{}", case.id);
+            assert!(case.tags.iter().any(|tag| tag == "x86-64"), "{}", case.id);
+            let thunks = case.flags.iter().any(|flag| flag.starts_with("-mindirect-branch="));
+            assert_eq!(thunks, case.source.contains("__x86_indirect_thunk_r15:"), "{}", case.id);
+        }
+    }
 
     #[test]
     fn every_width_of_every_shape_is_there() {

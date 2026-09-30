@@ -454,6 +454,15 @@ pub enum Facet {
     /// fault or a hang rather than a quietly wrong number.
     Lkmm,
 
+    /// Programs built with the flags the kernel's speculation mitigations add.
+    ///
+    /// Return and indirect branch thunks, a trap after every return and indirect jump, and a
+    /// landing pad at every function an indirect branch can reach. Each one changes the
+    /// instructions at the ends of a function, which is where a back end keeps its frame and its
+    /// tail calls, so a case built with one has to print what it prints without it. Only builds
+    /// and runs on x86-64.
+    Mitigations,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -559,6 +568,7 @@ impl Facet {
         Self::Crc32cArmv8,
         Self::SimdLfindNeon,
         Self::Lkmm,
+        Self::Mitigations,
         Self::Frontend,
     ];
 
@@ -658,6 +668,7 @@ impl Facet {
             Self::Crc32cArmv8 => "crc32c-armv8",
             Self::SimdLfindNeon => "simd-lfind-neon",
             Self::Lkmm => "lkmm",
+            Self::Mitigations => "mitigations",
             Self::Frontend => "frontend",
         }
     }
@@ -790,6 +801,9 @@ impl Facet {
             }
             Self::SimdLfindNeon => "the NEON search loops from port/simd.h and pg_lfind.h",
             Self::Lkmm => "the access and store rules the Linux kernel memory model assumes",
+            Self::Mitigations => {
+                "programs built with the kernel's thunk, trap and landing pad flags"
+            }
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -893,7 +907,8 @@ impl Facet {
             | Self::SimdLfind
             | Self::Crc32cArmv8
             | Self::SimdLfindNeon
-            | Self::Lkmm => Phase::Correctness,
+            | Self::Lkmm
+            | Self::Mitigations => Phase::Correctness,
         }
     }
 
