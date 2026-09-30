@@ -240,6 +240,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::postgres::generate(&mut sink);
     facets::kernel::generate(&mut sink);
     facets::kernel_asm::generate(&mut sink);
+    facets::kernel_build::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }

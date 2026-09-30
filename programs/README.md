@@ -1,10 +1,10 @@
 # The corpus
 
-3463 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3479 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `455e18b29716ade2da39593fc93903ce3d2363be058ac48b938d52e5de8caabc`.
+Corpus digest `a674cd30fe25cfcc4a64e44d4c0e71f1cb7763fe972e8c6e2a11ea19d649cf3f`.
 
 ## floor (118 programs)
 
@@ -130,7 +130,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (640 programs)
+## correctness (656 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -151,4 +151,7 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`asm-goto`](correctness/asm-goto/README.md) | 6 | asm goto as static keys and user copies use it, with and without outputs |
 | [`asm-local-labels`](correctness/asm-local-labels/README.md) | 5 | numeric labels, the %= number and a label another section names |
 | [`gas-macros`](correctness/gas-macros/README.md) | 6 | assembler macros, .rept, .irp and .if used from inline asm |
+| [`constant-p-after-inline`](correctness/constant-p-after-inline/README.md) | 5 | __builtin_constant_p answered after inlining, with the other branch unlinkable |
+| [`mcmodel-kernel`](correctness/mcmodel-kernel/README.md) | 6 | programs built for the kernel code model and linked without PIE |
+| [`general-regs-only`](correctness/general-regs-only/README.md) | 5 | programs built with -mgeneral-regs-only that check no vector register moved |
 

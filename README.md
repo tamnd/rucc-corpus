@@ -200,6 +200,8 @@ Two facets are the exception in the other direction. `crc32c-armv8` and `simd-lf
 
 `asm-goto`, `asm-local-labels` and `gas-macros` are the inline assembly the kernel writes, and are x86-64 only too, in the AT&T syntax. The one case that puts data in another section with `.pushsection .rodata` also carries the `elf` tag, since that section name means nothing to a Mach-O assembler.
 
+`constant-p-after-inline`, `mcmodel-kernel` and `general-regs-only` are the way the kernel is built. The first pins `-O2`, since the promise it checks only holds once the optimizer has run, and the branch a wrong answer would take calls a function defined nowhere, so a wrong answer fails to link. `mcmodel-kernel` is linked without PIE, which puts the program where a sign extended 32 bit address means what it says, so its cases carry the `elf` tag as well. `general-regs-only` puts a marker in every vector register before the work and checks them all before it prints.
+
 ## No dependencies
 
 The whole thing is `std` and nothing else. The JSON writer, the JSON parser, the SHA-256, the process runner with its timeouts, and the ELF, Mach-O and COFF section reader are all in here and all tested. The one exception to `std` alone is six Win32 calls in `memory.rs` for the peak working set of a process tree on Windows, declared by hand rather than through a crate.

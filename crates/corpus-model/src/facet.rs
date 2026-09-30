@@ -485,6 +485,29 @@ pub enum Facet {
     /// these wrong. Only builds and runs on x86-64.
     GasMacros,
 
+    /// `__builtin_constant_p` asked inside an inline function about a parameter, answered for the
+    /// argument at the call site once the function is inlined.
+    ///
+    /// The kernel's `test_bit`, `hweight32` and `BUILD_BUG_ON` all lean on this. The branch the
+    /// answer rules out calls a function defined nowhere, so a wrong answer is a link failure.
+    /// Built at `-O2` whatever the run asks for, since the promise only holds once the optimizer
+    /// has run. Only builds and runs on x86-64.
+    ConstantPAfterInline,
+
+    /// Programs built with `-mcmodel=kernel`, where every address is a sign extended 32 bit one.
+    ///
+    /// Linked without PIE, a program is in the bottom two gigabytes, where such an address means
+    /// the same thing, so the code the kernel gets runs in user space. Only builds and runs on
+    /// x86-64.
+    McmodelKernel,
+
+    /// Programs built with `-mgeneral-regs-only`, which must not touch a vector register.
+    ///
+    /// Each case marks every vector register, does work a compiler would like to vectorize, and
+    /// checks the marks before printing, so a compiler that ignores the flag prints something
+    /// else. Only builds and runs on x86-64.
+    GeneralRegsOnly,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -594,6 +617,9 @@ impl Facet {
         Self::AsmGoto,
         Self::AsmLocalLabels,
         Self::GasMacros,
+        Self::ConstantPAfterInline,
+        Self::McmodelKernel,
+        Self::GeneralRegsOnly,
         Self::Frontend,
     ];
 
@@ -697,6 +723,9 @@ impl Facet {
             Self::AsmGoto => "asm-goto",
             Self::AsmLocalLabels => "asm-local-labels",
             Self::GasMacros => "gas-macros",
+            Self::ConstantPAfterInline => "constant-p-after-inline",
+            Self::McmodelKernel => "mcmodel-kernel",
+            Self::GeneralRegsOnly => "general-regs-only",
             Self::Frontend => "frontend",
         }
     }
@@ -839,6 +868,15 @@ impl Facet {
                 "numeric labels, the %= number and a label another section names"
             }
             Self::GasMacros => "assembler macros, .rept, .irp and .if used from inline asm",
+            Self::ConstantPAfterInline => {
+                "__builtin_constant_p answered after inlining, with the other branch unlinkable"
+            }
+            Self::McmodelKernel => {
+                "programs built for the kernel code model and linked without PIE"
+            }
+            Self::GeneralRegsOnly => {
+                "programs built with -mgeneral-regs-only that check no vector register moved"
+            }
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -946,7 +984,10 @@ impl Facet {
             | Self::Mitigations
             | Self::AsmGoto
             | Self::AsmLocalLabels
-            | Self::GasMacros => Phase::Correctness,
+            | Self::GasMacros
+            | Self::ConstantPAfterInline
+            | Self::McmodelKernel
+            | Self::GeneralRegsOnly => Phase::Correctness,
         }
     }
 
