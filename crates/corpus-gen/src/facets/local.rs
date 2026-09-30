@@ -1230,6 +1230,16 @@ const SHAPES: &[Shape] = &[
         holds: |v| v < 250 && (v & 1) == 0,
         left: None,
     },
+    Shape {
+        name: "hinted-left",
+        purpose: "the same left half with its odds written down, so a hint decides",
+        top: &[],
+        prepare: &[],
+        setup: &[],
+        condition: "__builtin_expect_with_probability(v < 250, 1, 0.99) && (v & 1) == 0",
+        holds: |v| v < 250 && (v & 1) == 0,
+        left: None,
+    },
 ];
 
 /// Collapsing the two branches of `&&` or `||` into one, and the places that forbid it.
@@ -1241,7 +1251,10 @@ const SHAPES: &[Shape] = &[
 /// precedence through the collapse, three that must keep the branch because speculating would
 /// read a null pointer, divide by zero or run off the end of an array, one that must be
 /// refused on cost, one that must be refused on effects, and one whose left half is so
-/// predictable that keeping the branch is the cheaper answer.
+/// predictable that keeping the branch is the cheaper answer. That last one is also written with
+/// its odds given by `__builtin_expect_with_probability`, because a compiler cannot see from the
+/// code that the left half is nearly always true, and a hint is the only way the odds can be what
+/// decides.
 ///
 /// Each shape is written twice, once as `if (a && b)` and once as `x = a && b;`, because the
 /// two lower to the same triangle and a compiler that collapses one and not the other has a

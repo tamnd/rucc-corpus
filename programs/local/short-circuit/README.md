@@ -2,7 +2,7 @@
 
 collapsing the two branches of a logical operator into one. Part of the local phase of the M4 plan.
 
-22 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+24 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -24,6 +24,8 @@ collapsing the two branches of a logical operator into one. Part of the local ph
 | [`short-circuit.guarded-index.value.c17.0ae73929`](short-circuit.guarded-index.value.c17.0ae73929.c) | shape=guarded-index, form=value | c17 | `64` |
 | [`short-circuit.guarded-load.branch.c17.91898640`](short-circuit.guarded-load.branch.c17.91898640.c) | shape=guarded-load, form=branch | c17 | `96` |
 | [`short-circuit.guarded-load.value.c17.c29e0f4c`](short-circuit.guarded-load.value.c17.c29e0f4c.c) | shape=guarded-load, form=value | c17 | `96` |
+| [`short-circuit.hinted-left.branch.c17.5b7b2663`](short-circuit.hinted-left.branch.c17.5b7b2663.c) | shape=hinted-left, form=branch | c17 | `125` |
+| [`short-circuit.hinted-left.value.c17.0e840a13`](short-circuit.hinted-left.value.c17.0e840a13.c) | shape=hinted-left, form=value | c17 | `125` |
 | [`short-circuit.or-before-and.branch.c17.b43ff126`](short-circuit.or-before-and.branch.c17.b43ff126.c) | shape=or-before-and, form=branch | c17 | `47` |
 | [`short-circuit.or-before-and.value.c17.830d488d`](short-circuit.or-before-and.value.c17.830d488d.c) | shape=or-before-and, form=value | c17 | `47` |
 | [`short-circuit.predictable-left.branch.c17.ba97160c`](short-circuit.predictable-left.branch.c17.ba97160c.c) | shape=predictable-left, form=branch | c17 | `125` |
