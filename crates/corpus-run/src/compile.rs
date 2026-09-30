@@ -54,6 +54,40 @@ pub const BINARY: &str = if cfg!(windows) { "case.exe" } else { "case.bin" };
 /// that would make the match meaningless.
 pub const OPINIONS: &str = "case.opt-info";
 
+/// What the executable is linked with when the case loads a module, before the sources.
+///
+/// On ELF the executable's symbols are only in the dynamic symbol table, where a module loaded
+/// later can find them, when the executable is linked with `-rdynamic`. That is what Postgres
+/// links the server with. A Mach-O executable exports its globals already, and the bundle is
+/// the side that names it.
+const LOADER: &[&str] = if cfg!(target_os = "macos") { &[] } else { &["-rdynamic"] };
+
+/// What the executable is linked with when the case loads a module, after the sources.
+///
+/// `dlopen` lives in `libdl` on a C library older than glibc 2.34, and in the C library itself
+/// on anything newer and on macOS, where naming it still works and changes nothing.
+const LOADER_LIBRARIES: &[&str] = if cfg!(target_os = "macos") { &[] } else { &["-ldl"] };
+
+/// How a module is built, over and above the level and the case's own flags.
+///
+/// On ELF a module is a shared object of position independent code whose references to the
+/// executable are left undefined, which `-shared` allows. On Mach-O it is a bundle, and a
+/// bundle has to be linked against the executable that will load it so the linker can check
+/// every reference and record where each one is bound. Windows has neither, so a case with a
+/// module carries the `dlopen` tag and a run there leaves it out.
+fn module_flags() -> Vec<String> {
+    if cfg!(target_os = "macos") {
+        vec![
+            "-fPIC".to_owned(),
+            "-bundle".to_owned(),
+            "-bundle_loader".to_owned(),
+            BINARY.to_owned(),
+        ]
+    } else {
+        vec!["-fPIC".to_owned(), "-shared".to_owned()]
+    }
+}
+
 /// Everything one build produced.
 #[derive(Debug, Clone)]
 pub struct Built {
@@ -91,12 +125,17 @@ pub fn build_and_run(
     std::fs::write(&source, &case.source)
         .map_err(|error| format!("{}: {error}", source.display()))?;
     let mut units: Vec<String> = Vec::with_capacity(case.units.len());
+    let mut modules: Vec<(String, String)> = Vec::new();
     for unit in &case.units {
         let name = format!("{UNIT_PREFIX}{}.c", unit.name);
         let path = dir.join(&name);
         std::fs::write(&path, &unit.source)
             .map_err(|error| format!("{}: {error}", path.display()))?;
-        units.push(name);
+        if unit.is_module() {
+            modules.push((name, unit.module_file_name()));
+        } else {
+            units.push(name);
+        }
     }
 
     // Everything on the command line is named relative to the directory the compiler is run
@@ -112,6 +151,9 @@ pub fn build_and_run(
     // The flags the case asks for come before the ones the run asks for, so that a person who
     // adds a flag on the command line can still override what a case wanted.
     args.extend(case.flags.iter().cloned());
+    if !modules.is_empty() {
+        args.extend(LOADER.iter().map(|flag| (*flag).to_owned()));
+    }
     let wants_opinions = spec.understands_opt_info();
     if wants_opinions {
         args.extend(insight::flags(OPINIONS));
@@ -121,16 +163,62 @@ pub fn build_and_run(
     // would expect and the order the sources are listed in everywhere else.
     args.push(SOURCE.to_owned());
     args.extend(units);
+    if !modules.is_empty() {
+        args.extend(LOADER_LIBRARIES.iter().map(|flag| (*flag).to_owned()));
+    }
 
-    let outcome = exec::run(&spec.program, &args, Some(dir), COMPILE_TIMEOUT)
+    let mut outcome = exec::run(&spec.program, &args, Some(dir), COMPILE_TIMEOUT)
         .map_err(|error| format!("could not run {}: {error}", spec.program))?;
-    let produced = outcome.ok && binary.is_file();
-    let (bytes, sizes) = measure(&binary, produced);
+    let mut produced = outcome.ok && binary.is_file();
+    let mut stderr = outcome.stderr.clone();
+    let mut opinion_files = vec![opinions.clone()];
+
+    // The modules come after the executable, because on Mach-O a bundle is linked against the
+    // executable that will load it and that has to exist first. Each is a compile of its own,
+    // and the case compiled when every one of them did. The time, the diagnostics and the sizes
+    // are all of them together, since the program is all of them together.
+    let mut artifacts = vec![binary.clone()];
+    for (source_name, module_name) in &modules {
+        if !produced {
+            break;
+        }
+        let mut module_args: Vec<String> = vec![
+            case.dialect.std_flag().to_owned(),
+            level.flag().to_owned(),
+            "-o".to_owned(),
+            module_name.clone(),
+        ];
+        module_args.extend(case.flags.iter().cloned());
+        module_args.extend(module_flags());
+        if wants_opinions {
+            let said = format!("{source_name}.opt-info");
+            module_args.extend(insight::flags(&said));
+            opinion_files.push(dir.join(said));
+        }
+        module_args.extend(spec.extra.iter().cloned());
+        module_args.push(source_name.clone());
+        let built = exec::run(&spec.program, &module_args, Some(dir), COMPILE_TIMEOUT)
+            .map_err(|error| format!("could not run {}: {error}", spec.program))?;
+        let path = dir.join(module_name);
+        produced = built.ok && path.is_file();
+        if !built.stderr.trim().is_empty() {
+            stderr.push_str(&built.stderr);
+        }
+        outcome.micros += built.micros;
+        outcome.peak_bytes = outcome.peak_bytes.max(built.peak_bytes);
+        outcome.timed_out |= built.timed_out;
+        if !built.ok {
+            outcome.status = built.status;
+        }
+        artifacts.push(path);
+    }
+
+    let (bytes, sizes) = measure_all(&artifacts, produced);
     let compile = Compile {
         ok: produced,
         status: if outcome.timed_out { -1 } else { outcome.status },
         micros: outcome.micros,
-        diagnostics: trim_diagnostics(&outcome.stderr),
+        diagnostics: trim_diagnostics(&stderr),
         bytes,
         text_bytes: sizes.text,
         data_bytes: sizes.data,
@@ -139,7 +227,11 @@ pub fn build_and_run(
     };
 
     let insights = if wants_opinions {
-        std::fs::read_to_string(&opinions).map(|text| insight::parse(&text)).unwrap_or_default()
+        opinion_files
+            .iter()
+            .filter_map(|path| std::fs::read_to_string(path).ok())
+            .flat_map(|text| insight::parse(&text))
+            .collect()
     } else {
         Vec::new()
     };
@@ -245,6 +337,24 @@ fn measure(binary: &Path, produced: bool) -> (u64, object::Sizes) {
     (bytes.len() as u64, object::sizes(&bytes).unwrap_or_default())
 }
 
+/// Sizes everything a build produced together, the executable and every module it loads.
+///
+/// Summed rather than kept apart, because the program is all of them together and a module
+/// that grew is code the case cost as surely as a function in the executable that grew.
+fn measure_all(artifacts: &[PathBuf], produced: bool) -> (u64, object::Sizes) {
+    artifacts.iter().fold((0, object::Sizes::default()), |(bytes, sum), path| {
+        let (more, sizes) = measure(path, produced);
+        (
+            bytes + more,
+            object::Sizes {
+                text: sum.text + sizes.text,
+                data: sum.data + sizes.data,
+                bss: sum.bss + sizes.bss,
+            },
+        )
+    })
+}
+
 /// Keeps diagnostics down to something a report can hold.
 ///
 /// A compiler that goes wrong can print a megabyte about one case, and a JSON Lines file with
@@ -267,7 +377,7 @@ fn trim_diagnostics(text: &str) -> String {
 mod tests {
     use super::{build_and_run, record, trim_diagnostics, work_dir};
     use crate::toolchain::Spec;
-    use corpus_model::{Axes, Case, Dialect, Expect, Facet, Level};
+    use corpus_model::{Axes, Case, Dialect, Expect, Facet, Level, Unit};
 
     fn hello() -> Case {
         Case::new(
@@ -312,6 +422,27 @@ mod tests {
         assert!(built.execute.ok);
         assert_eq!(built.execute.output, "42\n");
         assert_eq!(built.execute.repeats, 2);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_module_is_built_on_its_own_and_calls_back_into_the_executable_that_loads_it() {
+        // Built with the system compiler, so this is the harness's link recipe for the host
+        // being checked on every machine the tests run on, Linux in CI and macOS on a laptop.
+        let dir = scratch("module");
+        let case = Case::linked(
+            Facet::Bundle,
+            Axes::of([("shape", "smoke")]),
+            Dialect::C17,
+            "#include <dlfcn.h>\nint printf(const char *, ...);\nint base = 40;\nint add_base(int x) { return base + x; }\nint main(void) {\n    void *h = dlopen(\"./m0.so\", RTLD_NOW | RTLD_LOCAL);\n    if (!h) return 1;\n    int (*run)(void) = (int (*)(void))dlsym(h, \"run\");\n    printf(\"%d\\n\", run());\n    return 0;\n}\n",
+            vec![Unit::module("m0", "int add_base(int);\nint run(void) { return add_base(2); }\n")],
+            Vec::new(),
+            Expect::Output("42\n".to_owned()),
+        );
+        let built = build_and_run(&case, &system_cc(), Level::O2, &dir, 1).unwrap();
+        assert!(built.compile.ok, "compile said: {}", built.compile.diagnostics);
+        assert!(dir.join("m0.so").is_file());
+        assert_eq!(built.execute.output, "42\n");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

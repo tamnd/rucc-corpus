@@ -84,15 +84,17 @@ The file count is kept alongside the line count and mentioned only where it is n
 
 **Only the markdown is committed.** The other three are regenerated on every run whether or not anything about the compiler moved, so committing them makes the history churn and makes the diff something nobody reads. They go up as artifacts on the nightly instead, kept for the default retention, and `rucc-corpus diff` on the nightly reads yesterday's from there rather than from the tree. The same rule covers `programs/manifest.json`, which is the machine readable copy of a program list that the `README.md` files already state in a form a person can read.
 
-## Twenty of the programs are more than one file
+## Some of the programs are more than one file
 
-Every case in here is a single translation unit apart from the `link-time-optimization` facet, and that default is worth defending. A program the compiler saw all of at once is a program where a wrong answer is about code generation and nothing else, which is most of what makes a failing case worth reading.
+Every case in here is a single translation unit apart from the `link-time-optimization` and `bundle` facets, and that default is worth defending. A program the compiler saw all of at once is a program where a wrong answer is about code generation and nothing else, which is most of what makes a failing case worth reading.
 
 The exception exists because a whole class of transformations only lives at the boundary between two files. Inlining across one, propagating a constant across one, turning an indirect call into a direct one across one, and dropping a function nothing calls across one are all things a compiler can only do once somebody has handed it both files together. That is what `-flto` is for and it cannot be tested with one file.
 
 So ten shapes are each generated twice. One half is compiled and linked the ordinary way and the other half is built with `-flto`, and both have to print the same answer. The pair is the point. An `-flto` case on its own that passes says the compiler accepted a flag, which is not the question. The pair says that turning whole program optimization on did not change the meaning of the program, which is the thing that actually breaks, and the two rows sit next to each other in the report with their code sizes beside them so what LTO bought is a subtraction rather than a claim.
 
 `-flto` is a property of those cases and not a sixth optimization level. A level is something every program in the corpus is built at, and asking all 1572 of them for LTO would multiply the whole run to learn one facet's answer. The case carries the flag, the facet index says which cases carry it, and the axis on the case says which half of the pair it is.
+
+The `bundle` facet is the other exception, and its files are not all linked into one program. Each case is an executable and one or more modules it opens with `dlopen`, which is the shape of every Postgres extension: the module calls functions and reads globals that the executable defines and leaves them undefined in itself, and the executable calls the hooks and callbacks the module registers. A unit in a case says which it is, linked or a module, and the harness knows the link for each target. On Linux the executable is built with `-rdynamic` and `-ldl`, and each module with `-fPIC -shared`. On macOS each module is a bundle built with `-fPIC -bundle -bundle_loader` naming the executable, so the executable is built first. Every module is written beside the executable as its name with `.so` on the end, which is the path the program opens. Windows builds a module against an import library for the executable, which the harness does not do yet, so every one of these cases carries the `dlopen` tag and a run there leaves them out with `--exclude-tag dlopen`.
 
 ## What `-Os` does
 

@@ -15,7 +15,7 @@
 //! file on purpose: the file that gets compiled is the file that is in the repository, byte
 //! for byte, so a comment carrying the answer would be a second copy that could drift.
 
-use corpus_model::{Case, Expect, Facet, Manifest, Phase};
+use corpus_model::{Case, Expect, Facet, Manifest, Phase, Unit};
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -131,14 +131,21 @@ fn facet_index(facet: Facet, cases: &[&Case]) -> String {
     // reading none on a thousand rows and hide the rows where they say something.
     let linked = cases.iter().any(|case| !case.units.is_empty());
     let flagged = cases.iter().any(|case| !case.flags.is_empty());
-    if linked {
+    let loaded = cases.iter().any(|case| case.units.iter().any(Unit::is_module));
+    if loaded {
+        out.push_str(
+            "These programs are an executable and the modules it loads with `dlopen`. The file with `main` in it is the executable and each module listed beside it is built on its own into its name with `.so` on the end, in the same directory, which is the path the program opens. On Linux that is `cc -rdynamic -o case case.c -ldl` and then `cc -fPIC -shared -o m0.so m0.c` for each module, and on macOS the module is built with `-fPIC -bundle -bundle_loader case` instead, which is why the executable is built first.\n\n",
+        );
+    } else if linked {
         out.push_str(
             "These programs are more than one translation unit each. The other units are listed beside the one that has `main` in it, and they are all handed to the compiler on one command line, in that order.\n\n",
         );
     }
 
     out.push_str("| program |");
-    if linked {
+    if loaded {
+        out.push_str(" loads |");
+    } else if linked {
         out.push_str(" linked with |");
     }
     if flagged {
