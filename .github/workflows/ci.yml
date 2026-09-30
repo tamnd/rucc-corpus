@@ -132,6 +132,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --reference gcc-16 \
             --level O0 --level O2 --repeats 1 \
+            --exclude-tag aarch64 \
             --out reports-ci --no-pages
       - name: keep the reports
         if: always()
@@ -190,6 +191,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
             --reference gcc-16 --level O0 --level O2 --repeats 3 \
+            --exclude-tag aarch64 \
             --out reports-ci --no-pages
       - name: what it said
         if: always()
@@ -202,11 +204,55 @@ jobs:
           path: reports-ci/
           if-no-files-found: ignore
 
+  # The cases that only build on AArch64, on an AArch64 machine, against both compilers.
+  #
+  # Every other job runs on x86-64 and leaves these out with `--exclude-tag aarch64`, the same
+  # way a run on anything but x86-64 leaves out the `x86-64` ones. This one runs the two
+  # facets that carry the tag and nothing else, so it is the only place their expected answers
+  # are checked against GCC 16 and the only place rucc's AArch64 back end is asked about them.
+  # rucc is built from the tip of its own repository, for the same reason as above.
+  arm:
+    name: rucc against gcc 16 on aarch64
+    needs: quick
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16
+          gcc-16 --version | head -1
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: run the corpus
+        run: |
+          cargo run --release -p rucc-corpus -- run \
+            --facet crc32c-armv8 --facet simd-lfind-neon \
+            --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
+            --reference gcc-16 --level O0 --level O2 --repeats 1 \
+            --out reports-ci --no-pages --no-cache
+      - name: what it said
+        if: always()
+        run: cat reports-ci/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: arm-reports
+          path: reports-ci/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above.
   ci:
     name: ci
     if: always()
-    needs: [quick, generated, reference, compiler]
+    needs: [quick, generated, reference, compiler, arm]
     runs-on: ubuntu-24.04
     steps:
       - name: every required job passed

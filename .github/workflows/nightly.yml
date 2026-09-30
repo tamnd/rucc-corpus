@@ -109,6 +109,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
             --reference gcc-16 --repeats 5 --refresh \
+            --exclude-tag aarch64 \
             --out reports
 
       - name: what changed since yesterday

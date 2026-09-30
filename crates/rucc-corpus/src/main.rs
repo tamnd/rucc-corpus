@@ -253,9 +253,12 @@ fn against_the_known(
 ) -> Result<ExitCode, String> {
     let path = PathBuf::from(args.value_or("known", known::FILE));
     let known = known::Known::read(&path)?;
+    // A facet whose every case was left out by a tag was not run, so the run has nothing to say
+    // about it. Without this an x86-64 run that leaves out the AArch64 facets would read every
+    // line those facets have in the file as a case that had started working.
     let covered = known::Coverage::new(
         plan.specs.iter().map(|spec| spec.id.clone()),
-        corpus.cases.iter().map(|case| case.facet),
+        corpus.cases.iter().filter(|case| !plan.excludes(case)).map(|case| case.facet),
     );
 
     if args.flag("accept") {
