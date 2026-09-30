@@ -444,6 +444,16 @@ pub enum Facet {
     /// Only builds and runs on AArch64.
     SimdLfindNeon,
 
+    /// The promises the Linux kernel memory model needs from a compiler that C does not make.
+    ///
+    /// A `READ_ONCE` or `WRITE_ONCE` is one access of the full width, never removed, never
+    /// split and never repeated, and a store the program only makes on one arm of a branch is
+    /// never made on the other. A single threaded program cannot see most of that, so these
+    /// cases put the location a store must not reach on a page that cannot be written, and
+    /// share the ones a load must keep reading with a second thread. A broken promise is a
+    /// fault or a hang rather than a quietly wrong number.
+    Lkmm,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -548,6 +558,7 @@ impl Facet {
         Self::SimdLfind,
         Self::Crc32cArmv8,
         Self::SimdLfindNeon,
+        Self::Lkmm,
         Self::Frontend,
     ];
 
@@ -646,6 +657,7 @@ impl Facet {
             Self::SimdLfind => "simd-lfind",
             Self::Crc32cArmv8 => "crc32c-armv8",
             Self::SimdLfindNeon => "simd-lfind-neon",
+            Self::Lkmm => "lkmm",
             Self::Frontend => "frontend",
         }
     }
@@ -777,6 +789,7 @@ impl Facet {
                 "CRC-32C through the ARMv8 CRC instructions against slicing by eight"
             }
             Self::SimdLfindNeon => "the NEON search loops from port/simd.h and pg_lfind.h",
+            Self::Lkmm => "the access and store rules the Linux kernel memory model assumes",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -879,7 +892,8 @@ impl Facet {
             | Self::Crc32c
             | Self::SimdLfind
             | Self::Crc32cArmv8
-            | Self::SimdLfindNeon => Phase::Correctness,
+            | Self::SimdLfindNeon
+            | Self::Lkmm => Phase::Correctness,
         }
     }
 
