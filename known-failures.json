@@ -7,6 +7,41 @@
       "verdict": "unimplemented",
       "issue": "tamnd/rucc#1008",
       "why": "rucc has no lowering for __atomic_signal_fence, the one atomic builtin that was left behind when the rest got theirs"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "general-regs-only.array-sum.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#2277",
+      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "general-regs-only.byte-mix.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#2277",
+      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "general-regs-only.struct-copy.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#2277",
+      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "general-regs-only.u64-math.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#2277",
+      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "general-regs-only.zeroed.c17",
+      "verdict": "unimplemented",
+      "issue": "tamnd/rucc#2277",
+      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
     }
   ]
 }
