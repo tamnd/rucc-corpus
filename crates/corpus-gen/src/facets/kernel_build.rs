@@ -21,7 +21,18 @@
 //! does work a compiler would like to vectorize, and checks the markers are all still there
 //! before it prints. A compiler that ignores the flag prints a different answer.
 //!
-//! All three are x86-64 only, and each case names the kernel file it has the shape of.
+//! `objtool-shapes` is the code objtool has to follow through an object: a jump table, a call that
+//! does not return, a realigned stack, a function that ends in `__builtin_unreachable` and a
+//! sibling call. Each is a shape objtool refused in a rucc object on the way to K3. The program
+//! only proves the code runs, and objtool from the pinned kernel is what checks the object.
+//!
+//! The kernel's `frame-size` cases are frames that GCC keeps under `FRAME_WARN`, 2048 bytes on
+//! x86-64, only because it puts buffers whose lifetimes never overlap in the same bytes. Each case
+//! has four buffers of 640 bytes, in scopes of their own, in callees inlined one after another, in
+//! the arms of a switch, in an inline function inside another, and in an inline function called
+//! from a loop. A compiler that gives each buffer its own slot has a frame of 2560 bytes.
+//!
+//! All but `frame-size` are x86-64 only, and each case names the kernel file it has the shape of.
 
 use crate::Sink;
 use crate::emit::Program;
@@ -45,6 +56,13 @@ const MARK: u64 = 0x5a5a_a5a5_c3c3_3c3c;
 /// address fits in 32 bits.
 const ELF: &[&str] = &["gnu", "x86-64", PROVENANCE, "elf"];
 
+/// The tags of a case that is plain C and runs anywhere.
+const PORTABLE: &[&str] = &["gnu", PROVENANCE];
+
+/// How many `unsigned int` each `frame-size` buffer holds, 640 bytes, so four of them go over
+/// `FRAME_WARN` and one does not.
+const WORDS: u32 = 160;
+
 /// Emits every facet in this module.
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     for &(facet, flags, shapes) in FACETS {
@@ -63,7 +81,11 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
                 flags.iter().map(|flag| (*flag).to_owned()).collect(),
                 Expect::Output(expected),
             )
-            .tagged(if facet == Facet::McmodelKernel { ELF } else { &ELF[..3] });
+            .tagged(match facet {
+                Facet::McmodelKernel => ELF,
+                Facet::FrameSize => PORTABLE,
+                _ => &ELF[..3],
+            });
             sink.push_case(case);
         }
     }
@@ -86,6 +108,16 @@ const FACETS: &[(Facet, &[&str], &[&str])] = &[
         &["-mgeneral-regs-only"],
         &["struct-copy", "array-sum", "byte-mix", "zeroed", "u64-math"],
     ),
+    (
+        Facet::ObjtoolShapes,
+        &["-O2"],
+        &["jump-table", "noreturn", "stack-realign", "unreachable-end", "sibling-call"],
+    ),
+    (
+        Facet::FrameSize,
+        &["-O2"],
+        &["disjoint-scopes", "inlined-callees", "switch-arms", "nested-inline", "loop-inline"],
+    ),
 ];
 
 /// What a case is: the file it has the shape of, the C above `main`, and the step it runs as
@@ -94,8 +126,11 @@ const FACETS: &[(Facet, &[&str], &[&str])] = &[
 struct Shape {
     after: &'static str,
     top: Vec<String>,
-    step: Box<dyn FnMut(u32, u32) -> u32>,
+    step: Step,
 }
+
+/// The step of a case, as Rust.
+type Step = Box<dyn FnMut(u32, u32) -> u32>;
 
 impl Shape {
     fn new(after: &'static str, top: &[&str], step: impl FnMut(u32, u32) -> u32 + 'static) -> Self {
@@ -112,6 +147,8 @@ fn case(facet: Facet, shape: &str) -> Program {
     let mut found = match facet {
         Facet::ConstantPAfterInline => constant_p(shape),
         Facet::McmodelKernel => mcmodel_kernel(shape),
+        Facet::ObjtoolShapes => objtool_shapes(shape),
+        Facet::FrameSize => frame_size(shape),
         _ => general_regs_only(shape),
     };
     let marked = facet == Facet::GeneralRegsOnly;
@@ -531,6 +568,327 @@ fn general_regs_only(shape: &str) -> Shape {
     }
 }
 
+/// The function every buffer is handed to, so that it has to be in memory, and what it returns
+/// for a buffer that was filled with `x + k * c`.
+const CONSUME: &[&str] = &[
+    "__attribute__((noinline))",
+    "static unsigned int consume(unsigned int *buf, unsigned int n, unsigned int x) {",
+    "    unsigned int s = x;",
+    "    for (unsigned int k = 0; k < n; k++) {",
+    "        buf[k] = buf[k] * 2654435761u + s;",
+    "        s = (s ^ buf[k]) * 16777619u;",
+    "    }",
+    "    return s;",
+    "}",
+    "",
+];
+
+fn consumed(x: u32, c: u32, n: u32) -> u32 {
+    let mut s = x;
+    for k in 0..n {
+        let word = x.wrapping_add(k.wrapping_mul(c)).wrapping_mul(2_654_435_761).wrapping_add(s);
+        s = (s ^ word).wrapping_mul(16_777_619);
+    }
+    s
+}
+
+/// The lines that declare a buffer, fill it from `x` and hand it to `consume`, at an indent.
+fn buffer(lines: &mut Vec<String>, depth: usize, name: &str, step: &str, end: &str) {
+    let pad = "    ".repeat(depth);
+    lines.push(format!("{pad}unsigned int {name}[{WORDS}];"));
+    lines.push(format!("{pad}for (unsigned int k = 0; k < {WORDS}u; k++) {{"));
+    lines.push(format!("{pad}    {name}[k] = x + k * {step};"));
+    lines.push(format!("{pad}}}"));
+    lines.push(format!("{pad}{end} consume({name}, {WORDS}u, x);"));
+}
+
+fn with_consume(body: Vec<String>) -> Vec<String> {
+    let mut top: Vec<String> = CONSUME.iter().map(|line| (*line).to_owned()).collect();
+    top.extend(body);
+    top
+}
+
+fn lines(text: &[&str]) -> Vec<String> {
+    text.iter().map(|line| (*line).to_owned()).collect()
+}
+
+fn frame_size(shape: &str) -> Shape {
+    let mut body = Vec::new();
+    let (after, step): (&'static str, Step) = match shape {
+        "disjoint-scopes" => {
+            body.extend(lines(&[
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+            ]));
+            for (bit, name, c) in [(1, "a", 3), (2, "b", 5), (4, "c", 7)] {
+                body.push(format!("    if (i & {bit}u) {{"));
+                buffer(&mut body, 2, name, &format!("{c}u"), "x =");
+                body.push("    }".to_owned());
+            }
+            body.push("    {".to_owned());
+            buffer(&mut body, 2, "d", "11u", "x =");
+            body.push("    }".to_owned());
+            body.extend(lines(&["    return x + i;", "}"]));
+            (
+                "fs/select.c",
+                Box::new(|mut x, i| {
+                    for (bit, c) in [(1, 3), (2, 5), (4, 7)] {
+                        if i & bit != 0 {
+                            x = consumed(x, c, WORDS);
+                        }
+                    }
+                    consumed(x, 11, WORDS).wrapping_add(i)
+                }),
+            )
+        }
+        "inlined-callees" => {
+            for (name, c) in [("a", 3), ("b", 5), ("c", 7), ("d", 11)] {
+                body.push("static inline __attribute__((always_inline))".to_owned());
+                body.push(format!("unsigned int part_{name}(unsigned int x) {{"));
+                buffer(&mut body, 1, "buf", &format!("{c}u"), "return");
+                body.extend(lines(&["}", ""]));
+            }
+            body.extend(lines(&[
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    x = part_a(x);",
+                "    x = part_b(x ^ i);",
+                "    x = part_c(x + i);",
+                "    return part_d(x);",
+                "}",
+            ]));
+            (
+                "lib/vsprintf.c",
+                Box::new(|x, i| {
+                    let x = consumed(x, 3, WORDS);
+                    let x = consumed(x ^ i, 5, WORDS);
+                    let x = consumed(x.wrapping_add(i), 7, WORDS);
+                    consumed(x, 11, WORDS)
+                }),
+            )
+        }
+        "switch-arms" => {
+            body.extend(lines(&[
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    switch (i & 3u) {",
+            ]));
+            for (arm, name, c) in [
+                ("case 0u", "a", 3),
+                ("case 1u", "b", 5),
+                ("case 2u", "c", 7),
+                ("default", "d", 11),
+            ] {
+                body.push(format!("    {arm}: {{"));
+                buffer(&mut body, 2, name, &format!("{c}u"), "x =");
+                body.extend(lines(&["        break;", "    }"]));
+            }
+            body.extend(lines(&["    }", "    return x ^ i;", "}"]));
+            (
+                "net/core/sock.c",
+                Box::new(|x, i| {
+                    let c = [3, 5, 7, 11][(i & 3) as usize];
+                    consumed(x, c, WORDS) ^ i
+                }),
+            )
+        }
+        "nested-inline" => {
+            body.extend(lines(&[
+                "static inline __attribute__((always_inline))",
+                "unsigned int inner(unsigned int x) {",
+            ]));
+            buffer(&mut body, 1, "buf", "5u", "return");
+            body.extend(lines(&[
+                "}",
+                "",
+                "static inline __attribute__((always_inline))",
+                "unsigned int outer(unsigned int x) {",
+            ]));
+            buffer(&mut body, 1, "buf", "3u", "x =");
+            body.extend(lines(&[
+                "    return inner(x + 1u);",
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    x = outer(x ^ i);",
+                "    return outer(x + i);",
+                "}",
+            ]));
+            let outer = |x: u32| consumed(consumed(x, 3, WORDS).wrapping_add(1), 5, WORDS);
+            ("lib/crypto/sha256.c", Box::new(move |x, i| outer(outer(x ^ i).wrapping_add(i))))
+        }
+        _ => {
+            body.extend(lines(&[
+                "static inline __attribute__((always_inline))",
+                "unsigned int part(unsigned int x, unsigned int j) {",
+            ]));
+            buffer(&mut body, 1, "buf", "(3u + j)", "return");
+            body.extend(lines(&[
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    for (unsigned int j = 0; j < 4u; j++) {",
+                "        x = part(x + j, j);",
+                "    }",
+                "    return x ^ i;",
+                "}",
+            ]));
+            (
+                "lib/xz/xz_dec_lzma2.c",
+                Box::new(|mut x, i| {
+                    for j in 0..4 {
+                        x = consumed(x.wrapping_add(j), 3 + j, WORDS);
+                    }
+                    x ^ i
+                }),
+            )
+        }
+    };
+    Shape { after, top: with_consume(body), step }
+}
+
+fn objtool_shapes(shape: &str) -> Shape {
+    match shape {
+        "jump-table" => Shape::new(
+            "arch/x86/lib/insn.c",
+            &[
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    switch ((x + i) & 7u) {",
+                "    case 0u: return x * 3u + 1u;",
+                "    case 1u: return x ^ 0x5bd1e995u;",
+                "    case 2u: return x + i * 7u;",
+                "    case 3u: return (x << 5) | (x >> 27);",
+                "    case 4u: return x - 0x1234u;",
+                "    case 5u: return (x * 33u) ^ i;",
+                "    case 6u: return ~x + i;",
+                "    default: return x + 0x9e3779b9u;",
+                "    }",
+                "}",
+            ],
+            |x, i| match x.wrapping_add(i) & 7 {
+                0 => x.wrapping_mul(3).wrapping_add(1),
+                1 => x ^ 0x5bd1_e995,
+                2 => x.wrapping_add(i * 7),
+                3 => x.rotate_left(5),
+                4 => x.wrapping_sub(0x1234),
+                5 => x.wrapping_mul(33) ^ i,
+                6 => (!x).wrapping_add(i),
+                _ => x.wrapping_add(0x9e37_79b9),
+            },
+        ),
+        "noreturn" => Shape::new(
+            "lib/bug.c",
+            &[
+                "__attribute__((noreturn, noinline))",
+                "static void fail(unsigned int x) {",
+                "    asm volatile(\"\" : : \"r\"(x));",
+                "    __builtin_trap();",
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int checked(unsigned int x) {",
+                "    if (x == 0xdeadbeefu) {",
+                "        fail(x);",
+                "    }",
+                "    return x * 5u + 3u;",
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    if (i > 1000u) {",
+                "        fail(i);",
+                "    }",
+                "    return checked(x ^ i);",
+                "}",
+            ],
+            |x, i| {
+                assert_ne!(x ^ i, 0xdead_beef, "the noreturn case would trap");
+                (x ^ i).wrapping_mul(5).wrapping_add(3)
+            },
+        ),
+        "stack-realign" => {
+            let mut top: Vec<String> = CONSUME.iter().map(|line| (*line).to_owned()).collect();
+            top.extend(lines(&[
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    unsigned int buf[16] __attribute__((aligned(64)));",
+                "    for (unsigned int k = 0; k < 16u; k++) {",
+                "        buf[k] = x + k * (i | 1u);",
+                "    }",
+                "    x = consume(buf, 16u, x);",
+                "    return x + (unsigned int)((unsigned long)buf & 63u);",
+                "}",
+            ]));
+            Shape {
+                after: "arch/x86/kernel/fpu/xstate.c",
+                top,
+                step: Box::new(|x, i| consumed(x, i | 1, 16)),
+            }
+        }
+        "unreachable-end" => Shape::new(
+            "arch/x86/kvm/emulate.c",
+            &[
+                "__attribute__((noinline))",
+                "static unsigned int pick(unsigned int k, unsigned int x) {",
+                "    switch (k & 3u) {",
+                "    case 0u: return x + 1u;",
+                "    case 1u: return x * 3u;",
+                "    case 2u: return x ^ 0x55aa55aau;",
+                "    case 3u: return x - 7u;",
+                "    }",
+                "    __builtin_unreachable();",
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    return pick(x + i, x) + i;",
+                "}",
+            ],
+            |x, i| {
+                let picked = match x.wrapping_add(i) & 3 {
+                    0 => x.wrapping_add(1),
+                    1 => x.wrapping_mul(3),
+                    2 => x ^ 0x55aa_55aa,
+                    _ => x.wrapping_sub(7),
+                };
+                picked.wrapping_add(i)
+            },
+        ),
+        _ => Shape::new(
+            "fs/read_write.c",
+            &[
+                "__attribute__((noinline))",
+                "static unsigned int odd(unsigned int x, unsigned int i) {",
+                "    return x * 7u + i;",
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int even(unsigned int x, unsigned int i) {",
+                "    return (x >> 1) ^ (i * 0x01000193u);",
+                "}",
+                "",
+                "__attribute__((noinline))",
+                "static unsigned int step(unsigned int x, unsigned int i) {",
+                "    if (x & 1u) {",
+                "        return odd(x, i);",
+                "    }",
+                "    return even(x + i, i);",
+                "}",
+            ],
+            |x, i| {
+                if x & 1 == 1 {
+                    x.wrapping_mul(7).wrapping_add(i)
+                } else {
+                    (x.wrapping_add(i) >> 1) ^ i.wrapping_mul(0x0100_0193)
+                }
+            },
+        ),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, generate};
@@ -543,14 +901,41 @@ mod tests {
             (Facet::ConstantPAfterInline, 5, "-O2"),
             (Facet::McmodelKernel, 6, "-mcmodel=kernel"),
             (Facet::GeneralRegsOnly, 5, "-mgeneral-regs-only"),
+            (Facet::ObjtoolShapes, 5, "-O2"),
+            (Facet::FrameSize, 5, "-O2"),
         ] {
-            let cases: Vec<_> = manifest.cases.iter().filter(|case| case.facet == facet).collect();
+            let cases: Vec<_> = manifest
+                .cases
+                .iter()
+                .filter(|case| case.facet == facet && case.has_tag("provenance:linux"))
+                .collect();
             assert_eq!(cases.len(), count, "{facet:?}");
             for case in cases {
                 assert!(case.flags.iter().any(|given| given == flag), "{}", case.id);
-                assert!(case.has_tag("x86-64"), "{}", case.id);
+                assert_eq!(case.has_tag("x86-64"), facet != Facet::FrameSize, "{}", case.id);
                 assert_eq!(case.has_tag("elf"), facet == Facet::McmodelKernel, "{}", case.id);
             }
+        }
+    }
+
+    #[test]
+    fn every_kernel_frame_has_four_buffers_of_640_bytes() {
+        let manifest = generate(&Options::all()).unwrap();
+        for case in manifest
+            .cases
+            .iter()
+            .filter(|case| case.facet == Facet::FrameSize && case.has_tag("provenance:linux"))
+        {
+            let buffers = case.source.matches("[160];").count();
+            let expected = if case.id.contains("nested-inline") {
+                2
+            } else if case.id.contains("loop-inline") {
+                1
+            } else {
+                4
+            };
+            assert_eq!(buffers, expected, "{}", case.id);
+            assert!(case.source.contains("consume("), "{}", case.id);
         }
     }
 
