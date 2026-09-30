@@ -9,6 +9,7 @@ pub(crate) mod backend;
 pub(crate) mod global;
 pub(crate) mod interproc;
 pub(crate) mod kernel;
+pub(crate) mod kernel_asm;
 pub(crate) mod link;
 pub(crate) mod local;
 pub(crate) mod loops;
