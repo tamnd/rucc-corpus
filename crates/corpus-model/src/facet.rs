@@ -427,6 +427,23 @@ pub enum Facet {
     /// vector width goes wrong.
     SimdLfind,
 
+    /// CRC-32C through the ARMv8 CRC instructions, against the same table-driven version.
+    ///
+    /// The AArch64 half of `crc32c`. Postgres computes the checksum there with `__crc32cb`,
+    /// `__crc32ch`, `__crc32cw` and `__crc32cd` from `arm_acle.h`, taking a byte, a halfword
+    /// and a word first until the pointer is on an eight byte boundary, in a file built with
+    /// `-march=armv8-a+crc`, and either calls it outright or first asks `getauxval` whether the
+    /// processor has the instructions. Only builds and runs on AArch64.
+    Crc32cArmv8,
+
+    /// The NEON search loops from `port/simd.h` and `port/pg_lfind.h`, against scalar loops.
+    ///
+    /// The AArch64 half of `simd-lfind`. The same searches, with the comparisons reduced across
+    /// the vector by `vmaxvq_u8` and `vminvq_u8` rather than a byte mask, which NEON does not
+    /// have, and the two ways of building one when a caller wants the index of the first match.
+    /// Only builds and runs on AArch64.
+    SimdLfindNeon,
+
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
     /// The C23 constructs, the awkward corners of the type system, and everything that has
@@ -529,6 +546,8 @@ impl Facet {
         Self::TargetAttribute,
         Self::Crc32c,
         Self::SimdLfind,
+        Self::Crc32cArmv8,
+        Self::SimdLfindNeon,
         Self::Frontend,
     ];
 
@@ -625,6 +644,8 @@ impl Facet {
             Self::TargetAttribute => "target-attribute",
             Self::Crc32c => "crc32c",
             Self::SimdLfind => "simd-lfind",
+            Self::Crc32cArmv8 => "crc32c-armv8",
+            Self::SimdLfindNeon => "simd-lfind-neon",
             Self::Frontend => "frontend",
         }
     }
@@ -752,6 +773,10 @@ impl Facet {
             }
             Self::Crc32c => "CRC-32C through the SSE4.2 instructions against slicing by eight",
             Self::SimdLfind => "the SSE2 search loops from port/simd.h and pg_lfind.h",
+            Self::Crc32cArmv8 => {
+                "CRC-32C through the ARMv8 CRC instructions against slicing by eight"
+            }
+            Self::SimdLfindNeon => "the NEON search loops from port/simd.h and pg_lfind.h",
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -852,7 +877,9 @@ impl Facet {
             | Self::OverflowBuiltins
             | Self::TargetAttribute
             | Self::Crc32c
-            | Self::SimdLfind => Phase::Correctness,
+            | Self::SimdLfind
+            | Self::Crc32cArmv8
+            | Self::SimdLfindNeon => Phase::Correctness,
         }
     }
 

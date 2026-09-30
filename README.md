@@ -192,6 +192,8 @@ As of today that is the only target rucc generates code for, so the rucc column 
 
 CI produces the rucc column. Locally, on anything that is not x86-64 Linux, leave `--toolchain rucc` off.
 
+Two facets are the exception in the other direction. `crc32c-armv8` and `simd-lfind-neon` are the AArch64 halves of `crc32c` and `simd-lfind`, written against `arm_acle.h` and `arm_neon.h`, so they only build on AArch64 and every case in them carries the `aarch64` tag. The x86-64 jobs leave them out with `--exclude-tag aarch64`, and a job of their own on GitHub's `ubuntu-24.04-arm` runner builds them with GCC 16 and with rucc. The x86-64 cases carry `x86-64` the same way, for a run that goes the other way round.
+
 ## No dependencies
 
 The whole thing is `std` and nothing else. The JSON writer, the JSON parser, the SHA-256, the process runner with its timeouts, and the ELF, Mach-O and COFF section reader are all in here and all tested. The one exception to `std` alone is six Win32 calls in `memory.rs` for the peak working set of a process tree on Windows, declared by hand rather than through a crate.

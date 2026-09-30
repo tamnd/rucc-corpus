@@ -1,10 +1,10 @@
 # The corpus
 
-3277 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3397 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `cd6c1751c3981944b4613f3e3ce23ea6e641321185c7cb0358f8204ae47b2ad6`.
+Corpus digest `58d808c126ae0bb70c293b210158a6557c8a456d0e4f00ffcf363e99d1e3418c`.
 
 ## floor (118 programs)
 
@@ -130,7 +130,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (454 programs)
+## correctness (574 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -144,4 +144,6 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`target-attribute`](correctness/target-attribute/README.md) | 52 | functions built for an extension and called only after asking the processor |
 | [`crc32c`](correctness/crc32c/README.md) | 64 | CRC-32C through the SSE4.2 instructions against slicing by eight |
 | [`simd-lfind`](correctness/simd-lfind/README.md) | 30 | the SSE2 search loops from port/simd.h and pg_lfind.h |
+| [`crc32c-armv8`](correctness/crc32c-armv8/README.md) | 72 | CRC-32C through the ARMv8 CRC instructions against slicing by eight |
+| [`simd-lfind-neon`](correctness/simd-lfind-neon/README.md) | 48 | the NEON search loops from port/simd.h and pg_lfind.h |
 

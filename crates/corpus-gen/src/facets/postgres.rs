@@ -37,8 +37,15 @@
 //! a dozen more values alive across every jump and every call a handler makes. The same
 //! interpreter built over a `switch` sits beside it in each program and has to agree with it.
 //!
+//! `crc32c-armv8` and `simd-lfind-neon` are the AArch64 halves of `crc32c` and `simd-lfind`,
+//! the ARMv8 CRC instructions from `arm_acle.h` and the NEON paths through `port/simd.h`. They
+//! live in [`arm`].
+//!
 //! Every case here carries the `provenance:postgres` tag, so a run can pick them out. The ones
-//! that only build on x86-64 also carry `x86-64`, so a run elsewhere can leave them out.
+//! that only build on x86-64 also carry `x86-64`, and the ones that only build on AArch64 carry
+//! `aarch64`, so a run elsewhere can leave them out.
+
+mod arm;
 
 use crate::Sink;
 use crate::emit::Program;
@@ -56,6 +63,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     target_attribute(sink);
     crc32c_facet(sink);
     simd_lfind(sink);
+    arm::generate(sink);
     frame_size(sink);
     interpreter_dispatch(sink);
 }
@@ -1345,13 +1353,8 @@ fn crc32c_facet(sink: &mut Sink<'_>) {
     }
 }
 
-/// One `crc32c` case.
-fn crc32c_program(step: &str, offset: usize, calls: &str, check: &str) -> Program {
-    let mut program = Program::new(format!(
-        "CRC-32C with the {step} SSE4.2 loop at offset {offset}, in {calls} calls, after a {check} check"
-    ));
-    program.include("nmmintrin.h");
-    program.top(format!("static unsigned long long storage[{}];", CRC_BYTES / 8));
+/// Writes `crc_init` and `crc_sb8`, which are Postgres's slicing by eight, `pg_comp_crc32c_sb8`.
+fn slicing_by_eight(program: &mut Program) {
     program.top("static unsigned int crc_table[8][256];");
     program.top("static void crc_init(void) {");
     program.top("    for (unsigned int i = 0; i < 256; i++) {");
@@ -1396,6 +1399,16 @@ fn crc32c_program(step: &str, offset: usize, calls: &str, check: &str) -> Progra
     program.top("    }");
     program.top("    return crc;");
     program.top("}");
+}
+
+/// One `crc32c` case.
+fn crc32c_program(step: &str, offset: usize, calls: &str, check: &str) -> Program {
+    let mut program = Program::new(format!(
+        "CRC-32C with the {step} SSE4.2 loop at offset {offset}, in {calls} calls, after a {check} check"
+    ));
+    program.include("nmmintrin.h");
+    program.top(format!("static unsigned long long storage[{}];", CRC_BYTES / 8));
+    slicing_by_eight(&mut program);
 
     let bytes = |program: &mut Program| {
         program.top("    while (len > 0) {");
