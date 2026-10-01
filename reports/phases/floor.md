@@ -4,12 +4,12 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`baseline`](../../programs/floor/baseline/README.md) | 10 | 241 | 50 of 50 | 3% more | 33% less | level |
-| [`control-flow`](../../programs/floor/control-flow/README.md) | 10 | 260 | 50 of 50 | 5% more | 37% less | 62% more |
-| [`branch-probability`](../../programs/floor/branch-probability/README.md) | 34 | 704 | 170 of 170 | 2% less | 32% less | 166% more |
-| [`computed-goto`](../../programs/floor/computed-goto/README.md) | 25 | 1,614 | 125 of 125 | 18% less | 41% less | 90% more |
-| [`vla-and-alloca`](../../programs/floor/vla-and-alloca/README.md) | 9 | 236 | 45 of 45 | 20% less | 49% less | 9% less |
-| [`frontend`](../../programs/floor/frontend/README.md) | 30 | 403 | 118 of 118 | 4% less | 36% less | 174% more |
+| [`baseline`](../../programs/floor/baseline/README.md) | 10 | 241 | 50 of 50 | 1% less | 33% less | 146% more |
+| [`control-flow`](../../programs/floor/control-flow/README.md) | 10 | 260 | 50 of 50 | 3% more | 35% less | 4% more |
+| [`branch-probability`](../../programs/floor/branch-probability/README.md) | 34 | 704 | 170 of 170 | 2% less | 33% less | 102% more |
+| [`computed-goto`](../../programs/floor/computed-goto/README.md) | 25 | 1,614 | 125 of 125 | 19% less | 42% less | 77% more |
+| [`vla-and-alloca`](../../programs/floor/vla-and-alloca/README.md) | 9 | 236 | 45 of 45 | 22% less | 47% less | 78% more |
+| [`frontend`](../../programs/floor/frontend/README.md) | 30 | 403 | 118 of 118 | 5% less | 33% less | level |
 
 The reference compiler said it took 192 transformations in this phase and wanted 1083 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
 

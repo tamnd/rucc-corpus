@@ -1,13 +1,13 @@
 # The corpus report
 
-Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
+230 case results did not come out as expected. They are on the failures page, worst first.
 
-3241 programs, 3,309 files between them and 142,580 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `e55eb59fd1fd2382`.
+3524 programs, 3,637 files between them and 200,468 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `a829fd28e437ce2a`.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.14.1 | under test |
+| `rucc` | rucc 0.18.7 | under test |
 
 ## How the cases came out
 
@@ -15,8 +15,8 @@ Every count is per case per level, so a corpus of a thousand programs built at f
 
 | compiler | pass | wrong | rejected | unimplemented | accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|
-| `gcc-16` | 16173 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `rucc` | 16168 | 0 | 0 | 5 | 0 | 0 | 0 |
+| `gcc-16` | 16873 | 0 | 115 | 0 | 0 | 0 | 600 |
+| `rucc` | 16873 | 0 | 115 | 0 | 0 | 0 | 600 |
 
 | verdict | what it means |
 |---|---|
@@ -33,16 +33,16 @@ Every count is per case per level, so a corpus of a thousand programs built at f
 | page | what is on it |
 |---|---|
 | [What it cost](cost.md) | Code size, size on disk, initialized data, compile time, instructions, run time and compiler memory, per facet, each against the reference build of the same program |
-| [What went wrong](failures.md) | No failures, and 5 cases a compiler said it has not built yet, grouped so that twenty cases blocked on one missing thing read as one missing thing |
+| [What went wrong](failures.md) | 230 failures in full, and nothing a compiler admitted to |
 | [By phase of the plan](phases/README.md) | One page per phase, its facets, how they came out, and links to the programs themselves |
 
 ## The claims this run checks
 
 | target | wanted | this run | met |
 |---|---|---|---|
-| `correctness` | every case prints the answer the generator computed, on every compiler, at every level | 0.000 | yes |
-| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2, counted over the whole corpus by byte | 1.521 | no |
-| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.629 | yes |
+| `correctness` | every case prints the answer the generator computed, on every compiler, at every level | 230.000 | no |
+| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2, counted over the whole corpus by byte | 1.527 | no |
+| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.618 | yes |
 | `size-model:rucc` | the code rucc produces at -Os is no larger than the code it produces at -O2, and where gcc-16 found something to trade away rucc found something too, since -Os is a different cost function and not a cheaper -O2 | 0.998 | yes |
 
 ## Running this yourself
@@ -54,4 +54,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3241 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3524 programs with the same digest, and a report that disagrees with this one is a report about a different commit.

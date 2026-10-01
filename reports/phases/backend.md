@@ -4,34 +4,35 @@ Everything below the machine independent IR, where the cost of a decision is mea
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`selection`](../../programs/backend/selection/README.md) | 40 | 680 | 200 of 200 | 5% less | 34% less | 177% more |
-| [`register-pressure`](../../programs/backend/register-pressure/README.md) | 60 | 3,120 | 300 of 300 | 30% more | 33% less | 155% more |
-| [`register-alloc`](../../programs/backend/register-alloc/README.md) | 40 | 2,664 | 200 of 200 | 64% more | 36% less | 133% more |
-| [`scheduling`](../../programs/backend/scheduling/README.md) | 20 | 1,046 | 100 of 100 | 43% more | 37% less | 113% more |
-| [`block-layout`](../../programs/backend/block-layout/README.md) | 16 | 421 | 80 of 80 | 1% less | 40% less | 107% more |
-| [`if-conversion`](../../programs/backend/if-conversion/README.md) | 38 | 945 | 190 of 190 | 8% less | 39% less | 84% more |
-| [`switch-lowering`](../../programs/backend/switch-lowering/README.md) | 27 | 1,521 | 135 of 135 | 4% more | 43% less | level |
-| [`switch-runs`](../../programs/backend/switch-runs/README.md) | 15 | 1,356 | 75 of 75 | 4% more | 38% less | 87% more |
-| [`switch-dispatch`](../../programs/backend/switch-dispatch/README.md) | 21 | 942 | 105 of 105 | 15% less | 41% less | 63% more |
-| [`division`](../../programs/backend/division/README.md) | 72 | 2,020 | 360 of 360 | 15% less | 50% less | 81% more |
-| [`narrow-shift`](../../programs/backend/narrow-shift/README.md) | 8 | 256 | 40 of 40 | 33% less | 56% less | 68% more |
-| [`calling-convention`](../../programs/backend/calling-convention/README.md) | 10 | 216 | 50 of 50 | 11% more | 31% less | 165% more |
-| [`machine-peephole`](../../programs/backend/machine-peephole/README.md) | 22 | 402 | 110 of 110 | 4% less | 32% less | 172% more |
-| [`bit-liveness`](../../programs/backend/bit-liveness/README.md) | 28 | 628 | 140 of 140 | 1% less | 32% less | 163% more |
-| [`compare-elim`](../../programs/backend/compare-elim/README.md) | 26 | 526 | 130 of 130 | 3% less | 35% less | 162% more |
-| [`address-fold`](../../programs/backend/address-fold/README.md) | 28 | 584 | 140 of 140 | 10% more | 33% less | 169% more |
-| [`load-fold`](../../programs/backend/load-fold/README.md) | 40 | 924 | 200 of 200 | 11% less | 39% less | 159% more |
-| [`store-fold`](../../programs/backend/store-fold/README.md) | 56 | 1,416 | 280 of 280 | 11% less | 38% less | 88% more |
-| [`store-fold-constant`](../../programs/backend/store-fold-constant/README.md) | 118 | 2,960 | 590 of 590 | 9% less | 38% less | 113% more |
-| [`compare-fold`](../../programs/backend/compare-fold/README.md) | 118 | 2,742 | 590 of 590 | 8% less | 38% less | 127% more |
-| [`frame-address`](../../programs/backend/frame-address/README.md) | 6 | 117 | 30 of 30 | 5% more | 31% less | 183% more |
-| [`stack-slots`](../../programs/backend/stack-slots/README.md) | 6 | 201 | 30 of 30 | 4% less | 45% less | 2% less |
-| [`frame-size`](../../programs/backend/frame-size/README.md) | 54 | 8,520 | 270 of 270 | 6% less | 66% less | 26% more |
-| [`bit-builtins`](../../programs/backend/bit-builtins/README.md) | 22 | 1,316 | 110 of 110 | 83% more | 39% less | 54% more |
-| [`float-conversion`](../../programs/backend/float-conversion/README.md) | 66 | 1,477 | 330 of 330 | level | 34% less | 153% more |
-| [`long-double`](../../programs/backend/long-double/README.md) | 10 | 226 | 50 of 50 | 49% more | 38% less | 92% more |
+| [`selection`](../../programs/backend/selection/README.md) | 40 | 680 | 200 of 200 | 5% less | 35% less | 174% more |
+| [`register-pressure`](../../programs/backend/register-pressure/README.md) | 60 | 3,120 | 300 of 300 | 30% more | 33% less | 166% more |
+| [`register-alloc`](../../programs/backend/register-alloc/README.md) | 40 | 2,664 | 200 of 200 | 64% more | 35% less | 119% more |
+| [`scheduling`](../../programs/backend/scheduling/README.md) | 20 | 1,046 | 100 of 100 | 43% more | 37% less | 139% more |
+| [`block-layout`](../../programs/backend/block-layout/README.md) | 16 | 421 | 80 of 80 | 1% less | 39% less | 96% more |
+| [`if-conversion`](../../programs/backend/if-conversion/README.md) | 38 | 945 | 190 of 190 | 9% less | 37% less | level |
+| [`switch-lowering`](../../programs/backend/switch-lowering/README.md) | 27 | 1,521 | 135 of 135 | 1% more | 45% less | 76% more |
+| [`switch-runs`](../../programs/backend/switch-runs/README.md) | 15 | 1,356 | 75 of 75 | 3% more | 38% less | level |
+| [`switch-dispatch`](../../programs/backend/switch-dispatch/README.md) | 21 | 942 | 105 of 105 | 18% less | 40% less | 86% more |
+| [`division`](../../programs/backend/division/README.md) | 72 | 2,020 | 360 of 360 | 16% less | 52% less | level |
+| [`narrow-shift`](../../programs/backend/narrow-shift/README.md) | 8 | 256 | 40 of 40 | 34% less | 54% less | 55% more |
+| [`calling-convention`](../../programs/backend/calling-convention/README.md) | 10 | 216 | 50 of 50 | 9% more | 32% less | 16% less |
+| [`machine-peephole`](../../programs/backend/machine-peephole/README.md) | 22 | 402 | 110 of 110 | 4% less | 32% less | 157% more |
+| [`bit-liveness`](../../programs/backend/bit-liveness/README.md) | 28 | 628 | 140 of 140 | 2% less | 37% less | 120% more |
+| [`compare-elim`](../../programs/backend/compare-elim/README.md) | 26 | 526 | 130 of 130 | 3% less | 35% less | 149% more |
+| [`address-fold`](../../programs/backend/address-fold/README.md) | 28 | 584 | 140 of 140 | 2% less | 35% less | 106% more |
+| [`load-fold`](../../programs/backend/load-fold/README.md) | 40 | 924 | 200 of 200 | 10% less | 39% less | 157% more |
+| [`store-fold`](../../programs/backend/store-fold/README.md) | 56 | 1,416 | 280 of 280 | 11% less | 37% less | 145% more |
+| [`store-fold-constant`](../../programs/backend/store-fold-constant/README.md) | 118 | 2,960 | 590 of 590 | 8% less | 37% less | 145% more |
+| [`compare-fold`](../../programs/backend/compare-fold/README.md) | 118 | 2,742 | 590 of 590 | 7% less | 39% less | 146% more |
+| [`frame-address`](../../programs/backend/frame-address/README.md) | 6 | 117 | 30 of 30 | level | 35% less | 8% less |
+| [`stack-slots`](../../programs/backend/stack-slots/README.md) | 6 | 201 | 30 of 30 | 9% less | 44% less | 92% more |
+| [`frame-size`](../../programs/backend/frame-size/README.md) | 59 | 8,808 | 295 of 295 | 8% less | 69% less | 42% more |
+| [`interpreter-dispatch`](../../programs/backend/interpreter-dispatch/README.md) | 36 | 20,442 | 180 of 180 | 186% more | 52% less | level |
+| [`bit-builtins`](../../programs/backend/bit-builtins/README.md) | 22 | 1,316 | 110 of 110 | 87% more | 43% less | 59% more |
+| [`float-conversion`](../../programs/backend/float-conversion/README.md) | 66 | 1,477 | 330 of 330 | 6% more | 36% less | 157% more |
+| [`long-double`](../../programs/backend/long-double/README.md) | 10 | 226 | 50 of 50 | 49% more | 36% less | 30% more |
 
-The reference compiler said it took 4331 transformations in this phase and wanted 12562 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
+The reference compiler said it took 4757 transformations in this phase and wanted 20736 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
 
 ## Switches lowered differently
 
@@ -39,6 +40,24 @@ Each of these cases has a `switch` that a compiler under test lowered into a dif
 
 | compiler | level | case | it used | `gcc-16` used |
 |---|---|---|---|---|
+| `rucc` | O0 | `interpreter-dispatch.12.table.direct.8.c17.fe4a8b3d` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.12.table.none.8.c17.fd7b1f54` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.12.table.pointer.8.c17.085ef334` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.12.threaded.direct.8.c17.ea92116c` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.12.threaded.none.8.c17.0a37857e` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.12.threaded.pointer.8.c17.31d76aaa` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.24.table.direct.8.c17.d33ddfed` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.24.table.pointer.8.c17.a376142a` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.24.threaded.direct.8.c17.288d7cd7` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.24.threaded.none.8.c17.1ad7034a` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.24.threaded.pointer.8.c17.5cdc26d1` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.4.table.direct.8.c17.ad381896` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.4.table.none.8.c17.66690ed6` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.4.table.pointer.8.c17.f16c570b` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.4.threaded.direct.8.c17.81bbc59c` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.4.threaded.none.8.c17.47a678c0` | compares | table |
+| `rucc` | O0 | `interpreter-dispatch.4.threaded.pointer.8.c17.77dc9ec0` | compares | table |
 | `rucc` | O0 | `switch-dispatch.affine.in-order.c17.3de0f02c` | table | compares |
 | `rucc` | O0 | `switch-dispatch.affine.unpredictable.c17.1095fab2` | table | compares |
 | `rucc` | O0 | `switch-dispatch.below-zero.unpredictable.c17.0348e7c3` | table | compares |
@@ -64,6 +83,42 @@ Each of these cases has a `switch` that a compiler under test lowered into a dif
 | `rucc` | O0 | `switch-lowering.dense.hot-case.95.wrong.c17.22be52ce` | table | compares |
 | `rucc` | O0 | `switch-runs.several-runs.31.c17.02b4c07b` | table | compares |
 | `rucc` | O0 | `switch-runs.several-runs.33.c17.9b43c0a4` | table | compares |
+| `rucc` | O1 | `interpreter-dispatch.12.table.direct.32.c17.49df9385` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.table.direct.8.c17.fe4a8b3d` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.table.none.32.c17.d9ec709c` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.table.none.8.c17.fd7b1f54` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.table.pointer.32.c17.090126a6` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.table.pointer.8.c17.085ef334` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.threaded.direct.32.c17.960c9160` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.threaded.direct.8.c17.ea92116c` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.threaded.none.32.c17.eec600eb` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.threaded.none.8.c17.0a37857e` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.threaded.pointer.32.c17.e1cf7a44` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.12.threaded.pointer.8.c17.31d76aaa` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.table.direct.32.c17.dc0e6741` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.table.direct.8.c17.d33ddfed` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.table.none.32.c17.2e0c71b0` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.table.pointer.8.c17.a376142a` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.threaded.direct.32.c17.80c136bc` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.threaded.direct.8.c17.288d7cd7` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.threaded.none.32.c17.bb796889` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.threaded.none.8.c17.1ad7034a` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.threaded.pointer.32.c17.2aaaaaae` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.24.threaded.pointer.8.c17.5cdc26d1` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.table.direct.32.c17.8f2d2ccd` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.table.direct.8.c17.ad381896` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.table.none.32.c17.55d82006` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.table.none.8.c17.66690ed6` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.table.pointer.32.c17.b8148020` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.table.pointer.8.c17.f16c570b` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.threaded.direct.32.c17.d368856f` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.threaded.direct.8.c17.81bbc59c` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.threaded.none.32.c17.25ff2287` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.threaded.none.8.c17.47a678c0` | compares | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.threaded.pointer.32.c17.03cdd965` | table | bit-test, table |
+| `rucc` | O1 | `interpreter-dispatch.4.threaded.pointer.8.c17.77dc9ec0` | compares | bit-test, table |
 | `rucc` | O1 | `switch-dispatch.eight-labels.unpredictable.c17.9cb88f09` | compares | table |
 | `rucc` | O1 | `switch-dispatch.five-labels.unpredictable.c17.912748f9` | compares | table |
 | `rucc` | O1 | `switch-dispatch.interpreter.unpredictable.c17.2c27825f` | compares | table |
@@ -71,6 +126,42 @@ Each of these cases has a `switch` that a compiler under test lowered into a dif
 | `rucc` | O1 | `switch-dispatch.six-labels.unpredictable.c17.98c71a5e` | compares | table |
 | `rucc` | O1 | `switch-lowering.dense.8.c17.35614fce` | compares | table |
 | `rucc` | O1 | `switch-runs.look-alike-arms.five.c17.641be602` | compares | table |
+| `rucc` | O2 | `interpreter-dispatch.12.table.direct.32.c17.49df9385` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.table.direct.8.c17.fe4a8b3d` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.table.none.32.c17.d9ec709c` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.table.none.8.c17.fd7b1f54` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.table.pointer.32.c17.090126a6` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.table.pointer.8.c17.085ef334` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.threaded.direct.32.c17.960c9160` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.threaded.direct.8.c17.ea92116c` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.threaded.none.32.c17.eec600eb` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.threaded.none.8.c17.0a37857e` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.threaded.pointer.32.c17.e1cf7a44` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.12.threaded.pointer.8.c17.31d76aaa` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.table.direct.32.c17.dc0e6741` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.table.direct.8.c17.d33ddfed` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.table.none.32.c17.2e0c71b0` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.table.pointer.8.c17.a376142a` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.threaded.direct.32.c17.80c136bc` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.threaded.direct.8.c17.288d7cd7` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.threaded.none.32.c17.bb796889` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.threaded.none.8.c17.1ad7034a` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.threaded.pointer.32.c17.2aaaaaae` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.24.threaded.pointer.8.c17.5cdc26d1` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.table.direct.32.c17.8f2d2ccd` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.table.direct.8.c17.ad381896` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.table.none.32.c17.55d82006` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.table.none.8.c17.66690ed6` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.table.pointer.32.c17.b8148020` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.table.pointer.8.c17.f16c570b` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.threaded.direct.32.c17.d368856f` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.threaded.direct.8.c17.81bbc59c` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.threaded.none.32.c17.25ff2287` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.threaded.none.8.c17.47a678c0` | compares | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.threaded.pointer.32.c17.03cdd965` | table | bit-test, table |
+| `rucc` | O2 | `interpreter-dispatch.4.threaded.pointer.8.c17.77dc9ec0` | compares | bit-test, table |
 | `rucc` | O2 | `switch-dispatch.interpreter.unpredictable.c17.2c27825f` | compares | table |
 | `rucc` | O2 | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | compares | table |
 | `rucc` | O2 | `switch-dispatch.names-with-holes.unpredictable.c17.64a0db1b` | compares | table |
@@ -78,6 +169,42 @@ Each of these cases has a `switch` that a compiler under test lowered into a dif
 | `rucc` | O2 | `switch-runs.classifier.char.c17.b072f937` | lookup | compares |
 | `rucc` | O2 | `switch-runs.classifier.unsigned-char.c17.3ae9dc72` | lookup | compares |
 | `rucc` | O2 | `switch-runs.several-runs.2.c17.c52ca973` | lookup | compares |
+| `rucc` | O3 | `interpreter-dispatch.12.table.direct.32.c17.49df9385` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.table.direct.8.c17.fe4a8b3d` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.table.none.32.c17.d9ec709c` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.table.none.8.c17.fd7b1f54` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.table.pointer.32.c17.090126a6` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.table.pointer.8.c17.085ef334` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.threaded.direct.32.c17.960c9160` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.threaded.direct.8.c17.ea92116c` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.threaded.none.32.c17.eec600eb` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.threaded.none.8.c17.0a37857e` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.threaded.pointer.32.c17.e1cf7a44` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.12.threaded.pointer.8.c17.31d76aaa` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.table.direct.32.c17.dc0e6741` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.table.direct.8.c17.d33ddfed` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.table.none.32.c17.2e0c71b0` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.table.pointer.8.c17.a376142a` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.threaded.direct.32.c17.80c136bc` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.threaded.direct.8.c17.288d7cd7` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.threaded.none.32.c17.bb796889` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.threaded.none.8.c17.1ad7034a` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.threaded.pointer.32.c17.2aaaaaae` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.24.threaded.pointer.8.c17.5cdc26d1` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.table.direct.32.c17.8f2d2ccd` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.table.direct.8.c17.ad381896` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.table.none.32.c17.55d82006` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.table.none.8.c17.66690ed6` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.table.pointer.32.c17.b8148020` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.table.pointer.8.c17.f16c570b` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.threaded.direct.32.c17.d368856f` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.threaded.direct.8.c17.81bbc59c` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.threaded.none.32.c17.25ff2287` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.threaded.none.8.c17.47a678c0` | compares | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.threaded.pointer.32.c17.03cdd965` | table | bit-test, table |
+| `rucc` | O3 | `interpreter-dispatch.4.threaded.pointer.8.c17.77dc9ec0` | compares | bit-test, table |
 | `rucc` | O3 | `switch-dispatch.interpreter.unpredictable.c17.2c27825f` | compares | table |
 | `rucc` | O3 | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | compares | table |
 | `rucc` | O3 | `switch-dispatch.names-with-holes.unpredictable.c17.64a0db1b` | compares | table |
@@ -85,6 +212,42 @@ Each of these cases has a `switch` that a compiler under test lowered into a dif
 | `rucc` | O3 | `switch-runs.classifier.char.c17.b072f937` | lookup | compares |
 | `rucc` | O3 | `switch-runs.classifier.unsigned-char.c17.3ae9dc72` | lookup | compares |
 | `rucc` | O3 | `switch-runs.several-runs.2.c17.c52ca973` | lookup | compares |
+| `rucc` | Os | `interpreter-dispatch.12.table.direct.32.c17.49df9385` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.table.direct.8.c17.fe4a8b3d` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.table.none.32.c17.d9ec709c` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.table.none.8.c17.fd7b1f54` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.table.pointer.32.c17.090126a6` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.table.pointer.8.c17.085ef334` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.threaded.direct.32.c17.960c9160` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.threaded.direct.8.c17.ea92116c` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.threaded.none.32.c17.eec600eb` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.threaded.none.8.c17.0a37857e` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.threaded.pointer.32.c17.e1cf7a44` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.12.threaded.pointer.8.c17.31d76aaa` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.table.direct.32.c17.dc0e6741` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.table.direct.8.c17.d33ddfed` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.table.none.32.c17.2e0c71b0` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.table.none.8.c17.dd956486` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.table.pointer.8.c17.a376142a` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.threaded.direct.32.c17.80c136bc` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.threaded.direct.8.c17.288d7cd7` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.threaded.none.32.c17.bb796889` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.threaded.none.8.c17.1ad7034a` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.threaded.pointer.32.c17.2aaaaaae` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.24.threaded.pointer.8.c17.5cdc26d1` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.table.direct.32.c17.8f2d2ccd` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.table.direct.8.c17.ad381896` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.table.none.32.c17.55d82006` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.table.none.8.c17.66690ed6` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.table.pointer.32.c17.b8148020` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.table.pointer.8.c17.f16c570b` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.threaded.direct.32.c17.d368856f` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.threaded.direct.8.c17.81bbc59c` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.threaded.none.32.c17.25ff2287` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.threaded.none.8.c17.47a678c0` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.threaded.pointer.32.c17.03cdd965` | table | bit-test, table |
+| `rucc` | Os | `interpreter-dispatch.4.threaded.pointer.8.c17.77dc9ec0` | table | bit-test, table |
 | `rucc` | Os | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | compares | table |
 | `rucc` | Os | `switch-dispatch.names-with-holes.unpredictable.c17.64a0db1b` | compares | table |
 | `rucc` | Os | `switch-dispatch.names.unpredictable.c17.cd05ba1f` | compares | table |
