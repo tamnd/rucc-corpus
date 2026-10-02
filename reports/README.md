@@ -7,7 +7,7 @@
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.18.7 | under test |
+| `rucc` | rucc 0.18.10 | under test |
 
 ## How the cases came out
 
@@ -41,9 +41,9 @@ Every count is per case per level, so a corpus of a thousand programs built at f
 | target | wanted | this run | met |
 |---|---|---|---|
 | `correctness` | every case prints the answer the generator computed, on every compiler, at every level | 230.000 | no |
-| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2, counted over the whole corpus by byte | 1.527 | no |
-| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.618 | yes |
-| `size-model:rucc` | the code rucc produces at -Os is no larger than the code it produces at -O2, and where gcc-16 found something to trade away rucc found something too, since -Os is a different cost function and not a cheaper -O2 | 0.998 | yes |
+| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2, counted over the whole corpus by byte | 1.374 | no |
+| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.610 | yes |
+| `size-model:rucc` | the code rucc produces at -Os is no larger than the code it produces at -O2, and where gcc-16 found something to trade away rucc found something too, since -Os is a different cost function and not a cheaper -O2 | 1.000 | yes |
 
 ## Running this yourself
 
