@@ -4,33 +4,33 @@ Everything below the machine independent IR, where the cost of a decision is mea
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`selection`](../../programs/backend/selection/README.md) | 40 | 680 | 200 of 200 | 5% less | 35% less | 160% more |
-| [`register-pressure`](../../programs/backend/register-pressure/README.md) | 60 | 3,120 | 300 of 300 | 2% less | 37% less | 172% more |
-| [`register-alloc`](../../programs/backend/register-alloc/README.md) | 40 | 2,664 | 200 of 200 | level | 36% less | 120% more |
-| [`scheduling`](../../programs/backend/scheduling/README.md) | 20 | 1,046 | 100 of 100 | 43% more | 35% less | 30% more |
-| [`block-layout`](../../programs/backend/block-layout/README.md) | 16 | 421 | 80 of 80 | 1% less | 43% less | 130% more |
-| [`if-conversion`](../../programs/backend/if-conversion/README.md) | 38 | 945 | 190 of 190 | 9% less | 43% less | 15% more |
-| [`switch-lowering`](../../programs/backend/switch-lowering/README.md) | 27 | 1,521 | 135 of 135 | 1% more | 45% less | level |
-| [`switch-runs`](../../programs/backend/switch-runs/README.md) | 15 | 1,356 | 75 of 75 | 3% more | 40% less | 99% more |
-| [`switch-dispatch`](../../programs/backend/switch-dispatch/README.md) | 21 | 942 | 105 of 105 | 18% less | 44% less | 95% more |
-| [`division`](../../programs/backend/division/README.md) | 72 | 2,020 | 360 of 360 | 16% less | 53% less | 10% less |
-| [`narrow-shift`](../../programs/backend/narrow-shift/README.md) | 8 | 256 | 40 of 40 | 34% less | 56% less | 79% more |
-| [`calling-convention`](../../programs/backend/calling-convention/README.md) | 10 | 216 | 50 of 50 | 3% less | 32% less | 121% more |
-| [`machine-peephole`](../../programs/backend/machine-peephole/README.md) | 22 | 402 | 110 of 110 | 4% less | 34% less | 169% more |
-| [`bit-liveness`](../../programs/backend/bit-liveness/README.md) | 28 | 628 | 140 of 140 | 2% less | 37% less | 168% more |
-| [`compare-elim`](../../programs/backend/compare-elim/README.md) | 26 | 526 | 130 of 130 | 3% less | 37% less | level |
-| [`address-fold`](../../programs/backend/address-fold/README.md) | 28 | 584 | 140 of 140 | 4% less | 36% less | 171% more |
-| [`load-fold`](../../programs/backend/load-fold/README.md) | 40 | 924 | 200 of 200 | 10% less | 38% less | 158% more |
-| [`store-fold`](../../programs/backend/store-fold/README.md) | 56 | 1,416 | 280 of 280 | 11% less | 39% less | 84% more |
-| [`store-fold-constant`](../../programs/backend/store-fold-constant/README.md) | 118 | 2,960 | 590 of 590 | 8% less | 38% less | 85% more |
-| [`compare-fold`](../../programs/backend/compare-fold/README.md) | 118 | 2,742 | 590 of 590 | 7% less | 38% less | 107% more |
-| [`frame-address`](../../programs/backend/frame-address/README.md) | 6 | 117 | 30 of 30 | 4% less | 34% less | 158% more |
-| [`stack-slots`](../../programs/backend/stack-slots/README.md) | 6 | 201 | 30 of 30 | 32% less | 47% less | 48% more |
-| [`frame-size`](../../programs/backend/frame-size/README.md) | 59 | 8,808 | 295 of 295 | 11% less | 67% less | 42% more |
-| [`interpreter-dispatch`](../../programs/backend/interpreter-dispatch/README.md) | 36 | 20,442 | 180 of 180 | 204% more | 47% less | 40% more |
-| [`bit-builtins`](../../programs/backend/bit-builtins/README.md) | 22 | 1,316 | 110 of 110 | 87% more | 44% less | 89% more |
-| [`float-conversion`](../../programs/backend/float-conversion/README.md) | 66 | 1,477 | 330 of 330 | 6% more | 35% less | 137% more |
-| [`long-double`](../../programs/backend/long-double/README.md) | 10 | 226 | 50 of 50 | 49% more | 34% less | 142% more |
+| [`selection`](../../programs/backend/selection/README.md) | 40 | 680 | 200 of 200 | 5% less | 33% less | 146% more |
+| [`register-pressure`](../../programs/backend/register-pressure/README.md) | 60 | 3,120 | 300 of 300 | 2% less | 33% less | 169% more |
+| [`register-alloc`](../../programs/backend/register-alloc/README.md) | 40 | 2,664 | 200 of 200 | level | 35% less | 85% more |
+| [`scheduling`](../../programs/backend/scheduling/README.md) | 20 | 1,046 | 100 of 100 | 43% more | 34% less | 106% more |
+| [`block-layout`](../../programs/backend/block-layout/README.md) | 16 | 421 | 80 of 80 | 1% less | 40% less | 97% more |
+| [`if-conversion`](../../programs/backend/if-conversion/README.md) | 38 | 945 | 190 of 190 | 8% less | 39% less | level |
+| [`switch-lowering`](../../programs/backend/switch-lowering/README.md) | 27 | 1,521 | 135 of 135 | 1% more | 43% less | level |
+| [`switch-runs`](../../programs/backend/switch-runs/README.md) | 15 | 1,356 | 75 of 75 | 1% more | 36% less | level |
+| [`switch-dispatch`](../../programs/backend/switch-dispatch/README.md) | 21 | 942 | 105 of 105 | 19% less | 42% less | 81% more |
+| [`division`](../../programs/backend/division/README.md) | 72 | 2,020 | 360 of 360 | 16% less | 50% less | 83% more |
+| [`narrow-shift`](../../programs/backend/narrow-shift/README.md) | 8 | 256 | 40 of 40 | 36% less | 57% less | 4% less |
+| [`calling-convention`](../../programs/backend/calling-convention/README.md) | 10 | 216 | 50 of 50 | 3% less | 33% less | 174% more |
+| [`machine-peephole`](../../programs/backend/machine-peephole/README.md) | 22 | 402 | 110 of 110 | 4% less | 31% less | 180% more |
+| [`bit-liveness`](../../programs/backend/bit-liveness/README.md) | 28 | 628 | 140 of 140 | 2% less | 32% less | 177% more |
+| [`compare-elim`](../../programs/backend/compare-elim/README.md) | 26 | 526 | 130 of 130 | 3% less | 35% less | 160% more |
+| [`address-fold`](../../programs/backend/address-fold/README.md) | 28 | 584 | 140 of 140 | 4% less | 35% less | level |
+| [`load-fold`](../../programs/backend/load-fold/README.md) | 40 | 924 | 200 of 200 | 10% less | 36% less | 158% more |
+| [`store-fold`](../../programs/backend/store-fold/README.md) | 56 | 1,416 | 280 of 280 | 11% less | 38% less | 89% more |
+| [`store-fold-constant`](../../programs/backend/store-fold-constant/README.md) | 118 | 2,960 | 590 of 590 | 8% less | 37% less | 148% more |
+| [`compare-fold`](../../programs/backend/compare-fold/README.md) | 118 | 2,742 | 590 of 590 | 7% less | 38% less | 17% more |
+| [`frame-address`](../../programs/backend/frame-address/README.md) | 6 | 117 | 30 of 30 | 4% less | 34% less | 85% more |
+| [`stack-slots`](../../programs/backend/stack-slots/README.md) | 6 | 201 | 30 of 30 | 33% less | 43% less | 386% more |
+| [`frame-size`](../../programs/backend/frame-size/README.md) | 59 | 8,808 | 295 of 295 | 11% less | 67% less | 37% more |
+| [`interpreter-dispatch`](../../programs/backend/interpreter-dispatch/README.md) | 36 | 20,442 | 180 of 180 | 203% more | 46% less | level |
+| [`bit-builtins`](../../programs/backend/bit-builtins/README.md) | 22 | 1,316 | 110 of 110 | 87% more | 40% less | 85% more |
+| [`float-conversion`](../../programs/backend/float-conversion/README.md) | 66 | 1,477 | 330 of 330 | 6% more | 35% less | 158% more |
+| [`long-double`](../../programs/backend/long-double/README.md) | 10 | 226 | 50 of 50 | 49% more | 33% less | 149% more |
 
 The reference compiler said it took 4757 transformations in this phase and wanted 20736 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
 
