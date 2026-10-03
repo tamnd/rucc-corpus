@@ -111,6 +111,8 @@ pub enum Facet {
     LoopIdiom,
     /// Deleting a loop whose body computes nothing anybody reads.
     LoopDeletion,
+    /// Replacing a loop that counts the bits of a value with the count.
+    BitLoops,
     /// Rotating a loop so the test lands at the bottom.
     LoopRotate,
     /// The shape a loop is left in by canonicalization, rather than what it computes.
@@ -585,6 +587,7 @@ impl Facet {
         Self::LoopUnrollShape,
         Self::LoopIdiom,
         Self::LoopDeletion,
+        Self::BitLoops,
         Self::LoopRotate,
         Self::LoopShape,
         Self::LoopRestructure,
@@ -693,6 +696,7 @@ impl Facet {
             Self::LoopUnrollShape => "loop-unroll-shape",
             Self::LoopIdiom => "loop-idiom",
             Self::LoopDeletion => "loop-deletion",
+            Self::BitLoops => "bit-loops",
             Self::LoopRotate => "loop-rotate",
             Self::LoopShape => "loop-shape",
             Self::LoopRestructure => "loop-restructure",
@@ -808,6 +812,9 @@ impl Facet {
             Self::LoopUnrollShape => "the loop shapes an unroller has to count or refuse",
             Self::LoopIdiom => "recognizing a loop the runtime already implements",
             Self::LoopDeletion => "deleting a loop whose body nobody reads",
+            Self::BitLoops => {
+                "loops that count bits, which some processors count in one instruction"
+            }
             Self::LoopRotate => "rotating a loop so the test lands at the bottom",
             Self::LoopShape => "the shape a loop is left in, before any pass reads it",
             Self::LoopRestructure => "exchanging or fusing loops for locality",
@@ -958,6 +965,7 @@ impl Facet {
             | Self::LoopUnrollShape
             | Self::LoopIdiom
             | Self::LoopDeletion
+            | Self::BitLoops
             | Self::LoopRotate
             | Self::LoopShape
             | Self::LoopHoist
