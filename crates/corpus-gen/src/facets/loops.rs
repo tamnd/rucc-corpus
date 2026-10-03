@@ -39,6 +39,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     loop_unroll_shape(sink);
     loop_idiom(sink);
     loop_deletion(sink);
+    bit_loops(sink);
     loop_rotate(sink);
     loop_shape(sink);
     loop_restructure(sink);
@@ -1631,6 +1632,161 @@ fn loop_deletion(sink: &mut Sink<'_>) {
     }
 }
 
+/// The loops [`bit_loops`] writes, each with the extension that has its count in one
+/// instruction.
+const BIT_LOOPS: &[(&str, &str)] =
+    &[("ones", "popcnt"), ("width", "lzcnt"), ("trailing", "bmi"), ("leading", "lzcnt")];
+
+/// How many values a `bit-loops` case counts.
+const BIT_VALUES: i64 = 100_000;
+
+/// Where the xorshift generator a `bit-loops` case counts the values of starts.
+const BIT_SEED: u64 = 88_172_645_463_325_252;
+
+/// Loops that count the bits of a value, which a processor with the right extension does in
+/// one instruction.
+///
+/// `ones` clears the lowest set bit until nothing is left, which is a population count.
+/// `width` shifts right until nothing is left, which is the width less the leading zeros.
+/// `trailing` shifts right until the bottom bit is set and `leading` shifts left until the top
+/// bit is set, and both return the width for a zero before the loop, because the loop would
+/// never end on one. These are the loops gcc takes in `number_of_iterations_popcount` and the
+/// functions beside it, written the way C programs write them.
+///
+/// `built` is whether the function with the loop in it is `plain` or carries a `target`
+/// attribute for the extension that has the count, which is `popcnt`, `lzcnt` or `bmi`. A plain
+/// x86-64 has none of the three, so at the corpus's default flags the plain case asks whether a
+/// compiler leaves the loop alone where the count would be a dozen instructions, and the target
+/// case asks whether it takes the loop where the count is one. The target case calls the
+/// function with the attribute only after `__builtin_cpu_supports` says the processor has the
+/// extension, and the plain one otherwise, so it prints the same on every x86-64.
+///
+/// Each case counts a hundred thousand values from an xorshift generator, shifted by a
+/// different amount each time so that every width of value turns up, and prints the total. At
+/// that size a loop left in place goes round a few million times, which stands well clear of
+/// what starting the process and printing costs.
+fn bit_loops(sink: &mut Sink<'_>) {
+    for &(count, feature) in BIT_LOOPS {
+        for ty in [Ty::U32, Ty::U64] {
+            for built in ["plain", "target"] {
+                if !sink.wants(Facet::BitLoops) {
+                    return;
+                }
+                let program = bit_program(count, feature, ty, built == "target");
+                let axes = Axes::of([("count", count), ("type", ty.name()), ("built", built)]);
+                if built == "target" {
+                    sink.push_tagged(
+                        Facet::BitLoops,
+                        axes,
+                        Dialect::C17,
+                        program,
+                        &["gnu", "x86-64"],
+                    );
+                } else {
+                    sink.push(Facet::BitLoops, axes, Dialect::C17, program);
+                }
+            }
+        }
+    }
+}
+
+/// One `bit-loops` case.
+fn bit_program(count: &str, feature: &str, ty: Ty, target: bool) -> Program {
+    let name = ty.c_name();
+    let bits = ty.bits();
+    let top = if bits == 32 { "0x80000000u" } else { "0x8000000000000000ull" };
+    let (what, lines): (String, Vec<String>) = match count {
+        "ones" => (
+            "clearing the lowest set bit of".to_owned(),
+            vec!["while (x) {".to_owned(), "    x &= x - 1;".to_owned()],
+        ),
+        "width" => (
+            "shifting right until nothing is left of".to_owned(),
+            vec!["while (x) {".to_owned(), "    x >>= 1;".to_owned()],
+        ),
+        "trailing" => (
+            "shifting right until the bottom bit is set in".to_owned(),
+            vec![
+                format!("if (!x) return {bits};"),
+                "while (!(x & 1)) {".to_owned(),
+                "    x >>= 1;".to_owned(),
+            ],
+        ),
+        _ => (
+            "shifting left until the top bit is set in".to_owned(),
+            vec![
+                format!("if (!x) return {bits};"),
+                format!("while (!(x & {top})) {{"),
+                "    x <<= 1;".to_owned(),
+            ],
+        ),
+    };
+    let built = if target {
+        format!("a function built with target(\"{feature}\")")
+    } else {
+        "a plain function".to_owned()
+    };
+    let mut program = Program::new(format!("a loop {what} an {name}, in {built}"));
+    let mut function = |prefix: &str, suffix: &str| {
+        program.top(format!("{prefix}static int count_{suffix}({name} x) {{"));
+        program.top("    int n = 0;");
+        for line in &lines {
+            program.top(format!("    {line}"));
+        }
+        program.top("        n++;");
+        program.top("    }");
+        program.top("    return n;");
+        program.top("}");
+    };
+    function("", "plain");
+    if target {
+        function(&format!("__attribute__((target(\"{feature}\"))) "), "fast");
+    }
+
+    program.input(Ty::U64, "seed", i128::from(BIT_SEED));
+    if target {
+        program.line(format!("int fast = __builtin_cpu_supports(\"{feature}\");"));
+    }
+    program.line("long long total = 0;");
+    program.line("unsigned long long x = seed;");
+    program.line(format!("for (int i = 0; i < {BIT_VALUES}; i++) {{"));
+    program.line_at(1, "x ^= x << 13;");
+    program.line_at(1, "x ^= x >> 7;");
+    program.line_at(1, "x ^= x << 17;");
+    program.line_at(1, format!("{name} v = ({name})(x >> (i & 63));"));
+    if target {
+        program.line_at(1, "total += fast ? count_fast(v) : count_plain(v);");
+    } else {
+        program.line_at(1, "total += count_plain(v);");
+    }
+    program.line("}");
+    program.blank();
+    program.check(Ty::I64, "total", bit_total(count, bits));
+    program
+}
+
+/// What a `bit-loops` case prints, worked out the way the loop in it would.
+fn bit_total(count: &str, bits: u32) -> i128 {
+    let mask = if bits == 64 { u64::MAX } else { (1u64 << bits) - 1 };
+    let mut x = BIT_SEED;
+    let mut total = 0i128;
+    for i in 0..BIT_VALUES {
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        let v = (x >> (i & 63)) & mask;
+        let n = match count {
+            "ones" => v.count_ones(),
+            "width" => 64 - v.leading_zeros(),
+            _ if v == 0 => bits,
+            "trailing" => v.trailing_zeros(),
+            _ => v.leading_zeros() - (64 - bits),
+        };
+        total += i128::from(n);
+    }
+    total
+}
+
 /// The same loop written four ways round.
 ///
 /// A `for`, a `while`, a `do while` and a `goto` all describe the same iteration, and a
@@ -2093,6 +2249,7 @@ fn loop_restructure(sink: &mut Sink<'_>) {
 
 #[cfg(test)]
 mod tests {
+    use super::{BIT_LOOPS, BIT_SEED, BIT_VALUES, bit_total};
     use crate::{Options, Sink};
     use corpus_model::{Case, Expect, Facet};
 
@@ -2317,6 +2474,46 @@ mod tests {
             })
             .unwrap();
         assert_eq!(output(sum), "136\n");
+    }
+
+    /// Every count at both widths, plain and with the attribute, and only the cases with the
+    /// attribute need anything a plain C compiler for any processor does not have.
+    #[test]
+    fn every_bit_loop_is_there_plain_and_built_for_its_extension() {
+        let cases = cases_for(Facet::BitLoops);
+        assert_eq!(cases.len(), BIT_LOOPS.len() * 2 * 2);
+        for case in &cases {
+            let target = case.axes.get("built") == Some("target");
+            assert_eq!(case.source.contains("__attribute__((target("), target, "{}", case.id);
+            assert_eq!(case.source.contains("__builtin_cpu_supports"), target, "{}", case.id);
+        }
+    }
+
+    /// The totals the cases print, worked out a second way, from the bits of each value one at a
+    /// time rather than from the standard library's counts.
+    #[test]
+    fn the_bit_loop_totals_agree_with_counting_one_bit_at_a_time() {
+        for (count, _) in BIT_LOOPS {
+            for bits in [32u32, 64] {
+                let mask = if bits == 64 { u64::MAX } else { (1u64 << bits) - 1 };
+                let mut x = BIT_SEED;
+                let mut total = 0i128;
+                for i in 0..BIT_VALUES {
+                    x ^= x << 13;
+                    x ^= x >> 7;
+                    x ^= x << 17;
+                    let v = (x >> (i & 63)) & mask;
+                    let set: Vec<u32> = (0..bits).filter(|at| (v >> at) & 1 == 1).collect();
+                    total += i128::from(match *count {
+                        "ones" => set.len() as u32,
+                        "width" => set.last().map_or(0, |at| at + 1),
+                        "trailing" => set.first().copied().unwrap_or(bits),
+                        _ => set.last().map_or(bits, |at| bits - 1 - at),
+                    });
+                }
+                assert_eq!(bit_total(count, bits), total, "{count} at {bits}");
+            }
+        }
     }
 
     #[test]
