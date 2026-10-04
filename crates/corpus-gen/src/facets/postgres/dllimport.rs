@@ -431,29 +431,27 @@ fn thunk_calls(sink: &mut Sink<'_>, variant: usize) {
     };
     let starts = [1i64, 20 + v, -5];
 
-    let body = format!(
-        "\
+    let body = "\
 long long step_add(long long x);
 long long step_mul(long long x);
 long long step_xor(long long x);
 
-static long long (*const steps[3])(long long) = {{ step_add, step_mul, step_xor }};
+static long long (*const steps[3])(long long) = { step_add, step_mul, step_xor };
 
 PGDLLEXPORT long long mod_fold(long long x, int rounds)
-{{
-    for (int i = 0; i < rounds; i++) {{
+{
+    for (int i = 0; i < rounds; i++) {
         x = steps[i % 3](x);
-    }}
+    }
     return x;
-}}
+}
 
 PGDLLEXPORT long long mod_direct(long long x)
-{{
+{
     return step_xor(step_mul(step_add(x)));
-}}
-"
-    );
-    let m0 = module("m0", "Calls the executable's functions through import thunks.", &body);
+}
+";
+    let m0 = module("m0", "Calls the executable's functions through import thunks.", body);
 
     let mut program =
         executable(format!("{steps} calls through import thunks and a table of them"));
@@ -662,10 +660,8 @@ fn exports(sink: &mut Sink<'_>, variant: usize) {
         exe_total += 1;
         seen.push(mod_total);
     }
-    let after_reset = {
-        let x = 100;
-        x * 3 + exe_total
-    };
+    // `step(100)` after the executable put the total back to nothing.
+    let after_reset = 100 * 3 + exe_total;
     exe_total += 1;
 
     let body = format!(
