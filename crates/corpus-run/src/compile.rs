@@ -300,7 +300,10 @@ pub fn build_and_run(
             instructions: counted.iter().min().copied(),
             instruction_samples: counted,
             peak_bytes: ran.peak_bytes,
-            output: ran.stdout,
+            // A Windows C library writes standard output in text mode, which puts a carriage
+            // return before every newline. The expected answers are written once for every
+            // platform, and the line ending is the C library's and not the compiler's.
+            output: if cfg!(windows) { ran.stdout.replace("\r\n", "\n") } else { ran.stdout },
         }
     } else {
         Execute::skipped()
