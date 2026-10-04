@@ -13,6 +13,14 @@
 //! whether it works with many values alive across it, some in registers the jump restores, some
 //! in the frame, and an arm that ran first and wanted the same registers and slots for itself.
 //!
+//! `builtin-setjmp` is the same error handling as MinGW builds it. There the `sigsetjmp` in
+//! `PG_TRY` is `__builtin_setjmp` on a buffer of five words, and the `siglongjmp` in
+//! `elog(ERROR)` is `__builtin_longjmp` with a second argument of 1, because the C library's
+//! `setjmp` on Windows unwinds through frames it has no tables for. The compiler writes both
+//! itself, so the save, the jump and where the values are when it lands are all its own work.
+//! It has the shapes `sigsetjmp` has, a jump from the bottom of a deep chain of calls, and a
+//! buffer that is a field of a global struct rather than a local.
+//!
 //! `overflow-builtins` is the arithmetic. `common/int.h` checks every add, subtract and
 //! multiply that could overflow with `__builtin_add_overflow` and its two siblings, over
 //! `int16`, `int32`, `int64`, their unsigned forms and `int128`. The builtins take the exact
@@ -66,6 +74,7 @@ const PROVENANCE: &str = "provenance:postgres";
 /// Emits everything in this module.
 pub(crate) fn generate(sink: &mut Sink<'_>) {
     sigsetjmp(sink);
+    builtin_setjmp(sink);
     overflow_builtins(sink);
     target_attribute(sink);
     crc32c_facet(sink);
@@ -311,11 +320,51 @@ fn sigsetjmp(sink: &mut Sink<'_>) {
     }
 }
 
-/// One `sigsetjmp` case.
+/// Locals live across a `__builtin_setjmp`, read after the `__builtin_longjmp` back to it.
+///
+/// The axes are the ones `sigsetjmp` has, with fewer points on `live`, and two more shapes.
+/// `deep` raises from the bottom of a recursive chain of a dozen calls, so the jump throws
+/// away a dozen frames rather than two. `global` saves into a buffer that is a field of a
+/// static struct, after an `int`, the way a handler kept in a global would be, so the save and
+/// the jump reach the buffer through an address that is not the frame's.
+///
+/// The buffer is five pointers, as GCC and MinGW Postgres have it. The jump is always in a
+/// function other than the one that saved, and its second argument is always the constant 1,
+/// since those are the only terms the builtins are defined on, and the function that jumps is
+/// never inlined, so it stays that way at every level.
+fn builtin_setjmp(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &["catch", "rethrow", "loop", "no-error", "deep", "global"];
+    const LIVE: &[usize] = &[1, 4, 12, 30];
+    const ARMS: &[&str] = &["quiet", "busy"];
+    for &shape in SHAPES {
+        for &live in LIVE {
+            for &arm in ARMS {
+                if !sink.wants(Facet::BuiltinSetjmp) {
+                    return;
+                }
+                let program = sigsetjmp_program("builtin", shape, live, arm == "busy");
+                let axes =
+                    Axes::of([("shape", shape), ("live", &live.to_string()), ("first-arm", arm)]);
+                sink.push_tagged(
+                    Facet::BuiltinSetjmp,
+                    axes,
+                    Dialect::C17,
+                    program,
+                    &["gnu", PROVENANCE],
+                );
+            }
+        }
+    }
+}
+
+/// One `sigsetjmp` case, or with `api` set to `builtin`, one `builtin-setjmp` case.
 fn sigsetjmp_program(api: &str, shape: &str, live: usize, busy: bool) -> Program {
     let posix = api == "sigsetjmp";
+    let builtin = api == "builtin";
     let (buffer, save, jump) = if posix {
         ("sigjmp_buf", "sigsetjmp", "siglongjmp")
+    } else if builtin {
+        ("builtin_jmp_buf", "__builtin_setjmp", "__builtin_longjmp")
     } else {
         ("jmp_buf", "setjmp", "longjmp")
     };
@@ -323,22 +372,38 @@ fn sigsetjmp_program(api: &str, shape: &str, live: usize, busy: bool) -> Program
         if posix { format!("{save}({name}, 0)") } else { format!("{save}({name})") }
     };
     let mut program = Program::new(format!(
-        "{live} value{} live across {api} in the {shape} shape, with a {} first arm",
+        "{live} value{} live across {} in the {shape} shape, with a {} first arm",
         if live == 1 { "" } else { "s" },
+        if builtin { save } else { api },
         if busy { "busy" } else { "quiet" }
     ));
     if posix {
         // With -std=c17 the C library shows only ISO C, and sigsetjmp is POSIX.
         program.define("_POSIX_C_SOURCE", "200809L");
     }
-    program.include("setjmp.h");
+    if builtin {
+        program.top("typedef void *builtin_jmp_buf[5];");
+    } else {
+        program.include("setjmp.h");
+    }
     program.top(format!("static {buffer} *exception_stack;"));
     program.top("static volatile int depth;");
     program.top("static volatile long long busy_total;");
     program.top(format!("static int cells[{CELLS}];"));
     program.top(format!("static volatile long long seen[{live}];"));
-    program.top("static void raise_error(int code) {");
-    program.top(format!("    {jump}(*exception_stack, code);"));
+    if shape == "global" {
+        program.top(format!("static struct {{ int active; {buffer} buf; }} handler;"));
+    }
+    if builtin {
+        // The builtins only allow a jump from another function and a value of 1, and the
+        // code only ever says that there was an error, so it goes no further.
+        program.top("static __attribute__((noinline)) void raise_error(int code) {");
+        program.top("    (void)code;");
+        program.top(format!("    {jump}(*exception_stack, 1);"));
+    } else {
+        program.top("static void raise_error(int code) {");
+        program.top(format!("    {jump}(*exception_stack, code);"));
+    }
     program.top("}");
     program.top("static void work(int code) {");
     program.top("    depth = depth + 1;");
@@ -346,6 +411,19 @@ fn sigsetjmp_program(api: &str, shape: &str, live: usize, busy: bool) -> Program
     program.top("        raise_error(code);");
     program.top("    }");
     program.top("}");
+    if shape == "deep" {
+        // The volatile local is read after the call returns, so every level keeps a frame
+        // of its own rather than the recursion becoming a loop.
+        program.top("static int descend(int levels, int code) {");
+        program.top("    volatile int frame = levels;");
+        program.top("    if (levels == 0) {");
+        program.top("        work(code);");
+        program.top("    } else {");
+        program.top("        descend(levels - 1, code);");
+        program.top("    }");
+        program.top("    return frame;");
+        program.top("}");
+    }
     program.input(Ty::I32, "seed", SEED);
     program.line(format!("for (int i = 0; i < {CELLS}; i++) {{"));
     program.line_at(1, "cells[i] = i * 7 + 1;");
@@ -382,6 +460,32 @@ fn sigsetjmp_program(api: &str, shape: &str, live: usize, busy: bool) -> Program
     // progress at, how many errors reached the outermost handler, how many times work was
     // called, and how many times over the busy sum ended up in busy_total.
     let (recorded, progress, caught, works, sums): (&[u32], _, _, _, _) = match shape {
+        "deep" | "global" => {
+            // A catch like the first, where the error comes from a dozen calls down or the
+            // buffer is the global handler's.
+            let global = shape == "global";
+            let target = if global { "handler.buf" } else { "local_buf" };
+            program.line(format!("{buffer} *save_stack = exception_stack;"));
+            if !global {
+                program.line(format!("{buffer} local_buf;"));
+            }
+            program.line(format!("if ({} == 0) {{", saved(target)));
+            program.line_at(1, format!("exception_stack = &{target};"));
+            program.line_at(1, "progress = 1;");
+            let call = if global { "work(5);" } else { "descend(12, 5);" };
+            first_arm(&mut program, 1, call);
+            program.line_at(1, "progress = 2;");
+            program.line("} else {");
+            program.line_at(1, "exception_stack = save_stack;");
+            program.line_at(1, "caught = caught + 1;");
+            if global {
+                program.line_at(1, "handler.active = handler.active + 1;");
+            }
+            record(&mut program, 1, &kept);
+            program.line("}");
+            program.line("exception_stack = save_stack;");
+            (&[1], 1, 1, 1 + i128::from(busy), 1)
+        }
         "catch" | "no-error" => {
             let raises = shape == "catch";
             program.line(format!("{buffer} *save_stack = exception_stack;"));
@@ -477,6 +581,9 @@ fn sigsetjmp_program(api: &str, shape: &str, live: usize, busy: bool) -> Program
     program.check(Ty::I32, "depth", works);
     if shape == "rethrow" {
         program.check(Ty::I32, "cleanups", 1);
+    }
+    if shape == "global" {
+        program.check(Ty::I32, "handler.active", 1);
     }
     if busy {
         program.check(Ty::I64, "busy_total", busy_value * sums);

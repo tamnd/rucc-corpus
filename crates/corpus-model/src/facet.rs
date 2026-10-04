@@ -395,6 +395,16 @@ pub enum Facet {
     /// arm that ran first did with the registers and the frame in the meantime.
     Sigsetjmp,
 
+    /// Locals that live across a `__builtin_setjmp` and are read after the `__builtin_longjmp`
+    /// back to it.
+    ///
+    /// A correctness facet. On MinGW, Postgres has `PG_TRY` save with `__builtin_setjmp` and
+    /// `elog(ERROR)` jump with `__builtin_longjmp`, because the C library's `setjmp` on Windows
+    /// wants to unwind frames it has no tables for. There is no library behind the builtins, so
+    /// the compiler alone decides what goes in the five words of the buffer and what it has to
+    /// reload when the jump lands, and it has to get that right for every value in the frame.
+    BuiltinSetjmp,
+
     /// The checked arithmetic builtins, over mixed operand and result types.
     ///
     /// A correctness facet because a wrong answer here is not a slow program, it is an overflow
@@ -636,6 +646,7 @@ impl Facet {
         Self::Atomics,
         Self::SetjmpLongjmp,
         Self::Sigsetjmp,
+        Self::BuiltinSetjmp,
         Self::OverflowBuiltins,
         Self::TargetAttribute,
         Self::Crc32c,
@@ -745,6 +756,7 @@ impl Facet {
             Self::Atomics => "atomics",
             Self::SetjmpLongjmp => "setjmp-longjmp",
             Self::Sigsetjmp => "sigsetjmp",
+            Self::BuiltinSetjmp => "builtin-setjmp",
             Self::OverflowBuiltins => "overflow-builtins",
             Self::TargetAttribute => "target-attribute",
             Self::Crc32c => "crc32c",
@@ -883,6 +895,9 @@ impl Facet {
             Self::Atomics => "the atomic builtins at every ordering, and the header over them",
             Self::SetjmpLongjmp => "the jump that leaves a function without returning from it",
             Self::Sigsetjmp => "locals live across a sigsetjmp the way PG_TRY and PG_CATCH use it",
+            Self::BuiltinSetjmp => {
+                "locals live across a __builtin_setjmp the way MinGW builds of Postgres use it"
+            }
             Self::OverflowBuiltins => {
                 "the checked add, subtract and multiply builtins over mixed integer types"
             }
@@ -1015,6 +1030,7 @@ impl Facet {
             | Self::Atomics
             | Self::SetjmpLongjmp
             | Self::Sigsetjmp
+            | Self::BuiltinSetjmp
             | Self::OverflowBuiltins
             | Self::TargetAttribute
             | Self::Crc32c

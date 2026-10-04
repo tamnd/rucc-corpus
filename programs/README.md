@@ -1,10 +1,10 @@
 # The corpus
 
-3540 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3588 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `78d0b75617767d56da1a70ba5d8ea250e81b732dd9c876123e652bcc84befc10`.
+Corpus digest `76b465622167ab0ad091cb9b65c68d7d564ac6795e62c5369aaea06e687760ec`.
 
 ## floor (118 programs)
 
@@ -131,7 +131,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (694 programs)
+## correctness (742 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -141,6 +141,7 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`atomics`](correctness/atomics/README.md) | 31 | the atomic builtins at every ordering, and the header over them |
 | [`setjmp-longjmp`](correctness/setjmp-longjmp/README.md) | 8 | the jump that leaves a function without returning from it |
 | [`sigsetjmp`](correctness/sigsetjmp/README.md) | 112 | locals live across a sigsetjmp the way PG_TRY and PG_CATCH use it |
+| [`builtin-setjmp`](correctness/builtin-setjmp/README.md) | 48 | locals live across a __builtin_setjmp the way MinGW builds of Postgres use it |
 | [`overflow-builtins`](correctness/overflow-builtins/README.md) | 144 | the checked add, subtract and multiply builtins over mixed integer types |
 | [`target-attribute`](correctness/target-attribute/README.md) | 52 | functions built for an extension and called only after asking the processor |
 | [`crc32c`](correctness/crc32c/README.md) | 64 | CRC-32C through the SSE4.2 instructions against slicing by eight |
