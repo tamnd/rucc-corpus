@@ -72,12 +72,6 @@ jobs:
             git diff --stat -- programs
             exit 1
           fi
-      - name: keep the regenerated programs
-        if: failure()
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: regenerated-programs
-          path: programs/
 
       # The report pages cannot be regenerated here, because they come from a run against a
       # compiler this job does not have. What can be checked is the thing a reader actually

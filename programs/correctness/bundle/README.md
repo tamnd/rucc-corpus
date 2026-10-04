@@ -4,7 +4,7 @@ modules loaded with dlopen that call back into the executable. Part of the corre
 
 33 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
-These programs are an executable and the modules it loads with `dlopen`. The file with `main` in it is the executable and each module listed beside it is built on its own into its name with `.so` on the end, in the same directory, which is the path the program opens. On Linux that is `cc -rdynamic -o case case.c -ldl` and then `cc -fPIC -shared -o m0.so m0.c` for each module, and on macOS the module is built with `-fPIC -bundle -bundle_loader case` instead, which is why the executable is built first.
+These programs are an executable and the modules it loads while it runs. The file with `main` in it is the executable and each module listed beside it is built on its own into its name with `.so` on the end, in the same directory, which is the path the program opens. On Linux that is `cc -rdynamic -o case case.c -ldl` and then `cc -fPIC -shared -o m0.so m0.c` for each module. On macOS the module is built with `-fPIC -bundle -bundle_loader case` instead, and on Windows the executable is built with `-Wl,--export-all-symbols -Wl,--out-implib,libcase.a` and the module with `cc -shared -o m0.so m0.c libcase.a`, which is why the executable is built first.
 
 | program | loads | axes | dialect | must print |
 |---|---|---|---|---|
