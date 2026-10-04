@@ -271,12 +271,18 @@ jobs:
           repository: tamnd/rucc
           path: rucc
       - uses: Swatinem/rust-cache@v2.9.2
-      # Cargo is on the runner's own PATH and not MSYS2's, so both are built outside it.
-      - name: build the corpus and the compiler
+      # Cargo is on the runner's own PATH and not MSYS2's, so all of it is built outside it. The
+      # runtime rucc links at the end of a Windows program lands in rucc/target, where rucc
+      # looks for it.
+      - name: build the corpus, the compiler and its runtime
         shell: pwsh
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           cargo build --release -p rucc-corpus
           cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+          $env:RUCC_XTASK_COMPILER = "$PWD\rucc\target\release\rucc.exe"
+          Set-Location rucc
+          cargo xtask builtins --target x86_64-windows-gnu
       - uses: msys2/setup-msys2@v2.33.0
         with:
           msystem: UCRT64

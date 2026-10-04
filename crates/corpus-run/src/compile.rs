@@ -270,22 +270,24 @@ pub fn build_and_run(
     };
 
     let should_run = produced && matches!(case.expect, Expect::Output(_));
+    // With a dot and a slash on the front, because a bare name would be looked for on the path and
+    // the path is not where this was just built. Windows reads a relative program from the
+    // harness's own directory rather than the one the child starts in, so there it is the whole
+    // path.
+    let program = if cfg!(windows) {
+        std::path::absolute(&binary).unwrap_or_else(|_| binary.clone()).display().to_string()
+    } else {
+        format!("./{BINARY}")
+    };
     let execute = if should_run {
-        // With a dot and a slash on the front, because a bare name would be looked for on the
-        // path and the path is not where this was just built.
-        let ran = exec::run_repeatedly::<String>(
-            &format!("./{BINARY}"),
-            &[],
-            Some(dir),
-            EXECUTE_TIMEOUT,
-            repeats,
-        )
-        .map_err(|error| format!("could not run {}: {error}", binary.display()))?;
+        let ran =
+            exec::run_repeatedly::<String>(&program, &[], Some(dir), EXECUTE_TIMEOUT, repeats)
+                .map_err(|error| format!("could not run {}: {error}", binary.display()))?;
         // Only for a program that worked. Counting the instructions of a program that crashed
         // would count the ones it managed before it died, which is a number that looks like a
         // measurement and is not one.
         let counted = if ran.ok {
-            counter::count_repeatedly::<String>(&format!("./{BINARY}"), &[], Some(dir))
+            counter::count_repeatedly::<String>(&program, &[], Some(dir))
         } else {
             Vec::new()
         };
