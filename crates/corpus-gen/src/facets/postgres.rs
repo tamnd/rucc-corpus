@@ -55,12 +55,18 @@
 //! run on Windows, where a module is built another way, can leave them out. They live in
 //! [`bundle`].
 //!
+//! `dllimport` is the same boundary as Windows builds it. A module reaches the server's data and
+//! functions through `PGDLLIMPORT` and an import library, and the server finds what the module
+//! marked `PGDLLEXPORT`. Its cases load their modules with `LoadLibraryA` there and with
+//! `dlopen` anywhere else, so they carry no `dlopen` tag. They live in [`dllimport`].
+//!
 //! Every case here carries the `provenance:postgres` tag, so a run can pick them out. The ones
 //! that only build on x86-64 also carry `x86-64`, and the ones that only build on AArch64 carry
 //! `aarch64`, so a run elsewhere can leave them out.
 
 mod arm;
 mod bundle;
+mod dllimport;
 
 use crate::Sink;
 use crate::emit::Program;
@@ -83,6 +89,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     frame_size(sink);
     interpreter_dispatch(sink);
     bundle::generate(sink);
+    dllimport::generate(sink);
 }
 
 /// The opaque number every value in a `sigsetjmp` case is computed from.

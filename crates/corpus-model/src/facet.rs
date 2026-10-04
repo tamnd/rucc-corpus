@@ -543,9 +543,24 @@ pub enum Facet {
     /// references from a position independent module to data and functions in the executable,
     /// the module's own globals reached through its own tables, variadic and wide calls in
     /// both directions, constructors that run at load, and two modules with the same names in
-    /// them loaded at once. Does not build on Windows yet, where a module links against an
-    /// import library for the executable instead.
+    /// them loaded at once. Does not build on Windows, where `dlopen` is not there, and the
+    /// `dllimport` facet asks the same questions in the form Windows has them.
     Bundle,
+
+    /// Modules that import functions and data from the executable that loads them, the way
+    /// Windows builds of Postgres do.
+    ///
+    /// On Windows a module reaches the server through an import library. Everything the server
+    /// shares is declared `PGDLLIMPORT`, which is `__declspec(dllimport)` there, so the module
+    /// loads it through an `__imp_` pointer the loader fills in, and every function the server
+    /// looks up in a module is declared `PGDLLEXPORT`. A function called without the attribute
+    /// goes through a thunk the import library supplies instead, and has a different address.
+    /// The questions for the compiler are those loads, calls through them of every shape, the
+    /// address of an import compared on both sides, hooks saved and replaced through one, and
+    /// the export directives a module has to carry for the server to find anything in it. On
+    /// every other system the two macros expand to nothing and the same program runs as a
+    /// shared object.
+    Dllimport,
 
     /// Programs whose point is the shape of the language rather than an optimization.
     ///
@@ -663,6 +678,7 @@ impl Facet {
         Self::GeneralRegsOnly,
         Self::ObjtoolShapes,
         Self::Bundle,
+        Self::Dllimport,
         Self::Frontend,
     ];
 
@@ -773,6 +789,7 @@ impl Facet {
             Self::GeneralRegsOnly => "general-regs-only",
             Self::ObjtoolShapes => "objtool-shapes",
             Self::Bundle => "bundle",
+            Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
         }
     }
@@ -932,6 +949,9 @@ impl Facet {
             }
             Self::ObjtoolShapes => "the code shapes objtool follows through a kernel object",
             Self::Bundle => "modules loaded with dlopen that call back into the executable",
+            Self::Dllimport => {
+                "modules importing the executable's functions and data the way Windows Postgres does"
+            }
             Self::Frontend => "language shape rather than optimization, including C23",
         }
     }
@@ -1046,7 +1066,8 @@ impl Facet {
             | Self::McmodelKernel
             | Self::GeneralRegsOnly
             | Self::ObjtoolShapes
-            | Self::Bundle => Phase::Correctness,
+            | Self::Bundle
+            | Self::Dllimport => Phase::Correctness,
         }
     }
 
