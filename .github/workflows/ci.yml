@@ -248,11 +248,73 @@ jobs:
           path: reports-ci/
           if-no-files-found: ignore
 
+  # The facets whose subject is Windows, on Windows, against MSYS2's UCRT64 GCC and rucc.
+  #
+  # `dllimport` and `builtin-setjmp` are the two places a MinGW build of Postgres differs from
+  # the Linux one in code the compiler writes rather than in the file format. Their expected
+  # answers are checked by GCC 16 on Linux like everything else, and here by the GCC MSYS2 ships,
+  # which is the compiler Postgres is built with on Windows. rucc is built from the tip of its own
+  # repository for the same reason as above, and is told its target and the MSYS2 tree it links
+  # against with --flag, since GCC here would reject both.
+  windows:
+    name: rucc against mingw gcc on windows
+    needs: quick
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      # Cargo is on the runner's own PATH and not MSYS2's, so all of it is built outside it. The
+      # runtime rucc links at the end of a Windows program lands in rucc/target, where rucc
+      # looks for it.
+      - name: build the corpus, the compiler and its runtime
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          cargo build --release -p rucc-corpus
+          cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+          $env:RUCC_XTASK_COMPILER = "$PWD\rucc\target\release\rucc.exe"
+          Set-Location rucc
+          cargo xtask builtins --target x86_64-windows-gnu
+      - uses: msys2/setup-msys2@v2.33.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-lld
+      - name: run the corpus
+        run: |
+          gcc --version | head -1
+          ./target/release/rucc-corpus.exe run \
+            --facet dllimport --facet builtin-setjmp \
+            --toolchain gcc --toolchain rucc=rucc/target/release/rucc.exe \
+            --flag rucc=--target=x86_64-windows-gnu --flag "rucc=--sysroot=$(cygpath -m /ucrt64)" \
+            --reference gcc --level O0 --level O2 --repeats 1 \
+            --out reports-ci --no-pages --no-cache
+      - name: what it said
+        if: always()
+        run: cat reports-ci/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: windows-reports
+          path: reports-ci/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above.
   ci:
     name: ci
     if: always()
-    needs: [quick, generated, reference, compiler, arm]
+    needs: [quick, generated, reference, compiler, arm, windows]
     runs-on: ubuntu-24.04
     steps:
       - name: every required job passed

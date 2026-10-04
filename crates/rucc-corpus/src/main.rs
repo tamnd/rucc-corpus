@@ -67,6 +67,7 @@ Options for gen:
 Options for run:
   --toolchain ID=PROG  a compiler to test, may be repeated, default gcc-16 and rucc
   --reference ID       the compiler the others are measured against, default gcc-16
+  --flag ID=FLAG       a flag for one compiler on every compile, may be repeated
   --level NAME         a level to build at, may be repeated, default all five
   --facet NAME         only this facet, may be repeated
   --limit N            at most this many cases per facet
@@ -138,6 +139,7 @@ fn cases(how_many: usize) -> String {
 const RUN_OPTIONS: &[&str] = &[
     "toolchain",
     "reference",
+    "flag",
     "level",
     "facet",
     "limit",
@@ -370,6 +372,19 @@ fn specs(args: &Args) -> Result<Vec<Spec>, String> {
             spec.reference = spec.id == wanted;
         }
     }
+    // A flag goes to the compiler it names and no other. rucc on Windows needs to be told its
+    // target and where MSYS2 keeps the headers and libraries, and GCC there would reject both.
+    for text in args.values("flag") {
+        let Some((id, flag)) = text.split_once('=') else {
+            return Err(format!("--flag {text} should be ID=FLAG"));
+        };
+        let Some(spec) = specs.iter_mut().find(|spec| spec.id == id) else {
+            return Err(format!(
+                "--flag {text} names {id}, which is not one of the compilers under test"
+            ));
+        };
+        spec.extra.push(flag.to_owned());
+    }
     if !specs.iter().any(|spec| spec.reference) {
         // Without a reference there is nothing to measure size or speed against, and the
         // report would silently drop every ratio. Better to say so now.
@@ -436,6 +451,24 @@ mod tests {
         let reference: Vec<&str> =
             found.iter().filter(|s| s.reference).map(|s| s.id.as_str()).collect();
         assert_eq!(reference, ["rucc"]);
+    }
+
+    #[test]
+    fn a_flag_goes_to_the_compiler_it_names_and_no_other() {
+        let found = specs(&parse(
+            "run --toolchain gcc --toolchain rucc --reference gcc --flag rucc=--target=x86_64-windows-gnu",
+        ))
+        .unwrap();
+        let extra: Vec<(&str, &[String])> =
+            found.iter().map(|s| (s.id.as_str(), s.extra.as_slice())).collect();
+        assert_eq!(
+            extra,
+            [("gcc", &[][..]), ("rucc", &["--target=x86_64-windows-gnu".to_owned()][..])]
+        );
+        let error = specs(&parse("run --flag clang=-O1")).unwrap_err();
+        assert!(error.contains("not one of the compilers under test"), "{error}");
+        let error = specs(&parse("run --flag -O1")).unwrap_err();
+        assert!(error.contains("should be ID=FLAG"), "{error}");
     }
 
     #[test]

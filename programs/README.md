@@ -1,10 +1,10 @@
 # The corpus
 
-3588 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3606 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `76b465622167ab0ad091cb9b65c68d7d564ac6795e62c5369aaea06e687760ec`.
+Corpus digest `fdbd34186fd89485be15876cf762d9fe4cb0d7d5cef878fa39ae6cf3b68df8c7`.
 
 ## floor (118 programs)
 
@@ -131,7 +131,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (742 programs)
+## correctness (760 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -158,4 +158,5 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`general-regs-only`](correctness/general-regs-only/README.md) | 5 | programs built with -mgeneral-regs-only that check no vector register moved |
 | [`objtool-shapes`](correctness/objtool-shapes/README.md) | 5 | the code shapes objtool follows through a kernel object |
 | [`bundle`](correctness/bundle/README.md) | 33 | modules loaded with dlopen that call back into the executable |
+| [`dllimport`](correctness/dllimport/README.md) | 18 | modules importing the executable's functions and data the way Windows Postgres does |
 

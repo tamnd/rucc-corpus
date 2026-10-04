@@ -59,22 +59,40 @@ pub const OPINIONS: &str = "case.opt-info";
 /// On ELF the executable's symbols are only in the dynamic symbol table, where a module loaded
 /// later can find them, when the executable is linked with `-rdynamic`. That is what Postgres
 /// links the server with. A Mach-O executable exports its globals already, and the bundle is
-/// the side that names it.
-const LOADER: &[&str] = if cfg!(target_os = "macos") { &[] } else { &["-rdynamic"] };
+/// the side that names it. On Windows the executable exports everything and writes an import
+/// library for it, which each module is then linked against, the way MinGW builds of Postgres
+/// link `postgres.exe` and `libpostgres.a`.
+const LOADER: &[&str] = if cfg!(target_os = "macos") {
+    &[]
+} else if cfg!(windows) {
+    &["-Wl,--export-all-symbols", "-Wl,--out-implib,libcase.a"]
+} else {
+    &["-rdynamic"]
+};
 
 /// What the executable is linked with when the case loads a module, after the sources.
 ///
 /// `dlopen` lives in `libdl` on a C library older than glibc 2.34, and in the C library itself
-/// on anything newer and on macOS, where naming it still works and changes nothing.
-const LOADER_LIBRARIES: &[&str] = if cfg!(target_os = "macos") { &[] } else { &["-ldl"] };
+/// on anything newer and on macOS, where naming it still works and changes nothing. Windows
+/// loads a module with `LoadLibraryA` from `kernel32`, which every program is linked with.
+const LOADER_LIBRARIES: &[&str] =
+    if cfg!(any(target_os = "macos", windows)) { &[] } else { &["-ldl"] };
+
+/// What each module is linked with, after its source.
+///
+/// The import library the executable wrote, on Windows, which is where a module finds the
+/// functions and data it imports from the executable. Nothing anywhere else, where a module
+/// leaves those references undefined until it is loaded.
+const MODULE_LIBRARIES: &[&str] = if cfg!(windows) { &["libcase.a"] } else { &[] };
 
 /// How a module is built, over and above the level and the case's own flags.
 ///
 /// On ELF a module is a shared object of position independent code whose references to the
 /// executable are left undefined, which `-shared` allows. On Mach-O it is a bundle, and a
 /// bundle has to be linked against the executable that will load it so the linker can check
-/// every reference and record where each one is bound. Windows has neither, so a case with a
-/// module carries the `dlopen` tag and a run there leaves it out.
+/// every reference and record where each one is bound. On Windows it is a DLL, and every
+/// reference to the executable is resolved against the executable's import library, which
+/// [`MODULE_LIBRARIES`] names after the source.
 fn module_flags() -> Vec<String> {
     if cfg!(target_os = "macos") {
         vec![
@@ -83,6 +101,8 @@ fn module_flags() -> Vec<String> {
             "-bundle_loader".to_owned(),
             BINARY.to_owned(),
         ]
+    } else if cfg!(windows) {
+        vec!["-shared".to_owned()]
     } else {
         vec!["-fPIC".to_owned(), "-shared".to_owned()]
     }
@@ -174,9 +194,10 @@ pub fn build_and_run(
     let mut opinion_files = vec![opinions.clone()];
 
     // The modules come after the executable, because on Mach-O a bundle is linked against the
-    // executable that will load it and that has to exist first. Each is a compile of its own,
-    // and the case compiled when every one of them did. The time, the diagnostics and the sizes
-    // are all of them together, since the program is all of them together.
+    // executable that will load it, and on Windows against the import library the executable's
+    // link wrote, and either has to exist first. Each is a compile of its own, and the case
+    // compiled when every one of them did. The time, the diagnostics and the sizes are all of
+    // them together, since the program is all of them together.
     let mut artifacts = vec![binary.clone()];
     for (source_name, module_name) in &modules {
         if !produced {
@@ -197,6 +218,7 @@ pub fn build_and_run(
         }
         module_args.extend(spec.extra.iter().cloned());
         module_args.push(source_name.clone());
+        module_args.extend(MODULE_LIBRARIES.iter().map(|library| (*library).to_owned()));
         let built = exec::run(&spec.program, &module_args, Some(dir), COMPILE_TIMEOUT)
             .map_err(|error| format!("could not run {}: {error}", spec.program))?;
         let path = dir.join(module_name);
@@ -248,22 +270,24 @@ pub fn build_and_run(
     };
 
     let should_run = produced && matches!(case.expect, Expect::Output(_));
+    // With a dot and a slash on the front, because a bare name would be looked for on the path and
+    // the path is not where this was just built. Windows reads a relative program from the
+    // harness's own directory rather than the one the child starts in, so there it is the whole
+    // path.
+    let program = if cfg!(windows) {
+        std::path::absolute(&binary).unwrap_or_else(|_| binary.clone()).display().to_string()
+    } else {
+        format!("./{BINARY}")
+    };
     let execute = if should_run {
-        // With a dot and a slash on the front, because a bare name would be looked for on the
-        // path and the path is not where this was just built.
-        let ran = exec::run_repeatedly::<String>(
-            &format!("./{BINARY}"),
-            &[],
-            Some(dir),
-            EXECUTE_TIMEOUT,
-            repeats,
-        )
-        .map_err(|error| format!("could not run {}: {error}", binary.display()))?;
+        let ran =
+            exec::run_repeatedly::<String>(&program, &[], Some(dir), EXECUTE_TIMEOUT, repeats)
+                .map_err(|error| format!("could not run {}: {error}", binary.display()))?;
         // Only for a program that worked. Counting the instructions of a program that crashed
         // would count the ones it managed before it died, which is a number that looks like a
         // measurement and is not one.
         let counted = if ran.ok {
-            counter::count_repeatedly::<String>(&format!("./{BINARY}"), &[], Some(dir))
+            counter::count_repeatedly::<String>(&program, &[], Some(dir))
         } else {
             Vec::new()
         };
@@ -276,7 +300,10 @@ pub fn build_and_run(
             instructions: counted.iter().min().copied(),
             instruction_samples: counted,
             peak_bytes: ran.peak_bytes,
-            output: ran.stdout,
+            // A Windows C library writes standard output in text mode, which puts a carriage
+            // return before every newline. The expected answers are written once for every
+            // platform, and the line ending is the C library's and not the compiler's.
+            output: if cfg!(windows) { ran.stdout.replace("\r\n", "\n") } else { ran.stdout },
         }
     } else {
         Execute::skipped()
