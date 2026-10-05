@@ -80,7 +80,7 @@ jobs:
       - name: every link in the report tree lands somewhere
         run: |
           broken=0
-          for page in README.md $(find reports programs -name '*.md'); do
+          for page in README.md $(find reports programs experiments -name '*.md'); do
             dir=$(dirname "$page")
             for link in $(grep -o '](\([^)#][^)]*\))' "$page" | sed 's/^](//; s/)$//'); do
               case "$link" in http*|mailto:*) continue ;; esac

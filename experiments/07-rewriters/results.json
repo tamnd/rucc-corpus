@@ -1,0 +1,5247 @@
+{
+  "schema": "rucc-corpus/experiment-7/v1",
+  "experiment": 7,
+  "spec": [
+    "spec/optimizer/12-egraph.md#123-the-three-way-experiment",
+    "spec/optimizer/42-measurement.md",
+    "spec/19-open-questions.md"
+  ],
+  "issue": "tamnd/rucc#2832",
+  "reference": "gcc-16",
+  "machine": "server2, x86-64 Linux, shared",
+  "corpus": {
+    "commit": "b3b7e40",
+    "cases": 3271,
+    "files": 3347
+  },
+  "rucc": {
+    "conventional, classical, consed, egraph": "tamnd/rucc 0d457148 (#2874)",
+    "egraph-forms": "tamnd/rucc bba61e80 (#2881)"
+  },
+  "instructions_note": "instructions retired, the minimum of five counted runs, summed over the cases every arm and gcc-16 have a count for at that level, which leaves out the sigsetjmp facet, whose counts differ from run to run, and the few cases the counter missed",
+  "arms": {
+    "conventional": {
+      "flag": "none, it is the default",
+      "what": "`simplify` then `number`, each once, where a level runs them",
+      "middle_end_lines_added": 0,
+      "sqlite_text_bytes": 1169344
+    },
+    "classical": {
+      "flag": "`-Zrewriter=classical`",
+      "what": "arm A: `simplify` to a bounded fixpoint, then `number`",
+      "middle_end_lines_added": 39,
+      "sqlite_text_bytes": 1171231
+    },
+    "consed": {
+      "flag": "`-Zrewriter=consed`",
+      "what": "arm B: rewrite at construction with hash-consing, one representative per value",
+      "middle_end_lines_added": 269,
+      "sqlite_text_bytes": 1170064
+    },
+    "egraph": {
+      "flag": "`-Zrewriter=egraph`",
+      "what": "arm C: arm B plus e-classes and extraction by the costs of section 40 of the optimizer specification",
+      "middle_end_lines_added": 555,
+      "sqlite_text_bytes": 1169776
+    },
+    "egraph-forms": {
+      "flag": "`-Zrewriter=egraph`, after tamnd/rucc#2831",
+      "what": "arm C with the classes kept into instruction selection",
+      "middle_end_lines_added": 650,
+      "sqlite_text_bytes": 1169776
+    }
+  },
+  "levels": {
+    "O2": {
+      "cases": 3271,
+      "instructions_counted_over": 3158,
+      "totals": {
+        "gcc-16": {
+          "text_bytes": 3042182,
+          "instructions": 19149757538,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271
+        },
+        "conventional": {
+          "text_bytes": 3729571,
+          "instructions": 23498345427,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 177.191,
+          "optimize_seconds": 78.311,
+          "rewriter_seconds": 13.891
+        },
+        "classical": {
+          "text_bytes": 3735166,
+          "instructions": 23498611227,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 183.727,
+          "optimize_seconds": 86.002,
+          "rewriter_seconds": 17.768,
+          "smaller_than_conventional": 76,
+          "larger_than_conventional": 105
+        },
+        "consed": {
+          "text_bytes": 3727089,
+          "instructions": 23498430565,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 185.25,
+          "optimize_seconds": 86.232,
+          "rewriter_seconds": 19.834,
+          "smaller_than_conventional": 89,
+          "larger_than_conventional": 82
+        },
+        "egraph": {
+          "text_bytes": 3727919,
+          "instructions": 23498481469,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 187.43,
+          "optimize_seconds": 88.498,
+          "rewriter_seconds": 23.217,
+          "smaller_than_conventional": 107,
+          "larger_than_conventional": 136
+        },
+        "egraph-forms": {
+          "text_bytes": 3727895,
+          "instructions": 23498480826,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 189.0,
+          "optimize_seconds": 91.441,
+          "rewriter_seconds": 24.216,
+          "smaller_than_conventional": 115,
+          "larger_than_conventional": 136
+        }
+      },
+      "facets": {
+        "address-fold": {
+          "phase": "backend",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11740,
+            "instructions": 3174857
+          },
+          "conventional": {
+            "text_bytes": 10835,
+            "instructions": 3179243
+          },
+          "classical": {
+            "text_bytes": 10835,
+            "instructions": 3179237
+          },
+          "consed": {
+            "text_bytes": 10835,
+            "instructions": 3179245
+          },
+          "egraph": {
+            "text_bytes": 10835,
+            "instructions": 3179245
+          },
+          "egraph-forms": {
+            "text_bytes": 10835,
+            "instructions": 3179247
+          }
+        },
+        "alias-analysis": {
+          "phase": "global",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 14436,
+            "instructions": 4080185
+          },
+          "conventional": {
+            "text_bytes": 13547,
+            "instructions": 4087263
+          },
+          "classical": {
+            "text_bytes": 13547,
+            "instructions": 4087258
+          },
+          "consed": {
+            "text_bytes": 13547,
+            "instructions": 4087255
+          },
+          "egraph": {
+            "text_bytes": 13547,
+            "instructions": 4087257
+          },
+          "egraph-forms": {
+            "text_bytes": 13547,
+            "instructions": 4087301
+          }
+        },
+        "atomics": {
+          "phase": "correctness",
+          "cases": 31,
+          "gcc-16": {
+            "text_bytes": 27983,
+            "instructions": 3839304
+          },
+          "conventional": {
+            "text_bytes": 29705,
+            "instructions": 3849837
+          },
+          "classical": {
+            "text_bytes": 29693,
+            "instructions": 3849839
+          },
+          "consed": {
+            "text_bytes": 29705,
+            "instructions": 3849835
+          },
+          "egraph": {
+            "text_bytes": 29705,
+            "instructions": 3849843
+          },
+          "egraph-forms": {
+            "text_bytes": 29705,
+            "instructions": 3849839
+          }
+        },
+        "barrier": {
+          "phase": "correctness",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 5421,
+            "instructions": 1476629
+          },
+          "conventional": {
+            "text_bytes": 5221,
+            "instructions": 1481385
+          },
+          "classical": {
+            "text_bytes": 5221,
+            "instructions": 1481384
+          },
+          "consed": {
+            "text_bytes": 5221,
+            "instructions": 1481383
+          },
+          "egraph": {
+            "text_bytes": 5221,
+            "instructions": 1481380
+          },
+          "egraph-forms": {
+            "text_bytes": 5221,
+            "instructions": 1481385
+          }
+        },
+        "baseline": {
+          "phase": "floor",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 5724,
+            "instructions": 1151539
+          },
+          "conventional": {
+            "text_bytes": 5005,
+            "instructions": 1155354
+          },
+          "classical": {
+            "text_bytes": 5005,
+            "instructions": 1155352
+          },
+          "consed": {
+            "text_bytes": 4995,
+            "instructions": 1155346
+          },
+          "egraph": {
+            "text_bytes": 4995,
+            "instructions": 1155352
+          },
+          "egraph-forms": {
+            "text_bytes": 4995,
+            "instructions": 1155351
+          }
+        },
+        "bit-builtins": {
+          "phase": "backend",
+          "cases": 22,
+          "gcc-16": {
+            "text_bytes": 35050,
+            "instructions": 3163001
+          },
+          "conventional": {
+            "text_bytes": 85635,
+            "instructions": 3179247
+          },
+          "classical": {
+            "text_bytes": 85635,
+            "instructions": 3179249
+          },
+          "consed": {
+            "text_bytes": 85635,
+            "instructions": 3179252
+          },
+          "egraph": {
+            "text_bytes": 85635,
+            "instructions": 3179249
+          },
+          "egraph-forms": {
+            "text_bytes": 85635,
+            "instructions": 3179257
+          }
+        },
+        "bit-liveness": {
+          "phase": "backend",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11132,
+            "instructions": 3170043
+          },
+          "conventional": {
+            "text_bytes": 10972,
+            "instructions": 3179385
+          },
+          "classical": {
+            "text_bytes": 10972,
+            "instructions": 3179385
+          },
+          "consed": {
+            "text_bytes": 10972,
+            "instructions": 3179386
+          },
+          "egraph": {
+            "text_bytes": 10972,
+            "instructions": 3179381
+          },
+          "egraph-forms": {
+            "text_bytes": 10972,
+            "instructions": 3179379
+          }
+        },
+        "block-layout": {
+          "phase": "backend",
+          "cases": 16,
+          "gcc-16": {
+            "text_bytes": 7300,
+            "instructions": 1843883
+          },
+          "conventional": {
+            "text_bytes": 7061,
+            "instructions": 1915500
+          },
+          "classical": {
+            "text_bytes": 7061,
+            "instructions": 1915502
+          },
+          "consed": {
+            "text_bytes": 7061,
+            "instructions": 1915507
+          },
+          "egraph": {
+            "text_bytes": 7061,
+            "instructions": 1915502
+          },
+          "egraph-forms": {
+            "text_bytes": 7061,
+            "instructions": 1915509
+          }
+        },
+        "branch-probability": {
+          "phase": "floor",
+          "cases": 34,
+          "gcc-16": {
+            "text_bytes": 13154,
+            "instructions": 3848723
+          },
+          "conventional": {
+            "text_bytes": 12772,
+            "instructions": 3860104
+          },
+          "classical": {
+            "text_bytes": 12772,
+            "instructions": 3860110
+          },
+          "consed": {
+            "text_bytes": 12772,
+            "instructions": 3860106
+          },
+          "egraph": {
+            "text_bytes": 12772,
+            "instructions": 3860102
+          },
+          "egraph-forms": {
+            "text_bytes": 12772,
+            "instructions": 3860100
+          }
+        },
+        "call-motion": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 17133,
+            "instructions": 4397054
+          },
+          "conventional": {
+            "text_bytes": 16801,
+            "instructions": 4507929
+          },
+          "classical": {
+            "text_bytes": 16801,
+            "instructions": 4507932
+          },
+          "consed": {
+            "text_bytes": 16801,
+            "instructions": 4507930
+          },
+          "egraph": {
+            "text_bytes": 16801,
+            "instructions": 4507933
+          },
+          "egraph-forms": {
+            "text_bytes": 16801,
+            "instructions": 4507929
+          }
+        },
+        "called-once": {
+          "phase": "interprocedural",
+          "cases": 5,
+          "gcc-16": {
+            "text_bytes": 13477,
+            "instructions": 2894801956
+          },
+          "conventional": {
+            "text_bytes": 5005,
+            "instructions": 3130230260
+          },
+          "classical": {
+            "text_bytes": 5005,
+            "instructions": 3130230329
+          },
+          "consed": {
+            "text_bytes": 5005,
+            "instructions": 3130230621
+          },
+          "egraph": {
+            "text_bytes": 5005,
+            "instructions": 3130230836
+          },
+          "egraph-forms": {
+            "text_bytes": 5005,
+            "instructions": 3130230407
+          }
+        },
+        "calling-convention": {
+          "phase": "backend",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 4037,
+            "instructions": 1132919
+          },
+          "conventional": {
+            "text_bytes": 4594,
+            "instructions": 1135644
+          },
+          "classical": {
+            "text_bytes": 4594,
+            "instructions": 1135637
+          },
+          "consed": {
+            "text_bytes": 4594,
+            "instructions": 1135640
+          },
+          "egraph": {
+            "text_bytes": 4594,
+            "instructions": 1135639
+          },
+          "egraph-forms": {
+            "text_bytes": 4594,
+            "instructions": 1135641
+          }
+        },
+        "code-motion": {
+          "phase": "global",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4812,
+            "instructions": 1358558
+          },
+          "conventional": {
+            "text_bytes": 4673,
+            "instructions": 1362566
+          },
+          "classical": {
+            "text_bytes": 4673,
+            "instructions": 1362559
+          },
+          "consed": {
+            "text_bytes": 4621,
+            "instructions": 1362546
+          },
+          "egraph": {
+            "text_bytes": 4621,
+            "instructions": 1362543
+          },
+          "egraph-forms": {
+            "text_bytes": 4621,
+            "instructions": 1362547
+          }
+        },
+        "common-subexpr": {
+          "phase": "global",
+          "cases": 32,
+          "gcc-16": {
+            "text_bytes": 12880,
+            "instructions": 3622832
+          },
+          "conventional": {
+            "text_bytes": 12305,
+            "instructions": 3633460
+          },
+          "classical": {
+            "text_bytes": 12305,
+            "instructions": 3633462
+          },
+          "consed": {
+            "text_bytes": 12305,
+            "instructions": 3633461
+          },
+          "egraph": {
+            "text_bytes": 12305,
+            "instructions": 3633472
+          },
+          "egraph-forms": {
+            "text_bytes": 12305,
+            "instructions": 3633466
+          }
+        },
+        "compare-elim": {
+          "phase": "backend",
+          "cases": 26,
+          "gcc-16": {
+            "text_bytes": 10458,
+            "instructions": 2943215
+          },
+          "conventional": {
+            "text_bytes": 10131,
+            "instructions": 2951885
+          },
+          "classical": {
+            "text_bytes": 10131,
+            "instructions": 2951884
+          },
+          "consed": {
+            "text_bytes": 10131,
+            "instructions": 2951884
+          },
+          "egraph": {
+            "text_bytes": 10131,
+            "instructions": 2951888
+          },
+          "egraph-forms": {
+            "text_bytes": 10131,
+            "instructions": 2951879
+          }
+        },
+        "compare-fold": {
+          "phase": "backend",
+          "cases": 118,
+          "gcc-16": {
+            "text_bytes": 61134,
+            "instructions": 13455230
+          },
+          "conventional": {
+            "text_bytes": 55094,
+            "instructions": 13399299
+          },
+          "classical": {
+            "text_bytes": 55094,
+            "instructions": 13399291
+          },
+          "consed": {
+            "text_bytes": 55094,
+            "instructions": 13399298
+          },
+          "egraph": {
+            "text_bytes": 55094,
+            "instructions": 13399293
+          },
+          "egraph-forms": {
+            "text_bytes": 55094,
+            "instructions": 13399301
+          }
+        },
+        "computed-goto": {
+          "phase": "floor",
+          "cases": 25,
+          "gcc-16": {
+            "text_bytes": 27081,
+            "instructions": 2880130
+          },
+          "conventional": {
+            "text_bytes": 21548,
+            "instructions": 2874613
+          },
+          "classical": {
+            "text_bytes": 21548,
+            "instructions": 2874609
+          },
+          "consed": {
+            "text_bytes": 21620,
+            "instructions": 2875458
+          },
+          "egraph": {
+            "text_bytes": 21620,
+            "instructions": 2875452
+          },
+          "egraph-forms": {
+            "text_bytes": 21620,
+            "instructions": 2875454
+          }
+        },
+        "conditional-store": {
+          "phase": "local",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 16628,
+            "instructions": 2350022
+          },
+          "conventional": {
+            "text_bytes": 11001,
+            "instructions": 2441095
+          },
+          "classical": {
+            "text_bytes": 10980,
+            "instructions": 2439042
+          },
+          "consed": {
+            "text_bytes": 11001,
+            "instructions": 2441094
+          },
+          "egraph": {
+            "text_bytes": 11001,
+            "instructions": 2441136
+          },
+          "egraph-forms": {
+            "text_bytes": 11001,
+            "instructions": 2441092
+          }
+        },
+        "constant-args": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 14724,
+            "instructions": 4079053
+          },
+          "conventional": {
+            "text_bytes": 14468,
+            "instructions": 4087919
+          },
+          "classical": {
+            "text_bytes": 14468,
+            "instructions": 4087924
+          },
+          "consed": {
+            "text_bytes": 14567,
+            "instructions": 4088005
+          },
+          "egraph": {
+            "text_bytes": 14567,
+            "instructions": 4088007
+          },
+          "egraph-forms": {
+            "text_bytes": 14567,
+            "instructions": 4088004
+          }
+        },
+        "constant-fold": {
+          "phase": "local",
+          "cases": 112,
+          "gcc-16": {
+            "text_bytes": 142880,
+            "instructions": 16152675
+          },
+          "conventional": {
+            "text_bytes": 144261,
+            "instructions": 16186445
+          },
+          "classical": {
+            "text_bytes": 144261,
+            "instructions": 16186424
+          },
+          "consed": {
+            "text_bytes": 144261,
+            "instructions": 16186465
+          },
+          "egraph": {
+            "text_bytes": 144261,
+            "instructions": 16186442
+          },
+          "egraph-forms": {
+            "text_bytes": 144261,
+            "instructions": 16186442
+          }
+        },
+        "constant-propagation": {
+          "phase": "global",
+          "cases": 16,
+          "gcc-16": {
+            "text_bytes": 6160,
+            "instructions": 1811350
+          },
+          "conventional": {
+            "text_bytes": 5824,
+            "instructions": 1816649
+          },
+          "classical": {
+            "text_bytes": 5824,
+            "instructions": 1816648
+          },
+          "consed": {
+            "text_bytes": 5824,
+            "instructions": 1816652
+          },
+          "egraph": {
+            "text_bytes": 5824,
+            "instructions": 1816646
+          },
+          "egraph-forms": {
+            "text_bytes": 5824,
+            "instructions": 1816646
+          }
+        },
+        "control-flow": {
+          "phase": "floor",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 4520,
+            "instructions": 1136747
+          },
+          "conventional": {
+            "text_bytes": 4714,
+            "instructions": 1139107
+          },
+          "classical": {
+            "text_bytes": 4714,
+            "instructions": 1139109
+          },
+          "consed": {
+            "text_bytes": 4714,
+            "instructions": 1139110
+          },
+          "egraph": {
+            "text_bytes": 4714,
+            "instructions": 1139107
+          },
+          "egraph-forms": {
+            "text_bytes": 4714,
+            "instructions": 1139107
+          }
+        },
+        "copy-propagation": {
+          "phase": "global",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4620,
+            "instructions": 1358503
+          },
+          "conventional": {
+            "text_bytes": 4329,
+            "instructions": 1362478
+          },
+          "classical": {
+            "text_bytes": 4329,
+            "instructions": 1362488
+          },
+          "consed": {
+            "text_bytes": 4329,
+            "instructions": 1362481
+          },
+          "egraph": {
+            "text_bytes": 4329,
+            "instructions": 1362480
+          },
+          "egraph-forms": {
+            "text_bytes": 4329,
+            "instructions": 1362480
+          }
+        },
+        "crc32c": {
+          "phase": "correctness",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 368128,
+            "instructions": 13844437
+          },
+          "conventional": {
+            "text_bytes": 380952,
+            "instructions": 16777365
+          },
+          "classical": {
+            "text_bytes": 380952,
+            "instructions": 16783609
+          },
+          "consed": {
+            "text_bytes": 377880,
+            "instructions": 16854947
+          },
+          "egraph": {
+            "text_bytes": 377880,
+            "instructions": 16854946
+          },
+          "egraph-forms": {
+            "text_bytes": 377880,
+            "instructions": 16854943
+          }
+        },
+        "dead-code": {
+          "phase": "local",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4620,
+            "instructions": 1358263
+          },
+          "conventional": {
+            "text_bytes": 4371,
+            "instructions": 1362242
+          },
+          "classical": {
+            "text_bytes": 4371,
+            "instructions": 1362239
+          },
+          "consed": {
+            "text_bytes": 4371,
+            "instructions": 1362241
+          },
+          "egraph": {
+            "text_bytes": 4371,
+            "instructions": 1362242
+          },
+          "egraph-forms": {
+            "text_bytes": 4371,
+            "instructions": 1362240
+          }
+        },
+        "dead-store": {
+          "phase": "local",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4620,
+            "instructions": 1358265
+          },
+          "conventional": {
+            "text_bytes": 4371,
+            "instructions": 1362244
+          },
+          "classical": {
+            "text_bytes": 4371,
+            "instructions": 1362243
+          },
+          "consed": {
+            "text_bytes": 4371,
+            "instructions": 1362241
+          },
+          "egraph": {
+            "text_bytes": 4371,
+            "instructions": 1362242
+          },
+          "egraph-forms": {
+            "text_bytes": 4371,
+            "instructions": 1362239
+          }
+        },
+        "declared-purity": {
+          "phase": "interprocedural",
+          "cases": 32,
+          "gcc-16": {
+            "text_bytes": 14824,
+            "instructions": 3636288
+          },
+          "conventional": {
+            "text_bytes": 13136,
+            "instructions": 3633801
+          },
+          "classical": {
+            "text_bytes": 13136,
+            "instructions": 3633805
+          },
+          "consed": {
+            "text_bytes": 13248,
+            "instructions": 3633890
+          },
+          "egraph": {
+            "text_bytes": 13248,
+            "instructions": 3633881
+          },
+          "egraph-forms": {
+            "text_bytes": 13248,
+            "instructions": 3633885
+          }
+        },
+        "devirtualize": {
+          "phase": "interprocedural",
+          "cases": 4,
+          "gcc-16": {
+            "text_bytes": 1650,
+            "instructions": 452886
+          },
+          "conventional": {
+            "text_bytes": 1607,
+            "instructions": 454214
+          },
+          "classical": {
+            "text_bytes": 1607,
+            "instructions": 454211
+          },
+          "consed": {
+            "text_bytes": 1607,
+            "instructions": 454212
+          },
+          "egraph": {
+            "text_bytes": 1607,
+            "instructions": 454215
+          },
+          "egraph-forms": {
+            "text_bytes": 1607,
+            "instructions": 454214
+          }
+        },
+        "division": {
+          "phase": "backend",
+          "cases": 72,
+          "gcc-16": {
+            "text_bytes": 48344,
+            "instructions": 1169909416
+          },
+          "conventional": {
+            "text_bytes": 36722,
+            "instructions": 2056553895
+          },
+          "classical": {
+            "text_bytes": 36722,
+            "instructions": 2056553884
+          },
+          "consed": {
+            "text_bytes": 36722,
+            "instructions": 2056553806
+          },
+          "egraph": {
+            "text_bytes": 36722,
+            "instructions": 2056553803
+          },
+          "egraph-forms": {
+            "text_bytes": 36722,
+            "instructions": 2056553817
+          }
+        },
+        "float-conversion": {
+          "phase": "backend",
+          "cases": 66,
+          "gcc-16": {
+            "text_bytes": 45106,
+            "instructions": 7976998
+          },
+          "conventional": {
+            "text_bytes": 51422,
+            "instructions": 8000674
+          },
+          "classical": {
+            "text_bytes": 51422,
+            "instructions": 8000677
+          },
+          "consed": {
+            "text_bytes": 51422,
+            "instructions": 8000680
+          },
+          "egraph": {
+            "text_bytes": 51422,
+            "instructions": 8000674
+          },
+          "egraph-forms": {
+            "text_bytes": 51422,
+            "instructions": 8000679
+          }
+        },
+        "frame-address": {
+          "phase": "backend",
+          "cases": 6,
+          "gcc-16": {
+            "text_bytes": 2310,
+            "instructions": 679236
+          },
+          "conventional": {
+            "text_bytes": 2208,
+            "instructions": 681227
+          },
+          "classical": {
+            "text_bytes": 2208,
+            "instructions": 681226
+          },
+          "consed": {
+            "text_bytes": 2208,
+            "instructions": 681227
+          },
+          "egraph": {
+            "text_bytes": 2208,
+            "instructions": 681228
+          },
+          "egraph-forms": {
+            "text_bytes": 2208,
+            "instructions": 681227
+          }
+        },
+        "frame-size": {
+          "phase": "backend",
+          "cases": 54,
+          "gcc-16": {
+            "text_bytes": 162058,
+            "instructions": 31185794
+          },
+          "conventional": {
+            "text_bytes": 137884,
+            "instructions": 37200267
+          },
+          "classical": {
+            "text_bytes": 141516,
+            "instructions": 37403075
+          },
+          "consed": {
+            "text_bytes": 137884,
+            "instructions": 37200284
+          },
+          "egraph": {
+            "text_bytes": 137884,
+            "instructions": 37200289
+          },
+          "egraph-forms": {
+            "text_bytes": 137884,
+            "instructions": 37200274
+          }
+        },
+        "frontend": {
+          "phase": "floor",
+          "cases": 22,
+          "gcc-16": {
+            "text_bytes": 9174,
+            "instructions": 2512611
+          },
+          "conventional": {
+            "text_bytes": 8670,
+            "instructions": 2519266
+          },
+          "classical": {
+            "text_bytes": 8670,
+            "instructions": 2519266
+          },
+          "consed": {
+            "text_bytes": 8670,
+            "instructions": 2519257
+          },
+          "egraph": {
+            "text_bytes": 8670,
+            "instructions": 2519266
+          },
+          "egraph-forms": {
+            "text_bytes": 8670,
+            "instructions": 2519307
+          }
+        },
+        "function-purity": {
+          "phase": "interprocedural",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11004,
+            "instructions": 3172396
+          },
+          "conventional": {
+            "text_bytes": 11356,
+            "instructions": 3181891
+          },
+          "classical": {
+            "text_bytes": 11345,
+            "instructions": 3181896
+          },
+          "consed": {
+            "text_bytes": 11356,
+            "instructions": 3181896
+          },
+          "egraph": {
+            "text_bytes": 11356,
+            "instructions": 3181898
+          },
+          "egraph-forms": {
+            "text_bytes": 11356,
+            "instructions": 3181902
+          }
+        },
+        "if-conversion": {
+          "phase": "backend",
+          "cases": 38,
+          "gcc-16": {
+            "text_bytes": 17670,
+            "instructions": 6544442698
+          },
+          "conventional": {
+            "text_bytes": 16593,
+            "instructions": 8344551776
+          },
+          "classical": {
+            "text_bytes": 16593,
+            "instructions": 8344551791
+          },
+          "consed": {
+            "text_bytes": 16593,
+            "instructions": 8344551875
+          },
+          "egraph": {
+            "text_bytes": 16593,
+            "instructions": 8344551880
+          },
+          "egraph-forms": {
+            "text_bytes": 16593,
+            "instructions": 8344551899
+          }
+        },
+        "induction-variable": {
+          "phase": "loops",
+          "cases": 42,
+          "gcc-16": {
+            "text_bytes": 17578,
+            "instructions": 4802698
+          },
+          "conventional": {
+            "text_bytes": 17107,
+            "instructions": 4820545
+          },
+          "classical": {
+            "text_bytes": 17107,
+            "instructions": 4820553
+          },
+          "consed": {
+            "text_bytes": 17107,
+            "instructions": 4820547
+          },
+          "egraph": {
+            "text_bytes": 17107,
+            "instructions": 4820557
+          },
+          "egraph-forms": {
+            "text_bytes": 17107,
+            "instructions": 4820551
+          }
+        },
+        "inline": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 13956,
+            "instructions": 4075941
+          },
+          "conventional": {
+            "text_bytes": 13549,
+            "instructions": 4087950
+          },
+          "classical": {
+            "text_bytes": 13549,
+            "instructions": 4087999
+          },
+          "consed": {
+            "text_bytes": 13549,
+            "instructions": 4087954
+          },
+          "egraph": {
+            "text_bytes": 13549,
+            "instructions": 4087951
+          },
+          "egraph-forms": {
+            "text_bytes": 13549,
+            "instructions": 4087946
+          }
+        },
+        "interpreter-dispatch": {
+          "phase": "backend",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 113840,
+            "instructions": 6654264
+          },
+          "conventional": {
+            "text_bytes": 433500,
+            "instructions": 10764075
+          },
+          "classical": {
+            "text_bytes": 434780,
+            "instructions": 10761963
+          },
+          "consed": {
+            "text_bytes": 433500,
+            "instructions": 10764072
+          },
+          "egraph": {
+            "text_bytes": 433500,
+            "instructions": 10764076
+          },
+          "egraph-forms": {
+            "text_bytes": 433500,
+            "instructions": 10764067
+          }
+        },
+        "iv-selection": {
+          "phase": "loops",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 24292,
+            "instructions": 4117057
+          },
+          "conventional": {
+            "text_bytes": 17751,
+            "instructions": 4105593
+          },
+          "classical": {
+            "text_bytes": 17751,
+            "instructions": 4105593
+          },
+          "consed": {
+            "text_bytes": 17787,
+            "instructions": 4105725
+          },
+          "egraph": {
+            "text_bytes": 17787,
+            "instructions": 4105719
+          },
+          "egraph-forms": {
+            "text_bytes": 17787,
+            "instructions": 4105723
+          }
+        },
+        "jump-threading": {
+          "phase": "global",
+          "cases": 5,
+          "gcc-16": {
+            "text_bytes": 4149,
+            "instructions": 615564
+          },
+          "conventional": {
+            "text_bytes": 3523,
+            "instructions": 634089
+          },
+          "classical": {
+            "text_bytes": 3523,
+            "instructions": 634089
+          },
+          "consed": {
+            "text_bytes": 3554,
+            "instructions": 638137
+          },
+          "egraph": {
+            "text_bytes": 3554,
+            "instructions": 638136
+          },
+          "egraph-forms": {
+            "text_bytes": 3554,
+            "instructions": 638139
+          }
+        },
+        "link-time-optimization": {
+          "phase": "interprocedural",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 9100,
+            "instructions": 2283253
+          },
+          "conventional": {
+            "text_bytes": 8955,
+            "instructions": 2289933
+          },
+          "classical": {
+            "text_bytes": 8955,
+            "instructions": 2289929
+          },
+          "consed": {
+            "text_bytes": 8955,
+            "instructions": 2289937
+          },
+          "egraph": {
+            "text_bytes": 8955,
+            "instructions": 2289933
+          },
+          "egraph-forms": {
+            "text_bytes": 8955,
+            "instructions": 2289933
+          }
+        },
+        "load-fold": {
+          "phase": "backend",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 20324,
+            "instructions": 4558172
+          },
+          "conventional": {
+            "text_bytes": 17529,
+            "instructions": 4542214
+          },
+          "classical": {
+            "text_bytes": 17529,
+            "instructions": 4542212
+          },
+          "consed": {
+            "text_bytes": 17529,
+            "instructions": 4542217
+          },
+          "egraph": {
+            "text_bytes": 17529,
+            "instructions": 4542204
+          },
+          "egraph-forms": {
+            "text_bytes": 17529,
+            "instructions": 4542213
+          }
+        },
+        "load-forwarding": {
+          "phase": "global",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 15528,
+            "instructions": 4528411
+          },
+          "conventional": {
+            "text_bytes": 14908,
+            "instructions": 4541693
+          },
+          "classical": {
+            "text_bytes": 14908,
+            "instructions": 4541702
+          },
+          "consed": {
+            "text_bytes": 14936,
+            "instructions": 4541708
+          },
+          "egraph": {
+            "text_bytes": 14936,
+            "instructions": 4541706
+          },
+          "egraph-forms": {
+            "text_bytes": 14936,
+            "instructions": 4541699
+          }
+        },
+        "long-double": {
+          "phase": "backend",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 5532,
+            "instructions": 1151484
+          },
+          "conventional": {
+            "text_bytes": 8277,
+            "instructions": 1154703
+          },
+          "classical": {
+            "text_bytes": 8277,
+            "instructions": 1154704
+          },
+          "consed": {
+            "text_bytes": 8277,
+            "instructions": 1154703
+          },
+          "egraph": {
+            "text_bytes": 8277,
+            "instructions": 1154696
+          },
+          "egraph-forms": {
+            "text_bytes": 8277,
+            "instructions": 1154697
+          }
+        },
+        "loop-deletion": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 25152,
+            "instructions": 7266362
+          },
+          "conventional": {
+            "text_bytes": 24302,
+            "instructions": 7287605
+          },
+          "classical": {
+            "text_bytes": 24302,
+            "instructions": 7287604
+          },
+          "consed": {
+            "text_bytes": 24302,
+            "instructions": 7287602
+          },
+          "egraph": {
+            "text_bytes": 24302,
+            "instructions": 7287656
+          },
+          "egraph-forms": {
+            "text_bytes": 24302,
+            "instructions": 7287612
+          }
+        },
+        "loop-hoist": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 33856,
+            "instructions": 7251662
+          },
+          "conventional": {
+            "text_bytes": 30797,
+            "instructions": 7272930
+          },
+          "classical": {
+            "text_bytes": 30797,
+            "instructions": 7272964
+          },
+          "consed": {
+            "text_bytes": 30797,
+            "instructions": 7272931
+          },
+          "egraph": {
+            "text_bytes": 30797,
+            "instructions": 7272948
+          },
+          "egraph-forms": {
+            "text_bytes": 30797,
+            "instructions": 7272928
+          }
+        },
+        "loop-idiom": {
+          "phase": "loops",
+          "cases": 78,
+          "gcc-16": {
+            "text_bytes": 40062,
+            "instructions": 14917012
+          },
+          "conventional": {
+            "text_bytes": 31271,
+            "instructions": 26074680
+          },
+          "classical": {
+            "text_bytes": 31271,
+            "instructions": 26074677
+          },
+          "consed": {
+            "text_bytes": 30971,
+            "instructions": 26074539
+          },
+          "egraph": {
+            "text_bytes": 30971,
+            "instructions": 26074528
+          },
+          "egraph-forms": {
+            "text_bytes": 30971,
+            "instructions": 26074532
+          }
+        },
+        "loop-invariant": {
+          "phase": "loops",
+          "cases": 32,
+          "gcc-16": {
+            "text_bytes": 12720,
+            "instructions": 3623146
+          },
+          "conventional": {
+            "text_bytes": 12176,
+            "instructions": 3636573
+          },
+          "classical": {
+            "text_bytes": 12176,
+            "instructions": 3636564
+          },
+          "consed": {
+            "text_bytes": 12176,
+            "instructions": 3636570
+          },
+          "egraph": {
+            "text_bytes": 12176,
+            "instructions": 3636568
+          },
+          "egraph-forms": {
+            "text_bytes": 12176,
+            "instructions": 3636562
+          }
+        },
+        "loop-restructure": {
+          "phase": "loops",
+          "cases": 48,
+          "gcc-16": {
+            "text_bytes": 20672,
+            "instructions": 5443244
+          },
+          "conventional": {
+            "text_bytes": 22277,
+            "instructions": 5492220
+          },
+          "classical": {
+            "text_bytes": 22217,
+            "instructions": 5492037
+          },
+          "consed": {
+            "text_bytes": 22277,
+            "instructions": 5492227
+          },
+          "egraph": {
+            "text_bytes": 22277,
+            "instructions": 5492214
+          },
+          "egraph-forms": {
+            "text_bytes": 22277,
+            "instructions": 5492221
+          }
+        },
+        "loop-rotate": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 24640,
+            "instructions": 7244989
+          },
+          "conventional": {
+            "text_bytes": 22912,
+            "instructions": 7266181
+          },
+          "classical": {
+            "text_bytes": 22912,
+            "instructions": 7266176
+          },
+          "consed": {
+            "text_bytes": 22912,
+            "instructions": 7266170
+          },
+          "egraph": {
+            "text_bytes": 22912,
+            "instructions": 7266164
+          },
+          "egraph-forms": {
+            "text_bytes": 22912,
+            "instructions": 7266168
+          }
+        },
+        "loop-shape": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 28016,
+            "instructions": 7260528
+          },
+          "conventional": {
+            "text_bytes": 26833,
+            "instructions": 7283346
+          },
+          "classical": {
+            "text_bytes": 26833,
+            "instructions": 7283344
+          },
+          "consed": {
+            "text_bytes": 26815,
+            "instructions": 7283346
+          },
+          "egraph": {
+            "text_bytes": 26815,
+            "instructions": 7283332
+          },
+          "egraph-forms": {
+            "text_bytes": 26815,
+            "instructions": 7283329
+          }
+        },
+        "loop-unroll": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 26432,
+            "instructions": 7247292
+          },
+          "conventional": {
+            "text_bytes": 24819,
+            "instructions": 7275189
+          },
+          "classical": {
+            "text_bytes": 24819,
+            "instructions": 7275192
+          },
+          "consed": {
+            "text_bytes": 24819,
+            "instructions": 7275245
+          },
+          "egraph": {
+            "text_bytes": 24819,
+            "instructions": 7275200
+          },
+          "egraph-forms": {
+            "text_bytes": 24819,
+            "instructions": 7275206
+          }
+        },
+        "loop-unroll-shape": {
+          "phase": "loops",
+          "cases": 80,
+          "gcc-16": {
+            "text_bytes": 31248,
+            "instructions": 9061800
+          },
+          "conventional": {
+            "text_bytes": 29734,
+            "instructions": 9088919
+          },
+          "classical": {
+            "text_bytes": 29734,
+            "instructions": 9088917
+          },
+          "consed": {
+            "text_bytes": 29734,
+            "instructions": 9088936
+          },
+          "egraph": {
+            "text_bytes": 29734,
+            "instructions": 9088931
+          },
+          "egraph-forms": {
+            "text_bytes": 29734,
+            "instructions": 9088933
+          }
+        },
+        "loop-unswitch": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 27200,
+            "instructions": 7248156
+          },
+          "conventional": {
+            "text_bytes": 28050,
+            "instructions": 7275497
+          },
+          "classical": {
+            "text_bytes": 28050,
+            "instructions": 7275488
+          },
+          "consed": {
+            "text_bytes": 28066,
+            "instructions": 7276291
+          },
+          "egraph": {
+            "text_bytes": 28866,
+            "instructions": 7276498
+          },
+          "egraph-forms": {
+            "text_bytes": 28866,
+            "instructions": 7276502
+          }
+        },
+        "machine-peephole": {
+          "phase": "backend",
+          "cases": 22,
+          "gcc-16": {
+            "text_bytes": 8630,
+            "instructions": 2490569
+          },
+          "conventional": {
+            "text_bytes": 8258,
+            "instructions": 2497876
+          },
+          "classical": {
+            "text_bytes": 8258,
+            "instructions": 2497880
+          },
+          "consed": {
+            "text_bytes": 8258,
+            "instructions": 2497880
+          },
+          "egraph": {
+            "text_bytes": 8258,
+            "instructions": 2497874
+          },
+          "egraph-forms": {
+            "text_bytes": 8258,
+            "instructions": 2497880
+          }
+        },
+        "memory-effects": {
+          "phase": "interprocedural",
+          "cases": 24,
+          "gcc-16": {
+            "text_bytes": 13194,
+            "instructions": 2998035
+          },
+          "conventional": {
+            "text_bytes": 12413,
+            "instructions": 3049566
+          },
+          "classical": {
+            "text_bytes": 12413,
+            "instructions": 3049568
+          },
+          "consed": {
+            "text_bytes": 12413,
+            "instructions": 3049576
+          },
+          "egraph": {
+            "text_bytes": 12413,
+            "instructions": 3049570
+          },
+          "egraph-forms": {
+            "text_bytes": 12413,
+            "instructions": 3049570
+          }
+        },
+        "memory-ssa": {
+          "phase": "global",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11164,
+            "instructions": 3173197
+          },
+          "conventional": {
+            "text_bytes": 10495,
+            "instructions": 3179210
+          },
+          "classical": {
+            "text_bytes": 10495,
+            "instructions": 3179208
+          },
+          "consed": {
+            "text_bytes": 10495,
+            "instructions": 3179204
+          },
+          "egraph": {
+            "text_bytes": 10495,
+            "instructions": 3179211
+          },
+          "egraph-forms": {
+            "text_bytes": 10495,
+            "instructions": 3179212
+          }
+        },
+        "narrow-shift": {
+          "phase": "backend",
+          "cases": 8,
+          "gcc-16": {
+            "text_bytes": 7256,
+            "instructions": 183630487
+          },
+          "conventional": {
+            "text_bytes": 4639,
+            "instructions": 269772842
+          },
+          "classical": {
+            "text_bytes": 4639,
+            "instructions": 269772859
+          },
+          "consed": {
+            "text_bytes": 4639,
+            "instructions": 269772856
+          },
+          "egraph": {
+            "text_bytes": 4639,
+            "instructions": 269772849
+          },
+          "egraph-forms": {
+            "text_bytes": 4639,
+            "instructions": 269772837
+          }
+        },
+        "narrowing": {
+          "phase": "local",
+          "cases": 52,
+          "gcc-16": {
+            "text_bytes": 30708,
+            "instructions": 6187165
+          },
+          "conventional": {
+            "text_bytes": 31270,
+            "instructions": 6204325
+          },
+          "classical": {
+            "text_bytes": 31270,
+            "instructions": 6204320
+          },
+          "consed": {
+            "text_bytes": 31270,
+            "instructions": 6204322
+          },
+          "egraph": {
+            "text_bytes": 31270,
+            "instructions": 6204320
+          },
+          "egraph-forms": {
+            "text_bytes": 31270,
+            "instructions": 6204331
+          }
+        },
+        "overflow-builtins": {
+          "phase": "correctness",
+          "cases": 144,
+          "gcc-16": {
+            "text_bytes": 375280,
+            "instructions": 21420163
+          },
+          "conventional": {
+            "text_bytes": 726382,
+            "instructions": 21584109
+          },
+          "classical": {
+            "text_bytes": 726382,
+            "instructions": 21584115
+          },
+          "consed": {
+            "text_bytes": 726382,
+            "instructions": 21584106
+          },
+          "egraph": {
+            "text_bytes": 726382,
+            "instructions": 21584116
+          },
+          "egraph-forms": {
+            "text_bytes": 726382,
+            "instructions": 21584155
+          }
+        },
+        "prune": {
+          "phase": "global",
+          "cases": 15,
+          "gcc-16": {
+            "text_bytes": 10255,
+            "instructions": 1734674
+          },
+          "conventional": {
+            "text_bytes": 7321,
+            "instructions": 1805243
+          },
+          "classical": {
+            "text_bytes": 7321,
+            "instructions": 1805243
+          },
+          "consed": {
+            "text_bytes": 7321,
+            "instructions": 1805245
+          },
+          "egraph": {
+            "text_bytes": 7321,
+            "instructions": 1805244
+          },
+          "egraph-forms": {
+            "text_bytes": 7321,
+            "instructions": 1805243
+          }
+        },
+        "reachability": {
+          "phase": "interprocedural",
+          "cases": 9,
+          "gcc-16": {
+            "text_bytes": 3465,
+            "instructions": 1018703
+          },
+          "conventional": {
+            "text_bytes": 3285,
+            "instructions": 1021687
+          },
+          "classical": {
+            "text_bytes": 3285,
+            "instructions": 1021688
+          },
+          "consed": {
+            "text_bytes": 3285,
+            "instructions": 1021688
+          },
+          "egraph": {
+            "text_bytes": 3285,
+            "instructions": 1021686
+          },
+          "egraph-forms": {
+            "text_bytes": 3285,
+            "instructions": 1021686
+          }
+        },
+        "reassociate": {
+          "phase": "local",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 9156,
+            "instructions": 2302340
+          },
+          "conventional": {
+            "text_bytes": 9442,
+            "instructions": 2309163
+          },
+          "classical": {
+            "text_bytes": 9442,
+            "instructions": 2309163
+          },
+          "consed": {
+            "text_bytes": 9442,
+            "instructions": 2309169
+          },
+          "egraph": {
+            "text_bytes": 9442,
+            "instructions": 2309213
+          },
+          "egraph-forms": {
+            "text_bytes": 9442,
+            "instructions": 2309167
+          }
+        },
+        "register-alloc": {
+          "phase": "backend",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 16040,
+            "instructions": 4529660
+          },
+          "conventional": {
+            "text_bytes": 22518,
+            "instructions": 4545619
+          },
+          "classical": {
+            "text_bytes": 22518,
+            "instructions": 4545658
+          },
+          "consed": {
+            "text_bytes": 22518,
+            "instructions": 4545622
+          },
+          "egraph": {
+            "text_bytes": 22518,
+            "instructions": 4545614
+          },
+          "egraph-forms": {
+            "text_bytes": 22518,
+            "instructions": 4545622
+          }
+        },
+        "register-pressure": {
+          "phase": "backend",
+          "cases": 60,
+          "gcc-16": {
+            "text_bytes": 24108,
+            "instructions": 6793181
+          },
+          "conventional": {
+            "text_bytes": 24990,
+            "instructions": 6813605
+          },
+          "classical": {
+            "text_bytes": 26006,
+            "instructions": 6813892
+          },
+          "consed": {
+            "text_bytes": 24990,
+            "instructions": 6813602
+          },
+          "egraph": {
+            "text_bytes": 25080,
+            "instructions": 6813637
+          },
+          "egraph-forms": {
+            "text_bytes": 25080,
+            "instructions": 6813635
+          }
+        },
+        "scalar-replacement": {
+          "phase": "global",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 7700,
+            "instructions": 2264199
+          },
+          "conventional": {
+            "text_bytes": 7395,
+            "instructions": 2270845
+          },
+          "classical": {
+            "text_bytes": 7395,
+            "instructions": 2270841
+          },
+          "consed": {
+            "text_bytes": 7395,
+            "instructions": 2270848
+          },
+          "egraph": {
+            "text_bytes": 7395,
+            "instructions": 2270844
+          },
+          "egraph-forms": {
+            "text_bytes": 7395,
+            "instructions": 2270843
+          }
+        },
+        "scheduling": {
+          "phase": "backend",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 9988,
+            "instructions": 2280395
+          },
+          "conventional": {
+            "text_bytes": 13948,
+            "instructions": 2287253
+          },
+          "classical": {
+            "text_bytes": 13948,
+            "instructions": 2287260
+          },
+          "consed": {
+            "text_bytes": 13948,
+            "instructions": 2287261
+          },
+          "egraph": {
+            "text_bytes": 13948,
+            "instructions": 2287259
+          },
+          "egraph-forms": {
+            "text_bytes": 13948,
+            "instructions": 2287250
+          }
+        },
+        "selection": {
+          "phase": "backend",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 16056,
+            "instructions": 4528497
+          },
+          "conventional": {
+            "text_bytes": 15276,
+            "instructions": 4541768
+          },
+          "classical": {
+            "text_bytes": 15276,
+            "instructions": 4541777
+          },
+          "consed": {
+            "text_bytes": 15276,
+            "instructions": 4541775
+          },
+          "egraph": {
+            "text_bytes": 15276,
+            "instructions": 4541775
+          },
+          "egraph-forms": {
+            "text_bytes": 15276,
+            "instructions": 4541778
+          }
+        },
+        "setjmp-longjmp": {
+          "phase": "correctness",
+          "cases": 8,
+          "gcc-16": {
+            "text_bytes": 4264,
+            "instructions": 922898
+          },
+          "conventional": {
+            "text_bytes": 3875,
+            "instructions": 923677
+          },
+          "classical": {
+            "text_bytes": 3875,
+            "instructions": 923677
+          },
+          "consed": {
+            "text_bytes": 3875,
+            "instructions": 923676
+          },
+          "egraph": {
+            "text_bytes": 3875,
+            "instructions": 923678
+          },
+          "egraph-forms": {
+            "text_bytes": 3875,
+            "instructions": 923672
+          }
+        },
+        "short-circuit": {
+          "phase": "local",
+          "cases": 24,
+          "gcc-16": {
+            "text_bytes": 18136,
+            "instructions": 2796696
+          },
+          "conventional": {
+            "text_bytes": 11930,
+            "instructions": 2884636
+          },
+          "classical": {
+            "text_bytes": 11932,
+            "instructions": 2884794
+          },
+          "consed": {
+            "text_bytes": 11930,
+            "instructions": 2884633
+          },
+          "egraph": {
+            "text_bytes": 11930,
+            "instructions": 2884631
+          },
+          "egraph-forms": {
+            "text_bytes": 11930,
+            "instructions": 2884633
+          }
+        },
+        "sigsetjmp": {
+          "phase": "correctness",
+          "cases": 112,
+          "gcc-16": {
+            "text_bytes": 189120,
+            "instructions": 0
+          },
+          "conventional": {
+            "text_bytes": 213328,
+            "instructions": 0
+          },
+          "classical": {
+            "text_bytes": 214490,
+            "instructions": 0
+          },
+          "consed": {
+            "text_bytes": 213766,
+            "instructions": 0
+          },
+          "egraph": {
+            "text_bytes": 213738,
+            "instructions": 0
+          },
+          "egraph-forms": {
+            "text_bytes": 213738,
+            "instructions": 0
+          }
+        },
+        "simd-lfind": {
+          "phase": "correctness",
+          "cases": 30,
+          "gcc-16": {
+            "text_bytes": 31870,
+            "instructions": 5405025
+          },
+          "conventional": {
+            "text_bytes": 61160,
+            "instructions": 9825472
+          },
+          "classical": {
+            "text_bytes": 60524,
+            "instructions": 9880427
+          },
+          "consed": {
+            "text_bytes": 61160,
+            "instructions": 9825477
+          },
+          "egraph": {
+            "text_bytes": 61160,
+            "instructions": 9825486
+          },
+          "egraph-forms": {
+            "text_bytes": 61160,
+            "instructions": 9825477
+          }
+        },
+        "simplify": {
+          "phase": "local",
+          "cases": 114,
+          "gcc-16": {
+            "text_bytes": 115538,
+            "instructions": 16321787
+          },
+          "conventional": {
+            "text_bytes": 105497,
+            "instructions": 20713881
+          },
+          "classical": {
+            "text_bytes": 105497,
+            "instructions": 20713910
+          },
+          "consed": {
+            "text_bytes": 105635,
+            "instructions": 20713965
+          },
+          "egraph": {
+            "text_bytes": 105667,
+            "instructions": 20763070
+          },
+          "egraph-forms": {
+            "text_bytes": 105643,
+            "instructions": 20763056
+          }
+        },
+        "stack-slots": {
+          "phase": "backend",
+          "cases": 6,
+          "gcc-16": {
+            "text_bytes": 4006,
+            "instructions": 684938
+          },
+          "conventional": {
+            "text_bytes": 3124,
+            "instructions": 681588
+          },
+          "classical": {
+            "text_bytes": 3124,
+            "instructions": 681589
+          },
+          "consed": {
+            "text_bytes": 3124,
+            "instructions": 681587
+          },
+          "egraph": {
+            "text_bytes": 3124,
+            "instructions": 681586
+          },
+          "egraph-forms": {
+            "text_bytes": 3124,
+            "instructions": 681587
+          }
+        },
+        "store-fold": {
+          "phase": "backend",
+          "cases": 56,
+          "gcc-16": {
+            "text_bytes": 29668,
+            "instructions": 6386294
+          },
+          "conventional": {
+            "text_bytes": 25304,
+            "instructions": 6359477
+          },
+          "classical": {
+            "text_bytes": 25304,
+            "instructions": 6359427
+          },
+          "consed": {
+            "text_bytes": 25304,
+            "instructions": 6359426
+          },
+          "egraph": {
+            "text_bytes": 25304,
+            "instructions": 6359426
+          },
+          "egraph-forms": {
+            "text_bytes": 25304,
+            "instructions": 6359431
+          }
+        },
+        "store-fold-constant": {
+          "phase": "backend",
+          "cases": 118,
+          "gcc-16": {
+            "text_bytes": 61582,
+            "instructions": 13456976
+          },
+          "conventional": {
+            "text_bytes": 54990,
+            "instructions": 13400833
+          },
+          "classical": {
+            "text_bytes": 54990,
+            "instructions": 13400897
+          },
+          "consed": {
+            "text_bytes": 54990,
+            "instructions": 13400828
+          },
+          "egraph": {
+            "text_bytes": 54990,
+            "instructions": 13400882
+          },
+          "egraph-forms": {
+            "text_bytes": 54990,
+            "instructions": 13400852
+          }
+        },
+        "strength": {
+          "phase": "local",
+          "cases": 24,
+          "gcc-16": {
+            "text_bytes": 64232,
+            "instructions": 3989564
+          },
+          "conventional": {
+            "text_bytes": 68882,
+            "instructions": 3996917
+          },
+          "classical": {
+            "text_bytes": 68882,
+            "instructions": 3996917
+          },
+          "consed": {
+            "text_bytes": 68882,
+            "instructions": 3996918
+          },
+          "egraph": {
+            "text_bytes": 68882,
+            "instructions": 3996921
+          },
+          "egraph-forms": {
+            "text_bytes": 68882,
+            "instructions": 3996927
+          }
+        },
+        "switch-dispatch": {
+          "phase": "backend",
+          "cases": 21,
+          "gcc-16": {
+            "text_bytes": 14901,
+            "instructions": 2438612356
+          },
+          "conventional": {
+            "text_bytes": 11453,
+            "instructions": 3330724392
+          },
+          "classical": {
+            "text_bytes": 11453,
+            "instructions": 3330724669
+          },
+          "consed": {
+            "text_bytes": 11453,
+            "instructions": 3330724542
+          },
+          "egraph": {
+            "text_bytes": 11453,
+            "instructions": 3330724845
+          },
+          "egraph-forms": {
+            "text_bytes": 11453,
+            "instructions": 3330724557
+          }
+        },
+        "switch-lowering": {
+          "phase": "backend",
+          "cases": 27,
+          "gcc-16": {
+            "text_bytes": 22233,
+            "instructions": 5343116434
+          },
+          "conventional": {
+            "text_bytes": 22026,
+            "instructions": 5627656948
+          },
+          "classical": {
+            "text_bytes": 22026,
+            "instructions": 5627656856
+          },
+          "consed": {
+            "text_bytes": 22026,
+            "instructions": 5627657387
+          },
+          "egraph": {
+            "text_bytes": 22026,
+            "instructions": 5627657424
+          },
+          "egraph-forms": {
+            "text_bytes": 22026,
+            "instructions": 5627657553
+          }
+        },
+        "switch-runs": {
+          "phase": "backend",
+          "cases": 15,
+          "gcc-16": {
+            "text_bytes": 7007,
+            "instructions": 1706276
+          },
+          "conventional": {
+            "text_bytes": 7075,
+            "instructions": 1716140
+          },
+          "classical": {
+            "text_bytes": 7075,
+            "instructions": 1716132
+          },
+          "consed": {
+            "text_bytes": 7075,
+            "instructions": 1716138
+          },
+          "egraph": {
+            "text_bytes": 7075,
+            "instructions": 1716133
+          },
+          "egraph-forms": {
+            "text_bytes": 7075,
+            "instructions": 1716133
+          }
+        },
+        "tail-call": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 15210,
+            "instructions": 4136309
+          },
+          "conventional": {
+            "text_bytes": 15483,
+            "instructions": 4436732
+          },
+          "classical": {
+            "text_bytes": 15483,
+            "instructions": 4436729
+          },
+          "consed": {
+            "text_bytes": 15483,
+            "instructions": 4436782
+          },
+          "egraph": {
+            "text_bytes": 15483,
+            "instructions": 4436731
+          },
+          "egraph-forms": {
+            "text_bytes": 15483,
+            "instructions": 4436736
+          }
+        },
+        "tail-dispatch": {
+          "phase": "interprocedural",
+          "cases": 5,
+          "gcc-16": {
+            "text_bytes": 6863,
+            "instructions": 136590403
+          },
+          "conventional": {
+            "text_bytes": 8072,
+            "instructions": 183784129
+          },
+          "classical": {
+            "text_bytes": 8072,
+            "instructions": 183784131
+          },
+          "consed": {
+            "text_bytes": 8072,
+            "instructions": 183784138
+          },
+          "egraph": {
+            "text_bytes": 8072,
+            "instructions": 183784132
+          },
+          "egraph-forms": {
+            "text_bytes": 8072,
+            "instructions": 183784135
+          }
+        },
+        "target-attribute": {
+          "phase": "correctness",
+          "cases": 52,
+          "gcc-16": {
+            "text_bytes": 192031,
+            "instructions": 7577682
+          },
+          "conventional": {
+            "text_bytes": 208623,
+            "instructions": 7852535
+          },
+          "classical": {
+            "text_bytes": 207786,
+            "instructions": 7852208
+          },
+          "consed": {
+            "text_bytes": 208623,
+            "instructions": 7852546
+          },
+          "egraph": {
+            "text_bytes": 208559,
+            "instructions": 7853523
+          },
+          "egraph-forms": {
+            "text_bytes": 208559,
+            "instructions": 7853526
+          }
+        },
+        "unreachable-code": {
+          "phase": "local",
+          "cases": 8,
+          "gcc-16": {
+            "text_bytes": 3080,
+            "instructions": 905686
+          },
+          "conventional": {
+            "text_bytes": 2963,
+            "instructions": 908347
+          },
+          "classical": {
+            "text_bytes": 2963,
+            "instructions": 908343
+          },
+          "consed": {
+            "text_bytes": 2963,
+            "instructions": 908343
+          },
+          "egraph": {
+            "text_bytes": 2963,
+            "instructions": 908344
+          },
+          "egraph-forms": {
+            "text_bytes": 2963,
+            "instructions": 908344
+          }
+        },
+        "unused-params": {
+          "phase": "interprocedural",
+          "cases": 44,
+          "gcc-16": {
+            "text_bytes": 17320,
+            "instructions": 4985548
+          },
+          "conventional": {
+            "text_bytes": 16684,
+            "instructions": 5000234
+          },
+          "classical": {
+            "text_bytes": 16684,
+            "instructions": 5000230
+          },
+          "consed": {
+            "text_bytes": 16684,
+            "instructions": 5000237
+          },
+          "egraph": {
+            "text_bytes": 16684,
+            "instructions": 5000244
+          },
+          "egraph-forms": {
+            "text_bytes": 16684,
+            "instructions": 5000240
+          }
+        },
+        "unused-returns": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 15384,
+            "instructions": 3983315
+          },
+          "conventional": {
+            "text_bytes": 14820,
+            "instructions": 3994999
+          },
+          "classical": {
+            "text_bytes": 14820,
+            "instructions": 3994992
+          },
+          "consed": {
+            "text_bytes": 14820,
+            "instructions": 3995003
+          },
+          "egraph": {
+            "text_bytes": 14820,
+            "instructions": 3995009
+          },
+          "egraph-forms": {
+            "text_bytes": 14820,
+            "instructions": 3994995
+          }
+        },
+        "value-range": {
+          "phase": "global",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 5501,
+            "instructions": 1482153
+          },
+          "conventional": {
+            "text_bytes": 5909,
+            "instructions": 1485951
+          },
+          "classical": {
+            "text_bytes": 5909,
+            "instructions": 1485949
+          },
+          "consed": {
+            "text_bytes": 5915,
+            "instructions": 1485957
+          },
+          "egraph": {
+            "text_bytes": 5915,
+            "instructions": 1485959
+          },
+          "egraph-forms": {
+            "text_bytes": 5915,
+            "instructions": 1485953
+          }
+        },
+        "value-replacement": {
+          "phase": "global",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 8621,
+            "instructions": 41698884
+          },
+          "conventional": {
+            "text_bytes": 6067,
+            "instructions": 123321287
+          },
+          "classical": {
+            "text_bytes": 6067,
+            "instructions": 123321291
+          },
+          "consed": {
+            "text_bytes": 6067,
+            "instructions": 123321281
+          },
+          "egraph": {
+            "text_bytes": 6067,
+            "instructions": 123321288
+          },
+          "egraph-forms": {
+            "text_bytes": 6067,
+            "instructions": 123321283
+          }
+        },
+        "value-settled": {
+          "phase": "local",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 9005,
+            "instructions": 1506335
+          },
+          "conventional": {
+            "text_bytes": 6463,
+            "instructions": 1577003
+          },
+          "classical": {
+            "text_bytes": 6558,
+            "instructions": 1582635
+          },
+          "consed": {
+            "text_bytes": 6471,
+            "instructions": 1577512
+          },
+          "egraph": {
+            "text_bytes": 6471,
+            "instructions": 1577513
+          },
+          "egraph-forms": {
+            "text_bytes": 6471,
+            "instructions": 1577513
+          }
+        },
+        "vla-and-alloca": {
+          "phase": "floor",
+          "cases": 9,
+          "gcc-16": {
+            "text_bytes": 7321,
+            "instructions": 1031983
+          },
+          "conventional": {
+            "text_bytes": 5148,
+            "instructions": 1027674
+          },
+          "classical": {
+            "text_bytes": 5133,
+            "instructions": 1027669
+          },
+          "consed": {
+            "text_bytes": 5134,
+            "instructions": 1027662
+          },
+          "egraph": {
+            "text_bytes": 5134,
+            "instructions": 1027666
+          },
+          "egraph-forms": {
+            "text_bytes": 5134,
+            "instructions": 1027664
+          }
+        }
+      }
+    },
+    "O3": {
+      "cases": 3271,
+      "instructions_counted_over": 3159,
+      "totals": {
+        "gcc-16": {
+          "text_bytes": 3717655,
+          "instructions": 17552669892,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271
+        },
+        "conventional": {
+          "text_bytes": 3729571,
+          "instructions": 23498459879,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 195.299,
+          "optimize_seconds": 90.027,
+          "rewriter_seconds": 14.635
+        },
+        "classical": {
+          "text_bytes": 3735166,
+          "instructions": 23498725205,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 198.509,
+          "optimize_seconds": 94.36,
+          "rewriter_seconds": 19.043,
+          "smaller_than_conventional": 76,
+          "larger_than_conventional": 105
+        },
+        "consed": {
+          "text_bytes": 3727089,
+          "instructions": 23498544631,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 202.959,
+          "optimize_seconds": 98.868,
+          "rewriter_seconds": 22.68,
+          "smaller_than_conventional": 89,
+          "larger_than_conventional": 82
+        },
+        "egraph": {
+          "text_bytes": 3727919,
+          "instructions": 23498594808,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 209.453,
+          "optimize_seconds": 103.273,
+          "rewriter_seconds": 25.531,
+          "smaller_than_conventional": 107,
+          "larger_than_conventional": 136
+        },
+        "egraph-forms": {
+          "text_bytes": 3727895,
+          "instructions": 23498594625,
+          "compiled": 3271,
+          "same_output_as_gcc": 3271,
+          "compile_seconds": 208.759,
+          "optimize_seconds": 103.477,
+          "rewriter_seconds": 27.174,
+          "smaller_than_conventional": 115,
+          "larger_than_conventional": 136
+        }
+      },
+      "facets": {
+        "address-fold": {
+          "phase": "backend",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11500,
+            "instructions": 3173169
+          },
+          "conventional": {
+            "text_bytes": 10835,
+            "instructions": 3179247
+          },
+          "classical": {
+            "text_bytes": 10835,
+            "instructions": 3179243
+          },
+          "consed": {
+            "text_bytes": 10835,
+            "instructions": 3179241
+          },
+          "egraph": {
+            "text_bytes": 10835,
+            "instructions": 3179241
+          },
+          "egraph-forms": {
+            "text_bytes": 10835,
+            "instructions": 3179242
+          }
+        },
+        "alias-analysis": {
+          "phase": "global",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 14436,
+            "instructions": 4080181
+          },
+          "conventional": {
+            "text_bytes": 13547,
+            "instructions": 4087258
+          },
+          "classical": {
+            "text_bytes": 13547,
+            "instructions": 4087260
+          },
+          "consed": {
+            "text_bytes": 13547,
+            "instructions": 4087250
+          },
+          "egraph": {
+            "text_bytes": 13547,
+            "instructions": 4087253
+          },
+          "egraph-forms": {
+            "text_bytes": 13547,
+            "instructions": 4087249
+          }
+        },
+        "atomics": {
+          "phase": "correctness",
+          "cases": 31,
+          "gcc-16": {
+            "text_bytes": 27983,
+            "instructions": 3839298
+          },
+          "conventional": {
+            "text_bytes": 29705,
+            "instructions": 3849835
+          },
+          "classical": {
+            "text_bytes": 29693,
+            "instructions": 3849833
+          },
+          "consed": {
+            "text_bytes": 29705,
+            "instructions": 3849848
+          },
+          "egraph": {
+            "text_bytes": 29705,
+            "instructions": 3849835
+          },
+          "egraph-forms": {
+            "text_bytes": 29705,
+            "instructions": 3849834
+          }
+        },
+        "barrier": {
+          "phase": "correctness",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 5421,
+            "instructions": 1476629
+          },
+          "conventional": {
+            "text_bytes": 5221,
+            "instructions": 1481382
+          },
+          "classical": {
+            "text_bytes": 5221,
+            "instructions": 1481386
+          },
+          "consed": {
+            "text_bytes": 5221,
+            "instructions": 1481381
+          },
+          "egraph": {
+            "text_bytes": 5221,
+            "instructions": 1481385
+          },
+          "egraph-forms": {
+            "text_bytes": 5221,
+            "instructions": 1481380
+          }
+        },
+        "baseline": {
+          "phase": "floor",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 5868,
+            "instructions": 1150524
+          },
+          "conventional": {
+            "text_bytes": 5005,
+            "instructions": 1155351
+          },
+          "classical": {
+            "text_bytes": 5005,
+            "instructions": 1155355
+          },
+          "consed": {
+            "text_bytes": 4995,
+            "instructions": 1155351
+          },
+          "egraph": {
+            "text_bytes": 4995,
+            "instructions": 1155350
+          },
+          "egraph-forms": {
+            "text_bytes": 4995,
+            "instructions": 1155354
+          }
+        },
+        "bit-builtins": {
+          "phase": "backend",
+          "cases": 22,
+          "gcc-16": {
+            "text_bytes": 35050,
+            "instructions": 3163004
+          },
+          "conventional": {
+            "text_bytes": 85635,
+            "instructions": 3179253
+          },
+          "classical": {
+            "text_bytes": 85635,
+            "instructions": 3179247
+          },
+          "consed": {
+            "text_bytes": 85635,
+            "instructions": 3179254
+          },
+          "egraph": {
+            "text_bytes": 85635,
+            "instructions": 3179251
+          },
+          "egraph-forms": {
+            "text_bytes": 85635,
+            "instructions": 3179249
+          }
+        },
+        "bit-liveness": {
+          "phase": "backend",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11132,
+            "instructions": 3170043
+          },
+          "conventional": {
+            "text_bytes": 10972,
+            "instructions": 3179387
+          },
+          "classical": {
+            "text_bytes": 10972,
+            "instructions": 3179382
+          },
+          "consed": {
+            "text_bytes": 10972,
+            "instructions": 3179377
+          },
+          "egraph": {
+            "text_bytes": 10972,
+            "instructions": 3179385
+          },
+          "egraph-forms": {
+            "text_bytes": 10972,
+            "instructions": 3179385
+          }
+        },
+        "block-layout": {
+          "phase": "backend",
+          "cases": 16,
+          "gcc-16": {
+            "text_bytes": 6868,
+            "instructions": 1812122
+          },
+          "conventional": {
+            "text_bytes": 7061,
+            "instructions": 1915497
+          },
+          "classical": {
+            "text_bytes": 7061,
+            "instructions": 1915498
+          },
+          "consed": {
+            "text_bytes": 7061,
+            "instructions": 1915502
+          },
+          "egraph": {
+            "text_bytes": 7061,
+            "instructions": 1915505
+          },
+          "egraph-forms": {
+            "text_bytes": 7061,
+            "instructions": 1915503
+          }
+        },
+        "branch-probability": {
+          "phase": "floor",
+          "cases": 34,
+          "gcc-16": {
+            "text_bytes": 13570,
+            "instructions": 3848577
+          },
+          "conventional": {
+            "text_bytes": 12772,
+            "instructions": 3860104
+          },
+          "classical": {
+            "text_bytes": 12772,
+            "instructions": 3860105
+          },
+          "consed": {
+            "text_bytes": 12772,
+            "instructions": 3860143
+          },
+          "egraph": {
+            "text_bytes": 12772,
+            "instructions": 3860104
+          },
+          "egraph-forms": {
+            "text_bytes": 12772,
+            "instructions": 3860103
+          }
+        },
+        "call-motion": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 17085,
+            "instructions": 4394048
+          },
+          "conventional": {
+            "text_bytes": 16801,
+            "instructions": 4507933
+          },
+          "classical": {
+            "text_bytes": 16801,
+            "instructions": 4507929
+          },
+          "consed": {
+            "text_bytes": 16801,
+            "instructions": 4507931
+          },
+          "egraph": {
+            "text_bytes": 16801,
+            "instructions": 4507928
+          },
+          "egraph-forms": {
+            "text_bytes": 16801,
+            "instructions": 4507933
+          }
+        },
+        "called-once": {
+          "phase": "interprocedural",
+          "cases": 5,
+          "gcc-16": {
+            "text_bytes": 14309,
+            "instructions": 2816683176
+          },
+          "conventional": {
+            "text_bytes": 5005,
+            "instructions": 3130229887
+          },
+          "classical": {
+            "text_bytes": 5005,
+            "instructions": 3130229963
+          },
+          "consed": {
+            "text_bytes": 5005,
+            "instructions": 3130230470
+          },
+          "egraph": {
+            "text_bytes": 5005,
+            "instructions": 3130230414
+          },
+          "egraph-forms": {
+            "text_bytes": 5005,
+            "instructions": 3130230417
+          }
+        },
+        "calling-convention": {
+          "phase": "backend",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 4037,
+            "instructions": 1132917
+          },
+          "conventional": {
+            "text_bytes": 4594,
+            "instructions": 1135645
+          },
+          "classical": {
+            "text_bytes": 4594,
+            "instructions": 1135634
+          },
+          "consed": {
+            "text_bytes": 4594,
+            "instructions": 1135637
+          },
+          "egraph": {
+            "text_bytes": 4594,
+            "instructions": 1135644
+          },
+          "egraph-forms": {
+            "text_bytes": 4594,
+            "instructions": 1135639
+          }
+        },
+        "code-motion": {
+          "phase": "global",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4812,
+            "instructions": 1358559
+          },
+          "conventional": {
+            "text_bytes": 4673,
+            "instructions": 1362560
+          },
+          "classical": {
+            "text_bytes": 4673,
+            "instructions": 1362566
+          },
+          "consed": {
+            "text_bytes": 4621,
+            "instructions": 1362550
+          },
+          "egraph": {
+            "text_bytes": 4621,
+            "instructions": 1362544
+          },
+          "egraph-forms": {
+            "text_bytes": 4621,
+            "instructions": 1362545
+          }
+        },
+        "common-subexpr": {
+          "phase": "global",
+          "cases": 32,
+          "gcc-16": {
+            "text_bytes": 12880,
+            "instructions": 3622839
+          },
+          "conventional": {
+            "text_bytes": 12305,
+            "instructions": 3633465
+          },
+          "classical": {
+            "text_bytes": 12305,
+            "instructions": 3633455
+          },
+          "consed": {
+            "text_bytes": 12305,
+            "instructions": 3633464
+          },
+          "egraph": {
+            "text_bytes": 12305,
+            "instructions": 3633504
+          },
+          "egraph-forms": {
+            "text_bytes": 12305,
+            "instructions": 3633462
+          }
+        },
+        "compare-elim": {
+          "phase": "backend",
+          "cases": 26,
+          "gcc-16": {
+            "text_bytes": 10458,
+            "instructions": 2943210
+          },
+          "conventional": {
+            "text_bytes": 10131,
+            "instructions": 2951880
+          },
+          "classical": {
+            "text_bytes": 10131,
+            "instructions": 2951890
+          },
+          "consed": {
+            "text_bytes": 10131,
+            "instructions": 2951883
+          },
+          "egraph": {
+            "text_bytes": 10131,
+            "instructions": 2951878
+          },
+          "egraph-forms": {
+            "text_bytes": 10131,
+            "instructions": 2951877
+          }
+        },
+        "compare-fold": {
+          "phase": "backend",
+          "cases": 118,
+          "gcc-16": {
+            "text_bytes": 61134,
+            "instructions": 13455234
+          },
+          "conventional": {
+            "text_bytes": 55094,
+            "instructions": 13399307
+          },
+          "classical": {
+            "text_bytes": 55094,
+            "instructions": 13399292
+          },
+          "consed": {
+            "text_bytes": 55094,
+            "instructions": 13399297
+          },
+          "egraph": {
+            "text_bytes": 55094,
+            "instructions": 13399295
+          },
+          "egraph-forms": {
+            "text_bytes": 55094,
+            "instructions": 13399281
+          }
+        },
+        "computed-goto": {
+          "phase": "floor",
+          "cases": 25,
+          "gcc-16": {
+            "text_bytes": 27081,
+            "instructions": 2880134
+          },
+          "conventional": {
+            "text_bytes": 21548,
+            "instructions": 2874608
+          },
+          "classical": {
+            "text_bytes": 21548,
+            "instructions": 2874616
+          },
+          "consed": {
+            "text_bytes": 21620,
+            "instructions": 2875450
+          },
+          "egraph": {
+            "text_bytes": 21620,
+            "instructions": 2875456
+          },
+          "egraph-forms": {
+            "text_bytes": 21620,
+            "instructions": 2875447
+          }
+        },
+        "conditional-store": {
+          "phase": "local",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 16756,
+            "instructions": 2349539
+          },
+          "conventional": {
+            "text_bytes": 11001,
+            "instructions": 2441134
+          },
+          "classical": {
+            "text_bytes": 10980,
+            "instructions": 2439043
+          },
+          "consed": {
+            "text_bytes": 11001,
+            "instructions": 2441098
+          },
+          "egraph": {
+            "text_bytes": 11001,
+            "instructions": 2441090
+          },
+          "egraph-forms": {
+            "text_bytes": 11001,
+            "instructions": 2441094
+          }
+        },
+        "constant-args": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 14724,
+            "instructions": 4079055
+          },
+          "conventional": {
+            "text_bytes": 14468,
+            "instructions": 4087923
+          },
+          "classical": {
+            "text_bytes": 14468,
+            "instructions": 4087919
+          },
+          "consed": {
+            "text_bytes": 14567,
+            "instructions": 4088010
+          },
+          "egraph": {
+            "text_bytes": 14567,
+            "instructions": 4087998
+          },
+          "egraph-forms": {
+            "text_bytes": 14567,
+            "instructions": 4088003
+          }
+        },
+        "constant-fold": {
+          "phase": "local",
+          "cases": 112,
+          "gcc-16": {
+            "text_bytes": 142880,
+            "instructions": 16152631
+          },
+          "conventional": {
+            "text_bytes": 144261,
+            "instructions": 16186438
+          },
+          "classical": {
+            "text_bytes": 144261,
+            "instructions": 16186436
+          },
+          "consed": {
+            "text_bytes": 144261,
+            "instructions": 16186445
+          },
+          "egraph": {
+            "text_bytes": 144261,
+            "instructions": 16186436
+          },
+          "egraph-forms": {
+            "text_bytes": 144261,
+            "instructions": 16186433
+          }
+        },
+        "constant-propagation": {
+          "phase": "global",
+          "cases": 16,
+          "gcc-16": {
+            "text_bytes": 6160,
+            "instructions": 1811353
+          },
+          "conventional": {
+            "text_bytes": 5824,
+            "instructions": 1816647
+          },
+          "classical": {
+            "text_bytes": 5824,
+            "instructions": 1816648
+          },
+          "consed": {
+            "text_bytes": 5824,
+            "instructions": 1816651
+          },
+          "egraph": {
+            "text_bytes": 5824,
+            "instructions": 1816652
+          },
+          "egraph-forms": {
+            "text_bytes": 5824,
+            "instructions": 1816652
+          }
+        },
+        "control-flow": {
+          "phase": "floor",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 4762,
+            "instructions": 1136124
+          },
+          "conventional": {
+            "text_bytes": 4714,
+            "instructions": 1139112
+          },
+          "classical": {
+            "text_bytes": 4714,
+            "instructions": 1139109
+          },
+          "consed": {
+            "text_bytes": 4714,
+            "instructions": 1139107
+          },
+          "egraph": {
+            "text_bytes": 4714,
+            "instructions": 1139115
+          },
+          "egraph-forms": {
+            "text_bytes": 4714,
+            "instructions": 1139112
+          }
+        },
+        "copy-propagation": {
+          "phase": "global",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4620,
+            "instructions": 1358506
+          },
+          "conventional": {
+            "text_bytes": 4329,
+            "instructions": 1362484
+          },
+          "classical": {
+            "text_bytes": 4329,
+            "instructions": 1362483
+          },
+          "consed": {
+            "text_bytes": 4329,
+            "instructions": 1362481
+          },
+          "egraph": {
+            "text_bytes": 4329,
+            "instructions": 1362482
+          },
+          "egraph-forms": {
+            "text_bytes": 4329,
+            "instructions": 1362481
+          }
+        },
+        "crc32c": {
+          "phase": "correctness",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 876552,
+            "instructions": 13242311
+          },
+          "conventional": {
+            "text_bytes": 380952,
+            "instructions": 16777376
+          },
+          "classical": {
+            "text_bytes": 380952,
+            "instructions": 16783608
+          },
+          "consed": {
+            "text_bytes": 377880,
+            "instructions": 16854961
+          },
+          "egraph": {
+            "text_bytes": 377880,
+            "instructions": 16854949
+          },
+          "egraph-forms": {
+            "text_bytes": 377880,
+            "instructions": 16854950
+          }
+        },
+        "dead-code": {
+          "phase": "local",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4620,
+            "instructions": 1358264
+          },
+          "conventional": {
+            "text_bytes": 4371,
+            "instructions": 1362243
+          },
+          "classical": {
+            "text_bytes": 4371,
+            "instructions": 1362245
+          },
+          "consed": {
+            "text_bytes": 4371,
+            "instructions": 1362238
+          },
+          "egraph": {
+            "text_bytes": 4371,
+            "instructions": 1362242
+          },
+          "egraph-forms": {
+            "text_bytes": 4371,
+            "instructions": 1362241
+          }
+        },
+        "dead-store": {
+          "phase": "local",
+          "cases": 12,
+          "gcc-16": {
+            "text_bytes": 4620,
+            "instructions": 1358269
+          },
+          "conventional": {
+            "text_bytes": 4371,
+            "instructions": 1362244
+          },
+          "classical": {
+            "text_bytes": 4371,
+            "instructions": 1362244
+          },
+          "consed": {
+            "text_bytes": 4371,
+            "instructions": 1362244
+          },
+          "egraph": {
+            "text_bytes": 4371,
+            "instructions": 1362245
+          },
+          "egraph-forms": {
+            "text_bytes": 4371,
+            "instructions": 1362243
+          }
+        },
+        "declared-purity": {
+          "phase": "interprocedural",
+          "cases": 32,
+          "gcc-16": {
+            "text_bytes": 14824,
+            "instructions": 3636289
+          },
+          "conventional": {
+            "text_bytes": 13136,
+            "instructions": 3633852
+          },
+          "classical": {
+            "text_bytes": 13136,
+            "instructions": 3633805
+          },
+          "consed": {
+            "text_bytes": 13248,
+            "instructions": 3633886
+          },
+          "egraph": {
+            "text_bytes": 13248,
+            "instructions": 3633886
+          },
+          "egraph-forms": {
+            "text_bytes": 13248,
+            "instructions": 3633889
+          }
+        },
+        "devirtualize": {
+          "phase": "interprocedural",
+          "cases": 4,
+          "gcc-16": {
+            "text_bytes": 1650,
+            "instructions": 452887
+          },
+          "conventional": {
+            "text_bytes": 1607,
+            "instructions": 454214
+          },
+          "classical": {
+            "text_bytes": 1607,
+            "instructions": 454211
+          },
+          "consed": {
+            "text_bytes": 1607,
+            "instructions": 454212
+          },
+          "egraph": {
+            "text_bytes": 1607,
+            "instructions": 454212
+          },
+          "egraph-forms": {
+            "text_bytes": 1607,
+            "instructions": 454213
+          }
+        },
+        "division": {
+          "phase": "backend",
+          "cases": 72,
+          "gcc-16": {
+            "text_bytes": 51112,
+            "instructions": 165193538
+          },
+          "conventional": {
+            "text_bytes": 36722,
+            "instructions": 2056553861
+          },
+          "classical": {
+            "text_bytes": 36722,
+            "instructions": 2056553843
+          },
+          "consed": {
+            "text_bytes": 36722,
+            "instructions": 2056553883
+          },
+          "egraph": {
+            "text_bytes": 36722,
+            "instructions": 2056553887
+          },
+          "egraph-forms": {
+            "text_bytes": 36722,
+            "instructions": 2056553904
+          }
+        },
+        "float-conversion": {
+          "phase": "backend",
+          "cases": 66,
+          "gcc-16": {
+            "text_bytes": 45106,
+            "instructions": 7976996
+          },
+          "conventional": {
+            "text_bytes": 51422,
+            "instructions": 8000674
+          },
+          "classical": {
+            "text_bytes": 51422,
+            "instructions": 8000718
+          },
+          "consed": {
+            "text_bytes": 51422,
+            "instructions": 8000682
+          },
+          "egraph": {
+            "text_bytes": 51422,
+            "instructions": 8000678
+          },
+          "egraph-forms": {
+            "text_bytes": 51422,
+            "instructions": 8000678
+          }
+        },
+        "frame-address": {
+          "phase": "backend",
+          "cases": 6,
+          "gcc-16": {
+            "text_bytes": 2310,
+            "instructions": 679240
+          },
+          "conventional": {
+            "text_bytes": 2208,
+            "instructions": 681226
+          },
+          "classical": {
+            "text_bytes": 2208,
+            "instructions": 681227
+          },
+          "consed": {
+            "text_bytes": 2208,
+            "instructions": 681225
+          },
+          "egraph": {
+            "text_bytes": 2208,
+            "instructions": 681227
+          },
+          "egraph-forms": {
+            "text_bytes": 2208,
+            "instructions": 681227
+          }
+        },
+        "frame-size": {
+          "phase": "backend",
+          "cases": 54,
+          "gcc-16": {
+            "text_bytes": 198745,
+            "instructions": 31169195
+          },
+          "conventional": {
+            "text_bytes": 137884,
+            "instructions": 37200275
+          },
+          "classical": {
+            "text_bytes": 141516,
+            "instructions": 37403087
+          },
+          "consed": {
+            "text_bytes": 137884,
+            "instructions": 37200273
+          },
+          "egraph": {
+            "text_bytes": 137884,
+            "instructions": 37200273
+          },
+          "egraph-forms": {
+            "text_bytes": 137884,
+            "instructions": 37200273
+          }
+        },
+        "frontend": {
+          "phase": "floor",
+          "cases": 22,
+          "gcc-16": {
+            "text_bytes": 9046,
+            "instructions": 2511733
+          },
+          "conventional": {
+            "text_bytes": 8670,
+            "instructions": 2519263
+          },
+          "classical": {
+            "text_bytes": 8670,
+            "instructions": 2519265
+          },
+          "consed": {
+            "text_bytes": 8670,
+            "instructions": 2519269
+          },
+          "egraph": {
+            "text_bytes": 8670,
+            "instructions": 2519309
+          },
+          "egraph-forms": {
+            "text_bytes": 8670,
+            "instructions": 2519267
+          }
+        },
+        "function-purity": {
+          "phase": "interprocedural",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 10940,
+            "instructions": 3172364
+          },
+          "conventional": {
+            "text_bytes": 11356,
+            "instructions": 3181901
+          },
+          "classical": {
+            "text_bytes": 11345,
+            "instructions": 3181896
+          },
+          "consed": {
+            "text_bytes": 11356,
+            "instructions": 3181891
+          },
+          "egraph": {
+            "text_bytes": 11356,
+            "instructions": 3181900
+          },
+          "egraph-forms": {
+            "text_bytes": 11356,
+            "instructions": 3181888
+          }
+        },
+        "if-conversion": {
+          "phase": "backend",
+          "cases": 38,
+          "gcc-16": {
+            "text_bytes": 20038,
+            "instructions": 6544423891
+          },
+          "conventional": {
+            "text_bytes": 16593,
+            "instructions": 8344551899
+          },
+          "classical": {
+            "text_bytes": 16593,
+            "instructions": 8344551958
+          },
+          "consed": {
+            "text_bytes": 16593,
+            "instructions": 8344551738
+          },
+          "egraph": {
+            "text_bytes": 16593,
+            "instructions": 8344551740
+          },
+          "egraph-forms": {
+            "text_bytes": 16593,
+            "instructions": 8344551775
+          }
+        },
+        "induction-variable": {
+          "phase": "loops",
+          "cases": 42,
+          "gcc-16": {
+            "text_bytes": 17546,
+            "instructions": 4801742
+          },
+          "conventional": {
+            "text_bytes": 17107,
+            "instructions": 4820551
+          },
+          "classical": {
+            "text_bytes": 17107,
+            "instructions": 4820594
+          },
+          "consed": {
+            "text_bytes": 17107,
+            "instructions": 4820553
+          },
+          "egraph": {
+            "text_bytes": 17107,
+            "instructions": 4820550
+          },
+          "egraph-forms": {
+            "text_bytes": 17107,
+            "instructions": 4820552
+          }
+        },
+        "inline": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 13956,
+            "instructions": 4075938
+          },
+          "conventional": {
+            "text_bytes": 13549,
+            "instructions": 4087945
+          },
+          "classical": {
+            "text_bytes": 13549,
+            "instructions": 4087951
+          },
+          "consed": {
+            "text_bytes": 13549,
+            "instructions": 4087949
+          },
+          "egraph": {
+            "text_bytes": 13549,
+            "instructions": 4087945
+          },
+          "egraph-forms": {
+            "text_bytes": 13549,
+            "instructions": 4087948
+          }
+        },
+        "interpreter-dispatch": {
+          "phase": "backend",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 115708,
+            "instructions": 6646465
+          },
+          "conventional": {
+            "text_bytes": 433500,
+            "instructions": 10764067
+          },
+          "classical": {
+            "text_bytes": 434780,
+            "instructions": 10761962
+          },
+          "consed": {
+            "text_bytes": 433500,
+            "instructions": 10764069
+          },
+          "egraph": {
+            "text_bytes": 433500,
+            "instructions": 10764114
+          },
+          "egraph-forms": {
+            "text_bytes": 433500,
+            "instructions": 10764067
+          }
+        },
+        "iv-selection": {
+          "phase": "loops",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 27908,
+            "instructions": 4104784
+          },
+          "conventional": {
+            "text_bytes": 17751,
+            "instructions": 4105611
+          },
+          "classical": {
+            "text_bytes": 17751,
+            "instructions": 4105594
+          },
+          "consed": {
+            "text_bytes": 17787,
+            "instructions": 4105725
+          },
+          "egraph": {
+            "text_bytes": 17787,
+            "instructions": 4105715
+          },
+          "egraph-forms": {
+            "text_bytes": 17787,
+            "instructions": 4105719
+          }
+        },
+        "jump-threading": {
+          "phase": "global",
+          "cases": 5,
+          "gcc-16": {
+            "text_bytes": 4213,
+            "instructions": 610780
+          },
+          "conventional": {
+            "text_bytes": 3523,
+            "instructions": 634090
+          },
+          "classical": {
+            "text_bytes": 3523,
+            "instructions": 634086
+          },
+          "consed": {
+            "text_bytes": 3554,
+            "instructions": 638136
+          },
+          "egraph": {
+            "text_bytes": 3554,
+            "instructions": 638139
+          },
+          "egraph-forms": {
+            "text_bytes": 3554,
+            "instructions": 638138
+          }
+        },
+        "link-time-optimization": {
+          "phase": "interprocedural",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 9482,
+            "instructions": 2283268
+          },
+          "conventional": {
+            "text_bytes": 8955,
+            "instructions": 2289936
+          },
+          "classical": {
+            "text_bytes": 8955,
+            "instructions": 2289937
+          },
+          "consed": {
+            "text_bytes": 8955,
+            "instructions": 2289940
+          },
+          "egraph": {
+            "text_bytes": 8955,
+            "instructions": 2289937
+          },
+          "egraph-forms": {
+            "text_bytes": 8955,
+            "instructions": 2289939
+          }
+        },
+        "load-fold": {
+          "phase": "backend",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 20324,
+            "instructions": 4558135
+          },
+          "conventional": {
+            "text_bytes": 17529,
+            "instructions": 4542203
+          },
+          "classical": {
+            "text_bytes": 17529,
+            "instructions": 4542217
+          },
+          "consed": {
+            "text_bytes": 17529,
+            "instructions": 4542213
+          },
+          "egraph": {
+            "text_bytes": 17529,
+            "instructions": 4542211
+          },
+          "egraph-forms": {
+            "text_bytes": 17529,
+            "instructions": 4542210
+          }
+        },
+        "load-forwarding": {
+          "phase": "global",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 15528,
+            "instructions": 4528418
+          },
+          "conventional": {
+            "text_bytes": 14908,
+            "instructions": 4541704
+          },
+          "classical": {
+            "text_bytes": 14908,
+            "instructions": 4541696
+          },
+          "consed": {
+            "text_bytes": 14936,
+            "instructions": 4541703
+          },
+          "egraph": {
+            "text_bytes": 14936,
+            "instructions": 4541703
+          },
+          "egraph-forms": {
+            "text_bytes": 14936,
+            "instructions": 4541708
+          }
+        },
+        "long-double": {
+          "phase": "backend",
+          "cases": 10,
+          "gcc-16": {
+            "text_bytes": 5564,
+            "instructions": 1151462
+          },
+          "conventional": {
+            "text_bytes": 8277,
+            "instructions": 1154698
+          },
+          "classical": {
+            "text_bytes": 8277,
+            "instructions": 1154696
+          },
+          "consed": {
+            "text_bytes": 8277,
+            "instructions": 1154700
+          },
+          "egraph": {
+            "text_bytes": 8277,
+            "instructions": 1154698
+          },
+          "egraph-forms": {
+            "text_bytes": 8277,
+            "instructions": 1154713
+          }
+        },
+        "loop-deletion": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 25152,
+            "instructions": 7266303
+          },
+          "conventional": {
+            "text_bytes": 24302,
+            "instructions": 7287604
+          },
+          "classical": {
+            "text_bytes": 24302,
+            "instructions": 7287606
+          },
+          "consed": {
+            "text_bytes": 24302,
+            "instructions": 7287596
+          },
+          "egraph": {
+            "text_bytes": 24302,
+            "instructions": 7287592
+          },
+          "egraph-forms": {
+            "text_bytes": 24302,
+            "instructions": 7287610
+          }
+        },
+        "loop-hoist": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 35200,
+            "instructions": 7250484
+          },
+          "conventional": {
+            "text_bytes": 30797,
+            "instructions": 7272929
+          },
+          "classical": {
+            "text_bytes": 30797,
+            "instructions": 7272933
+          },
+          "consed": {
+            "text_bytes": 30797,
+            "instructions": 7272935
+          },
+          "egraph": {
+            "text_bytes": 30797,
+            "instructions": 7272941
+          },
+          "egraph-forms": {
+            "text_bytes": 30797,
+            "instructions": 7272940
+          }
+        },
+        "loop-idiom": {
+          "phase": "loops",
+          "cases": 78,
+          "gcc-16": {
+            "text_bytes": 36494,
+            "instructions": 14899222
+          },
+          "conventional": {
+            "text_bytes": 31271,
+            "instructions": 26074691
+          },
+          "classical": {
+            "text_bytes": 31271,
+            "instructions": 26074697
+          },
+          "consed": {
+            "text_bytes": 30971,
+            "instructions": 26074545
+          },
+          "egraph": {
+            "text_bytes": 30971,
+            "instructions": 26074547
+          },
+          "egraph-forms": {
+            "text_bytes": 30971,
+            "instructions": 26074522
+          }
+        },
+        "loop-invariant": {
+          "phase": "loops",
+          "cases": 32,
+          "gcc-16": {
+            "text_bytes": 12720,
+            "instructions": 3623131
+          },
+          "conventional": {
+            "text_bytes": 12176,
+            "instructions": 3636577
+          },
+          "classical": {
+            "text_bytes": 12176,
+            "instructions": 3636570
+          },
+          "consed": {
+            "text_bytes": 12176,
+            "instructions": 3636568
+          },
+          "egraph": {
+            "text_bytes": 12176,
+            "instructions": 3636574
+          },
+          "egraph-forms": {
+            "text_bytes": 12176,
+            "instructions": 3636576
+          }
+        },
+        "loop-restructure": {
+          "phase": "loops",
+          "cases": 48,
+          "gcc-16": {
+            "text_bytes": 29232,
+            "instructions": 5441294
+          },
+          "conventional": {
+            "text_bytes": 22277,
+            "instructions": 5492227
+          },
+          "classical": {
+            "text_bytes": 22217,
+            "instructions": 5492036
+          },
+          "consed": {
+            "text_bytes": 22277,
+            "instructions": 5492224
+          },
+          "egraph": {
+            "text_bytes": 22277,
+            "instructions": 5492223
+          },
+          "egraph-forms": {
+            "text_bytes": 22277,
+            "instructions": 5492214
+          }
+        },
+        "loop-rotate": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 24640,
+            "instructions": 7245041
+          },
+          "conventional": {
+            "text_bytes": 22912,
+            "instructions": 7266169
+          },
+          "classical": {
+            "text_bytes": 22912,
+            "instructions": 7266183
+          },
+          "consed": {
+            "text_bytes": 22912,
+            "instructions": 7266170
+          },
+          "egraph": {
+            "text_bytes": 22912,
+            "instructions": 7266173
+          },
+          "egraph-forms": {
+            "text_bytes": 22912,
+            "instructions": 7266172
+          }
+        },
+        "loop-shape": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 33520,
+            "instructions": 7260297
+          },
+          "conventional": {
+            "text_bytes": 26833,
+            "instructions": 7283344
+          },
+          "classical": {
+            "text_bytes": 26833,
+            "instructions": 7283343
+          },
+          "consed": {
+            "text_bytes": 26815,
+            "instructions": 7283338
+          },
+          "egraph": {
+            "text_bytes": 26815,
+            "instructions": 7283337
+          },
+          "egraph-forms": {
+            "text_bytes": 26815,
+            "instructions": 7283341
+          }
+        },
+        "loop-unroll": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 33344,
+            "instructions": 7247898
+          },
+          "conventional": {
+            "text_bytes": 24819,
+            "instructions": 7275188
+          },
+          "classical": {
+            "text_bytes": 24819,
+            "instructions": 7275181
+          },
+          "consed": {
+            "text_bytes": 24819,
+            "instructions": 7275202
+          },
+          "egraph": {
+            "text_bytes": 24819,
+            "instructions": 7275206
+          },
+          "egraph-forms": {
+            "text_bytes": 24819,
+            "instructions": 7275194
+          }
+        },
+        "loop-unroll-shape": {
+          "phase": "loops",
+          "cases": 80,
+          "gcc-16": {
+            "text_bytes": 32272,
+            "instructions": 9061906
+          },
+          "conventional": {
+            "text_bytes": 29734,
+            "instructions": 9088917
+          },
+          "classical": {
+            "text_bytes": 29734,
+            "instructions": 9088912
+          },
+          "consed": {
+            "text_bytes": 29734,
+            "instructions": 9088935
+          },
+          "egraph": {
+            "text_bytes": 29734,
+            "instructions": 9088922
+          },
+          "egraph-forms": {
+            "text_bytes": 29734,
+            "instructions": 9088930
+          }
+        },
+        "loop-unswitch": {
+          "phase": "loops",
+          "cases": 64,
+          "gcc-16": {
+            "text_bytes": 25088,
+            "instructions": 7245465
+          },
+          "conventional": {
+            "text_bytes": 28050,
+            "instructions": 7275499
+          },
+          "classical": {
+            "text_bytes": 28050,
+            "instructions": 7275489
+          },
+          "consed": {
+            "text_bytes": 28066,
+            "instructions": 7276286
+          },
+          "egraph": {
+            "text_bytes": 28866,
+            "instructions": 7276495
+          },
+          "egraph-forms": {
+            "text_bytes": 28866,
+            "instructions": 7276493
+          }
+        },
+        "machine-peephole": {
+          "phase": "backend",
+          "cases": 22,
+          "gcc-16": {
+            "text_bytes": 8630,
+            "instructions": 2490573
+          },
+          "conventional": {
+            "text_bytes": 8258,
+            "instructions": 2497880
+          },
+          "classical": {
+            "text_bytes": 8258,
+            "instructions": 2497878
+          },
+          "consed": {
+            "text_bytes": 8258,
+            "instructions": 2497874
+          },
+          "egraph": {
+            "text_bytes": 8258,
+            "instructions": 2497874
+          },
+          "egraph-forms": {
+            "text_bytes": 8258,
+            "instructions": 2497874
+          }
+        },
+        "memory-effects": {
+          "phase": "interprocedural",
+          "cases": 24,
+          "gcc-16": {
+            "text_bytes": 13194,
+            "instructions": 2998028
+          },
+          "conventional": {
+            "text_bytes": 12413,
+            "instructions": 3049567
+          },
+          "classical": {
+            "text_bytes": 12413,
+            "instructions": 3049566
+          },
+          "consed": {
+            "text_bytes": 12413,
+            "instructions": 3049564
+          },
+          "egraph": {
+            "text_bytes": 12413,
+            "instructions": 3049558
+          },
+          "egraph-forms": {
+            "text_bytes": 12413,
+            "instructions": 3049566
+          }
+        },
+        "memory-ssa": {
+          "phase": "global",
+          "cases": 28,
+          "gcc-16": {
+            "text_bytes": 11164,
+            "instructions": 3173192
+          },
+          "conventional": {
+            "text_bytes": 10495,
+            "instructions": 3179206
+          },
+          "classical": {
+            "text_bytes": 10495,
+            "instructions": 3179211
+          },
+          "consed": {
+            "text_bytes": 10495,
+            "instructions": 3179208
+          },
+          "egraph": {
+            "text_bytes": 10495,
+            "instructions": 3179216
+          },
+          "egraph-forms": {
+            "text_bytes": 10495,
+            "instructions": 3179250
+          }
+        },
+        "narrow-shift": {
+          "phase": "backend",
+          "cases": 8,
+          "gcc-16": {
+            "text_bytes": 7400,
+            "instructions": 160616719
+          },
+          "conventional": {
+            "text_bytes": 4639,
+            "instructions": 269772847
+          },
+          "classical": {
+            "text_bytes": 4639,
+            "instructions": 269772844
+          },
+          "consed": {
+            "text_bytes": 4639,
+            "instructions": 269772844
+          },
+          "egraph": {
+            "text_bytes": 4639,
+            "instructions": 269772842
+          },
+          "egraph-forms": {
+            "text_bytes": 4639,
+            "instructions": 269772855
+          }
+        },
+        "narrowing": {
+          "phase": "local",
+          "cases": 52,
+          "gcc-16": {
+            "text_bytes": 30708,
+            "instructions": 6187169
+          },
+          "conventional": {
+            "text_bytes": 31270,
+            "instructions": 6204321
+          },
+          "classical": {
+            "text_bytes": 31270,
+            "instructions": 6204329
+          },
+          "consed": {
+            "text_bytes": 31270,
+            "instructions": 6204320
+          },
+          "egraph": {
+            "text_bytes": 31270,
+            "instructions": 6204322
+          },
+          "egraph-forms": {
+            "text_bytes": 31270,
+            "instructions": 6204330
+          }
+        },
+        "overflow-builtins": {
+          "phase": "correctness",
+          "cases": 144,
+          "gcc-16": {
+            "text_bytes": 375280,
+            "instructions": 21420148
+          },
+          "conventional": {
+            "text_bytes": 726382,
+            "instructions": 21584125
+          },
+          "classical": {
+            "text_bytes": 726382,
+            "instructions": 21584130
+          },
+          "consed": {
+            "text_bytes": 726382,
+            "instructions": 21584128
+          },
+          "egraph": {
+            "text_bytes": 726382,
+            "instructions": 21584112
+          },
+          "egraph-forms": {
+            "text_bytes": 726382,
+            "instructions": 21584107
+          }
+        },
+        "prune": {
+          "phase": "global",
+          "cases": 15,
+          "gcc-16": {
+            "text_bytes": 10255,
+            "instructions": 1734673
+          },
+          "conventional": {
+            "text_bytes": 7321,
+            "instructions": 1805247
+          },
+          "classical": {
+            "text_bytes": 7321,
+            "instructions": 1805241
+          },
+          "consed": {
+            "text_bytes": 7321,
+            "instructions": 1805247
+          },
+          "egraph": {
+            "text_bytes": 7321,
+            "instructions": 1805246
+          },
+          "egraph-forms": {
+            "text_bytes": 7321,
+            "instructions": 1805246
+          }
+        },
+        "reachability": {
+          "phase": "interprocedural",
+          "cases": 9,
+          "gcc-16": {
+            "text_bytes": 3465,
+            "instructions": 1018709
+          },
+          "conventional": {
+            "text_bytes": 3285,
+            "instructions": 1021686
+          },
+          "classical": {
+            "text_bytes": 3285,
+            "instructions": 1021686
+          },
+          "consed": {
+            "text_bytes": 3285,
+            "instructions": 1021687
+          },
+          "egraph": {
+            "text_bytes": 3285,
+            "instructions": 1021691
+          },
+          "egraph-forms": {
+            "text_bytes": 3285,
+            "instructions": 1021689
+          }
+        },
+        "reassociate": {
+          "phase": "local",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 9156,
+            "instructions": 2302340
+          },
+          "conventional": {
+            "text_bytes": 9442,
+            "instructions": 2309166
+          },
+          "classical": {
+            "text_bytes": 9442,
+            "instructions": 2309165
+          },
+          "consed": {
+            "text_bytes": 9442,
+            "instructions": 2309166
+          },
+          "egraph": {
+            "text_bytes": 9442,
+            "instructions": 2309164
+          },
+          "egraph-forms": {
+            "text_bytes": 9442,
+            "instructions": 2309166
+          }
+        },
+        "register-alloc": {
+          "phase": "backend",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 17480,
+            "instructions": 4529629
+          },
+          "conventional": {
+            "text_bytes": 22518,
+            "instructions": 4545614
+          },
+          "classical": {
+            "text_bytes": 22518,
+            "instructions": 4545607
+          },
+          "consed": {
+            "text_bytes": 22518,
+            "instructions": 4545623
+          },
+          "egraph": {
+            "text_bytes": 22518,
+            "instructions": 4545612
+          },
+          "egraph-forms": {
+            "text_bytes": 22518,
+            "instructions": 4545620
+          }
+        },
+        "register-pressure": {
+          "phase": "backend",
+          "cases": 60,
+          "gcc-16": {
+            "text_bytes": 24108,
+            "instructions": 6793187
+          },
+          "conventional": {
+            "text_bytes": 24990,
+            "instructions": 6813604
+          },
+          "classical": {
+            "text_bytes": 26006,
+            "instructions": 6813895
+          },
+          "consed": {
+            "text_bytes": 24990,
+            "instructions": 6813603
+          },
+          "egraph": {
+            "text_bytes": 25080,
+            "instructions": 6813646
+          },
+          "egraph-forms": {
+            "text_bytes": 25080,
+            "instructions": 6813637
+          }
+        },
+        "scalar-replacement": {
+          "phase": "global",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 7700,
+            "instructions": 2264201
+          },
+          "conventional": {
+            "text_bytes": 7395,
+            "instructions": 2270846
+          },
+          "classical": {
+            "text_bytes": 7395,
+            "instructions": 2270845
+          },
+          "consed": {
+            "text_bytes": 7395,
+            "instructions": 2270840
+          },
+          "egraph": {
+            "text_bytes": 7395,
+            "instructions": 2270843
+          },
+          "egraph-forms": {
+            "text_bytes": 7395,
+            "instructions": 2270843
+          }
+        },
+        "scheduling": {
+          "phase": "backend",
+          "cases": 20,
+          "gcc-16": {
+            "text_bytes": 9716,
+            "instructions": 2279953
+          },
+          "conventional": {
+            "text_bytes": 13948,
+            "instructions": 2287264
+          },
+          "classical": {
+            "text_bytes": 13948,
+            "instructions": 2287256
+          },
+          "consed": {
+            "text_bytes": 13948,
+            "instructions": 2287261
+          },
+          "egraph": {
+            "text_bytes": 13948,
+            "instructions": 2287259
+          },
+          "egraph-forms": {
+            "text_bytes": 13948,
+            "instructions": 2287261
+          }
+        },
+        "selection": {
+          "phase": "backend",
+          "cases": 40,
+          "gcc-16": {
+            "text_bytes": 16056,
+            "instructions": 4528497
+          },
+          "conventional": {
+            "text_bytes": 15276,
+            "instructions": 4541776
+          },
+          "classical": {
+            "text_bytes": 15276,
+            "instructions": 4541774
+          },
+          "consed": {
+            "text_bytes": 15276,
+            "instructions": 4541775
+          },
+          "egraph": {
+            "text_bytes": 15276,
+            "instructions": 4541783
+          },
+          "egraph-forms": {
+            "text_bytes": 15276,
+            "instructions": 4541776
+          }
+        },
+        "setjmp-longjmp": {
+          "phase": "correctness",
+          "cases": 8,
+          "gcc-16": {
+            "text_bytes": 4264,
+            "instructions": 922899
+          },
+          "conventional": {
+            "text_bytes": 3875,
+            "instructions": 923681
+          },
+          "classical": {
+            "text_bytes": 3875,
+            "instructions": 923678
+          },
+          "consed": {
+            "text_bytes": 3875,
+            "instructions": 923681
+          },
+          "egraph": {
+            "text_bytes": 3875,
+            "instructions": 923675
+          },
+          "egraph-forms": {
+            "text_bytes": 3875,
+            "instructions": 923679
+          }
+        },
+        "short-circuit": {
+          "phase": "local",
+          "cases": 24,
+          "gcc-16": {
+            "text_bytes": 18168,
+            "instructions": 2796759
+          },
+          "conventional": {
+            "text_bytes": 11930,
+            "instructions": 2884636
+          },
+          "classical": {
+            "text_bytes": 11932,
+            "instructions": 2884789
+          },
+          "consed": {
+            "text_bytes": 11930,
+            "instructions": 2884634
+          },
+          "egraph": {
+            "text_bytes": 11930,
+            "instructions": 2884639
+          },
+          "egraph-forms": {
+            "text_bytes": 11930,
+            "instructions": 2884639
+          }
+        },
+        "sigsetjmp": {
+          "phase": "correctness",
+          "cases": 112,
+          "gcc-16": {
+            "text_bytes": 200320,
+            "instructions": 0
+          },
+          "conventional": {
+            "text_bytes": 213328,
+            "instructions": 0
+          },
+          "classical": {
+            "text_bytes": 214490,
+            "instructions": 0
+          },
+          "consed": {
+            "text_bytes": 213766,
+            "instructions": 0
+          },
+          "egraph": {
+            "text_bytes": 213738,
+            "instructions": 0
+          },
+          "egraph-forms": {
+            "text_bytes": 213738,
+            "instructions": 0
+          }
+        },
+        "simd-lfind": {
+          "phase": "correctness",
+          "cases": 30,
+          "gcc-16": {
+            "text_bytes": 31870,
+            "instructions": 5405024
+          },
+          "conventional": {
+            "text_bytes": 61160,
+            "instructions": 9825473
+          },
+          "classical": {
+            "text_bytes": 60524,
+            "instructions": 9880424
+          },
+          "consed": {
+            "text_bytes": 61160,
+            "instructions": 9825483
+          },
+          "egraph": {
+            "text_bytes": 61160,
+            "instructions": 9825478
+          },
+          "egraph-forms": {
+            "text_bytes": 61160,
+            "instructions": 9825478
+          }
+        },
+        "simplify": {
+          "phase": "local",
+          "cases": 114,
+          "gcc-16": {
+            "text_bytes": 131970,
+            "instructions": 16297349
+          },
+          "conventional": {
+            "text_bytes": 105497,
+            "instructions": 20713886
+          },
+          "classical": {
+            "text_bytes": 105497,
+            "instructions": 20713891
+          },
+          "consed": {
+            "text_bytes": 105635,
+            "instructions": 20713925
+          },
+          "egraph": {
+            "text_bytes": 105667,
+            "instructions": 20763049
+          },
+          "egraph-forms": {
+            "text_bytes": 105643,
+            "instructions": 20763061
+          }
+        },
+        "stack-slots": {
+          "phase": "backend",
+          "cases": 6,
+          "gcc-16": {
+            "text_bytes": 3174,
+            "instructions": 679547
+          },
+          "conventional": {
+            "text_bytes": 3124,
+            "instructions": 681597
+          },
+          "classical": {
+            "text_bytes": 3124,
+            "instructions": 681587
+          },
+          "consed": {
+            "text_bytes": 3124,
+            "instructions": 681584
+          },
+          "egraph": {
+            "text_bytes": 3124,
+            "instructions": 681593
+          },
+          "egraph-forms": {
+            "text_bytes": 3124,
+            "instructions": 681586
+          }
+        },
+        "store-fold": {
+          "phase": "backend",
+          "cases": 56,
+          "gcc-16": {
+            "text_bytes": 29668,
+            "instructions": 6386295
+          },
+          "conventional": {
+            "text_bytes": 25304,
+            "instructions": 6359431
+          },
+          "classical": {
+            "text_bytes": 25304,
+            "instructions": 6359434
+          },
+          "consed": {
+            "text_bytes": 25304,
+            "instructions": 6359429
+          },
+          "egraph": {
+            "text_bytes": 25304,
+            "instructions": 6359437
+          },
+          "egraph-forms": {
+            "text_bytes": 25304,
+            "instructions": 6359427
+          }
+        },
+        "store-fold-constant": {
+          "phase": "backend",
+          "cases": 118,
+          "gcc-16": {
+            "text_bytes": 61582,
+            "instructions": 13456944
+          },
+          "conventional": {
+            "text_bytes": 54990,
+            "instructions": 13400849
+          },
+          "classical": {
+            "text_bytes": 54990,
+            "instructions": 13400843
+          },
+          "consed": {
+            "text_bytes": 54990,
+            "instructions": 13400894
+          },
+          "egraph": {
+            "text_bytes": 54990,
+            "instructions": 13400844
+          },
+          "egraph-forms": {
+            "text_bytes": 54990,
+            "instructions": 13400844
+          }
+        },
+        "strength": {
+          "phase": "local",
+          "cases": 24,
+          "gcc-16": {
+            "text_bytes": 64232,
+            "instructions": 3989564
+          },
+          "conventional": {
+            "text_bytes": 68882,
+            "instructions": 3996922
+          },
+          "classical": {
+            "text_bytes": 68882,
+            "instructions": 3996918
+          },
+          "consed": {
+            "text_bytes": 68882,
+            "instructions": 3996930
+          },
+          "egraph": {
+            "text_bytes": 68882,
+            "instructions": 3996919
+          },
+          "egraph-forms": {
+            "text_bytes": 68882,
+            "instructions": 3996925
+          }
+        },
+        "switch-dispatch": {
+          "phase": "backend",
+          "cases": 21,
+          "gcc-16": {
+            "text_bytes": 14933,
+            "instructions": 2418132340
+          },
+          "conventional": {
+            "text_bytes": 11453,
+            "instructions": 3330724642
+          },
+          "classical": {
+            "text_bytes": 11453,
+            "instructions": 3330724635
+          },
+          "consed": {
+            "text_bytes": 11453,
+            "instructions": 3330724922
+          },
+          "egraph": {
+            "text_bytes": 11453,
+            "instructions": 3330724594
+          },
+          "egraph-forms": {
+            "text_bytes": 11453,
+            "instructions": 3330724522
+          }
+        },
+        "switch-lowering": {
+          "phase": "backend",
+          "cases": 27,
+          "gcc-16": {
+            "text_bytes": 27419,
+            "instructions": 4903114647
+          },
+          "conventional": {
+            "text_bytes": 22026,
+            "instructions": 5627657132
+          },
+          "classical": {
+            "text_bytes": 22026,
+            "instructions": 5627657029
+          },
+          "consed": {
+            "text_bytes": 22026,
+            "instructions": 5627657238
+          },
+          "egraph": {
+            "text_bytes": 22026,
+            "instructions": 5627657436
+          },
+          "egraph-forms": {
+            "text_bytes": 22026,
+            "instructions": 5627657338
+          }
+        },
+        "switch-runs": {
+          "phase": "backend",
+          "cases": 15,
+          "gcc-16": {
+            "text_bytes": 9583,
+            "instructions": 1705970
+          },
+          "conventional": {
+            "text_bytes": 7075,
+            "instructions": 1716138
+          },
+          "classical": {
+            "text_bytes": 7075,
+            "instructions": 1716135
+          },
+          "consed": {
+            "text_bytes": 7075,
+            "instructions": 1716132
+          },
+          "egraph": {
+            "text_bytes": 7075,
+            "instructions": 1716135
+          },
+          "egraph-forms": {
+            "text_bytes": 7075,
+            "instructions": 1716139
+          }
+        },
+        "tail-call": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 14244,
+            "instructions": 4136234
+          },
+          "conventional": {
+            "text_bytes": 15483,
+            "instructions": 4436731
+          },
+          "classical": {
+            "text_bytes": 15483,
+            "instructions": 4436732
+          },
+          "consed": {
+            "text_bytes": 15483,
+            "instructions": 4436734
+          },
+          "egraph": {
+            "text_bytes": 15483,
+            "instructions": 4436730
+          },
+          "egraph-forms": {
+            "text_bytes": 15483,
+            "instructions": 4436729
+          }
+        },
+        "tail-dispatch": {
+          "phase": "interprocedural",
+          "cases": 5,
+          "gcc-16": {
+            "text_bytes": 7284,
+            "instructions": 136579138
+          },
+          "conventional": {
+            "text_bytes": 8072,
+            "instructions": 183784129
+          },
+          "classical": {
+            "text_bytes": 8072,
+            "instructions": 183784132
+          },
+          "consed": {
+            "text_bytes": 8072,
+            "instructions": 183784120
+          },
+          "egraph": {
+            "text_bytes": 8072,
+            "instructions": 183784132
+          },
+          "egraph-forms": {
+            "text_bytes": 8072,
+            "instructions": 183784130
+          }
+        },
+        "target-attribute": {
+          "phase": "correctness",
+          "cases": 52,
+          "gcc-16": {
+            "text_bytes": 254236,
+            "instructions": 7172248
+          },
+          "conventional": {
+            "text_bytes": 208623,
+            "instructions": 7852537
+          },
+          "classical": {
+            "text_bytes": 207786,
+            "instructions": 7852209
+          },
+          "consed": {
+            "text_bytes": 208623,
+            "instructions": 7852538
+          },
+          "egraph": {
+            "text_bytes": 208559,
+            "instructions": 7853519
+          },
+          "egraph-forms": {
+            "text_bytes": 208559,
+            "instructions": 7853558
+          }
+        },
+        "unreachable-code": {
+          "phase": "local",
+          "cases": 8,
+          "gcc-16": {
+            "text_bytes": 3080,
+            "instructions": 905731
+          },
+          "conventional": {
+            "text_bytes": 2963,
+            "instructions": 908344
+          },
+          "classical": {
+            "text_bytes": 2963,
+            "instructions": 908346
+          },
+          "consed": {
+            "text_bytes": 2963,
+            "instructions": 908343
+          },
+          "egraph": {
+            "text_bytes": 2963,
+            "instructions": 908343
+          },
+          "egraph-forms": {
+            "text_bytes": 2963,
+            "instructions": 908342
+          }
+        },
+        "unused-params": {
+          "phase": "interprocedural",
+          "cases": 44,
+          "gcc-16": {
+            "text_bytes": 17320,
+            "instructions": 4985538
+          },
+          "conventional": {
+            "text_bytes": 16684,
+            "instructions": 5000224
+          },
+          "classical": {
+            "text_bytes": 16684,
+            "instructions": 5000237
+          },
+          "consed": {
+            "text_bytes": 16684,
+            "instructions": 5000229
+          },
+          "egraph": {
+            "text_bytes": 16684,
+            "instructions": 5000249
+          },
+          "egraph-forms": {
+            "text_bytes": 16684,
+            "instructions": 5000231
+          }
+        },
+        "unused-returns": {
+          "phase": "interprocedural",
+          "cases": 36,
+          "gcc-16": {
+            "text_bytes": 16024,
+            "instructions": 4097120
+          },
+          "conventional": {
+            "text_bytes": 14820,
+            "instructions": 4109142
+          },
+          "classical": {
+            "text_bytes": 14820,
+            "instructions": 4109139
+          },
+          "consed": {
+            "text_bytes": 14820,
+            "instructions": 4109135
+          },
+          "egraph": {
+            "text_bytes": 14820,
+            "instructions": 4109132
+          },
+          "egraph-forms": {
+            "text_bytes": 14820,
+            "instructions": 4109134
+          }
+        },
+        "value-range": {
+          "phase": "global",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 5501,
+            "instructions": 1482159
+          },
+          "conventional": {
+            "text_bytes": 5909,
+            "instructions": 1485947
+          },
+          "classical": {
+            "text_bytes": 5909,
+            "instructions": 1485948
+          },
+          "consed": {
+            "text_bytes": 5915,
+            "instructions": 1485953
+          },
+          "egraph": {
+            "text_bytes": 5915,
+            "instructions": 1485956
+          },
+          "egraph-forms": {
+            "text_bytes": 5915,
+            "instructions": 1485958
+          }
+        },
+        "value-replacement": {
+          "phase": "global",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 8605,
+            "instructions": 12001103
+          },
+          "conventional": {
+            "text_bytes": 6067,
+            "instructions": 123321299
+          },
+          "classical": {
+            "text_bytes": 6067,
+            "instructions": 123321296
+          },
+          "consed": {
+            "text_bytes": 6067,
+            "instructions": 123321297
+          },
+          "egraph": {
+            "text_bytes": 6067,
+            "instructions": 123321290
+          },
+          "egraph-forms": {
+            "text_bytes": 6067,
+            "instructions": 123321298
+          }
+        },
+        "value-settled": {
+          "phase": "local",
+          "cases": 13,
+          "gcc-16": {
+            "text_bytes": 9005,
+            "instructions": 1506338
+          },
+          "conventional": {
+            "text_bytes": 6463,
+            "instructions": 1577004
+          },
+          "classical": {
+            "text_bytes": 6558,
+            "instructions": 1582627
+          },
+          "consed": {
+            "text_bytes": 6471,
+            "instructions": 1577514
+          },
+          "egraph": {
+            "text_bytes": 6471,
+            "instructions": 1577507
+          },
+          "egraph-forms": {
+            "text_bytes": 6471,
+            "instructions": 1577512
+          }
+        },
+        "vla-and-alloca": {
+          "phase": "floor",
+          "cases": 9,
+          "gcc-16": {
+            "text_bytes": 9881,
+            "instructions": 1032045
+          },
+          "conventional": {
+            "text_bytes": 5148,
+            "instructions": 1027671
+          },
+          "classical": {
+            "text_bytes": 5133,
+            "instructions": 1027667
+          },
+          "consed": {
+            "text_bytes": 5134,
+            "instructions": 1027666
+          },
+          "egraph": {
+            "text_bytes": 5134,
+            "instructions": 1027668
+          },
+          "egraph-forms": {
+            "text_bytes": 5134,
+            "instructions": 1027666
+          }
+        }
+      }
+    }
+  },
+  "decision": {
+    "rule": "If C beats B by less than 0.5% execution time, arm B ships. If B beats A by less than 1%, arm A ships.",
+    "measure": "instructions retired over the corpus, standing in for execution time because it barely moves from run to run",
+    "c_against_b_percent": 0.0002,
+    "b_against_a_percent": -0.0008,
+    "b_against_conventional_percent": 0.0004,
+    "ships": "conventional",
+    "losing_arms": "classical, consed, egraph and egraph-forms stay behind -Zrewriter= and off by default, so the experiment can be run again as the rule set grows"
+  },
+  "classes": {
+    "level": "O2",
+    "forms": 1627468,
+    "classes": 1479735,
+    "average": 1.0998,
+    "kept_for_selection": 74901,
+    "cranelift_reported": 1.13
+  }
+}

@@ -84,6 +84,14 @@ The file count is kept alongside the line count and mentioned only where it is n
 
 **Only the markdown is committed.** The other three are regenerated on every run whether or not anything about the compiler moved, so committing them makes the history churn and makes the diff something nobody reads. They go up as artifacts on the nightly instead, kept for the default retention, and `rucc-corpus diff` on the nightly reads yesterday's from there rather than from the tree. The same rule covers `programs/manifest.json`, which is the machine readable copy of a program list that the `README.md` files already state in a form a person can read.
 
+## Experiments
+
+`experiments/` holds the measurements the plan asks for once, to settle a question, rather than every night. Each is a page for a person and a `results.json` for a tool, and both are committed, because unlike the nightly reports they only change when the experiment is run again, and then the diff is the point.
+
+| experiment | what it settled |
+|---|---|
+| [07-rewriters](experiments/07-rewriters/README.md) | Experiment 7 of the optimizer plan: the conventional pipeline against the classical, hash-consed and e-graph rewriters, which answers open question one. The conventional pipeline ships. |
+
 ## Some of the programs are more than one file
 
 Every case in here is a single translation unit apart from the `link-time-optimization`, `bundle` and `dllimport` facets, and that default is worth defending. A program the compiler saw all of at once is a program where a wrong answer is about code generation and nothing else, which is most of what makes a failing case worth reading.
