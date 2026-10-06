@@ -91,6 +91,7 @@ The file count is kept alongside the line count and mentioned only where it is n
 | experiment | what it settled |
 |---|---|
 | [07-rewriters](experiments/07-rewriters/README.md) | Experiment 7 of the optimizer plan: the conventional pipeline against the classical, hash-consed and e-graph rewriters, which answers open question one. The conventional pipeline ships. |
+| [60-constant-sweep](experiments/60-constant-sweep/README.md) | Experiment 60 of the optimizer plan: every row of `rucc --print-params` at half and at double its value. 63 rows are flat, 16 are worth tuning and 9 are wrong, each with an issue in tamnd/rucc. |
 
 ## Some of the programs are more than one file
 
