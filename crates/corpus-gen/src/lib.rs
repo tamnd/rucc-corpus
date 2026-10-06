@@ -241,6 +241,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::kernel::generate(&mut sink);
     facets::kernel_asm::generate(&mut sink);
     facets::kernel_build::generate(&mut sink);
+    facets::kernel_front::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }
@@ -307,7 +308,14 @@ mod tests {
     fn no_case_prints_anything_that_depends_on_the_machine_it_runs_on() {
         let corpus = generate(&Options::all()).unwrap();
         for case in &corpus.cases {
+            // Two facets are about sizeof itself, since the kernel builds its constants out of
+            // it. They only take sizes that are the same on every target, which a test next to
+            // them checks, and never print one.
+            let sizes = matches!(case.facet, Facet::NullPointerConstant | Facet::ConstIce);
             for banned in ["%p", "sizeof", "__FILE__", "__LINE__", "__TIME__", "__DATE__"] {
+                if sizes && banned == "sizeof" {
+                    continue;
+                }
                 // Every file the compiler is handed, not only the one with main in it. A helper
                 // unit is C that gets compiled like any other, so a rule about what the corpus may
                 // contain that only looked at one of the files would have a hole in it.

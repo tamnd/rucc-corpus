@@ -16,7 +16,7 @@ Then `cargo run -p rucc-corpus -- gen --clean` and commit the C along with the g
 
 Everything printed goes out through `long long` or `unsigned long long`, with `%lld` or `%llu`. That is one format for every width and it does not change with the machine.
 
-Nothing printed may depend on the machine. No `%p`, no `sizeof`, no `__FILE__`, no `__LINE__`, no `__DATE__`, no `__TIME__`, no byte order. There is a test that enforces this across the whole corpus and it will catch you.
+Nothing printed may depend on the machine. No `%p`, no `sizeof`, no `__FILE__`, no `__LINE__`, no `__DATE__`, no `__TIME__`, no byte order. There is a test that enforces this across the whole corpus and it will catch you. The one exception is `sizeof` in `null-pointer-constant` and `const-ice`, which are about the constants the kernel builds out of it. They only take the size of types that are the same everywhere, and a test of their own checks that.
 
 `printf` is declared by hand rather than included, so a case tests the compiler and not the system headers. Testing the headers is what rucc-compat is for.
 

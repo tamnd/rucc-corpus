@@ -1,4 +1,33 @@
 {
   "note": "Every family a compiler under test is known not to handle, with the issue that will close it. A run fails on any failure this file does not name, and on any line in this file whose case has started working. Regenerate with `rucc-corpus run --accept`, and read the whole story in the README under \"What the compiler is known not to do\".",
-  "known": []
+  "known": [
+    {
+      "toolchain": "rucc",
+      "family": "const-ice.const-local.c17",
+      "verdict": "rejected",
+      "issue": "tamnd/rucc#3055",
+      "why": "rucc does not fold a const local in _Static_assert, an enumerator or a case label, which gcc does from -O1 up and this case pins -O2"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "null-pointer-constant.conditional-type.c17",
+      "verdict": "wrong",
+      "issue": "tamnd/rucc#3053",
+      "why": "rucc gives a conditional between an object pointer and a void * that is not a null pointer constant the type of its second operand instead of void *"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "null-pointer-constant.is-const.c17",
+      "verdict": "wrong",
+      "issue": "tamnd/rucc#3053",
+      "why": "rucc counts (char *)0 as a null pointer constant, so the _Generic in __is_const_zero sees void * and is_const answers 0 for every constant"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "null-pointer-constant.is-constexpr.c17",
+      "verdict": "wrong",
+      "issue": "tamnd/rucc#3054",
+      "why": "rucc folds 0 && x to a constant when x is not one, so __is_constexpr(0 && x) is 1 where gcc says 0"
+    }
+  ]
 }

@@ -54,9 +54,9 @@ pub fn parse(text: &str) -> Vec<Fired> {
 
 /// Whether a case's own flags build it at another level than the one the run asked for.
 ///
-/// `constant-p-after-inline`, `objtool-shapes` and `frame-size` pass `-O2` themselves, since
-/// what they check only holds once the optimizer has run, and the last `-O` on the command line is
-/// the one the compiler takes. Their trace at `-O0` is a trace of the `-O2` pipeline, and counted
+/// `constant-p-after-inline`, `objtool-shapes`, `frame-size` and the `const-local` case of
+/// `const-ice` pass `-O2` themselves, since what they check only holds once the optimizer has run,
+/// and the last `-O` on the command line is the one the compiler takes. Their trace at `-O0` is a trace of the `-O2` pipeline, and counted
 /// under `-O0` it would say that level runs passes it does not. Such a case keeps no trace.
 #[must_use]
 pub fn elsewhere(flags: &[String], level: Level) -> bool {
