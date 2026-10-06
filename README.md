@@ -154,6 +154,17 @@ cargo run --release -p rucc-corpus -- sweep \
 
 It compiles every case to assembly once as rucc is and once per move, so only the cases whose assembly changed are built and run, against rucc as it is and gcc 16 at the same level. `reports/sweep/index.md` has a line per move with the cases it changed, the change in instructions retired, text and compile time, and the facets that moved most, and calls each row flat, worth tuning, or wrong, which is when a value the sweep tried saves on instructions or text and spends on neither. A move that makes a case print the wrong answer is listed on its own. `sweep.json` is the same for a tool, and `sweep.jsonl` keeps each move as it finishes, so a sweep that stops picks up where it was with the same compiler and corpus. `--row` and `--facet` narrow it down, and `--level` picks a level other than `-O2`.
 
+## Turning each pass off
+
+`rucc-corpus passoff` is the same machinery with a pass in place of a threshold. It reads the passes from `rucc -O2 --print-pipeline`, turns each off on its own with `-fdisable-NAME`, and builds and runs only the cases whose assembly changed:
+
+```sh
+cargo run --release -p rucc-corpus -- passoff \
+    --rucc ../rucc/target/release/rucc --reference gcc-16=gcc-16
+```
+
+`reports/passoff/index.md` has a line per pass with the cases it changed, what turning it off did to instructions retired, text and compile time, the facets the pass helps and hurts most, and a call: it pays, trades, costs, is flat, or is idle when turning it off changes no case at all. A case that prints the wrong answer with a pass off is a bug in a later pass and is listed on its own. The numbers for one pass are not its share of the pipeline, because passes enable each other, and the page says so. `--pass` narrows it down, and it resumes from `passoff.jsonl` the way the sweep does.
+
 ## What a run time in here is worth
 
 Every case is run five times by default and every one of those times is kept, in `runs.jsonl` under `execute.samples`. The number the reports compare is the fastest of them, because on a machine that is doing anything else the slower measurements contain somebody else's work and there is no way to subtract it. The rest are kept so the floor can be argued with.

@@ -21,9 +21,12 @@
 /reports/findings.sarif
 /programs/manifest.json
 
-# The sweep keeps its page and leaves the two files a tool reads, the same as a run.
+# The sweep and the pass off measurement keep their pages and leave the two files a tool
+# reads, the same as a run.
 /reports/sweep/sweep.json
 /reports/sweep/sweep.jsonl
+/reports/passoff/passoff.json
+/reports/passoff/passoff.jsonl
 
 .DS_Store
 .idea/
