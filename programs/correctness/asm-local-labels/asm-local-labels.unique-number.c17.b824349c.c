@@ -7,7 +7,7 @@ static volatile unsigned int seed_in = 7;
 
 static inline __attribute__((always_inline))
 unsigned int add_if_odd(unsigned int x, unsigned int k) {
-    asm("testl $1, %1\n\tjz .Lrk_skip%=\n\taddl %1, %0\n.Lrk_skip%=:"
+    __asm__("testl $1, %1\n\tjz .Lrk_skip%=\n\taddl %1, %0\n.Lrk_skip%=:"
         : "+r"(x) : "r"(k) : "cc");
     return x;
 }

@@ -6,10 +6,10 @@ asm goto as static keys and user copies use it, with and without outputs. Part o
 
 | program | axes | dialect | must print |
 |---|---|---|---|
-| [`asm-goto.branch.c17.33690266`](asm-goto.branch.c17.33690266.c) | shape=branch | c17 | `3249` |
-| [`asm-goto.in-loop.c17.340e5676`](asm-goto.in-loop.c17.340e5676.c) | shape=in-loop | c17 | `1736138884` |
-| [`asm-goto.output.c17.2a15ca0e`](asm-goto.output.c17.2a15ca0e.c) | shape=output | c17 | `2840` |
-| [`asm-goto.static-key-off.c17.c699bc6d`](asm-goto.static-key-off.c17.c699bc6d.c) | shape=static-key-off | c17 | `14119` |
-| [`asm-goto.static-key-on.c17.7b3f5e16`](asm-goto.static-key-on.c17.7b3f5e16.c) | shape=static-key-on | c17 | `3854620103` |
-| [`asm-goto.two-labels.c17.8f7cd34d`](asm-goto.two-labels.c17.8f7cd34d.c) | shape=two-labels | c17 | `5383` |
+| [`asm-goto.branch.c17.bd8abef0`](asm-goto.branch.c17.bd8abef0.c) | shape=branch | c17 | `3249` |
+| [`asm-goto.in-loop.c17.d3655c03`](asm-goto.in-loop.c17.d3655c03.c) | shape=in-loop | c17 | `1736138884` |
+| [`asm-goto.output.c17.b939b5fe`](asm-goto.output.c17.b939b5fe.c) | shape=output | c17 | `2840` |
+| [`asm-goto.static-key-off.c17.429621de`](asm-goto.static-key-off.c17.429621de.c) | shape=static-key-off | c17 | `14119` |
+| [`asm-goto.static-key-on.c17.afdb5d04`](asm-goto.static-key-on.c17.afdb5d04.c) | shape=static-key-on | c17 | `3854620103` |
+| [`asm-goto.two-labels.c17.c9d186cc`](asm-goto.two-labels.c17.c9d186cc.c) | shape=two-labels | c17 | `5383` |
 

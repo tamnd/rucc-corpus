@@ -175,7 +175,7 @@ cargo run --release -p rucc-corpus -- run \
 
 That keeps the issue and the prose on every line that is still failing, and gives a new line an empty issue and a reason taken from the compiler's own words, which is a starting point for somebody to write over rather than an answer. A run only rewrites the part of the file it exercised. A run narrowed with `--facet` leaves the other facets alone, and a run whose command line did not name a compiler leaves that compiler's lines alone, which is why the reference job can run GCC 16 on its own without deleting everything the file says about rucc.
 
-As of the run that created it the file has eight lines, all of them rucc, across three things: the address of a label and the indirect jump through it, `__atomic_signal_fence`, and the library `setjmp` and `longjmp`. GCC 16 compiles and runs all of them.
+As of the run that created it the file has eight lines, all of them rucc, across three things: the address of a label and the indirect jump through it, `__atomic_signal_fence`, and the library `setjmp` and `longjmp`. GCC 16 compiles and runs all of them. Since rucc 0.24.2 every one of them works and the file names nothing, so any failure at all turns the job red.
 
 ## A case that has not changed is not built again
 
@@ -210,7 +210,7 @@ Two facets are the exception in the other direction. `crc32c-armv8` and `simd-lf
 
 `mitigations` is x86-64 only, like the Postgres SSE cases, and carries the `x86-64` tag. Its cases are built with the flags the kernel's speculation mitigations add, one mitigation at a time and then all of them together, and each program links the return and indirect branch thunks from a few lines of top level assembly in its own source.
 
-`asm-goto`, `asm-local-labels` and `gas-macros` are the inline assembly the kernel writes, and are x86-64 only too, in the AT&T syntax. The one case that puts data in another section with `.pushsection .rodata` also carries the `elf` tag, since that section name means nothing to a Mach-O assembler.
+`asm-goto`, `asm-local-labels` and `gas-macros` are the inline assembly the kernel writes, and are x86-64 only too, in the AT&T syntax. The one case that puts data in another section with `.pushsection .rodata` also carries the `elf` tag, since that section name means nothing to a Mach-O assembler. Every one of them writes `__asm__` rather than `asm`, because the corpus is built with `-std=c17` and in ISO C `asm` is an ordinary name, so GCC 16 reads `asm goto(...)` as a call to an undeclared function and refuses it.
 
 `constant-p-after-inline`, `mcmodel-kernel` and `general-regs-only` are the way the kernel is built. The first pins `-O2`, since the promise it checks only holds once the optimizer has run, and the branch a wrong answer would take calls a function defined nowhere, so a wrong answer fails to link. `mcmodel-kernel` is linked without PIE, which puts the program where a sign extended 32 bit address means what it says, so its cases carry the `elf` tag as well. `general-regs-only` puts a marker in every vector register before the work and checks them all before it prints.
 

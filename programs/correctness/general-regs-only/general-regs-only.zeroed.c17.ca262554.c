@@ -7,7 +7,7 @@ static volatile unsigned int seed_in = 7;
 
 __attribute__((noinline))
 static void mark_vectors(unsigned long long mark) {
-    asm volatile(
+    __asm__ volatile(
         "movq %0, %%xmm0\n\t"
         "movq %0, %%xmm1\n\t"
         "movq %0, %%xmm2\n\t"
@@ -30,37 +30,37 @@ static void mark_vectors(unsigned long long mark) {
 __attribute__((noinline))
 static unsigned long long vectors_changed(unsigned long long mark) {
     unsigned long long seen, changed = 0;
-    asm volatile("movq %%xmm0, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm0, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm1, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm1, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm2, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm2, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm3, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm3, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm4, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm4, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm5, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm5, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm6, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm6, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm7, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm7, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm8, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm8, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm9, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm9, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm10, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm10, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm11, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm11, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm12, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm12, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm13, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm13, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm14, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm14, %0" : "=r"(seen));
     changed |= seen ^ mark;
-    asm volatile("movq %%xmm15, %0" : "=r"(seen));
+    __asm__ volatile("movq %%xmm15, %0" : "=r"(seen));
     changed |= seen ^ mark;
     return changed;
 }

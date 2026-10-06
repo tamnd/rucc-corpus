@@ -6,9 +6,9 @@ numeric labels, the %= number and a label another section names. Part of the cor
 
 | program | axes | dialect | must print |
 |---|---|---|---|
-| [`asm-local-labels.backward.c17.dce84780`](asm-local-labels.backward.c17.dce84780.c) | shape=backward | c17 | `9543` |
-| [`asm-local-labels.forward.c17.657cf2e4`](asm-local-labels.forward.c17.657cf2e4.c) | shape=forward | c17 | `1863996935` |
-| [`asm-local-labels.inlined-copies.c17.d7c43c59`](asm-local-labels.inlined-copies.c17.d7c43c59.c) | shape=inlined-copies | c17 | `2426` |
-| [`asm-local-labels.pushsection.c17.d8176bc4`](asm-local-labels.pushsection.c17.d8176bc4.c) | shape=pushsection | c17 | `3367` |
-| [`asm-local-labels.unique-number.c17.7f861ad3`](asm-local-labels.unique-number.c17.7f861ad3.c) | shape=unique-number | c17 | `1768705308` |
+| [`asm-local-labels.backward.c17.03e01722`](asm-local-labels.backward.c17.03e01722.c) | shape=backward | c17 | `9543` |
+| [`asm-local-labels.forward.c17.c7069b9d`](asm-local-labels.forward.c17.c7069b9d.c) | shape=forward | c17 | `1863996935` |
+| [`asm-local-labels.inlined-copies.c17.4c7d5942`](asm-local-labels.inlined-copies.c17.4c7d5942.c) | shape=inlined-copies | c17 | `2426` |
+| [`asm-local-labels.pushsection.c17.718d8389`](asm-local-labels.pushsection.c17.718d8389.c) | shape=pushsection | c17 | `3367` |
+| [`asm-local-labels.unique-number.c17.b824349c`](asm-local-labels.unique-number.c17.b824349c.c) | shape=unique-number | c17 | `1768705308` |
 

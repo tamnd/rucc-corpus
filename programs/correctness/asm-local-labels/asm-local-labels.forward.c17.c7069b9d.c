@@ -7,7 +7,7 @@ static volatile unsigned int seed_in = 7;
 
 __attribute__((noinline))
 static unsigned int step(unsigned int x, unsigned int i) {
-    asm("testl %1, %1\n\tjz 1f\n\txorl %1, %0\n1:"
+    __asm__("testl %1, %1\n\tjz 1f\n\txorl %1, %0\n1:"
         : "+r"(x) : "r"(i & 3u) : "cc");
     return x * 3u + i;
 }
