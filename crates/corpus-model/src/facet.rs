@@ -534,6 +534,31 @@ pub enum Facet {
     /// the checker for the object. Only builds and runs on x86-64.
     ObjtoolShapes,
 
+    /// Programs that ask whether an expression is a null pointer constant, the way the kernel does.
+    ///
+    /// `__is_constexpr` and `is_const` turn "is this an integer constant expression" into "is
+    /// this cast a null pointer constant", which decides the type of a conditional. The cases ask
+    /// it of constants and of things that are not, choose between code with the answer, tell
+    /// the spellings of a null pointer apart by the type they give a conditional, and compare
+    /// and convert null pointers. Every answer feeds what the program prints.
+    NullPointerConstant,
+
+    /// Programs whose integer constant expressions are built from `sizeof` and `offsetof`.
+    ///
+    /// Array sizes with `ARRAY_SIZE`, enumerators, ioctl numbers as case labels,
+    /// `static_assert`, `BUILD_BUG_ON_ZERO` inside `GENMASK`, `__builtin_constant_p` on all of
+    /// them, and casts and conditionals that stay constant. One case is the GCC extension that
+    /// folds a `const` local into a constant, which only holds at `-O1` and above, so that case
+    /// pins `-O2`.
+    ConstIce,
+
+    /// Programs that put functions and data in named sections and walk them.
+    ///
+    /// Initcall and parameter tables walked from `__start_` to `__stop_`, entries kept by `used`
+    /// and held to their own alignment, init text, and the read-mostly, read-only, zeroed and
+    /// page aligned data sections. They need an ELF linker to define the start and stop symbols.
+    SectionAttr,
+
     /// An executable and the modules it loads with `dlopen`, which call back into it.
     ///
     /// The shape of every Postgres extension. The server opens a module, the module calls
@@ -677,6 +702,9 @@ impl Facet {
         Self::McmodelKernel,
         Self::GeneralRegsOnly,
         Self::ObjtoolShapes,
+        Self::NullPointerConstant,
+        Self::ConstIce,
+        Self::SectionAttr,
         Self::Bundle,
         Self::Dllimport,
         Self::Frontend,
@@ -788,6 +816,9 @@ impl Facet {
             Self::McmodelKernel => "mcmodel-kernel",
             Self::GeneralRegsOnly => "general-regs-only",
             Self::ObjtoolShapes => "objtool-shapes",
+            Self::NullPointerConstant => "null-pointer-constant",
+            Self::ConstIce => "const-ice",
+            Self::SectionAttr => "section-attr",
             Self::Bundle => "bundle",
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
@@ -948,6 +979,13 @@ impl Facet {
                 "programs built with -mgeneral-regs-only that check no vector register moved"
             }
             Self::ObjtoolShapes => "the code shapes objtool follows through a kernel object",
+            Self::NullPointerConstant => {
+                "__is_constexpr, is_const and the null pointer constants they rest on"
+            }
+            Self::ConstIce => "sizeof, offsetof and const objects in integer constant expressions",
+            Self::SectionAttr => {
+                "functions and data in named sections, walked from __start_ to __stop_"
+            }
             Self::Bundle => "modules loaded with dlopen that call back into the executable",
             Self::Dllimport => {
                 "modules importing the executable's functions and data the way Windows Postgres does"
@@ -1066,6 +1104,9 @@ impl Facet {
             | Self::McmodelKernel
             | Self::GeneralRegsOnly
             | Self::ObjtoolShapes
+            | Self::NullPointerConstant
+            | Self::ConstIce
+            | Self::SectionAttr
             | Self::Bundle
             | Self::Dllimport => Phase::Correctness,
         }

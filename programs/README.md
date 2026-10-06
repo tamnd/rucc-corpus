@@ -1,10 +1,10 @@
 # The corpus
 
-3606 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3626 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `5d6bb4f385a902a8d91e079c529828b7cd9217a2856f1278099e6b3a25c69408`.
+Corpus digest `8e2e474ec8da0fa112d9e5be13eff922e5ff3aa4604b9f538b40a786e7f1044a`.
 
 ## floor (118 programs)
 
@@ -131,7 +131,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (760 programs)
+## correctness (780 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -157,6 +157,9 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`mcmodel-kernel`](correctness/mcmodel-kernel/README.md) | 6 | programs built for the kernel code model and linked without PIE |
 | [`general-regs-only`](correctness/general-regs-only/README.md) | 5 | programs built with -mgeneral-regs-only that check no vector register moved |
 | [`objtool-shapes`](correctness/objtool-shapes/README.md) | 5 | the code shapes objtool follows through a kernel object |
+| [`null-pointer-constant`](correctness/null-pointer-constant/README.md) | 6 | __is_constexpr, is_const and the null pointer constants they rest on |
+| [`const-ice`](correctness/const-ice/README.md) | 8 | sizeof, offsetof and const objects in integer constant expressions |
+| [`section-attr`](correctness/section-attr/README.md) | 6 | functions and data in named sections, walked from __start_ to __stop_ |
 | [`bundle`](correctness/bundle/README.md) | 33 | modules loaded with dlopen that call back into the executable |
 | [`dllimport`](correctness/dllimport/README.md) | 18 | modules importing the executable's functions and data the way Windows Postgres does |
 
