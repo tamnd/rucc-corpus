@@ -21,6 +21,10 @@
 /reports/findings.sarif
 /programs/manifest.json
 
+# The sweep keeps its page and leaves the two files a tool reads, the same as a run.
+/reports/sweep/sweep.json
+/reports/sweep/sweep.jsonl
+
 .DS_Store
 .idea/
 .vscode/

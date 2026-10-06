@@ -143,6 +143,17 @@ cargo run --release -p rucc-corpus -- run --facet loop-unroll --level O2 --keep
 
 The reference is GCC 16, which is the current release. Homebrew installs it as `gcc-16` and the Ubuntu toolchain archive installs it under the same name.
 
+## Moving the thresholds
+
+Every number a rucc pass decides by is a row of `rucc --print-params`, and `--param=NAME=VALUE` moves one for a single run. `rucc-corpus sweep` moves each row to half and to double its value, one at a time, and measures what that did:
+
+```sh
+cargo run --release -p rucc-corpus -- sweep \
+    --rucc ../rucc/target/release/rucc --reference gcc-16=gcc-16
+```
+
+It compiles every case to assembly once as rucc is and once per move, so only the cases whose assembly changed are built and run, against rucc as it is and gcc 16 at the same level. `reports/sweep/index.md` has a line per move with the cases it changed, the change in instructions retired, text and compile time, and the facets that moved most, and calls each row flat, worth tuning, or wrong, which is when a value the sweep tried saves on instructions or text and spends on neither. A move that makes a case print the wrong answer is listed on its own. `sweep.json` is the same for a tool, and `sweep.jsonl` keeps each move as it finishes, so a sweep that stops picks up where it was with the same compiler and corpus. `--row` and `--facet` narrow it down, and `--level` picks a level other than `-O2`.
+
 ## What a run time in here is worth
 
 Every case is run five times by default and every one of those times is kept, in `runs.jsonl` under `execute.samples`. The number the reports compare is the fastest of them, because on a machine that is doing anything else the slower measurements contain somebody else's work and there is no way to subtract it. The rest are kept so the floor can be argued with.
