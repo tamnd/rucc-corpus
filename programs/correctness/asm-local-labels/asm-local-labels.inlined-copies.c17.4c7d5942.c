@@ -7,7 +7,7 @@ static volatile unsigned int seed_in = 7;
 
 static inline __attribute__((always_inline))
 unsigned int at_least(unsigned int x, unsigned int floor) {
-    asm("cmpl %1, %0\n\tjae 1f\n\tmovl %1, %0\n1:"
+    __asm__("cmpl %1, %0\n\tjae 1f\n\tmovl %1, %0\n1:"
         : "+r"(x) : "r"(floor) : "cc");
     return x;
 }

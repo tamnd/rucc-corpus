@@ -188,7 +188,7 @@ fn case(facet: Facet, shape: &str) -> Program {
 fn marking(program: &mut Program) {
     program.top("__attribute__((noinline))");
     program.top("static void mark_vectors(unsigned long long mark) {");
-    program.top("    asm volatile(");
+    program.top("    __asm__ volatile(");
     for register in 0..16 {
         let end = if register == 15 { "" } else { "\\n\\t" };
         program.top(format!("        \"movq %0, %%xmm{register}{end}\""));
@@ -200,7 +200,7 @@ fn marking(program: &mut Program) {
     program.top("static unsigned long long vectors_changed(unsigned long long mark) {");
     program.top("    unsigned long long seen, changed = 0;");
     for register in 0..16 {
-        program.top(format!("    asm volatile(\"movq %%xmm{register}, %0\" : \"=r\"(seen));"));
+        program.top(format!("    __asm__ volatile(\"movq %%xmm{register}, %0\" : \"=r\"(seen));"));
         program.top("    changed |= seen ^ mark;");
     }
     program.top("    return changed;");
@@ -784,7 +784,7 @@ fn objtool_shapes(shape: &str) -> Shape {
             &[
                 "__attribute__((noreturn, noinline))",
                 "static void fail(unsigned int x) {",
-                "    asm volatile(\"\" : : \"r\"(x));",
+                "    __asm__ volatile(\"\" : : \"r\"(x));",
                 "    __builtin_trap();",
                 "}",
                 "",

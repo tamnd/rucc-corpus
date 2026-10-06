@@ -8,7 +8,7 @@ static volatile unsigned int seed_in = 7;
 __attribute__((noinline))
 static unsigned int step(unsigned int x, unsigned int i) {
     unsigned int low;
-    asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
+    __asm__ goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
              : "=r"(low) : "r"(x) : "cc" : zero);
     return x + low * i;
 zero:

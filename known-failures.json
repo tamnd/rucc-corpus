@@ -1,47 +1,4 @@
 {
   "note": "Every family a compiler under test is known not to handle, with the issue that will close it. A run fails on any failure this file does not name, and on any line in this file whose case has started working. Regenerate with `rucc-corpus run --accept`, and read the whole story in the README under \"What the compiler is known not to do\".",
-  "known": [
-    {
-      "toolchain": "rucc",
-      "family": "atomics.fence.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#1008",
-      "why": "rucc has no lowering for __atomic_signal_fence, the one atomic builtin that was left behind when the rest got theirs"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "general-regs-only.array-sum.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#2277",
-      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "general-regs-only.byte-mix.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#2277",
-      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "general-regs-only.struct-copy.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#2277",
-      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "general-regs-only.u64-math.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#2277",
-      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
-    },
-    {
-      "toolchain": "rucc",
-      "family": "general-regs-only.zeroed.c17",
-      "verdict": "unimplemented",
-      "issue": "tamnd/rucc#2277",
-      "why": "rucc refuses -mgeneral-regs-only until copies, fills and the variadic save area stay out of the vector registers, which tamnd/rucc#2318 does"
-    }
-  ]
+  "known": []
 }

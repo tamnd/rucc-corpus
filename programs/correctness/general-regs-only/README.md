@@ -6,9 +6,9 @@ programs built with -mgeneral-regs-only that check no vector register moved. Par
 
 | program | also built with | axes | dialect | must print |
 |---|---|---|---|---|
-| [`general-regs-only.array-sum.c17.b6fb6e86`](general-regs-only.array-sum.c17.b6fb6e86.c) | `-mgeneral-regs-only` | shape=array-sum | c17 | `470974658` |
-| [`general-regs-only.byte-mix.c17.4a4263ee`](general-regs-only.byte-mix.c17.4a4263ee.c) | `-mgeneral-regs-only` | shape=byte-mix | c17 | `9900455` |
-| [`general-regs-only.struct-copy.c17.496266d3`](general-regs-only.struct-copy.c17.496266d3.c) | `-mgeneral-regs-only` | shape=struct-copy | c17 | `2188897103` |
-| [`general-regs-only.u64-math.c17.754a8f5a`](general-regs-only.u64-math.c17.754a8f5a.c) | `-mgeneral-regs-only` | shape=u64-math | c17 | `188972664` |
-| [`general-regs-only.zeroed.c17.e639f9d1`](general-regs-only.zeroed.c17.e639f9d1.c) | `-mgeneral-regs-only` | shape=zeroed | c17 | `3575246495` |
+| [`general-regs-only.array-sum.c17.e88591dd`](general-regs-only.array-sum.c17.e88591dd.c) | `-mgeneral-regs-only` | shape=array-sum | c17 | `470974658` |
+| [`general-regs-only.byte-mix.c17.9ea609ba`](general-regs-only.byte-mix.c17.9ea609ba.c) | `-mgeneral-regs-only` | shape=byte-mix | c17 | `9900455` |
+| [`general-regs-only.struct-copy.c17.85360170`](general-regs-only.struct-copy.c17.85360170.c) | `-mgeneral-regs-only` | shape=struct-copy | c17 | `2188897103` |
+| [`general-regs-only.u64-math.c17.d0d3e64f`](general-regs-only.u64-math.c17.d0d3e64f.c) | `-mgeneral-regs-only` | shape=u64-math | c17 | `188972664` |
+| [`general-regs-only.zeroed.c17.ca262554`](general-regs-only.zeroed.c17.ca262554.c) | `-mgeneral-regs-only` | shape=zeroed | c17 | `3575246495` |
 
