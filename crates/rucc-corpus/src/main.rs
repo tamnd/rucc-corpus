@@ -1,11 +1,11 @@
 //! The command line front end to the corpus.
 //!
-//! Four things it does. `gen` writes the C out, so the corpus in the repository is readable C
+//! Five things it does. `gen` writes the C out, so the corpus in the repository is readable C
 //! that anybody can open, compile by hand and argue with, rather than a program that promises
 //! to produce some. `run` builds every program with every compiler at every level, checks the
 //! answers against what the generator computed, and writes the reports. `diff` compares two
 //! reports, which is how progress across the phases of the plan gets tracked. `list` says what
-//! is in the corpus.
+//! is in the corpus. `sweep` moves each of rucc's thresholds and measures what moved.
 //!
 //! Everything is deterministic. The same commit produces the same programs with the same
 //! digest, so a report that disagrees with another report is a report about different code.
@@ -13,6 +13,7 @@
 mod args;
 mod diff;
 mod emit;
+mod sweep;
 
 use args::Args;
 use corpus_gen::Options;
@@ -41,6 +42,7 @@ fn dispatch(raw: Vec<String>) -> Result<ExitCode, String> {
         "run" => run(&args),
         "diff" => diff::command(&args),
         "list" => list(&args),
+        "sweep" => sweep::command(&args),
         "help" | "" => {
             print!("{USAGE}");
             Ok(ExitCode::SUCCESS)
@@ -56,6 +58,7 @@ rucc-corpus, the systematic C corpus for rucc
   rucc-corpus run [options]     build and run it against every compiler
   rucc-corpus diff old new      compare two report.json files
   rucc-corpus list [options]    say what is in the corpus
+  rucc-corpus sweep [options]   move each of rucc's thresholds to half and double and measure it
 
 Options for gen:
   --out DIR            where to write, default programs
@@ -84,6 +87,16 @@ Options for run:
   --known FILE         what each compiler is allowed to fail, default known-failures.json
   --quiet-passes FILE  which rucc passes may fire on nothing, default quiet-passes.json
   --accept             write those two files from this run instead of checking against them
+
+Options for sweep, which also takes --facet, --limit, --exclude-tag, --jobs and --repeats:
+  --rucc PROG          the rucc to sweep, default rucc
+  --reference ID=PROG  the compiler to measure against, default gcc-16
+  --level NAME         the level to build at, default O2
+  --row NAME           only this row of --print-params, may be repeated
+  --out DIR            where the reports go, default reports/sweep
+  --work DIR           where the builds happen, default target/sweep-work
+  --no-cache           neither read nor write the record cache
+  --quiet              say nothing while it runs
 ";
 
 /// Writes the corpus out as C.
@@ -475,6 +488,13 @@ mod tests {
     fn every_option_the_run_command_takes_is_in_the_usage_text() {
         for option in RUN_OPTIONS {
             assert!(USAGE.contains(&format!("--{option} ")), "--{option} is not documented");
+        }
+    }
+
+    #[test]
+    fn every_option_the_sweep_command_takes_is_in_the_usage_text() {
+        for option in crate::sweep::OPTIONS {
+            assert!(USAGE.contains(&format!("--{option}")), "--{option} is not documented");
         }
     }
 
