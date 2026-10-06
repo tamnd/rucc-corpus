@@ -18,7 +18,7 @@ use args::Args;
 use corpus_gen::Options;
 use corpus_model::{Facet, Level};
 use corpus_report::terminal::Watcher;
-use corpus_run::{Plan, cache::Reuse, known, toolchain::Spec};
+use corpus_run::{Plan, cache::Reuse, known, quiet, toolchain::Spec};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -82,7 +82,8 @@ Options for run:
   --refresh            build every case, then keep the results for next time
   --no-cache           neither read nor write the record cache
   --known FILE         what each compiler is allowed to fail, default known-failures.json
-  --accept             write that file from this run instead of checking against it
+  --quiet-passes FILE  which rucc passes may fire on nothing, default quiet-passes.json
+  --accept             write those two files from this run instead of checking against them
 ";
 
 /// Writes the corpus out as C.
@@ -154,6 +155,7 @@ const RUN_OPTIONS: &[&str] = &[
     "refresh",
     "no-cache",
     "known",
+    "quiet-passes",
     "accept",
 ];
 
@@ -239,7 +241,54 @@ fn run(args: &Args) -> Result<ExitCode, String> {
     } else {
         println!("every case produced the answer the generator computed");
     }
-    against_the_known(args, &corpus, &plan, &outcome)
+    let quiet = against_the_quiet(args, &outcome)?;
+    let known = against_the_known(args, &corpus, &plan, &outcome)?;
+    Ok(if quiet { known } else { ExitCode::FAILURE })
+}
+
+/// Compares the passes that fired on nothing against the file that says which may.
+///
+/// Only for a run of the whole corpus. A run narrowed to some facets or some cases leaves out
+/// the programs a pass is written for, and a pass quiet there says nothing about the pass.
+/// Answers whether the run agreed with the file. See tamnd/rucc#2967.
+fn against_the_quiet(args: &Args, outcome: &corpus_run::Run) -> Result<bool, String> {
+    let builds = corpus_run::firing::builds(&outcome.records);
+    if builds.is_empty() {
+        return Ok(true);
+    }
+    if args.value("facet").is_some() || args.value("limit").is_some() {
+        println!("the passes that fired on nothing are only checked on a run of the whole corpus");
+        return Ok(true);
+    }
+    let path = PathBuf::from(args.value_or("quiet-passes", quiet::FILE));
+    let quiet = quiet::Quiet::read(&path)?;
+    if args.flag("accept") {
+        let next = quiet.accepting(&builds);
+        std::fs::write(&path, next.to_text())
+            .map_err(|error| format!("could not write {}: {error}", path.display()))?;
+        println!("wrote {} lines to {}", next.entries.len(), path.display());
+        return Ok(true);
+    }
+    let check = quiet.check(&builds);
+    if check.agrees() {
+        println!(
+            "every pass that fired on nothing is one {} names, and every line in it is still quiet",
+            path.display()
+        );
+        return Ok(true);
+    }
+    let file = path.display();
+    for entry in check.unexpected.iter().take(TOLD) {
+        println!("  {} fired on nothing and {file} does not name it", entry.describe());
+    }
+    for entry in check.fired.iter().take(TOLD) {
+        println!("  {} is named in {file} and fired, so the line comes out", entry.describe());
+    }
+    for entry in check.gone.iter().take(TOLD) {
+        println!("  {} is named in {file} and no longer runs at that level", entry.describe());
+    }
+    println!("\nrun the same command with --accept to write the file this run would have made");
+    Ok(false)
 }
 
 /// Compares what went wrong against the file that says what is allowed to go wrong.

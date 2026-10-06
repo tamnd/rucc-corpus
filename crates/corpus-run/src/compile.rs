@@ -7,11 +7,12 @@
 
 use crate::counter;
 use crate::exec;
+use crate::firing;
 use crate::insight;
 use crate::object;
 use crate::shape;
 use crate::toolchain::Spec;
-use corpus_model::{Case, Compile, Execute, Expect, Insight, Level, RunRecord};
+use corpus_model::{Case, Compile, Execute, Expect, Fired, Insight, Level, RunRecord};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -119,6 +120,8 @@ pub struct Built {
     pub insights: Vec<Insight>,
     /// What each `switch` became, as `function: shape`, when the case has one.
     pub switches: Vec<String>,
+    /// What each rucc pass did, when the compiler is rucc.
+    pub fired: Vec<Fired>,
 }
 
 /// Builds a case and runs it, unless it was not supposed to build.
@@ -178,6 +181,15 @@ pub fn build_and_run(
     if wants_opinions {
         args.extend(insight::flags(OPINIONS));
     }
+    // rucc appends to its trace rather than writing it, so the one a case left behind the last
+    // time it was built goes first. A case that pins a level of its own is not asked for one at
+    // the others, see `firing::elsewhere`.
+    let wants_trace = shape::says_what_it_did(spec) && !firing::elsewhere(&case.flags, level);
+    let trace = dir.join(firing::TRACE);
+    if wants_trace {
+        let _ = std::fs::remove_file(&trace);
+        args.push(firing::flag(firing::TRACE));
+    }
     args.extend(spec.extra.iter().cloned());
     // The unit with `main` in it goes first, which is the order somebody reading the command
     // would expect and the order the sources are listed in everywhere else.
@@ -215,6 +227,9 @@ pub fn build_and_run(
             let said = format!("{source_name}.opt-info");
             module_args.extend(insight::flags(&said));
             opinion_files.push(dir.join(said));
+        }
+        if wants_trace {
+            module_args.push(firing::flag(firing::TRACE));
         }
         module_args.extend(spec.extra.iter().cloned());
         module_args.push(source_name.clone());
@@ -254,6 +269,11 @@ pub fn build_and_run(
             .filter_map(|path| std::fs::read_to_string(path).ok())
             .flat_map(|text| insight::parse(&text))
             .collect()
+    } else {
+        Vec::new()
+    };
+    let fired = if wants_trace {
+        std::fs::read_to_string(&trace).map(|text| firing::parse(&text)).unwrap_or_default()
     } else {
         Vec::new()
     };
@@ -309,7 +329,7 @@ pub fn build_and_run(
         Execute::skipped()
     };
 
-    Ok(Built { compile, execute, insights, switches })
+    Ok(Built { compile, execute, insights, switches, fired })
 }
 
 /// Turns a build into the record that goes in the JSON Lines file.
@@ -327,6 +347,7 @@ pub fn record(case: &Case, toolchain: &str, level: Level, built: Built) -> RunRe
         execute: built.execute,
         insights: built.insights,
         switches: built.switches,
+        fired: built.fired,
         // This one was built here, just now. Only the cache sets the flag, on the way out.
         reused: false,
     }

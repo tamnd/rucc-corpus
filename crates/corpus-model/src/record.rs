@@ -431,6 +431,89 @@ impl Insight {
     }
 }
 
+/// What one rucc pass said it did over one case, from `-frucc-trace`.
+///
+/// rucc names every pass that ran, including the ones that did nothing, so a record with a pass
+/// in it and no events is a pass that ran and was quiet. That is different from a pass that is
+/// not in the record at all, which did not run.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Fired {
+    /// The pass, by the name its `-f` flag spells.
+    pub pass: String,
+    /// Each thing it said, as `kind: what` where the kind is `optimized`, `missed` or `note`, and
+    /// how many times, in the order it first said them.
+    pub events: Vec<(String, u64)>,
+}
+
+impl Fired {
+    /// Adds `count` to an event, making it when it is new. Nought adds nothing.
+    pub fn add(&mut self, what: &str, count: u64) {
+        if count == 0 {
+            return;
+        }
+        match self.events.iter_mut().find(|(it, _)| it == what) {
+            Some((_, total)) => *total += count,
+            None => self.events.push((what.to_owned(), count)),
+        }
+    }
+
+    /// How many rewrites it made, which is its `optimized` events added up. A pass fires on a
+    /// case when this is more than nought. What it missed and what it noted is not firing.
+    #[must_use]
+    pub fn rewrites(&self) -> u64 {
+        self.events.iter().filter(|(what, _)| what.starts_with("optimized: ")).map(|(_, n)| n).sum()
+    }
+
+    /// How many times it said it missed something.
+    #[must_use]
+    pub fn missed(&self) -> u64 {
+        self.events.iter().filter(|(what, _)| what.starts_with("missed: ")).map(|(_, n)| n).sum()
+    }
+
+    /// The passes as one JSON object, a pass to an object of its events.
+    #[must_use]
+    pub fn to_json(passes: &[Self]) -> Json {
+        Json::Object(
+            passes
+                .iter()
+                .map(|one| {
+                    let events = one
+                        .events
+                        .iter()
+                        .map(|(what, count)| (what.clone(), Json::int(signed(*count))))
+                        .collect();
+                    (one.pass.clone(), Json::Object(events))
+                })
+                .collect(),
+        )
+    }
+
+    /// The passes read back from that object.
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    pub fn from_json(value: &Json) -> Vec<Self> {
+        value
+            .as_object()
+            .unwrap_or_default()
+            .iter()
+            .map(|(pass, events)| Self {
+                pass: pass.clone(),
+                events: events
+                    .as_object()
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|(what, count)| (what.clone(), count.as_f64().unwrap_or(0.0) as u64))
+                    .collect(),
+            })
+            .collect()
+    }
+}
+
+/// A count as the signed number JSON is written with, held at the top rather than wrapped.
+fn signed(count: u64) -> i64 {
+    i64::try_from(count).unwrap_or(i64::MAX)
+}
+
 /// How much C a case is.
 ///
 /// Every other number on a record is a cost, and a cost with nothing next to it cannot be read.
@@ -547,6 +630,10 @@ pub struct RunRecord {
     /// it names under `-fopt-info`, and gcc's are read off its assembly, which is why the two
     /// lists do not use quite the same words. See `corpus_run::shape`.
     pub switches: Vec<String>,
+    /// What each rucc pass did, from `-frucc-trace`, in the order the passes ran.
+    ///
+    /// Empty for a compiler that is not rucc, and for a rucc that does not write the field.
+    pub fired: Vec<Fired>,
     /// Whether this record was read out of the cache rather than measured today.
     ///
     /// An outcome keeps. A timing does not. A record that says the program printed the wrong
@@ -572,6 +659,7 @@ impl RunRecord {
             execute: Execute::skipped(),
             insights: Vec::new(),
             switches: Vec::new(),
+            fired: Vec::new(),
             reused: false,
         }
     }
@@ -606,6 +694,10 @@ impl RunRecord {
         if !self.switches.is_empty() {
             let switches = self.switches.iter().map(|one| Json::string(one.clone()));
             fields.push(("switches".to_owned(), Json::array(switches)));
+        }
+        // The same, so a record of a compiler that is not rucc is the line it always was.
+        if !self.fired.is_empty() {
+            fields.push(("fired".to_owned(), Fired::to_json(&self.fired)));
         }
         if self.reused {
             fields.push(("reused".to_owned(), Json::Bool(true)));
@@ -647,6 +739,7 @@ impl RunRecord {
                 .iter()
                 .filter_map(|one| one.as_str().map(str::to_owned))
                 .collect(),
+            fired: value.get("fired").map(Fired::from_json).unwrap_or_default(),
             reused: value.get("reused").and_then(Json::as_bool).unwrap_or(false),
         })
     }
@@ -781,7 +874,7 @@ impl Finding {
 
 #[cfg(test)]
 mod tests {
-    use super::{Compile, Execute, Insight, Level, RunRecord, Source, Toolchain, Verdict};
+    use super::{Compile, Execute, Fired, Insight, Level, RunRecord, Source, Toolchain, Verdict};
     use crate::case::{Axes, Case, Dialect, Expect};
     use crate::facet::{Facet, Phase};
 
@@ -966,6 +1059,34 @@ mod tests {
         assert_eq!(Compile::from_json(&json).peak_bytes, None);
         let json = Compile { peak_bytes: Some(0), ..Compile::skipped() }.to_json();
         assert_eq!(Compile::from_json(&json).peak_bytes, Some(0));
+    }
+
+    #[test]
+    fn what_each_pass_did_survives_the_round_trip_and_is_left_out_when_there_is_none() {
+        let case = Case::new(
+            Facet::Baseline,
+            Axes::default(),
+            Dialect::C17,
+            "int main(void) { return 0; }",
+            Expect::Output(String::new()),
+        );
+        let quiet = RunRecord::skipped(&case, "gcc-16", Level::O2);
+        assert!(quiet.to_json().get("fired").is_none());
+        let mut fold = Fired { pass: "fold".to_owned(), events: Vec::new() };
+        fold.add("optimized: folded", 2);
+        fold.add("missed: kept", 1);
+        fold.add("optimized: folded", 1);
+        fold.add("note: nothing", 0);
+        assert_eq!(fold.rewrites(), 3);
+        assert_eq!(fold.missed(), 1);
+        let licm = Fired { pass: "licm".to_owned(), events: Vec::new() };
+        let record = RunRecord { fired: vec![fold, licm], ..quiet };
+        let line = record.to_json().to_line();
+        assert!(
+            line.contains(r#""fired":{"fold":{"optimized: folded":3,"missed: kept":1},"licm":{}}"#),
+            "{line}"
+        );
+        assert_eq!(RunRecord::from_json(&record.to_json()), Some(record));
     }
 
     #[test]

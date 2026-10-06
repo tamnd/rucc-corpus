@@ -19,10 +19,12 @@ pub mod compare;
 pub mod compile;
 pub mod counter;
 pub mod exec;
+pub mod firing;
 pub mod insight;
 pub mod known;
 pub mod memory;
 pub mod object;
+pub mod quiet;
 pub mod shape;
 pub mod toolchain;
 

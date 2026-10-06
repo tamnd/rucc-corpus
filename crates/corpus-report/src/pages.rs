@@ -15,6 +15,7 @@
 //! reports/failures.md            what went wrong, and what the compiler admits is missing
 //! reports/phases/README.md       one row per phase of the plan
 //! reports/phases/<phase>.md      one phase, its facets, and links to the programs
+//! reports/firing.md              what each rucc pass did over the corpus
 //! ```
 //!
 //! Three properties hold and all three are load bearing.
@@ -67,6 +68,7 @@ pub fn generate(run: &Run, summary: &Summary) -> Vec<Page> {
         Page { path: "reports/cost.md".to_owned(), text: cost_page(run, summary) },
         Page { path: "reports/failures.md".to_owned(), text: failures_page(run) },
         Page { path: "reports/phases/README.md".to_owned(), text: phase_index(summary) },
+        Page { path: "reports/firing.md".to_owned(), text: crate::firing::page(run) },
     ];
     for phase in Phase::ALL {
         if summary.facets.iter().any(|facet| facet.phase == *phase) {
@@ -184,7 +186,10 @@ fn hub(run: &Run, summary: &Summary) -> String {
         went_wrong(run.failures(), run.gaps())
     );
     out.push_str(
-        "| [By phase of the plan](phases/README.md) | One page per phase, its facets, how they came out, and links to the programs themselves |\n\n",
+        "| [By phase of the plan](phases/README.md) | One page per phase, its facets, how they came out, and links to the programs themselves |\n",
+    );
+    out.push_str(
+        "| [What each rucc pass did](firing.md) | Every optimizer pass rucc ran, how many cases it fired on and what it did, with the passes that never fired first |\n\n",
     );
 
     if !summary.targets.is_empty() {
