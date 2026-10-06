@@ -1,11 +1,12 @@
 //! The command line front end to the corpus.
 //!
-//! Five things it does. `gen` writes the C out, so the corpus in the repository is readable C
+//! Six things it does. `gen` writes the C out, so the corpus in the repository is readable C
 //! that anybody can open, compile by hand and argue with, rather than a program that promises
 //! to produce some. `run` builds every program with every compiler at every level, checks the
 //! answers against what the generator computed, and writes the reports. `diff` compares two
 //! reports, which is how progress across the phases of the plan gets tracked. `list` says what
-//! is in the corpus. `sweep` moves each of rucc's thresholds and measures what moved.
+//! is in the corpus. `sweep` moves each of rucc's thresholds and measures what moved, and
+//! `passoff` turns each of rucc's passes off and measures what that did.
 //!
 //! Everything is deterministic. The same commit produces the same programs with the same
 //! digest, so a report that disagrees with another report is a report about different code.
@@ -13,6 +14,7 @@
 mod args;
 mod diff;
 mod emit;
+mod passoff;
 mod sweep;
 
 use args::Args;
@@ -43,6 +45,7 @@ fn dispatch(raw: Vec<String>) -> Result<ExitCode, String> {
         "diff" => diff::command(&args),
         "list" => list(&args),
         "sweep" => sweep::command(&args),
+        "passoff" => passoff::command(&args),
         "help" | "" => {
             print!("{USAGE}");
             Ok(ExitCode::SUCCESS)
@@ -59,6 +62,7 @@ rucc-corpus, the systematic C corpus for rucc
   rucc-corpus diff old new      compare two report.json files
   rucc-corpus list [options]    say what is in the corpus
   rucc-corpus sweep [options]   move each of rucc's thresholds to half and double and measure it
+  rucc-corpus passoff [options] turn each of rucc's passes off on its own and measure it
 
 Options for gen:
   --out DIR            where to write, default programs
@@ -97,6 +101,11 @@ Options for sweep, which also takes --facet, --limit, --exclude-tag, --jobs and 
   --work DIR           where the builds happen, default target/sweep-work
   --no-cache           neither read nor write the record cache
   --quiet              say nothing while it runs
+
+Options for passoff, which takes the options of sweep except --row, and:
+  --pass NAME          only this pass of --print-pipeline, may be repeated
+  --out DIR            where the reports go, default reports/passoff
+  --work DIR           where the builds happen, default target/passoff-work
 ";
 
 /// Writes the corpus out as C.
@@ -488,6 +497,13 @@ mod tests {
     fn every_option_the_run_command_takes_is_in_the_usage_text() {
         for option in RUN_OPTIONS {
             assert!(USAGE.contains(&format!("--{option} ")), "--{option} is not documented");
+        }
+    }
+
+    #[test]
+    fn every_option_the_passoff_command_takes_is_in_the_usage_text() {
+        for option in crate::passoff::OPTIONS {
+            assert!(USAGE.contains(&format!("--{option}")), "--{option} is not documented");
         }
     }
 

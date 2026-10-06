@@ -47,17 +47,17 @@ pub(crate) const OPTIONS: &[&str] = &[
 ];
 
 /// The id the compiler as it is goes under in the run.
-const BASE: &str = "rucc";
+pub(crate) const BASE: &str = "rucc";
 
 /// The id the compiler with the row moved goes under.
-const MOVED: &str = "rucc-moved";
+pub(crate) const MOVED: &str = "rucc-moved";
 
 /// How far an end has to move the instructions or the text, as a fraction of what the cases it
 /// changed had before, to count as moving them at all.
 ///
 /// Instructions retired are counted rather than timed and barely move from run to run, so this
 /// is about what is worth a sentence in section 40.14 rather than about noise.
-const FLAT: f64 = 0.001;
+pub(crate) const FLAT: f64 = 0.001;
 
 /// One row of `--print-params`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -202,11 +202,62 @@ impl Moved {
         facets.truncate(how_many);
         facets
     }
+
+    /// The fields a journal line or a report writes for this, after the ones that say what moved.
+    pub(crate) fn fields(&self) -> Vec<(String, Json)> {
+        let numbers = |values: &[u64]| {
+            Json::array(
+                values.iter().map(|value| Json::int(i64::try_from(*value).unwrap_or(i64::MAX))),
+            )
+        };
+        let count = |n: usize| Json::int(i64::try_from(n).unwrap_or(i64::MAX));
+        let facets =
+            self.facets.iter().map(|(facet, delta)| (facet.clone(), Json::int(*delta))).collect();
+        vec![
+            ("changed".to_owned(), count(self.changed)),
+            ("counted".to_owned(), count(self.counted)),
+            ("instructions".to_owned(), numbers(&self.instructions)),
+            ("text".to_owned(), numbers(&self.text)),
+            ("compile_micros".to_owned(), numbers(&self.compile_micros)),
+            ("facets".to_owned(), Json::Object(facets)),
+            ("broke".to_owned(), Json::array(self.broke.iter().map(Json::string))),
+        ]
+    }
+
+    /// Reads back what [`Moved::fields`] wrote.
+    pub(crate) fn from_json(value: &Json) -> Option<Self> {
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let number = |item: &Json| item.as_f64().map(|n| n as u64);
+        let numbers = |key: &str| -> Option<Vec<u64>> {
+            value.get(key)?.as_array()?.iter().map(number).collect()
+        };
+        #[allow(clippy::cast_possible_truncation)]
+        let facets = value
+            .get("facets")?
+            .as_object()?
+            .iter()
+            .map(|(facet, delta)| Some((facet.clone(), delta.as_f64()? as i64)))
+            .collect::<Option<_>>()?;
+        Some(Self {
+            changed: usize::try_from(number(value.get("changed")?)?).ok()?,
+            counted: usize::try_from(number(value.get("counted")?)?).ok()?,
+            instructions: numbers("instructions")?.try_into().ok()?,
+            text: numbers("text")?.try_into().ok()?,
+            compile_micros: numbers("compile_micros")?.try_into().ok()?,
+            facets,
+            broke: value
+                .get("broke")?
+                .as_array()?
+                .iter()
+                .map(|case| case.as_str().map(str::to_owned))
+                .collect::<Option<_>>()?,
+        })
+    }
 }
 
 /// The change from one total to another, as a fraction of the first.
 #[allow(clippy::cast_precision_loss)]
-fn change(before: u64, after: u64) -> Option<f64> {
+pub(crate) fn change(before: u64, after: u64) -> Option<f64> {
     (before > 0).then(|| (after as f64 - before as f64) / before as f64)
 }
 
@@ -258,186 +309,283 @@ struct Line {
 
 impl Line {
     fn to_json(&self, stamp: &Stamp) -> Json {
-        let m = &self.moved;
-        let numbers = |values: &[u64]| {
-            Json::array(
-                values.iter().map(|value| Json::int(i64::try_from(*value).unwrap_or(i64::MAX))),
-            )
-        };
-        Json::object([
-            ("row", Json::string(&self.the_move.row)),
-            ("default", Json::int(i64::try_from(self.the_move.default).unwrap_or(i64::MAX))),
-            ("end", Json::string(self.the_move.end.name())),
-            ("value", Json::int(i64::try_from(self.the_move.value).unwrap_or(i64::MAX))),
-            ("changed", Json::int(i64::try_from(m.changed).unwrap_or(i64::MAX))),
-            ("counted", Json::int(i64::try_from(m.counted).unwrap_or(i64::MAX))),
-            ("instructions", numbers(&m.instructions)),
-            ("text", numbers(&m.text)),
-            ("compile_micros", numbers(&m.compile_micros)),
-            (
-                "facets",
-                Json::Object(
-                    m.facets
-                        .iter()
-                        .map(|(facet, delta)| (facet.clone(), Json::int(*delta)))
-                        .collect(),
-                ),
-            ),
-            ("broke", Json::array(m.broke.iter().map(Json::string))),
-            ("compiler", Json::string(&stamp.compiler)),
-            ("corpus", Json::string(&stamp.corpus)),
-        ])
+        let the_move = &self.the_move;
+        let number = |n: u64| Json::int(i64::try_from(n).unwrap_or(i64::MAX));
+        let mut fields = vec![
+            ("row".to_owned(), Json::string(&the_move.row)),
+            ("default".to_owned(), number(the_move.default)),
+            ("end".to_owned(), Json::string(the_move.end.name())),
+            ("value".to_owned(), number(the_move.value)),
+        ];
+        fields.extend(self.moved.fields());
+        fields.extend(stamp.fields());
+        Json::Object(fields)
     }
 
     fn from_json(value: &Json, stamp: &Stamp) -> Option<Self> {
-        let text = |key: &str| value.get(key)?.as_str().map(str::to_owned);
-        if text("compiler")? != stamp.compiler || text("corpus")? != stamp.corpus {
+        if !stamp.wrote(value) {
             return None;
         }
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let number = |item: &Json| item.as_f64().map(|n| n as u64);
-        let numbers = |key: &str| -> Option<Vec<u64>> {
-            value.get(key)?.as_array()?.iter().map(number).collect()
-        };
-        let end = match text("end")?.as_str() {
+        let number = |key: &str| value.get(key)?.as_f64().map(|n| n as u64);
+        let end = match value.get("end")?.as_str()? {
             "half" => End::Half,
             "double" => End::Double,
             _ => return None,
         };
-        let instructions = numbers("instructions")?;
-        let text_bytes = numbers("text")?;
-        let compile_micros = numbers("compile_micros")?;
-        #[allow(clippy::cast_possible_truncation)]
-        let facets = value
-            .get("facets")?
-            .as_object()?
-            .iter()
-            .map(|(facet, delta)| Some((facet.clone(), delta.as_f64()? as i64)))
-            .collect::<Option<_>>()?;
         Some(Self {
             the_move: Move {
-                row: text("row")?,
-                default: number(value.get("default")?)?,
+                row: value.get("row")?.as_str()?.to_owned(),
+                default: number("default")?,
                 end,
-                value: number(value.get("value")?)?,
+                value: number("value")?,
             },
-            moved: Moved {
-                changed: usize::try_from(number(value.get("changed")?)?).ok()?,
-                counted: usize::try_from(number(value.get("counted")?)?).ok()?,
-                instructions: instructions.try_into().ok()?,
-                text: text_bytes.try_into().ok()?,
-                compile_micros: compile_micros.try_into().ok()?,
-                facets,
-                broke: value
-                    .get("broke")?
-                    .as_array()?
-                    .iter()
-                    .map(|case| case.as_str().map(str::to_owned))
-                    .collect::<Option<_>>()?,
-            },
+            moved: Moved::from_json(value)?,
         })
     }
 }
 
 /// What a line was measured against, so a line from another compiler or corpus is not kept.
 #[derive(Debug, Clone)]
-struct Stamp {
-    compiler: String,
-    corpus: String,
+pub(crate) struct Stamp {
+    /// The version the compiler gives.
+    pub(crate) compiler: String,
+    /// The corpus digest.
+    pub(crate) corpus: String,
+}
+
+impl Stamp {
+    /// The fields a journal line ends with.
+    pub(crate) fn fields(&self) -> [(String, Json); 2] {
+        [
+            ("compiler".to_owned(), Json::string(&self.compiler)),
+            ("corpus".to_owned(), Json::string(&self.corpus)),
+        ]
+    }
+
+    /// Whether a journal line was written against this compiler and this corpus.
+    pub(crate) fn wrote(&self, line: &Json) -> bool {
+        let text = |key: &str| line.get(key).and_then(Json::as_str);
+        text("compiler") == Some(self.compiler.as_str()) && text("corpus") == Some(&self.corpus)
+    }
+}
+
+/// What the sweep and the pass off measurement both start from: the compiler as it is, the
+/// reference, the level, the cases, and where everything goes.
+#[derive(Debug)]
+pub(crate) struct Setup {
+    /// rucc as it is, under [`BASE`].
+    pub(crate) rucc: Spec,
+    /// The compiler the moved one is set against.
+    pub(crate) reference: Spec,
+    /// The one level everything is built at.
+    pub(crate) level: Level,
+    /// Where the reports and the journal go.
+    pub(crate) out: PathBuf,
+    /// Where the sources are written and the changed cases are built.
+    pub(crate) work: PathBuf,
+    /// How many compiles or builds at once.
+    pub(crate) jobs: usize,
+    /// How many times each changed case is timed.
+    pub(crate) repeats: u32,
+    /// Whether the record cache is read and written.
+    pub(crate) reuse: Reuse,
+    /// Whether to say nothing while it runs.
+    pub(crate) quiet: bool,
+    /// The cases, without the rejections and the excluded tags.
+    pub(crate) cases: Vec<Case>,
+    /// The compiler and the corpus, for the journal.
+    pub(crate) stamp: Stamp,
+}
+
+impl Setup {
+    /// Reads the options both commands take, generates the corpus and writes its sources out.
+    ///
+    /// # Errors
+    ///
+    /// When an option is wrong, the corpus cannot be generated, the compiler cannot say what it
+    /// is, or a directory cannot be written.
+    pub(crate) fn new(args: &Args, out: &str, work: &str) -> Result<Self, String> {
+        let rucc = Spec::parse(&format!("{BASE}={}", args.value_or("rucc", "rucc")));
+        let reference = Spec::parse(args.value_or("reference", "gcc-16")).as_reference();
+        let level = match args.value("level") {
+            None => Level::O2,
+            Some(name) => Level::parse(name).ok_or_else(|| format!("{name} is not a level"))?,
+        };
+        let jobs = args.number("jobs")?.unwrap_or_else(|| {
+            std::thread::available_parallelism().map_or(4, std::num::NonZero::get)
+        });
+        let repeats = args.number("repeats")?.unwrap_or(1);
+        let corpus = corpus_gen::generate(&crate::options(args)?)?;
+        let excluded = args.values("exclude-tag");
+        let cases: Vec<Case> = corpus
+            .cases
+            .iter()
+            .filter(|case| !case.expect_is_rejection())
+            .filter(|case| !excluded.iter().any(|tag| case.has_tag(tag)))
+            .cloned()
+            .collect();
+        let stamp = Stamp { compiler: rucc.describe()?.version, corpus: corpus.digest() };
+        let setup = Self {
+            rucc,
+            reference,
+            level,
+            out: PathBuf::from(args.value_or("out", out)),
+            work: PathBuf::from(args.value_or("work", work)),
+            jobs: jobs.max(1),
+            repeats: u32::try_from(repeats).map_err(|_| "--repeats is too large".to_owned())?,
+            reuse: if args.flag("no-cache") { Reuse::Off } else { Reuse::Allow },
+            quiet: args.flag("quiet"),
+            cases,
+            stamp,
+        };
+        let out = &setup.out;
+        std::fs::create_dir_all(out).map_err(|error| format!("{}: {error}", out.display()))?;
+        write_sources(&setup.sources(), &setup.cases)?;
+        Ok(setup)
+    }
+
+    /// Where each case's sources are.
+    fn sources(&self) -> PathBuf {
+        self.work.join("src")
+    }
+
+    /// What rucc's `--print-` option of that name lists.
+    ///
+    /// # Errors
+    ///
+    /// When rucc cannot be run or says it failed.
+    pub(crate) fn listing(&self, args: &[&str]) -> Result<String, String> {
+        let program = &self.rucc.program;
+        let listing = exec::run(program, args, None, COMPILE_TIMEOUT)
+            .map_err(|error| format!("could not run {program}: {error}"))?;
+        if !listing.ok {
+            return Err(format!("{program} {} failed: {}", args.join(" "), listing.stderr.trim()));
+        }
+        Ok(listing.stdout)
+    }
+
+    /// A digest of the assembly of every case, in order, with the flag added when there is one.
+    pub(crate) fn assemble(&self, flag: Option<&str>) -> Vec<String> {
+        let sources = self.sources();
+        let compile = Compile {
+            program: &self.rucc.program,
+            level: self.level,
+            root: &sources,
+            jobs: self.jobs,
+        };
+        compile.all(&self.cases, flag)
+    }
+
+    /// The cases whose assembly with the flag differs from the baseline, built and run three
+    /// ways and measured.
+    ///
+    /// # Errors
+    ///
+    /// When the run itself cannot be done.
+    pub(crate) fn measure(&self, baseline: &[String], flag: &str) -> Result<Moved, String> {
+        let after = self.assemble(Some(flag));
+        let changed: Vec<Case> = self
+            .cases
+            .iter()
+            .zip(baseline.iter().zip(&after))
+            .filter(|(_, (before, after))| before != after)
+            .map(|(case, _)| case.clone())
+            .collect();
+        if changed.is_empty() {
+            return Ok(Moved::default());
+        }
+        let mut plan = Plan::new(self.work.join("run"));
+        let mut moved = Spec::parse(&format!("{MOVED}={}", self.rucc.program));
+        moved.extra.push(flag.to_owned());
+        plan.specs = vec![self.reference.clone(), self.rucc.clone(), moved];
+        plan.levels = vec![self.level];
+        plan.jobs = self.jobs;
+        plan.repeats = self.repeats;
+        plan.reuse = self.reuse;
+        let manifest = Manifest::new(changed)?;
+        let run = corpus_run::execute(&manifest, &plan, &|_, _, _| {})?;
+        Ok(measure(&manifest, &run, &self.reference.id, self.level))
+    }
+
+    /// Opens the journal, keeping the lines this compiler and corpus wrote and dropping the
+    /// rest, and gives back the lines and the file to add to.
+    ///
+    /// # Errors
+    ///
+    /// When the journal cannot be written.
+    pub(crate) fn journal(&self, name: &str) -> Result<(Vec<Json>, Journal), String> {
+        let path = self.out.join(name);
+        // A line cut short by a run that was killed in the middle of writing it is the last one,
+        // and it is dropped with the rest of what does not parse.
+        let kept: Vec<Json> = std::fs::read_to_string(&path)
+            .unwrap_or_default()
+            .lines()
+            .filter_map(|line| json::parse(line).ok())
+            .filter(|value| self.stamp.wrote(value))
+            .collect();
+        let file =
+            std::fs::File::create(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+        let mut journal = Journal { file, path };
+        for line in &kept {
+            journal.add(line)?;
+        }
+        Ok((kept, journal))
+    }
+}
+
+/// The file each move or pass is written to as it finishes.
+#[derive(Debug)]
+pub(crate) struct Journal {
+    file: std::fs::File,
+    path: PathBuf,
+}
+
+impl Journal {
+    /// Adds a line.
+    ///
+    /// # Errors
+    ///
+    /// When it cannot be written.
+    pub(crate) fn add(&mut self, line: &Json) -> Result<(), String> {
+        writeln!(self.file, "{}", line.to_line())
+            .map_err(|error| format!("{}: {error}", self.path.display()))
+    }
 }
 
 /// Runs the sweep.
 pub(crate) fn command(args: &Args) -> Result<ExitCode, String> {
     args.only(OPTIONS)?;
-    let rucc = Spec::parse(&format!("{BASE}={}", args.value_or("rucc", "rucc")));
-    let reference = Spec::parse(args.value_or("reference", "gcc-16")).as_reference();
-    let level = match args.value("level") {
-        None => Level::O2,
-        Some(name) => Level::parse(name).ok_or_else(|| format!("{name} is not a level"))?,
-    };
-    let out = PathBuf::from(args.value_or("out", "reports/sweep"));
-    let work = PathBuf::from(args.value_or("work", "target/sweep-work"));
-    let jobs = args
-        .number("jobs")?
-        .unwrap_or_else(|| std::thread::available_parallelism().map_or(4, std::num::NonZero::get));
-    let repeats = args.number("repeats")?.unwrap_or(1);
-    let quiet = args.flag("quiet");
-
-    let corpus = corpus_gen::generate(&crate::options(args)?)?;
-    let excluded = args.values("exclude-tag");
-    let cases: Vec<&Case> = corpus
-        .cases
-        .iter()
-        .filter(|case| !case.expect_is_rejection())
-        .filter(|case| !excluded.iter().any(|tag| case.has_tag(tag)))
-        .collect();
-
-    let listing = exec::run(&rucc.program, &["--print-params"], None, COMPILE_TIMEOUT)
-        .map_err(|error| format!("could not run {}: {error}", rucc.program))?;
-    if !listing.ok {
-        return Err(format!("{} --print-params failed: {}", rucc.program, listing.stderr.trim()));
-    }
-    let mut rows = rows(&listing.stdout)?;
+    let setup = Setup::new(args, "reports/sweep", "target/sweep-work")?;
+    let mut rows = rows(&setup.listing(&["--print-params"])?)?;
     let asked = args.values("row");
     if !asked.is_empty() {
         for name in asked {
             if !rows.iter().any(|row| &row.name == name) {
-                return Err(format!("{name} is not a row of {} --print-params", rucc.program));
+                return Err(format!(
+                    "{name} is not a row of {} --print-params",
+                    setup.rucc.program
+                ));
             }
         }
         rows.retain(|row| asked.contains(&row.name));
     }
-    let stamp = Stamp { compiler: rucc.describe()?.version, corpus: corpus.digest() };
 
-    std::fs::create_dir_all(&out).map_err(|error| format!("{}: {error}", out.display()))?;
-    let journal = out.join("sweep.jsonl");
-    let mut lines = read_journal(&journal, &stamp);
-    let mut file = std::fs::File::create(&journal)
-        .map_err(|error| format!("{}: {error}", journal.display()))?;
-    for line in &lines {
-        writeln!(file, "{}", line.to_json(&stamp).to_line())
-            .map_err(|error| format!("{}: {error}", journal.display()))?;
+    let (kept, mut journal) = setup.journal("sweep.jsonl")?;
+    let mut lines: Vec<Line> =
+        kept.iter().filter_map(|value| Line::from_json(value, &setup.stamp)).collect();
+    if !setup.quiet {
+        eprintln!("compiling {} cases to assembly as rucc is", setup.cases.len());
     }
-
-    let sources = work.join("src");
-    write_sources(&sources, &cases)?;
-    let compile = Compile { program: &rucc.program, level, root: &sources, jobs };
-    if !quiet {
-        eprintln!("compiling {} cases to assembly as rucc is", cases.len());
-    }
-    let baseline = compile.all(&cases, None);
+    let baseline = setup.assemble(None);
 
     let all = moves(&rows);
     for (at, the_move) in all.iter().enumerate() {
-        let done = lines.iter().any(|line| line.the_move == *the_move);
-        if done {
+        if lines.iter().any(|line| line.the_move == *the_move) {
             continue;
         }
-        let flag = the_move.flag();
-        let after = compile.all(&cases, Some(&flag));
-        let changed: Vec<Case> = cases
-            .iter()
-            .zip(baseline.iter().zip(&after))
-            .filter(|(_, (before, after))| before != after)
-            .map(|(case, _)| (*case).clone())
-            .collect();
-        let moved = if changed.is_empty() {
-            Moved::default()
-        } else {
-            let mut plan = Plan::new(work.join("run"));
-            let mut moved_spec = Spec::parse(&format!("{MOVED}={}", rucc.program));
-            moved_spec.extra.push(flag.clone());
-            plan.specs = vec![reference.clone(), rucc.clone(), moved_spec];
-            plan.levels = vec![level];
-            plan.jobs = jobs.max(1);
-            plan.repeats =
-                u32::try_from(repeats).map_err(|_| "--repeats is too large".to_owned())?;
-            plan.reuse = if args.flag("no-cache") { Reuse::Off } else { Reuse::Allow };
-            let manifest = Manifest::new(changed)?;
-            let run = corpus_run::execute(&manifest, &plan, &|_, _, _| {})?;
-            measure(&manifest, &run, &reference.id, level)
-        };
-        if !quiet {
+        let moved = setup.measure(&baseline, &the_move.flag())?;
+        if !setup.quiet {
             eprintln!(
                 "{}/{} {} at {}: {} cases changed",
                 at + 1,
@@ -448,22 +596,21 @@ pub(crate) fn command(args: &Args) -> Result<ExitCode, String> {
             );
         }
         let line = Line { the_move: the_move.clone(), moved };
-        writeln!(file, "{}", line.to_json(&stamp).to_line())
-            .map_err(|error| format!("{}: {error}", journal.display()))?;
+        journal.add(&line.to_json(&setup.stamp))?;
         lines.push(line);
     }
 
     let report = Report {
         lines: &lines,
         rows: &rows,
-        stamp: &stamp,
-        level,
-        reference: &reference.id,
-        cases: cases.len(),
+        stamp: &setup.stamp,
+        level: setup.level,
+        reference: &setup.reference.id,
+        cases: setup.cases.len(),
     };
-    write(&out.join("sweep.json"), &report.to_json().to_pretty())?;
-    write(&out.join("index.md"), &report.to_markdown())?;
-    println!("wrote the sweep of {} rows to {}", rows.len(), out.display());
+    write(&setup.out.join("sweep.json"), &report.to_json().to_pretty())?;
+    write(&setup.out.join("index.md"), &report.to_markdown())?;
+    println!("wrote the sweep of {} rows to {}", rows.len(), setup.out.display());
     let broke = lines.iter().filter(|line| !line.moved.broke.is_empty()).count();
     if broke > 0 {
         println!("{broke} moves built a case that gave the wrong answer, listed in the report");
@@ -471,26 +618,13 @@ pub(crate) fn command(args: &Args) -> Result<ExitCode, String> {
     Ok(ExitCode::SUCCESS)
 }
 
-fn write(path: &Path, text: &str) -> Result<(), String> {
+/// Writes a report, saying which file it could not write.
+pub(crate) fn write(path: &Path, text: &str) -> Result<(), String> {
     std::fs::write(path, text).map_err(|error| format!("{}: {error}", path.display()))
 }
 
-/// The lines a sweep that was stopped already wrote, when they are about this compiler and this
-/// corpus.
-fn read_journal(path: &Path, stamp: &Stamp) -> Vec<Line> {
-    let Ok(text) = std::fs::read_to_string(path) else {
-        return Vec::new();
-    };
-    // A line cut short by a sweep that was killed in the middle of writing it is the last one,
-    // and it is dropped with the rest of what does not parse.
-    text.lines()
-        .filter_map(|line| json::parse(line).ok())
-        .filter_map(|value| Line::from_json(&value, stamp))
-        .collect()
-}
-
 /// Writes each case's sources into a directory of its own, named after the case.
-fn write_sources(root: &Path, cases: &[&Case]) -> Result<(), String> {
+fn write_sources(root: &Path, cases: &[Case]) -> Result<(), String> {
     for case in cases {
         let dir = root.join(&case.id);
         std::fs::create_dir_all(&dir).map_err(|error| format!("{}: {error}", dir.display()))?;
@@ -521,7 +655,7 @@ struct Compile<'a> {
 impl Compile<'_> {
     /// A digest of the assembly of each case, in the order the cases are given, with the flag
     /// added when there is one.
-    fn all(&self, cases: &[&Case], flag: Option<&str>) -> Vec<String> {
+    fn all(&self, cases: &[Case], flag: Option<&str>) -> Vec<String> {
         let next = AtomicUsize::new(0);
         let digests: Mutex<Vec<String>> = Mutex::new(vec![String::new(); cases.len()]);
         std::thread::scope(|scope| {
@@ -752,12 +886,12 @@ impl Report<'_> {
 
 /// One total over another.
 #[allow(clippy::cast_precision_loss)]
-fn ratio(mine: u64, theirs: u64) -> Option<f64> {
+pub(crate) fn ratio(mine: u64, theirs: u64) -> Option<f64> {
     (mine > 0 && theirs > 0).then(|| mine as f64 / theirs as f64)
 }
 
 /// A change as a signed percentage, or nothing when there was nothing to change.
-fn percent(change: Option<f64>) -> String {
+pub(crate) fn percent(change: Option<f64>) -> String {
     change.map_or_else(String::new, |change| format!("{:+.2}%", change * 100.0))
 }
 
