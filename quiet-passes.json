@@ -88,13 +88,6 @@
     {
       "toolchain": "rucc",
       "level": "O2",
-      "pass": "ipa-vrp",
-      "issue": "tamnd/rucc#3016",
-      "why": "The pass writes its ranges onto the parameters and reports nothing, so the trace has nothing to count even where a range it wrote settled a test."
-    },
-    {
-      "toolchain": "rucc",
-      "level": "O2",
       "pass": "lanes",
       "issue": "tamnd/rucc-corpus#135",
       "why": "No case uses the SSE2 shift or shuffle intrinsics, which are what become a vector built a lane at a time out of another one."
@@ -158,13 +151,6 @@
     {
       "toolchain": "rucc",
       "level": "O3",
-      "pass": "ipa-vrp",
-      "issue": "tamnd/rucc#3016",
-      "why": "The pass writes its ranges onto the parameters and reports nothing, so the trace has nothing to count even where a range it wrote settled a test."
-    },
-    {
-      "toolchain": "rucc",
-      "level": "O3",
       "pass": "lanes",
       "issue": "tamnd/rucc-corpus#135",
       "why": "No case uses the SSE2 shift or shuffle intrinsics, which are what become a vector built a lane at a time out of another one."
@@ -217,13 +203,6 @@
       "pass": "discharge",
       "issue": "tamnd/rucc-corpus#133",
       "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
-    },
-    {
-      "toolchain": "rucc",
-      "level": "Os",
-      "pass": "ipa-vrp",
-      "issue": "tamnd/rucc#3016",
-      "why": "The pass writes its ranges onto the parameters and reports nothing, so the trace has nothing to count even where a range it wrote settled a test."
     },
     {
       "toolchain": "rucc",
