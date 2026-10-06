@@ -1,0 +1,4682 @@
+{
+  "schema": "rucc-corpus/experiment-60/v1",
+  "experiment": 60,
+  "spec": [
+    "spec/optimizer/42-measurement.md",
+    "spec/optimizer/40-cost-models.md#4014-what-to-measure"
+  ],
+  "issue": "tamnd/rucc#2970",
+  "reference": "gcc-16 16.0.1 20260315",
+  "machine": "server2, x86-64 Linux, shared, 4 jobs",
+  "corpus": {
+    "commit": "8da8508",
+    "digest": "d11e3ac475f4648e08e99473d7af28d466c46d1088330a758051058e8a8210ca",
+    "cases": 3500
+  },
+  "rucc": "tamnd/rucc 0.25.0, the branch of #3109",
+  "level": "O2",
+  "rule": {
+    "flat_percent": 0.1,
+    "flat": "neither end moves instructions retired or text by more than 0.1% of what the changed cases had",
+    "wrong": "an end saves on instructions or text and does not spend on the other",
+    "worth tuning": "any other row that moves something"
+  },
+  "instructions_note": "instructions is [rucc as it is, rucc moved, gcc-16], summed over the counted cases",
+  "text_note": "text is [as it is, moved] in bytes",
+  "compile_micros_note": "wall time [as it is, moved] on a shared machine",
+  "totals": {
+    "flat": 63,
+    "wrong": 9,
+    "worth tuning": 16
+  },
+  "rows": [
+    {
+      "row": "branch-cost-for-size",
+      "default": 2,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "branch-cost-predictable",
+      "default": 0,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "double",
+          "value": 1,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predictable-branch-percent",
+      "default": 2,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "if-conversion-budget-predictable",
+      "default": 20,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 10,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 40,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "if-conversion-budget-unpredictable",
+      "default": 40,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 80,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "if-conversion-block-limit",
+      "default": 10,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "phiopt-arm-instructions",
+      "default": 2,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 116,
+          "counted": 116,
+          "instructions": [
+            937580652,
+            878114960,
+            784573086
+          ],
+          "text": [
+            473391,
+            473595
+          ],
+          "compile_micros": [
+            73773574,
+            75621388
+          ],
+          "facets": {
+            "baseline": -1,
+            "code-motion": -8,
+            "compare-fold": -6,
+            "conditional-store": -636,
+            "crc32c": -393221,
+            "frontend": -4,
+            "if-conversion": -60014541,
+            "simd-lfind": -119093,
+            "simplify": -327681,
+            "target-attribute": -314416,
+            "value-range": -21,
+            "value-replacement": 1703936
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 45,
+          "counted": 45,
+          "instructions": [
+            5391020381,
+            6688567762,
+            5345535675
+          ],
+          "text": [
+            36104,
+            36310
+          ],
+          "compile_micros": [
+            10082494,
+            7970633
+          ],
+          "facets": {
+            "bit-liveness": 39,
+            "compare-fold": 9,
+            "simd-lfind": 84460,
+            "switch-lowering": 1297469211,
+            "value-range": 14,
+            "value-settled": -6352
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3157"
+    },
+    {
+      "row": "phiopt-factor-depth",
+      "default": 4,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 8,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "phiopt-arm-scan-instructions",
+      "default": 16,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 8,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 32,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "phiopt-unpredictable-margin-percent",
+      "default": 3,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 2,
+          "counted": 2,
+          "instructions": [
+            237919,
+            238586,
+            232521
+          ],
+          "text": [
+            911,
+            904
+          ],
+          "compile_micros": [
+            413611,
+            431378
+          ],
+          "facets": {
+            "short-circuit": 667
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 6,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "short-circuit-instructions",
+      "default": 2,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 8,
+          "counted": 8,
+          "instructions": [
+            958832,
+            953712,
+            932935
+          ],
+          "text": [
+            3702,
+            3709
+          ],
+          "compile_micros": [
+            5861141,
+            5782372
+          ],
+          "facets": {
+            "short-circuit": -5120
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 65,
+          "counted": 65,
+          "instructions": [
+            16240174,
+            16280164,
+            13999976
+          ],
+          "text": [
+            379118,
+            381646
+          ],
+          "compile_micros": [
+            51059047,
+            105252156
+          ],
+          "facets": {
+            "crc32c": 40182,
+            "section-attr": -192
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "sra-max-bytes",
+      "default": 128,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 64,
+          "changed": 11,
+          "counted": 11,
+          "instructions": [
+            1260787,
+            1260836,
+            1262588
+          ],
+          "text": [
+            4696,
+            5179
+          ],
+          "compile_micros": [
+            3461786,
+            3641387
+          ],
+          "facets": {
+            "calling-convention": 36,
+            "induction-variable": 1,
+            "loop-idiom": 12
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 256,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "sra-max-pieces",
+      "default": 8,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 4,
+          "counted": 4,
+          "instructions": [
+            456523,
+            456559,
+            456839
+          ],
+          "text": [
+            1484,
+            1652
+          ],
+          "compile_micros": [
+            823129,
+            641148
+          ],
+          "facets": {
+            "alias-analysis": 36
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 26,
+          "counted": 26,
+          "instructions": [
+            6197553,
+            6393537,
+            4113028
+          ],
+          "text": [
+            68624,
+            74374
+          ],
+          "compile_micros": [
+            7914640,
+            5785507
+          ],
+          "facets": {
+            "simd-lfind": 198734,
+            "target-attribute": -2750
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "sra-max-word-pieces",
+      "default": 16,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 8,
+          "changed": 22,
+          "counted": 22,
+          "instructions": [
+            2526497,
+            2526858,
+            2531210
+          ],
+          "text": [
+            9422,
+            9961
+          ],
+          "compile_micros": [
+            4933878,
+            2881529
+          ],
+          "facets": {
+            "calling-convention": 37,
+            "general-regs-only": 320,
+            "induction-variable": 2,
+            "loop-idiom": 2
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 32,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "block-copy-moves-for-speed",
+      "default": 8,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "block-copy-moves-for-size",
+      "default": 4,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 8,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "loop-header-insns-for-speed",
+      "default": 20,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 10,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 40,
+          "changed": 4,
+          "counted": 4,
+          "instructions": [
+            457262,
+            457123,
+            455788
+          ],
+          "text": [
+            1883,
+            1913
+          ],
+          "compile_micros": [
+            978966,
+            959702
+          ],
+          "facets": {
+            "loop-shape": -139
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "loop-header-insns-for-size",
+      "default": 5,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 10,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "jump-thread-duplication-insns",
+      "default": 15,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 7,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 30,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "jump-thread-paths",
+      "default": 64,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 32,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 128,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "jump-thread-path-insns",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "jump-thread-back-edge-scale",
+      "default": 2,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "reassoc-width-untuned",
+      "default": 1,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 0,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-frequency-clamp",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-growth-squaring-bound",
+      "default": 256,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 128,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 512,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-insns-single",
+      "default": 70,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 35,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 140,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-early-insns",
+      "default": 6,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 3,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 12,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-insns-single-o3",
+      "default": 200,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 100,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 400,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-insns-auto",
+      "default": 15,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 7,
+          "changed": 169,
+          "counted": 169,
+          "instructions": [
+            33360341,
+            33780806,
+            30161088
+          ],
+          "text": [
+            775994,
+            737839
+          ],
+          "compile_micros": [
+            81153331,
+            55077798
+          ],
+          "facets": {
+            "baseline": 4,
+            "bundle": 1770,
+            "crc32c": 413839,
+            "dllimport": 225,
+            "inline": 476,
+            "interpreter-dispatch": 2769,
+            "target-attribute": 1382
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 30,
+          "changed": 83,
+          "counted": 83,
+          "instructions": [
+            17436104,
+            17411571,
+            15646700
+          ],
+          "text": [
+            358530,
+            417666
+          ],
+          "compile_micros": [
+            51137836,
+            25543257
+          ],
+          "facets": {
+            "bundle": -55,
+            "crc32c": -25431,
+            "target-attribute": 953
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-called-once-insns",
+      "default": 4000,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2000,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 8000,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-called-once-loop-depth",
+      "default": 6,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 3,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 12,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-frame-growth",
+      "default": 1000,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 500,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 2000,
+          "changed": 6,
+          "counted": 6,
+          "instructions": [
+            1964799,
+            1966770,
+            1151846
+          ],
+          "text": [
+            14032,
+            13089
+          ],
+          "compile_micros": [
+            1222719,
+            1109219
+          ],
+          "facets": {
+            "simd-lfind": 1971
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-large-frame",
+      "default": 256,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 128,
+          "changed": 6,
+          "counted": 6,
+          "instructions": [
+            1894449,
+            1890771,
+            1006190
+          ],
+          "text": [
+            12473,
+            14094
+          ],
+          "compile_micros": [
+            3740029,
+            1558189
+          ],
+          "facets": {
+            "simd-lfind": -3678
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 512,
+          "changed": 6,
+          "counted": 6,
+          "instructions": [
+            1964799,
+            1966771,
+            1151846
+          ],
+          "text": [
+            14032,
+            13089
+          ],
+          "compile_micros": [
+            1222719,
+            2399532
+          ],
+          "facets": {
+            "simd-lfind": 1972
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-frame-growth-conserve",
+      "default": 40,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 80,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-large-frame-conserve",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-hint-percent",
+      "default": 200,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 100,
+          "changed": 8,
+          "counted": 8,
+          "instructions": [
+            1092773,
+            1092240,
+            1060776
+          ],
+          "text": [
+            38162,
+            31250
+          ],
+          "compile_micros": [
+            1675861,
+            7141518
+          ],
+          "facets": {
+            "target-attribute": -533
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 400,
+          "changed": 12,
+          "counted": 12,
+          "instructions": [
+            2031693,
+            2031510,
+            2010636
+          ],
+          "text": [
+            48956,
+            60816
+          ],
+          "compile_micros": [
+            5431605,
+            7372544
+          ],
+          "facets": {
+            "target-attribute": -183
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3158"
+    },
+    {
+      "row": "inline-hint-percent-o3",
+      "default": 600,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 300,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 1200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-min-speedup",
+      "default": 30,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 15,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 60,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-min-speedup-o3",
+      "default": 15,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 7,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 30,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-unit-growth",
+      "default": 40,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 80,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "large-unit-insns",
+      "default": 10000,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5000,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 20000,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "large-function-insns",
+      "default": 2700,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1350,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 5400,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "large-function-growth",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "inline-call-time",
+      "default": 10,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "hot-block-fraction",
+      "default": 1000,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 500,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 2000,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-expect",
+      "default": 90,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 45,
+          "changed": 8,
+          "counted": 8,
+          "instructions": [
+            2054221149,
+            2281002106,
+            1852666647
+          ],
+          "text": [
+            7228,
+            7218
+          ],
+          "compile_micros": [
+            1723650,
+            1532337
+          ],
+          "facets": {
+            "block-layout": 2001,
+            "switch-lowering": 226778956
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 180,
+          "changed": 17,
+          "counted": 17,
+          "instructions": [
+            6255245809,
+            6240092901,
+            5453692527
+          ],
+          "text": [
+            11287,
+            11297
+          ],
+          "compile_micros": [
+            2259853,
+            2047318
+          ],
+          "facets": {
+            "block-layout": 1000,
+            "if-conversion": -527248604,
+            "switch-lowering": 512094696
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3159"
+    },
+    {
+      "row": "predict-never-returns",
+      "default": 99,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 49,
+          "changed": 96,
+          "counted": 96,
+          "instructions": [
+            11910482,
+            11910352,
+            11925758
+          ],
+          "text": [
+            163469,
+            163429
+          ],
+          "compile_micros": [
+            14323959,
+            14308998
+          ],
+          "facets": {
+            "branch-probability": -1,
+            "control-flow": 0,
+            "objtool-shapes": 1,
+            "setjmp-longjmp": -166,
+            "sigsetjmp": 36
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 198,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-cold-call",
+      "default": 99,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 49,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 198,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-loop-exit-not-taken",
+      "default": 89,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 44,
+          "changed": 448,
+          "counted": 445,
+          "instructions": [
+            3375025769,
+            3372941284,
+            3127038817
+          ],
+          "text": [
+            1126496,
+            1126166
+          ],
+          "compile_micros": [
+            151372643,
+            171942781
+          ],
+          "facets": {
+            "asm-goto": 4,
+            "asm-local-labels": -2,
+            "atomics": 3,
+            "baseline": 13,
+            "bit-loops": 679289,
+            "block-layout": 2,
+            "branch-probability": 4,
+            "builtin-setjmp": -3,
+            "bundle": 206,
+            "computed-goto": -1,
+            "conditional-store": 0,
+            "const-ice": 1,
+            "constant-p-after-inline": 6,
+            "control-flow": -1,
+            "crc32c": -3615,
+            "dllimport": -8,
+            "frame-size": 99805,
+            "gas-macros": -3,
+            "general-regs-only": 2,
+            "induction-variable": 1,
+            "interpreter-dispatch": 62853,
+            "iv-selection": 239,
+            "jump-threading": 0,
+            "lkmm": -2924755,
+            "long-double": 1,
+            "loop-hoist": -2,
+            "loop-invariant": 1,
+            "loop-restructure": 0,
+            "loop-shape": -3,
+            "loop-unroll-shape": 4,
+            "mcmodel-kernel": 226,
+            "mitigations": -11,
+            "null-pointer-constant": 0,
+            "objtool-shapes": -2,
+            "section-attr": 125,
+            "short-circuit": 511,
+            "sigsetjmp": 4,
+            "simd-lfind": -3473,
+            "switch-lowering": 892,
+            "target-attribute": 3183,
+            "value-range": 17,
+            "value-replacement": 3,
+            "vla-and-alloca": -1
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 178,
+          "changed": 482,
+          "counted": 482,
+          "instructions": [
+            5104873768,
+            5402545144,
+            4197988744
+          ],
+          "text": [
+            1255923,
+            1261184
+          ],
+          "compile_micros": [
+            146848739,
+            159995365
+          ],
+          "facets": {
+            "atomics": 0,
+            "bit-loops": -400005,
+            "builtin-setjmp": 50,
+            "bundle": 136,
+            "called-once": 8388589,
+            "computed-goto": 1,
+            "control-flow": 0,
+            "crc32c": -14261,
+            "division": 289406668,
+            "dllimport": 0,
+            "frame-size": 150601,
+            "induction-variable": -1,
+            "interpreter-dispatch": 49,
+            "iv-selection": 519,
+            "jump-threading": 2,
+            "long-double": 4,
+            "loop-hoist": -2,
+            "loop-restructure": 0,
+            "loop-shape": 7,
+            "loop-unroll-shape": 3,
+            "register-alloc": 210,
+            "section-attr": 126,
+            "sigsetjmp": -16,
+            "simd-lfind": 133460,
+            "switch-lowering": 1055,
+            "target-attribute": 4175,
+            "value-range": 2,
+            "vla-and-alloca": 4
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-loop-guard-taken",
+      "default": 73,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 36,
+          "changed": 335,
+          "counted": 335,
+          "instructions": [
+            3462085234,
+            3466104294,
+            2725883100
+          ],
+          "text": [
+            750582,
+            752782
+          ],
+          "compile_micros": [
+            125089491,
+            164895275
+          ],
+          "facets": {
+            "bit-loops": 375235,
+            "bundle": 277,
+            "called-once": 3670025,
+            "calling-convention": 2,
+            "control-flow": 2,
+            "crc32c": 7836,
+            "dllimport": 14,
+            "frame-size": 160,
+            "induction-variable": 0,
+            "iv-selection": 74,
+            "link-time-optimization": 7,
+            "long-double": 6,
+            "loop-shape": 65,
+            "loop-unroll": -40989,
+            "loop-unroll-shape": 27,
+            "prune": 239,
+            "section-attr": 321,
+            "simd-lfind": 3609,
+            "switch-dispatch": -9,
+            "switch-runs": 28,
+            "target-attribute": 2067,
+            "value-range": 18,
+            "vla-and-alloca": 46
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 146,
+          "changed": 87,
+          "counted": 87,
+          "instructions": [
+            21997732,
+            21979159,
+            17860131
+          ],
+          "text": [
+            428196,
+            429024
+          ],
+          "compile_micros": [
+            56704203,
+            35226777
+          ],
+          "facets": {
+            "bundle": 1,
+            "crc32c": -21697,
+            "frame-size": -112,
+            "loop-shape": -4,
+            "simd-lfind": 3240,
+            "target-attribute": -1
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-pointer-not-null",
+      "default": 70,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 35,
+          "changed": 74,
+          "counted": 73,
+          "instructions": [
+            11394052,
+            11404803,
+            10851247
+          ],
+          "text": [
+            189619,
+            188704
+          ],
+          "compile_micros": [
+            24546966,
+            24578821
+          ],
+          "facets": {
+            "bundle": 102,
+            "dllimport": 139,
+            "interpreter-dispatch": 10221,
+            "null-pointer-constant": 3,
+            "short-circuit": 286
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 140,
+          "changed": 24,
+          "counted": 24,
+          "instructions": [
+            4570738,
+            4570894,
+            4177556
+          ],
+          "text": [
+            111839,
+            111821
+          ],
+          "compile_micros": [
+            7060187,
+            7791106
+          ],
+          "facets": {
+            "bundle": 152,
+            "interpreter-dispatch": 4
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3160"
+    },
+    {
+      "row": "predict-negative-return",
+      "default": 98,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 49,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 196,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-null-return",
+      "default": 71,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 35,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 142,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-call-not-taken",
+      "default": 67,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 33,
+          "changed": 198,
+          "counted": 198,
+          "instructions": [
+            248315005,
+            247512135,
+            198493675
+          ],
+          "text": [
+            288811,
+            288737
+          ],
+          "compile_micros": [
+            42438390,
+            38832010
+          ],
+          "facets": {
+            "address-fold": 3,
+            "baseline": -3,
+            "bit-liveness": 4,
+            "bit-loops": -800004,
+            "block-layout": 2004,
+            "branch-probability": 4,
+            "builtin-setjmp": 27,
+            "call-motion": 3,
+            "computed-goto": 5,
+            "constant-args": 0,
+            "frame-size": -158,
+            "function-purity": 9,
+            "interpreter-dispatch": -4913,
+            "lkmm": -3,
+            "loop-deletion": 16,
+            "loop-hoist": -10,
+            "section-attr": 190,
+            "setjmp-longjmp": -1,
+            "tail-call": -29,
+            "tail-dispatch": -8,
+            "target-attribute": 2,
+            "unused-params": -2,
+            "unused-returns": -6
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 134,
+          "changed": 46,
+          "counted": 46,
+          "instructions": [
+            132109633,
+            132107159,
+            97652772
+          ],
+          "text": [
+            149988,
+            149885
+          ],
+          "compile_micros": [
+            11234018,
+            13390492
+          ],
+          "facets": {
+            "baseline": 2,
+            "bit-loops": 2,
+            "builtin-setjmp": 0,
+            "interpreter-dispatch": -2419,
+            "section-attr": -1,
+            "setjmp-longjmp": -1,
+            "simplify": -54,
+            "tail-dispatch": -7,
+            "target-attribute": 4
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3161"
+    },
+    {
+      "row": "predict-continue-taken",
+      "default": 67,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 33,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 134,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "max-predicted-iterations",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 4,
+          "counted": 4,
+          "instructions": [
+            838820,
+            838816,
+            733750
+          ],
+          "text": [
+            18838,
+            18838
+          ],
+          "compile_micros": [
+            856915,
+            1143000
+          ],
+          "facets": {
+            "interpreter-dispatch": -4
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 6,
+          "counted": 6,
+          "instructions": [
+            1222364,
+            1222361,
+            1080359
+          ],
+          "text": [
+            27609,
+            27609
+          ],
+          "compile_micros": [
+            1174791,
+            1644750
+          ],
+          "facets": {
+            "interpreter-dispatch": -3
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "loop-reserved-regs",
+      "default": 2,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 71,
+          "counted": 71,
+          "instructions": [
+            16997361,
+            16988827,
+            14725933
+          ],
+          "text": [
+            397662,
+            397930
+          ],
+          "compile_micros": [
+            52041056,
+            40258224
+          ],
+          "facets": {
+            "crc32c": -8558,
+            "sigsetjmp": -3,
+            "target-attribute": 30,
+            "vla-and-alloca": -3
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 71,
+          "counted": 71,
+          "instructions": [
+            40171235,
+            40160638,
+            35802512
+          ],
+          "text": [
+            387743,
+            386718
+          ],
+          "compile_micros": [
+            53302977,
+            32655033
+          ],
+          "facets": {
+            "bundle": 15,
+            "crc32c": -10622,
+            "dllimport": 10,
+            "tail-dispatch": 0
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3162"
+    },
+    {
+      "row": "licm-expensive",
+      "default": 20,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 10,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 40,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "unroll-max-times",
+      "default": 16,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 8,
+          "changed": 164,
+          "counted": 164,
+          "instructions": [
+            26495738,
+            29124033,
+            22150192
+          ],
+          "text": [
+            240403,
+            220921
+          ],
+          "compile_micros": [
+            45132381,
+            39993956
+          ],
+          "facets": {
+            "baseline": 43,
+            "general-regs-only": 8577,
+            "induction-variable": 831,
+            "loop-deletion": 2,
+            "loop-idiom": 10053,
+            "loop-invariant": 412,
+            "loop-restructure": 20066,
+            "loop-rotate": 1176,
+            "loop-unroll": -4711,
+            "loop-unroll-shape": 466,
+            "loop-unswitch": 518,
+            "objtool-shapes": 8639,
+            "scheduling": 527,
+            "short-circuit": 192,
+            "simd-lfind": 2119237,
+            "target-attribute": 462267
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 32,
+          "changed": 76,
+          "counted": 76,
+          "instructions": [
+            23775831,
+            23457658,
+            22107239
+          ],
+          "text": [
+            157360,
+            215948
+          ],
+          "compile_micros": [
+            23061573,
+            21309556
+          ],
+          "facets": {
+            "frame-size": -267476,
+            "interpreter-dispatch": 34,
+            "iv-selection": -5023,
+            "loop-unroll-shape": -312,
+            "target-attribute": -45396
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "unroll-max-insns",
+      "default": 200,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 100,
+          "changed": 58,
+          "counted": 58,
+          "instructions": [
+            8227414,
+            8473755,
+            7315997
+          ],
+          "text": [
+            96593,
+            89357
+          ],
+          "compile_micros": [
+            12708898,
+            12537041
+          ],
+          "facets": {
+            "loop-hoist": 1419,
+            "loop-restructure": 12175,
+            "objtool-shapes": 3328,
+            "register-alloc": 510,
+            "scheduling": 18,
+            "sigsetjmp": 246,
+            "simd-lfind": 10405,
+            "target-attribute": 218227,
+            "vla-and-alloca": 13
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 400,
+          "changed": 48,
+          "counted": 48,
+          "instructions": [
+            8012340,
+            7595988,
+            6303101
+          ],
+          "text": [
+            101685,
+            135265
+          ],
+          "compile_micros": [
+            12671583,
+            11648717
+          ],
+          "facets": {
+            "control-flow": -232,
+            "loop-hoist": -742,
+            "loop-restructure": -1867,
+            "register-alloc": -895,
+            "scheduling": -41,
+            "sigsetjmp": -440,
+            "simd-lfind": -411626,
+            "stack-slots": -17,
+            "target-attribute": -492
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "split-max-insns",
+      "default": 200,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 100,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 400,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "split-remade-insns",
+      "default": 8,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "unroll-max-depth",
+      "default": 8,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "profile-sum-tolerance-percent",
+      "default": 1,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 0,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "predict-return-blocks",
+      "default": 8,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "align-frequency-fraction",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "loop-align-min-iterations",
+      "default": 4,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 8,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "iv-max-considered-uses",
+      "default": 250,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 125,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 500,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "iv-consider-all-candidates-bound",
+      "default": 40,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 80,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "iv-always-prune-cand-set-bound",
+      "default": 10,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "ivopts-new-variable-bias",
+      "default": 3,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 484,
+          "counted": 484,
+          "instructions": [
+            3597701196,
+            3584053715,
+            2759137813
+          ],
+          "text": [
+            897488,
+            908157
+          ],
+          "compile_micros": [
+            153418625,
+            169226266
+          ],
+          "facets": {
+            "baseline": -7,
+            "conditional-store": -2664,
+            "crc32c": -509925,
+            "frame-size": 150059,
+            "frontend": 84,
+            "general-regs-only": 12480,
+            "induction-variable": 403,
+            "iv-selection": 1255,
+            "jump-threading": -997,
+            "lkmm": -51,
+            "loop-idiom": 600846,
+            "narrow-shift": 46,
+            "prune": -942,
+            "short-circuit": -5759,
+            "sigsetjmp": -1432,
+            "simd-lfind": 312993,
+            "simplify": -585138,
+            "switch-dispatch": -54729,
+            "target-attribute": -19219,
+            "value-replacement": -13545422,
+            "value-settled": 559,
+            "vla-and-alloca": 79
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 6,
+          "changed": 203,
+          "counted": 203,
+          "instructions": [
+            5451054146,
+            5761966169,
+            4403399926
+          ],
+          "text": [
+            343764,
+            344193
+          ],
+          "compile_micros": [
+            56345791,
+            68201921
+          ],
+          "facets": {
+            "called-once": 40936,
+            "computed-goto": 181,
+            "conditional-store": -260,
+            "division": 302211177,
+            "frame-size": 157729,
+            "lkmm": 696,
+            "narrow-shift": 8380422,
+            "simd-lfind": 70855,
+            "switch-runs": 309,
+            "tail-dispatch": 20514,
+            "target-attribute": 26660,
+            "value-settled": 2804
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "ivopts-set-penalty",
+      "default": 10,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "scheduler-ready-list-bound",
+      "default": 100,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 50,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 200,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "switch-conversion-max-growth",
+      "default": 8,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 2,
+          "counted": 2,
+          "instructions": [
+            228465,
+            228415,
+            227745
+          ],
+          "text": [
+            991,
+            836
+          ],
+          "compile_micros": [
+            717884,
+            718072
+          ],
+          "facets": {
+            "switch-lowering": -50
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3163"
+    },
+    {
+      "row": "jump-table-min-targets",
+      "default": 11,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5,
+          "changed": 29,
+          "counted": 29,
+          "instructions": [
+            228013640,
+            194076497,
+            143640442
+          ],
+          "text": [
+            79506,
+            78291
+          ],
+          "compile_micros": [
+            6695377,
+            6016444
+          ],
+          "facets": {
+            "bundle": 129,
+            "interpreter-dispatch": -94053,
+            "mcmodel-kernel": -222,
+            "mitigations": -309,
+            "objtool-shapes": -223,
+            "switch-dispatch": -33842428,
+            "switch-runs": -37
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 22,
+          "changed": 1,
+          "counted": 1,
+          "instructions": [
+            54952736,
+            74603942,
+            36929997
+          ],
+          "text": [
+            5030,
+            6806
+          ],
+          "compile_micros": [
+            574528,
+            185778
+          ],
+          "facets": {
+            "tail-dispatch": 19651206
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3164"
+    },
+    {
+      "row": "jump-table-min-targets-for-size",
+      "default": 6,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 3,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 12,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "switch-peel-percent",
+      "default": 66,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 33,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 132,
+          "changed": 4,
+          "counted": 4,
+          "instructions": [
+            2053740313,
+            2280519463,
+            1852203411
+          ],
+          "text": [
+            5436,
+            5436
+          ],
+          "compile_micros": [
+            623058,
+            1988765
+          ],
+          "facets": {
+            "switch-lowering": 226779150
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "wasm-jump-table-min-targets",
+      "default": 24,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 12,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 48,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "wasm-jump-table-min-targets-for-size",
+      "default": 4,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 8,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "allocator-degradation-percent",
+      "default": 10,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 5,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 20,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "dse-walk-limit",
+      "default": 256,
+      "call": "wrong",
+      "ends": [
+        {
+          "end": "half",
+          "value": 128,
+          "changed": 34,
+          "counted": 34,
+          "instructions": [
+            4411645,
+            4411793,
+            4402045
+          ],
+          "text": [
+            99723,
+            100365
+          ],
+          "compile_micros": [
+            7139235,
+            10184474
+          ],
+          "facets": {
+            "builtin-setjmp": 13,
+            "conditional-store": -2,
+            "jump-threading": -2,
+            "load-forwarding": 83,
+            "sigsetjmp": 56
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 512,
+          "changed": 21,
+          "counted": 21,
+          "instructions": [
+            2869466,
+            2869416,
+            2865223
+          ],
+          "text": [
+            86044,
+            85736
+          ],
+          "compile_micros": [
+            5245640,
+            4381076
+          ],
+          "facets": {
+            "builtin-setjmp": -29,
+            "sigsetjmp": -21
+          },
+          "broke": []
+        }
+      ],
+      "issue": "tamnd/rucc#3165"
+    },
+    {
+      "row": "range-test-bit-intervals",
+      "default": 3,
+      "call": "worth tuning",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 63,
+          "counted": 63,
+          "instructions": [
+            12530466,
+            12531500,
+            11321833
+          ],
+          "text": [
+            150421,
+            152456
+          ],
+          "compile_micros": [
+            39307519,
+            25424122
+          ],
+          "facets": {
+            "baseline": 4,
+            "crc32c": 319,
+            "target-attribute": 703,
+            "value-range": 8
+          },
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 6,
+          "changed": 1,
+          "counted": 1,
+          "instructions": [
+            121268,
+            122623,
+            119989
+          ],
+          "text": [
+            515,
+            519
+          ],
+          "compile_micros": [
+            117034,
+            158562
+          ],
+          "facets": {
+            "short-circuit": 1355
+          },
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "range-switch-cases",
+      "default": 64,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 32,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 128,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "constant-p-load-depth",
+      "default": 8,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "cons-cascade",
+      "default": 8,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 16,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "egraph-nodes",
+      "default": 65536,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 32768,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 131072,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "select-forms",
+      "default": 2,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 1,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 4,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    },
+    {
+      "row": "simplify-rounds",
+      "default": 4,
+      "call": "flat",
+      "ends": [
+        {
+          "end": "half",
+          "value": 2,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        },
+        {
+          "end": "double",
+          "value": 8,
+          "changed": 0,
+          "counted": 0,
+          "instructions": [
+            0,
+            0,
+            0
+          ],
+          "text": [
+            0,
+            0
+          ],
+          "compile_micros": [
+            0,
+            0
+          ],
+          "facets": {},
+          "broke": []
+        }
+      ]
+    }
+  ]
+}
