@@ -1,23 +1,23 @@
 # rucc corpus report
 
-230 case results did not come out as expected. They are listed below, worst first.
+20 case results did not come out as expected. They are listed below, worst first.
 
-The corpus holds 3606 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `fdbd34186fd89485`.
+The corpus holds 3626 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `8e2e474ec8da0fa1`.
 
-That is 208,960 lines of C, 6.7 MiB, in 3,740 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 209,990 lines of C, 6.8 MiB, in 3,760 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.19.1 | under test |
+| `rucc` | rucc 0.25.0 | under test |
 
 ## Did it meet the targets
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 230 failures | no |
-| `code-quality:rucc` | within 10 percent | 21 percent more | no |
-| `compile-throughput:rucc` | no worse | 41 percent less | yes |
+| `correctness` | 0 failures | 20 failures | no |
+| `code-quality:rucc` | within 10 percent | 12 percent more | no |
+| `compile-throughput:rucc` | no worse | 37 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -29,14 +29,284 @@ That is 208,960 lines of C, 6.7 MiB, in 3,740 files, and it is the denominator f
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 17398 | 17283 | 0 | 115 | 0 | 0 | 0 | 600 |
-| `rucc` | 17398 | 17283 | 0 | 115 | 0 | 0 | 0 | 600 |
+| `gcc-16` | 17498 | 17498 | 0 | 0 | 0 | 0 | 0 | 600 |
+| `rucc` | 17498 | 17478 | 15 | 5 | 0 | 0 | 0 | 600 |
 
 ## What went wrong
 
-### `asm-goto.branch.c17.33690266`
+### `null-pointer-constant.conditional-type.c17.b33903a7`
 
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O0`.
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O0`.
+
+Expected:
+
+```
+34503
+```
+
+Got:
+
+```
+238279
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.conditional-type.c17.b33903a7`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O1`.
+
+Expected:
+
+```
+34503
+```
+
+Got:
+
+```
+238279
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.conditional-type.c17.b33903a7`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O2`.
+
+Expected:
+
+```
+34503
+```
+
+Got:
+
+```
+238279
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.conditional-type.c17.b33903a7`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O3`.
+
+Expected:
+
+```
+34503
+```
+
+Got:
+
+```
+238279
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.conditional-type.c17.b33903a7`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-Os`.
+
+Expected:
+
+```
+34503
+```
+
+Got:
+
+```
+238279
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-const.c17.0749e5ff`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O0`.
+
+Expected:
+
+```
+2515880359
+```
+
+Got:
+
+```
+2563465191
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-const.c17.0749e5ff`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O1`.
+
+Expected:
+
+```
+2515880359
+```
+
+Got:
+
+```
+2563465191
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-const.c17.0749e5ff`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O2`.
+
+Expected:
+
+```
+2515880359
+```
+
+Got:
+
+```
+2563465191
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-const.c17.0749e5ff`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O3`.
+
+Expected:
+
+```
+2515880359
+```
+
+Got:
+
+```
+2563465191
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-const.c17.0749e5ff`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-Os`.
+
+Expected:
+
+```
+2515880359
+```
+
+Got:
+
+```
+2563465191
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O0`.
+
+Expected:
+
+```
+991576615
+```
+
+Got:
+
+```
+81932839
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O1`.
+
+Expected:
+
+```
+991576615
+```
+
+Got:
+
+```
+81932839
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O2`.
+
+Expected:
+
+```
+991576615
+```
+
+Got:
+
+```
+81932839
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O3`.
+
+Expected:
+
+```
+991576615
+```
+
+Got:
+
+```
+81932839
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+
+### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+
+rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-Os`.
+
+Expected:
+
+```
+991576615
+```
+
+Got:
+
+```
+81932839
+```
+
+The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+
+### `const-ice.const-local.c17.d372496d`
+
+rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O0`.
 
 Expected:
 
@@ -47,22 +317,19 @@ the program compiles
 Got:
 
 ```
-case.c: In function ‘step’:
-case.c:10:5: error: ‘asm’ undeclared (first use in this function)
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |     ^~~
-case.c:10:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:10:8: error: expected ‘;’ before ‘goto’
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |        ^~~~~
-      |        ;
+case.c:14:20: error: expression in static assertion is not constant [E0614]
+case.c:15:20: error: expression in static assertion is not constant [E0614]
+case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
+case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+case.c:19:10: error: case label does not reduce to an integer constant [E0624]
+case.c:21:10: error: case label does not reduce to an integer constant [E0624]
 ```
 
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
-### `asm-goto.branch.c17.33690266`
+### `const-ice.const-local.c17.d372496d`
 
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O1`.
+rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O1`.
 
 Expected:
 
@@ -73,22 +340,19 @@ the program compiles
 Got:
 
 ```
-case.c: In function ‘step’:
-case.c:10:5: error: ‘asm’ undeclared (first use in this function)
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |     ^~~
-case.c:10:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:10:8: error: expected ‘;’ before ‘goto’
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |        ^~~~~
-      |        ;
+case.c:14:20: error: expression in static assertion is not constant [E0614]
+case.c:15:20: error: expression in static assertion is not constant [E0614]
+case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
+case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+case.c:19:10: error: case label does not reduce to an integer constant [E0624]
+case.c:21:10: error: case label does not reduce to an integer constant [E0624]
 ```
 
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
-### `asm-goto.branch.c17.33690266`
+### `const-ice.const-local.c17.d372496d`
 
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O2`.
+rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O2`.
 
 Expected:
 
@@ -99,22 +363,19 @@ the program compiles
 Got:
 
 ```
-case.c: In function ‘step’:
-case.c:10:5: error: ‘asm’ undeclared (first use in this function)
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |     ^~~
-case.c:10:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:10:8: error: expected ‘;’ before ‘goto’
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |        ^~~~~
-      |        ;
+case.c:14:20: error: expression in static assertion is not constant [E0614]
+case.c:15:20: error: expression in static assertion is not constant [E0614]
+case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
+case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+case.c:19:10: error: case label does not reduce to an integer constant [E0624]
+case.c:21:10: error: case label does not reduce to an integer constant [E0624]
 ```
 
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
-### `asm-goto.branch.c17.33690266`
+### `const-ice.const-local.c17.d372496d`
 
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O3`.
+rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O3`.
 
 Expected:
 
@@ -125,22 +386,19 @@ the program compiles
 Got:
 
 ```
-case.c: In function ‘step’:
-case.c:10:5: error: ‘asm’ undeclared (first use in this function)
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |     ^~~
-case.c:10:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:10:8: error: expected ‘;’ before ‘goto’
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |        ^~~~~
-      |        ;
+case.c:14:20: error: expression in static assertion is not constant [E0614]
+case.c:15:20: error: expression in static assertion is not constant [E0614]
+case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
+case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+case.c:19:10: error: case label does not reduce to an integer constant [E0624]
+case.c:21:10: error: case label does not reduce to an integer constant [E0624]
 ```
 
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
-### `asm-goto.branch.c17.33690266`
+### `const-ice.const-local.c17.d372496d`
 
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-Os`.
+rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-Os`.
 
 Expected:
 
@@ -151,460 +409,15 @@ the program compiles
 Got:
 
 ```
-case.c: In function ‘step’:
-case.c:10:5: error: ‘asm’ undeclared (first use in this function)
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |     ^~~
-case.c:10:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:10:8: error: expected ‘;’ before ‘goto’
-   10 |     asm goto("testl $1, %0\n\tjnz %l[odd]" : : "r"(x) : "cc" : odd);
-      |        ^~~~~
-      |        ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.branch.c17.33690266`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O0`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:10:8: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.branch.c17.33690266`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O1`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:10:8: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.branch.c17.33690266`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O2`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:10:8: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.branch.c17.33690266`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O3`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:10:8: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.branch.c17.33690266`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-Os`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:10:8: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.branch.c17.33690266.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O0`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘bits’:
-case.c:12:9: error: ‘asm’ undeclared (first use in this function)
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |         ^~~
-case.c:12:9: note: each undeclared identifier is reported only once for each function it appears in
-case.c:12:12: error: expected ‘;’ before ‘goto’
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |            ^~~~~
-      |            ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O1`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘bits’:
-case.c:12:9: error: ‘asm’ undeclared (first use in this function)
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |         ^~~
-case.c:12:9: note: each undeclared identifier is reported only once for each function it appears in
-case.c:12:12: error: expected ‘;’ before ‘goto’
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |            ^~~~~
-      |            ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O2`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘bits’:
-case.c:12:9: error: ‘asm’ undeclared (first use in this function)
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |         ^~~
-case.c:12:9: note: each undeclared identifier is reported only once for each function it appears in
-case.c:12:12: error: expected ‘;’ before ‘goto’
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |            ^~~~~
-      |            ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O3`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘bits’:
-case.c:12:9: error: ‘asm’ undeclared (first use in this function)
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |         ^~~
-case.c:12:9: note: each undeclared identifier is reported only once for each function it appears in
-case.c:12:12: error: expected ‘;’ before ‘goto’
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |            ^~~~~
-      |            ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-Os`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘bits’:
-case.c:12:9: error: ‘asm’ undeclared (first use in this function)
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |         ^~~
-case.c:12:9: note: each undeclared identifier is reported only once for each function it appears in
-case.c:12:12: error: expected ‘;’ before ‘goto’
-   12 |         asm goto("btl %1, %0\n\tjc %l[set]" : : "r"(x), "r"(k) : "cc" : set);
-      |            ^~~~~
-      |            ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O0`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:12:12: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O1`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:12:12: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O2`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:12:12: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O3`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:12:12: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.in-loop.c17.340e5676`
-
-rucc would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-Os`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c:12:12: error: expected `;`, found `goto` [E0400]
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.in-loop.c17.340e5676.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.output.c17.2a15ca0e`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O0`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘step’:
-case.c:11:5: error: ‘asm’ undeclared (first use in this function)
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |     ^~~
-case.c:11:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:11:8: error: expected ‘;’ before ‘goto’
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |        ^~~~~
-      |        ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.output.c17.2a15ca0e.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.output.c17.2a15ca0e`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O1`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘step’:
-case.c:11:5: error: ‘asm’ undeclared (first use in this function)
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |     ^~~
-case.c:11:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:11:8: error: expected ‘;’ before ‘goto’
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |        ^~~~~
-      |        ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.output.c17.2a15ca0e.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.output.c17.2a15ca0e`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O2`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘step’:
-case.c:11:5: error: ‘asm’ undeclared (first use in this function)
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |     ^~~
-case.c:11:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:11:8: error: expected ‘;’ before ‘goto’
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |        ^~~~~
-      |        ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.output.c17.2a15ca0e.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.output.c17.2a15ca0e`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-O3`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘step’:
-case.c:11:5: error: ‘asm’ undeclared (first use in this function)
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |     ^~~
-case.c:11:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:11:8: error: expected ‘;’ before ‘goto’
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |        ^~~~~
-      |        ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.output.c17.2a15ca0e.c` and the working directory of the failing build was kept under the run directory.
-
-### `asm-goto.output.c17.2a15ca0e`
-
-gcc-16 would not compile a valid program about asm goto as static keys and user copies use it, with and without outputs. This is a case about asm goto as static keys and user copies use it, with and without outputs, built at `-Os`.
-
-Expected:
-
-```
-the program compiles
-```
-
-Got:
-
-```
-case.c: In function ‘step’:
-case.c:11:5: error: ‘asm’ undeclared (first use in this function)
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |     ^~~
-case.c:11:5: note: each undeclared identifier is reported only once for each function it appears in
-case.c:11:8: error: expected ‘;’ before ‘goto’
-   11 |     asm goto("movl %1, %0\n\tandl $3, %0\n\tjz %l[zero]"
-      |        ^~~~~
-      |        ;
-```
-
-The program is `programs/correctness/asm-goto/asm-goto.output.c17.2a15ca0e.c` and the working directory of the failing build was kept under the run directory.
-
-And 205 more, which are all in `findings.sarif` and in `report.json`.
+case.c:14:20: error: expression in static assertion is not constant [E0614]
+case.c:15:20: error: expression in static assertion is not constant [E0614]
+case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
+case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+case.c:19:10: error: case label does not reduce to an integer constant [E0624]
+case.c:21:10: error: case label does not reduce to an integer constant [E0624]
+```
+
+The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
 ## How big the code is
 
@@ -616,33 +429,33 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces 21 percent more. The middle facet is 4 percent less, over 99 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces 12 percent more. The middle facet is 4 percent less, over 106 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `interpreter-dispatch` | backend | 36 | 191 percent more | not measured | inside the noise | 41 percent less |
-| `simd-lfind` | correctness | 30 | 92 percent more | not measured | inside the noise | 49 percent less |
-| `bit-builtins` | backend | 22 | 86 percent more | not measured | inside the noise | 41 percent less |
-| `overflow-builtins` | correctness | 144 | 56 percent more | not measured | level | 51 percent less |
-| `long-double` | backend | 10 | 49 percent more | not measured | inside the noise | 41 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 40 percent less |
-| `target-attribute` | correctness | 52 | 12 percent more | not measured | inside the noise | 48 percent less |
-| `tail-call` | interprocedural | 36 | 10 percent more | not measured | inside the noise | 40 percent less |
+| `simd-lfind` | correctness | 30 | 85 percent more | not measured | inside the noise | 45 percent less |
+| `interpreter-dispatch` | backend | 36 | 61 percent more | not measured | inside the noise | 58 percent less |
+| `overflow-builtins` | correctness | 144 | 56 percent more | not measured | inside the noise | 46 percent less |
+| `long-double` | backend | 10 | 49 percent more | not measured | inside the noise | 33 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 35 percent less |
+| `bit-builtins` | backend | 22 | 19 percent more | not measured | inside the noise | 44 percent less |
+| `target-attribute` | correctness | 52 | 13 percent more | not measured | inside the noise | 43 percent less |
+| `tail-call` | interprocedural | 36 | 10 percent more | not measured | inside the noise | 37 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 24 | 37 percent less | not measured | inside the noise | 49 percent less |
-| `narrow-shift` | backend | 8 | 36 percent less | not measured | inside the noise | 59 percent less |
-| `conditional-store` | local | 20 | 34 percent less | not measured | level | 50 percent less |
-| `stack-slots` | backend | 6 | 34 percent less | not measured | inside the noise | 48 percent less |
-| `prune` | global | 15 | 32 percent less | not measured | inside the noise | 47 percent less |
-| `value-replacement` | global | 13 | 30 percent less | not measured | inside the noise | 48 percent less |
-| `loop-idiom` | loops | 78 | 28 percent less | not measured | inside the noise | 41 percent less |
-| `value-settled` | local | 13 | 26 percent less | not measured | inside the noise | 48 percent less |
+| `short-circuit` | local | 24 | 39 percent less | not measured | inside the noise | 44 percent less |
+| `narrow-shift` | backend | 8 | 38 percent less | not measured | inside the noise | 54 percent less |
+| `conditional-store` | local | 20 | 37 percent less | not measured | inside the noise | 47 percent less |
+| `prune` | global | 15 | 34 percent less | not measured | inside the noise | 43 percent less |
+| `stack-slots` | backend | 6 | 34 percent less | not measured | inside the noise | 43 percent less |
+| `value-replacement` | global | 13 | 32 percent less | not measured | inside the noise | 42 percent less |
+| `loop-idiom` | loops | 78 | 28 percent less | not measured | inside the noise | 36 percent less |
+| `value-settled` | local | 13 | 27 percent less | not measured | inside the noise | 43 percent less |
 
 ## What `-Os` does
 
@@ -650,8 +463,8 @@ Every other number in this report is one compiler against another at the same le
 
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
-| `gcc-16` | 3455 | 4 percent less | 1155 |
-| `rucc` | 3455 | level | 1079 |
+| `gcc-16` | 3498 | 4 percent less | 1157 |
+| `rucc` | 3497 | level | 1050 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -661,23 +474,23 @@ Where `-Os` saves the most:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `simd-lfind` | 30 | 19 percent less |
-| `scheduling` | 20 | 16 percent less |
-| `bundle` | 33 | 9 percent less |
-| `compare-fold` | 118 | 8 percent less |
-| `target-attribute` | 52 | 8 percent less |
-| `store-fold-constant` | 118 | 8 percent less |
+| `simd-lfind` | 30 | 17 percent less |
+| `scheduling` | 20 | 17 percent less |
+| `target-attribute` | 52 | 12 percent less |
+| `interpreter-dispatch` | 36 | 10 percent less |
+| `compare-fold` | 118 | 9 percent less |
+| `store-fold-constant` | 118 | 9 percent less |
 
 Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `loop-rotate` | 64 | 6 percent more |
-| `function-purity` | 28 | 7 percent more |
-| `stack-slots` | 6 | 11 percent more |
-| `induction-variable` | 42 | 12 percent more |
-| `loop-restructure` | 48 | 13 percent more |
-| `loop-idiom` | 78 | 14 percent more |
+| `loop-invariant` | 32 | 5 percent more |
+| `function-purity` | 28 | 6 percent more |
+| `stack-slots` | 6 | 9 percent more |
+| `loop-restructure` | 48 | 10 percent more |
+| `induction-variable` | 42 | 10 percent more |
+| `loop-idiom` | 78 | 11 percent more |
 
 ## By phase of the plan
 
@@ -688,10 +501,10 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | floor | 6 | 118 | 3,458 | 558 of 558 | 4 percent less |
 | local | 11 | 411 | 20,527 | 2055 of 2055 | 5 percent less |
 | global | 12 | 242 | 5,794 | 1210 of 1210 | 5 percent less |
-| loops | 13 | 716 | 14,715 | 3580 of 3580 | 5 percent less |
-| interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 3 percent less |
+| loops | 13 | 716 | 14,715 | 3580 of 3580 | 6 percent less |
+| interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 4 percent less |
 | backend | 27 | 1008 | 57,956 | 5040 of 5040 | 4 percent less |
-| correctness | 22 | 760 | 96,337 in 826 files | 3085 of 3200 | 1 percent more |
+| correctness | 25 | 780 | 97,367 in 846 files | 3280 of 3300 | level |
 
 ## What gcc-16 said about these programs
 
@@ -726,11 +539,11 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 
 | compiler | level | cases | same | different |
 |---|---|---|---|---|
-| rucc | O0 | 122 | 77 | 45 |
-| rucc | O1 | 120 | 72 | 48 |
-| rucc | O2 | 120 | 72 | 48 |
-| rucc | O3 | 120 | 72 | 48 |
-| rucc | Os | 120 | 76 | 44 |
+| rucc | O0 | 125 | 80 | 45 |
+| rucc | O1 | 123 | 75 | 48 |
+| rucc | O2 | 123 | 75 | 48 |
+| rucc | O3 | 123 | 75 | 48 |
+| rucc | Os | 123 | 79 | 44 |
 
 ### rucc at O0 against gcc-16
 
@@ -933,4 +746,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3606 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3626 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
