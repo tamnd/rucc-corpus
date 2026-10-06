@@ -30,7 +30,7 @@ pub use case::{Axes, Case, Dialect, Expect, Manifest, Unit, UnitKind, family_of,
 pub use facet::{Facet, Phase};
 pub use json::Json;
 pub use record::{
-    Compile, Execute, Finding, Insight, Level, RunRecord, Source, Toolchain, Verdict,
+    Compile, Execute, Finding, Fired, Insight, Level, RunRecord, Source, Toolchain, Verdict,
 };
 
 /// The version stamped into every file this workspace writes.

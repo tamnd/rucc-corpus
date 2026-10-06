@@ -1,0 +1,250 @@
+{
+  "note": "Every rucc pass that runs at a level and rewrites nothing in the whole corpus there, with the reason. A run of the whole corpus fails on a quiet pass this file does not name, and on a line whose pass fired or no longer runs. Regenerate with `rucc-corpus run --accept` and write the reason on every new line.",
+  "quiet": [
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "coalesce",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "constant-p",
+      "issue": "",
+      "why": "Only constant-p-after-inline asks __builtin_constant_p about a value inlining settles, and that facet pins -O2, so it is counted at -O2 and nowhere else."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "dead-plane",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "discharge",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "hoist",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "libcall",
+      "issue": "tamnd/rucc-corpus#134",
+      "why": "Every case prints through printf with a conversion in the format and calls no string function on a string the compiler can see, so nothing has a shape this folds."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "plane-sink",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O1",
+      "pass": "rangetest",
+      "issue": "tamnd/rucc#3017",
+      "why": "Only short-circuit makes the or of comparisons this reads, and it runs at -O2 and -O3 alone, so at this level every range test is still a chain of branches."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "coalesce",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "dead-plane",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "discharge",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "hoist",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "ipa-vrp",
+      "issue": "tamnd/rucc#3016",
+      "why": "The pass writes its ranges onto the parameters and reports nothing, so the trace has nothing to count even where a range it wrote settled a test."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "lanes",
+      "issue": "tamnd/rucc-corpus#135",
+      "why": "No case uses the SSE2 shift or shuffle intrinsics, which are what become a vector built a lane at a time out of another one."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "libcall",
+      "issue": "tamnd/rucc-corpus#134",
+      "why": "Every case prints through printf with a conversion in the format and calls no string function on a string the compiler can see, so nothing has a shape this folds."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "plane-sink",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "split",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "coalesce",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "constant-p",
+      "issue": "",
+      "why": "Only constant-p-after-inline asks __builtin_constant_p about a value inlining settles, and that facet pins -O2, so it is counted at -O2 and nowhere else."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "dead-plane",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "discharge",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "hoist",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "ipa-vrp",
+      "issue": "tamnd/rucc#3016",
+      "why": "The pass writes its ranges onto the parameters and reports nothing, so the trace has nothing to count even where a range it wrote settled a test."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "lanes",
+      "issue": "tamnd/rucc-corpus#135",
+      "why": "No case uses the SSE2 shift or shuffle intrinsics, which are what become a vector built a lane at a time out of another one."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "libcall",
+      "issue": "tamnd/rucc-corpus#134",
+      "why": "Every case prints through printf with a conversion in the format and calls no string function on a string the compiler can see, so nothing has a shape this folds."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "plane-sink",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
+      "pass": "split",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "coalesce",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "constant-p",
+      "issue": "",
+      "why": "Only constant-p-after-inline asks __builtin_constant_p about a value inlining settles, and that facet pins -O2, so it is counted at -O2 and nowhere else."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "dead-plane",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "discharge",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "ipa-vrp",
+      "issue": "tamnd/rucc#3016",
+      "why": "The pass writes its ranges onto the parameters and reports nothing, so the trace has nothing to count even where a range it wrote settled a test."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "libcall",
+      "issue": "tamnd/rucc-corpus#134",
+      "why": "Every case prints through printf with a conversion in the format and calls no string function on a string the compiler can see, so nothing has a shape this folds."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "plane-sink",
+      "issue": "tamnd/rucc-corpus#133",
+      "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "rangetest",
+      "issue": "tamnd/rucc#3017",
+      "why": "Only short-circuit makes the or of comparisons this reads, and it runs at -O2 and -O3 alone, so at this level every range test is still a chain of branches."
+    }
+  ]
+}

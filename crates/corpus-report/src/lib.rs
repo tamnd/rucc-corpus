@@ -16,6 +16,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod firing;
 pub mod human;
 pub mod machine;
 pub mod pages;

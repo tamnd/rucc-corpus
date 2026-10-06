@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85.0"
 license = "Apache-2.0"
@@ -17,10 +17,10 @@ readme = "README.md"
 # crate, a CLI crate and a parallelism crate is a harness whose output format is somebody
 # else's decision, and the machine report here is a contract other tools read.
 [workspace.dependencies]
-corpus-model = { version = "=0.1.0", path = "crates/corpus-model" }
-corpus-gen = { version = "=0.1.0", path = "crates/corpus-gen" }
-corpus-run = { version = "=0.1.0", path = "crates/corpus-run" }
-corpus-report = { version = "=0.1.0", path = "crates/corpus-report" }
+corpus-model = { version = "=0.2.0", path = "crates/corpus-model" }
+corpus-gen = { version = "=0.2.0", path = "crates/corpus-gen" }
+corpus-run = { version = "=0.2.0", path = "crates/corpus-run" }
+corpus-report = { version = "=0.2.0", path = "crates/corpus-report" }
 
 [workspace.lints.rust]
 missing_debug_implementations = "warn"

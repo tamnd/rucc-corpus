@@ -177,6 +177,16 @@ That keeps the issue and the prose on every line that is still failing, and give
 
 As of the run that created it the file has eight lines, all of them rucc, across three things: the address of a label and the indirect jump through it, `__atomic_signal_fence`, and the library `setjmp` and `longjmp`. GCC 16 compiles and runs all of them. Since rucc 0.24.2 every one of them works and the file names nothing, so any failure at all turns the job red.
 
+## What each rucc pass did
+
+When the compiler under test is rucc, every build asks it for a trace, and the trace says for each pass that ran what the pass did and how many times. The corpus adds those up across a run and writes `reports/firing.md`: for every level, which passes ran, which of them fired on how many cases, how many rewrites they made, what they reported as missed, and the facets they fired on most. The few facets that pin `-O2` themselves, because what they check needs the optimizer, are only counted at `-O2`, since at any other level they still run the `-O2` pipeline.
+
+A pass that runs on every case and never fires is either a pass the corpus has no program for or a pass that is broken, and neither shows up as a wrong answer. `quiet-passes.json` names every pass that is allowed to be quiet at a level, with the issue that explains it and one line saying why. It is checked the same way as `known-failures.json`, in both directions. A run fails when a pass fired on nothing and the file does not name it, when a pass the file names fired, and when a pass the file names no longer runs at that level. Each message says which line to add or take out.
+
+As of the run that created it the file has 35 lines, all of them rucc at `-O1` and above. Six of the passes are the safety check passes, which have nothing to do while the corpus builds with `-fsafety=off`. The rest are a shape no facet generates yet, a pipeline where the pass cannot see the form it reads, or a pass that does not say what it did, and each line names the issue that will take it out.
+
+Only a whole run is checked, since a run narrowed with `--facet` or `--limit` leaves out the very programs a pass might have fired on. A run that leaves out a tag is still checked, which is what keeps the check on in CI, whose runs leave out the programs that only an aarch64 machine can run. Regenerate the file the same way, by adding `--accept` to a run, which keeps the issue and the reason on every line that still holds.
+
 ## A case that has not changed is not built again
 
 A result whose every input hashes to what it hashed last time is read out of a cache instead of being built. The key covers the source, the expected answer, the dialect, the level, the compiler as bytes and as a version string, the extra flags, the repeat count, the operating system, the architecture and the version of the harness. Change any one of them and the entry misses.
