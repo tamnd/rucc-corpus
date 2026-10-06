@@ -1,10 +1,10 @@
 # The corpus
 
-3626 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3628 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `8e2e474ec8da0fa112d9e5be13eff922e5ff3aa4604b9f538b40a786e7f1044a`.
+Corpus digest `d11e3ac475f4648e08e99473d7af28d466c46d1088330a758051058e8a8210ca`.
 
 ## floor (118 programs)
 
@@ -19,7 +19,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (411 programs)
+## local (413 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -29,7 +29,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`strength`](local/strength/README.md) | 24 | rewriting an operation into a cheaper one with the same value |
 | [`narrowing`](local/narrowing/README.md) | 52 | taking the width back off arithmetic that C promoted |
 | [`simplify`](local/simplify/README.md) | 114 | algebraic identities and the local peephole rules |
-| [`short-circuit`](local/short-circuit/README.md) | 24 | collapsing the two branches of a logical operator into one |
+| [`short-circuit`](local/short-circuit/README.md) | 26 | collapsing the two branches of a logical operator into one |
 | [`conditional-store`](local/conditional-store/README.md) | 20 | moving a store below a branch whose arms wrote the same place |
 | [`value-settled`](local/value-settled/README.md) | 13 | a condition that settles the value its two arms disagree about |
 | [`reassociate`](local/reassociate/README.md) | 20 | reassociating a chain to shorten its dependency height |

@@ -52,13 +52,6 @@
     },
     {
       "toolchain": "rucc",
-      "level": "O1",
-      "pass": "rangetest",
-      "issue": "tamnd/rucc#3017",
-      "why": "Only short-circuit makes the or of comparisons this reads, and it runs at -O2 and -O3 alone, so at this level every range test is still a chain of branches."
-    },
-    {
-      "toolchain": "rucc",
       "level": "O2",
       "pass": "coalesce",
       "issue": "tamnd/rucc-corpus#133",
@@ -217,13 +210,6 @@
       "pass": "plane-sink",
       "issue": "tamnd/rucc-corpus#133",
       "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
-    },
-    {
-      "toolchain": "rucc",
-      "level": "Os",
-      "pass": "rangetest",
-      "issue": "tamnd/rucc#3017",
-      "why": "Only short-circuit makes the or of comparisons this reads, and it runs at -O2 and -O3 alone, so at this level every range test is still a chain of branches."
     }
   ]
 }

@@ -1096,6 +1096,9 @@ struct Shape {
     holds: fn(i128) -> bool,
     /// When the right half is a call, the left half, so the call count can be checked too.
     left: Option<fn(i128) -> bool>,
+    /// Statements the branch runs besides counting the hit. A write the program can see keeps the
+    /// branch a branch, where a count alone would be folded into the sum.
+    arm: &'static [&'static str],
 }
 
 /// The conditions, one per thing the collapse has to decide.
@@ -1114,6 +1117,7 @@ const SHAPES: &[Shape] = &[
         condition: "v > 100 && v < 200",
         holds: |v| v > 100 && v < 200,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "cheap-or",
@@ -1124,6 +1128,7 @@ const SHAPES: &[Shape] = &[
         condition: "v < 50 || v > 200",
         holds: |v| v < 50 || v > 200,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "chain-of-three",
@@ -1134,6 +1139,7 @@ const SHAPES: &[Shape] = &[
         condition: "v > 30 && v < 220 && (v & 1) == 0",
         holds: |v| v > 30 && v < 220 && (v & 1) == 0,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "and-before-or",
@@ -1144,6 +1150,7 @@ const SHAPES: &[Shape] = &[
         condition: "v > 200 && (v & 1) == 0 || v < 20",
         holds: |v| v > 200 && (v & 1) == 0 || v < 20,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "or-before-and",
@@ -1154,6 +1161,7 @@ const SHAPES: &[Shape] = &[
         condition: "v < 20 || v > 200 && (v & 1) == 0",
         holds: |v| v < 20 || v > 200 && (v & 1) == 0,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "guarded-load",
@@ -1168,6 +1176,7 @@ const SHAPES: &[Shape] = &[
         condition: "p && p->x",
         holds: |v| (v & 3) != 0 && (v & 4) != 0,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "guarded-division",
@@ -1178,6 +1187,7 @@ const SHAPES: &[Shape] = &[
         condition: "d && n / d > 1",
         holds: |v| (v & 7) != 0 && (v + 100) / (v & 7) > 1,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "guarded-index",
@@ -1193,6 +1203,7 @@ const SHAPES: &[Shape] = &[
         condition: "k < 16 && small[k]",
         holds: |v| (v & 31) < 16 && ((v & 31) & 1) != 0,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "costly-right",
@@ -1203,6 +1214,7 @@ const SHAPES: &[Shape] = &[
         condition: "(v & 1) == 0 && (v * 37 + 11) * (v + 3) % 97 > 40",
         holds: |v| (v & 1) == 0 && ((v * 37 + 11) * (v + 3)) % 97 > 40,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "calling-right",
@@ -1219,6 +1231,7 @@ const SHAPES: &[Shape] = &[
         condition: "(v & 1) == 0 && bump(v)",
         holds: |v| (v & 1) == 0 && (v & 8) != 0,
         left: Some(|v| (v & 1) == 0),
+        arm: &[],
     },
     Shape {
         name: "predictable-left",
@@ -1229,6 +1242,7 @@ const SHAPES: &[Shape] = &[
         condition: "v < 250 && (v & 1) == 0",
         holds: |v| v < 250 && (v & 1) == 0,
         left: None,
+        arm: &[],
     },
     Shape {
         name: "hinted-left",
@@ -1239,6 +1253,30 @@ const SHAPES: &[Shape] = &[
         condition: "__builtin_expect_with_probability(v < 250, 1, 0.99) && (v & 1) == 0",
         holds: |v| v < 250 && (v & 1) == 0,
         left: None,
+        arm: &[],
+    },
+    Shape {
+        name: "spread-set",
+        purpose: "one value tested against a set too spread out for one word, so a switch is the better test",
+        top: &["static volatile int last;"],
+        prepare: &[],
+        setup: &[],
+        condition: "v == 3 || v == 4 || v == 5 || v == 40 || v == 41 || v == 130 || v == 131 || v == 160 || v == 161 || v == 162 || v == 250",
+        holds: |v| {
+            v == 3
+                || v == 4
+                || v == 5
+                || v == 40
+                || v == 41
+                || v == 130
+                || v == 131
+                || v == 160
+                || v == 161
+                || v == 162
+                || v == 250
+        },
+        left: None,
+        arm: &["last = v;"],
     },
 ];
 
@@ -1254,7 +1292,9 @@ const SHAPES: &[Shape] = &[
 /// predictable that keeping the branch is the cheaper answer. That last one is also written with
 /// its odds given by `__builtin_expect_with_probability`, because a compiler cannot see from the
 /// code that the left half is nearly always true, and a hint is the only way the odds can be what
-/// decides.
+/// decides. The last shape is eleven tests of one value spread over more than a word, which is
+/// PostgreSQL's `IsSharedRelation` in small: no single bit test holds the set, and gcc and clang
+/// both make a `switch` of it.
 ///
 /// Each shape is written twice, once as `if (a && b)` and once as `x = a && b;`, because the
 /// two lower to the same triangle and a compiler that collapses one and not the other has a
@@ -1303,6 +1343,9 @@ fn short_circuit(sink: &mut Sink<'_>) {
             if form == "branch" {
                 program.line_at(1, format!("if ({}) {{", shape.condition));
                 program.line_at(2, "hits++;");
+                for line in shape.arm {
+                    program.line_at(2, *line);
+                }
                 program.line_at(1, "}");
             } else {
                 program.line_at(1, format!("int got = {};", shape.condition));

@@ -2,7 +2,7 @@
 
 collapsing the two branches of a logical operator into one. Part of the local phase of the M4 plan.
 
-24 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+26 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -30,4 +30,6 @@ collapsing the two branches of a logical operator into one. Part of the local ph
 | [`short-circuit.or-before-and.value.c17.830d488d`](short-circuit.or-before-and.value.c17.830d488d.c) | shape=or-before-and, form=value | c17 | `47` |
 | [`short-circuit.predictable-left.branch.c17.ba97160c`](short-circuit.predictable-left.branch.c17.ba97160c.c) | shape=predictable-left, form=branch | c17 | `125` |
 | [`short-circuit.predictable-left.value.c17.858d5c9e`](short-circuit.predictable-left.value.c17.858d5c9e.c) | shape=predictable-left, form=value | c17 | `125` |
+| [`short-circuit.spread-set.branch.c17.ee979ef1`](short-circuit.spread-set.branch.c17.ee979ef1.c) | shape=spread-set, form=branch | c17 | `11` |
+| [`short-circuit.spread-set.value.c17.c481af82`](short-circuit.spread-set.value.c17.c481af82.c) | shape=spread-set, form=value | c17 | `11` |
 
