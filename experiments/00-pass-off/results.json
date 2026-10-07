@@ -1,0 +1,1852 @@
+{
+  "schema": "rucc-corpus/experiment-pass-off/v1",
+  "experiment": "pass-off",
+  "spec": [
+    "spec/optimizer/42-measurement.md#424-the-default-experiment-the-pass-off"
+  ],
+  "issue": "tamnd/rucc#2968",
+  "reference": "gcc-16 16.0.1 20260315",
+  "machine": "server2, x86-64 Linux, shared, 4 jobs",
+  "corpus": {
+    "commit": "60c8fd1",
+    "digest": "d11e3ac475f4648e08e99473d7af28d466c46d1088330a758051058e8a8210ca",
+    "cases": 3500
+  },
+  "rucc": "tamnd/rucc 0.27.0, main at a52b6c74",
+  "level": "O2",
+  "rule": {
+    "flat_percent": 0.1,
+    "pays": "off costs instructions retired or text by more than 0.1% of what the changed cases had and saves on neither",
+    "trades": "off saves on one of instructions and text and costs on the other",
+    "costs": "off saves on one of the two and costs on neither",
+    "flat": "off changes the assembly and moves neither past 0.1%",
+    "idle": "off changes the assembly of no case"
+  },
+  "instructions_note": "instructions is [rucc as it is, rucc with the pass off, gcc-16], summed over the counted cases",
+  "text_note": "text is [as it is, pass off] in bytes",
+  "compile_micros_note": "wall time [as it is, pass off] on a shared machine",
+  "facets_note": "instructions with the pass off less as it is, by facet, so a negative number is a facet the pass makes slower",
+  "totals": {
+    "flat": 2,
+    "pays": 24,
+    "trades": 7,
+    "idle": 7,
+    "costs": 3
+  },
+  "required": {
+    "passes": [
+      "expect",
+      "constant-p"
+    ],
+    "issue": "tamnd/rucc#3189",
+    "note": "both cannot be turned off with -fno-, and -fdisable- turned them off, so their call and broken cases are about the flag and not the pass"
+  },
+  "passes": [
+    {
+      "pass": "expect",
+      "call": "flat",
+      "changed": 28,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": [],
+      "issue": "tamnd/rucc#3189"
+    },
+    {
+      "pass": "fold",
+      "call": "pays",
+      "changed": 1132,
+      "counted": 1132,
+      "instructions": [
+        163813104,
+        165620460,
+        157602062
+      ],
+      "text": [
+        1406342,
+        1645595
+      ],
+      "compile_micros": [
+        255023125,
+        257340910
+      ],
+      "facets": {
+        "address-fold": 209,
+        "alias-analysis": 209,
+        "barrier": 3,
+        "baseline": 212,
+        "bit-builtins": 5655,
+        "bundle": 757,
+        "compare-fold": 2328,
+        "conditional-store": 97,
+        "constant-fold": 4415,
+        "constant-propagation": 4,
+        "control-flow": 15,
+        "crc32c": 199774,
+        "dllimport": 279,
+        "float-conversion": 1136,
+        "frame-size": 40670,
+        "frontend": 23,
+        "general-regs-only": 4351,
+        "induction-variable": 1343,
+        "interpreter-dispatch": 5514,
+        "iv-selection": 1235,
+        "link-time-optimization": 12,
+        "load-fold": 683,
+        "load-forwarding": 121,
+        "long-double": 79,
+        "loop-deletion": 1184,
+        "loop-hoist": 1312,
+        "loop-idiom": 3338,
+        "loop-invariant": 433,
+        "loop-restructure": 25376,
+        "loop-rotate": 982,
+        "loop-shape": 74,
+        "loop-unroll": 543,
+        "loop-unroll-shape": 904,
+        "loop-unswitch": 547,
+        "memory-ssa": 75,
+        "objtool-shapes": 4800,
+        "prune": 3,
+        "scheduling": 254,
+        "section-attr": 1320,
+        "short-circuit": 368,
+        "sigsetjmp": 225,
+        "simd-lfind": 1282296,
+        "simplify": 30,
+        "stack-slots": 830,
+        "store-fold": 941,
+        "store-fold-constant": 2238,
+        "strength": 9,
+        "target-attribute": 210145,
+        "vla-and-alloca": 5
+      },
+      "broke": []
+    },
+    {
+      "pass": "image",
+      "call": "pays",
+      "changed": 67,
+      "counted": 67,
+      "instructions": [
+        11056541,
+        11057260,
+        10303855
+      ],
+      "text": [
+        221225,
+        222275
+      ],
+      "compile_micros": [
+        26454173,
+        21379661
+      ],
+      "facets": {
+        "bundle": 344,
+        "constant-args": 55,
+        "devirtualize": 26,
+        "frontend": 3,
+        "function-purity": 2,
+        "interpreter-dispatch": 205,
+        "section-attr": -25,
+        "unused-params": 54,
+        "unused-returns": 55
+      },
+      "broke": []
+    },
+    {
+      "pass": "sroa",
+      "call": "pays",
+      "changed": 487,
+      "counted": 487,
+      "instructions": [
+        84207137,
+        84977803,
+        73241557
+      ],
+      "text": [
+        1109809,
+        1137230
+      ],
+      "compile_micros": [
+        149173752,
+        153022975
+      ],
+      "facets": {
+        "address-fold": 1,
+        "alias-analysis": 56,
+        "atomics": 63,
+        "baseline": -32,
+        "bit-liveness": 3,
+        "bundle": 712,
+        "calling-convention": 56,
+        "code-motion": 0,
+        "common-subexpr": 1,
+        "constant-propagation": -2,
+        "crc32c": 92628,
+        "dead-store": 2,
+        "dllimport": 20,
+        "frame-address": -3,
+        "frontend": 42,
+        "general-regs-only": 320,
+        "induction-variable": 14,
+        "load-forwarding": 2,
+        "loop-idiom": 43,
+        "loop-unroll-shape": -1,
+        "machine-peephole": 0,
+        "memory-ssa": -4,
+        "narrowing": 25,
+        "overflow-builtins": 219,
+        "scalar-replacement": 2,
+        "simd-lfind": 604429,
+        "stack-slots": 4,
+        "target-attribute": 72058,
+        "unused-params": 8
+      },
+      "broke": []
+    },
+    {
+      "pass": "simplify",
+      "call": "pays",
+      "changed": 1834,
+      "counted": 1833,
+      "instructions": [
+        12422909035,
+        13397840912,
+        11179528251
+      ],
+      "text": [
+        2750749,
+        2786121
+      ],
+      "compile_micros": [
+        413064718,
+        347791618
+      ],
+      "facets": {
+        "asm-goto": 14,
+        "barrier": 6,
+        "baseline": 4,
+        "bit-liveness": 10,
+        "bit-loops": 0,
+        "block-layout": 37,
+        "branch-probability": 1,
+        "builtin-setjmp": 45,
+        "bundle": 796,
+        "call-motion": -4003,
+        "called-once": 29359907,
+        "calling-convention": 5,
+        "common-subexpr": -2,
+        "compare-elim": -1,
+        "compare-fold": 170,
+        "computed-goto": 1019,
+        "conditional-store": -1018,
+        "const-ice": 320,
+        "constant-args": 3,
+        "constant-p-after-inline": 64,
+        "control-flow": 103,
+        "crc32c": 18028,
+        "declared-purity": 9,
+        "devirtualize": 2,
+        "division": 8388612,
+        "dllimport": 220,
+        "frame-size": -11969,
+        "frontend": 0,
+        "function-purity": 39,
+        "general-regs-only": 1120,
+        "if-conversion": 900008395,
+        "induction-variable": -398,
+        "inline": -77,
+        "interpreter-dispatch": 313,
+        "iv-selection": 338,
+        "jump-threading": 698,
+        "link-time-optimization": 54,
+        "lkmm": 27162952,
+        "load-fold": 29,
+        "load-forwarding": 9,
+        "long-double": 17,
+        "loop-deletion": 9,
+        "loop-hoist": 54,
+        "loop-idiom": 225,
+        "loop-restructure": -223,
+        "loop-shape": 173,
+        "loop-unroll": 12,
+        "loop-unroll-shape": 1,
+        "loop-unswitch": 39,
+        "machine-peephole": 6,
+        "mcmodel-kernel": 65,
+        "memory-ssa": -5,
+        "narrowing": 68,
+        "null-pointer-constant": 512,
+        "objtool-shapes": 1151,
+        "overflow-builtins": 3497,
+        "prune": -1993,
+        "register-alloc": -40,
+        "register-pressure": 8,
+        "scheduling": 50,
+        "section-attr": 127,
+        "setjmp-longjmp": 0,
+        "short-circuit": 2051,
+        "sigsetjmp": 119,
+        "simd-lfind": 465433,
+        "simplify": 607233,
+        "stack-slots": 0,
+        "store-fold": 53,
+        "store-fold-constant": 147,
+        "strength": 319,
+        "switch-dispatch": 12311,
+        "switch-lowering": 10,
+        "switch-runs": 14,
+        "tail-dispatch": 8890361,
+        "target-attribute": 25212,
+        "unused-params": -16,
+        "unused-returns": 16,
+        "value-range": 8,
+        "value-settled": -1023,
+        "vla-and-alloca": 22
+      },
+      "broke": []
+    },
+    {
+      "pass": "sccp",
+      "call": "pays",
+      "changed": 39,
+      "counted": 39,
+      "instructions": [
+        298868754,
+        309358185,
+        180296508
+      ],
+      "text": [
+        80499,
+        81222
+      ],
+      "compile_micros": [
+        7073830,
+        5042952
+      ],
+      "facets": {
+        "bit-builtins": 213,
+        "bit-liveness": -7,
+        "division": 18874368,
+        "dllimport": 0,
+        "narrow-shift": -8388610,
+        "objtool-shapes": 193,
+        "prune": 2563,
+        "target-attribute": 685,
+        "value-range": 26
+      },
+      "broke": []
+    },
+    {
+      "pass": "narrow",
+      "call": "pays",
+      "changed": 242,
+      "counted": 242,
+      "instructions": [
+        110036535,
+        115861570,
+        95886630
+      ],
+      "text": [
+        241577,
+        241884
+      ],
+      "compile_micros": [
+        48489829,
+        30000514
+      ],
+      "facets": {
+        "barrier": 4,
+        "baseline": 6,
+        "bit-liveness": 41,
+        "bundle": 667,
+        "compare-fold": -285,
+        "const-ice": 574,
+        "dllimport": 27,
+        "frame-size": 0,
+        "lkmm": 1382214,
+        "loop-unroll-shape": 4004,
+        "mcmodel-kernel": 128,
+        "narrow-shift": 4194304,
+        "narrowing": 11,
+        "null-pointer-constant": 192,
+        "section-attr": 62,
+        "simd-lfind": 243114,
+        "simplify": 410,
+        "store-fold-constant": -186,
+        "value-settled": -252
+      },
+      "broke": []
+    },
+    {
+      "pass": "switch-conv",
+      "call": "pays",
+      "changed": 37,
+      "counted": 37,
+      "instructions": [
+        5116232750,
+        6379382148,
+        4661387801
+      ],
+      "text": [
+        17767,
+        25237
+      ],
+      "compile_micros": [
+        3465715,
+        4507742
+      ],
+      "facets": {
+        "switch-dispatch": 863680828,
+        "switch-lowering": 399466137,
+        "switch-runs": 2433
+      },
+      "broke": []
+    },
+    {
+      "pass": "short-circuit",
+      "call": "pays",
+      "changed": 33,
+      "counted": 33,
+      "instructions": [
+        18756228,
+        34130551,
+        31509048
+      ],
+      "text": [
+        21182,
+        21640
+      ],
+      "compile_micros": [
+        4647344,
+        4080919
+      ],
+      "facets": {
+        "baseline": 2,
+        "lkmm": 15375039,
+        "short-circuit": -703,
+        "simplify": 16,
+        "value-range": -31
+      },
+      "broke": []
+    },
+    {
+      "pass": "thread",
+      "call": "pays",
+      "changed": 7,
+      "counted": 7,
+      "instructions": [
+        833421,
+        837998,
+        824625
+      ],
+      "text": [
+        3544,
+        3572
+      ],
+      "compile_micros": [
+        1220495,
+        673567
+      ],
+      "facets": {
+        "short-circuit": 4577
+      },
+      "broke": []
+    },
+    {
+      "pass": "phiopt",
+      "call": "trades",
+      "changed": 634,
+      "counted": 633,
+      "instructions": [
+        7111348192,
+        7059847519,
+        6696367469
+      ],
+      "text": [
+        880136,
+        904191
+      ],
+      "compile_micros": [
+        142907940,
+        68262305
+      ],
+      "facets": {
+        "atomics": -21,
+        "barrier": -2,
+        "baseline": -16,
+        "bit-liveness": -17,
+        "block-layout": 14993,
+        "branch-probability": 5,
+        "bundle": 21,
+        "code-motion": 3,
+        "common-subexpr": 12,
+        "compare-elim": -30,
+        "compare-fold": -95,
+        "conditional-store": -1408,
+        "constant-propagation": 0,
+        "control-flow": -18,
+        "crc32c": -362972,
+        "frontend": -3,
+        "general-regs-only": 7,
+        "if-conversion": -77265337,
+        "lkmm": 721388,
+        "load-fold": 2,
+        "load-forwarding": -1,
+        "long-double": -3,
+        "loop-idiom": -667440,
+        "loop-shape": -5,
+        "loop-unswitch": 262,
+        "memory-ssa": -2,
+        "null-pointer-constant": -321,
+        "prune": -19161,
+        "register-pressure": 280,
+        "selection": 9,
+        "short-circuit": -550,
+        "simd-lfind": -99747,
+        "simplify": -489160,
+        "target-attribute": -321131,
+        "unused-returns": -12,
+        "value-range": -20,
+        "value-replacement": 26980395,
+        "value-settled": 9422
+      },
+      "broke": []
+    },
+    {
+      "pass": "rangeswitch",
+      "call": "pays",
+      "changed": 1,
+      "counted": 1,
+      "instructions": [
+        120757,
+        122111,
+        119989
+      ],
+      "text": [
+        512,
+        516
+      ],
+      "compile_micros": [
+        133075,
+        102815
+      ],
+      "facets": {
+        "short-circuit": 1354
+      },
+      "broke": []
+    },
+    {
+      "pass": "rangetest",
+      "call": "pays",
+      "changed": 15,
+      "counted": 15,
+      "instructions": [
+        16523401,
+        16769925,
+        29296298
+      ],
+      "text": [
+        7081,
+        7271
+      ],
+      "compile_micros": [
+        2026388,
+        1476249
+      ],
+      "facets": {
+        "lkmm": 239853,
+        "short-circuit": 6656,
+        "value-range": 15
+      },
+      "broke": []
+    },
+    {
+      "pass": "thread-copy",
+      "call": "pays",
+      "changed": 68,
+      "counted": 68,
+      "instructions": [
+        12867055,
+        12870307,
+        11908623
+      ],
+      "text": [
+        152234,
+        154386
+      ],
+      "compile_micros": [
+        35616941,
+        12492443
+      ],
+      "facets": {
+        "branch-probability": 29,
+        "crc32c": 222,
+        "jump-threading": 3226,
+        "short-circuit": -579,
+        "target-attribute": 354
+      },
+      "broke": []
+    },
+    {
+      "pass": "prune",
+      "call": "pays",
+      "changed": 8,
+      "counted": 8,
+      "instructions": [
+        246794907,
+        308239588,
+        263421403
+      ],
+      "text": [
+        3767,
+        4027
+      ],
+      "compile_micros": [
+        830235,
+        591332
+      ],
+      "facets": {
+        "induction-variable": 4,
+        "objtool-shapes": 193,
+        "prune": 4486,
+        "switch-dispatch": 61439998
+      },
+      "broke": []
+    },
+    {
+      "pass": "canon",
+      "call": "trades",
+      "changed": 1504,
+      "counted": 1501,
+      "instructions": [
+        21409102166,
+        22423889698,
+        19027995450
+      ],
+      "text": [
+        1625600,
+        1583334
+      ],
+      "compile_micros": [
+        281443526,
+        144935385
+      ],
+      "facets": {
+        "address-fold": 227,
+        "asm-goto": 1171,
+        "asm-local-labels": 22,
+        "baseline": 66,
+        "bit-liveness": -21,
+        "bit-loops": 7387795,
+        "block-layout": 13027,
+        "branch-probability": 31,
+        "bundle": 1117,
+        "call-motion": 96076,
+        "called-once": 40369992,
+        "calling-convention": 10,
+        "computed-goto": -164,
+        "conditional-store": 2768,
+        "const-ice": 27,
+        "constant-p-after-inline": 20,
+        "control-flow": 2248,
+        "crc32c": 633133,
+        "division": 147127552,
+        "dllimport": 620,
+        "frame-size": 1923690,
+        "function-purity": 83,
+        "gas-macros": 26,
+        "general-regs-only": 8915,
+        "if-conversion": 360019905,
+        "induction-variable": 2695,
+        "interpreter-dispatch": -183661,
+        "iv-selection": 121,
+        "jump-threading": 1601,
+        "link-time-optimization": 87,
+        "lkmm": 433149,
+        "long-double": 31,
+        "loop-deletion": 12004219,
+        "loop-hoist": 4088,
+        "loop-idiom": 603160,
+        "loop-invariant": 1067,
+        "loop-restructure": 24720,
+        "loop-rotate": 2406,
+        "loop-shape": 484,
+        "loop-unroll": 2245,
+        "loop-unroll-shape": 2734,
+        "loop-unswitch": 2883,
+        "mcmodel-kernel": 25,
+        "memory-effects": 60033,
+        "memory-ssa": 2,
+        "mitigations": -243,
+        "narrow-shift": 4216862,
+        "null-pointer-constant": 12,
+        "objtool-shapes": 4435,
+        "prune": 6576,
+        "register-alloc": 1068,
+        "register-pressure": 296,
+        "scheduling": 693,
+        "section-attr": 2686,
+        "short-circuit": 8244,
+        "simd-lfind": 2358245,
+        "simplify": 597351,
+        "stack-slots": 792,
+        "switch-dispatch": 182886036,
+        "switch-lowering": 240000459,
+        "switch-runs": 895,
+        "tail-dispatch": 5125,
+        "target-attribute": 426757,
+        "value-range": 3,
+        "value-replacement": 13717547,
+        "value-settled": 3352,
+        "vla-and-alloca": -84
+      },
+      "broke": []
+    },
+    {
+      "pass": "header-copy",
+      "call": "trades",
+      "changed": 1209,
+      "counted": 1206,
+      "instructions": [
+        21380037958,
+        22383236933,
+        18995486995
+      ],
+      "text": [
+        1574199,
+        1548354
+      ],
+      "compile_micros": [
+        237005005,
+        106852155
+      ],
+      "facets": {
+        "asm-goto": 1169,
+        "asm-local-labels": 21,
+        "barrier": 102,
+        "baseline": 18,
+        "bit-liveness": -23,
+        "bit-loops": 7387792,
+        "block-layout": 13024,
+        "branch-probability": 30,
+        "bundle": 290,
+        "call-motion": 96064,
+        "called-once": 40390621,
+        "calling-convention": 10,
+        "computed-goto": -165,
+        "conditional-store": 13163,
+        "const-ice": 28,
+        "constant-p-after-inline": 20,
+        "control-flow": 55,
+        "crc32c": 405076,
+        "division": 147274853,
+        "dllimport": 58,
+        "frame-size": 3846618,
+        "frontend": 45,
+        "function-purity": -120,
+        "gas-macros": 27,
+        "general-regs-only": 13142,
+        "if-conversion": 360019838,
+        "induction-variable": 1211,
+        "interpreter-dispatch": 1528,
+        "iv-selection": 969,
+        "jump-threading": 4859,
+        "link-time-optimization": 31,
+        "lkmm": -1238217,
+        "long-double": 8,
+        "loop-deletion": -61,
+        "loop-hoist": 44,
+        "loop-idiom": 4636816,
+        "loop-invariant": 409,
+        "loop-restructure": 22189,
+        "loop-rotate": 1098,
+        "loop-shape": 359,
+        "loop-unroll": 1422,
+        "loop-unroll-shape": 484,
+        "loop-unswitch": 1475,
+        "mcmodel-kernel": 22,
+        "memory-effects": 60031,
+        "mitigations": -246,
+        "narrow-shift": 57387,
+        "null-pointer-constant": 11,
+        "objtool-shapes": 9810,
+        "prune": 10445,
+        "register-alloc": 25,
+        "scheduling": 1175,
+        "section-attr": -809,
+        "short-circuit": 15664,
+        "sigsetjmp": 6510,
+        "simd-lfind": 2450557,
+        "simplify": 606643,
+        "stack-slots": 8,
+        "switch-dispatch": 182973179,
+        "switch-lowering": 240000380,
+        "switch-runs": 891,
+        "tail-dispatch": 15365,
+        "target-attribute": 367999,
+        "value-range": 6,
+        "value-replacement": 13720907,
+        "value-settled": 6709,
+        "vla-and-alloca": -74
+      },
+      "broke": []
+    },
+    {
+      "pass": "licm",
+      "call": "trades",
+      "changed": 240,
+      "counted": 240,
+      "instructions": [
+        790853384,
+        793035188,
+        701862797
+      ],
+      "text": [
+        743973,
+        740362
+      ],
+      "compile_micros": [
+        89317104,
+        36115521
+      ],
+      "facets": {
+        "baseline": 15,
+        "bit-loops": -2,
+        "block-layout": 25932,
+        "builtin-setjmp": 13,
+        "bundle": 16,
+        "call-motion": 60001,
+        "crc32c": -3998,
+        "dllimport": 29,
+        "induction-variable": 6,
+        "interpreter-dispatch": 1048,
+        "loop-hoist": 89,
+        "loop-restructure": 6832,
+        "loop-unswitch": -14,
+        "memory-effects": 35984,
+        "sigsetjmp": 1890,
+        "simd-lfind": -3362,
+        "stack-slots": 4,
+        "switch-dispatch": 2057508,
+        "tail-dispatch": -17,
+        "vla-and-alloca": -170
+      },
+      "broke": []
+    },
+    {
+      "pass": "unroll",
+      "call": "trades",
+      "changed": 1133,
+      "counted": 1133,
+      "instructions": [
+        162056903,
+        165853305,
+        155839325
+      ],
+      "text": [
+        1344449,
+        1266391
+      ],
+      "compile_micros": [
+        253382762,
+        112884554
+      ],
+      "facets": {
+        "address-fold": 290,
+        "alias-analysis": 6297,
+        "baseline": 476,
+        "bundle": 1163,
+        "compare-fold": 3369,
+        "conditional-store": 131,
+        "control-flow": 2061,
+        "crc32c": 1196029,
+        "dllimport": 411,
+        "frame-size": 64656,
+        "frontend": 17,
+        "function-purity": 144,
+        "general-regs-only": 6784,
+        "induction-variable": 1928,
+        "interpreter-dispatch": 16739,
+        "iv-selection": 4135,
+        "link-time-optimization": 57,
+        "load-fold": 969,
+        "load-forwarding": 4365,
+        "long-double": 18,
+        "loop-deletion": 2213,
+        "loop-hoist": 3593,
+        "loop-idiom": 26570,
+        "loop-invariant": 951,
+        "loop-restructure": 30137,
+        "loop-rotate": 1917,
+        "loop-shape": 129,
+        "loop-unroll": 1090,
+        "loop-unroll-shape": 2159,
+        "loop-unswitch": 1566,
+        "memory-ssa": 115,
+        "objtool-shapes": 7552,
+        "register-alloc": 989,
+        "register-pressure": 298,
+        "scheduling": 439,
+        "section-attr": 3688,
+        "short-circuit": 159,
+        "sigsetjmp": 302,
+        "simd-lfind": 1777038,
+        "stack-slots": 1010,
+        "store-fold": 1344,
+        "store-fold-constant": 3164,
+        "target-attribute": 619927,
+        "vla-and-alloca": 13
+      },
+      "broke": []
+    },
+    {
+      "pass": "simplify-cfg",
+      "call": "pays",
+      "changed": 2563,
+      "counted": 2560,
+      "instructions": [
+        21540082498,
+        22252141953,
+        19154422992
+      ],
+      "text": [
+        2382356,
+        2623576
+      ],
+      "compile_micros": [
+        456093856,
+        234122182
+      ],
+      "facets": {
+        "address-fold": 253,
+        "alias-analysis": 236,
+        "asm-goto": 5370,
+        "asm-local-labels": 321,
+        "atomics": 10,
+        "barrier": 2,
+        "baseline": 309,
+        "bit-liveness": 0,
+        "bit-loops": 60825412,
+        "block-layout": 8997,
+        "branch-probability": 292,
+        "builtin-setjmp": 296,
+        "bundle": 1709,
+        "call-motion": 111931,
+        "called-once": 82837381,
+        "calling-convention": 49,
+        "code-motion": 1,
+        "common-subexpr": 16,
+        "compare-elim": 1,
+        "compare-fold": 2263,
+        "computed-goto": -166,
+        "conditional-store": 14238,
+        "const-ice": 447,
+        "constant-args": 143,
+        "constant-p-after-inline": 323,
+        "constant-propagation": 0,
+        "control-flow": 1079,
+        "crc32c": 1415934,
+        "devirtualize": 2,
+        "division": -3973218,
+        "dllimport": 590,
+        "frame-size": 2425285,
+        "frontend": 14,
+        "function-purity": 266,
+        "gas-macros": 385,
+        "general-regs-only": 39461,
+        "if-conversion": 20122,
+        "induction-variable": 3442,
+        "inline": 920,
+        "interpreter-dispatch": -52257,
+        "iv-selection": 1021,
+        "jump-threading": 1179,
+        "link-time-optimization": 93,
+        "lkmm": -2728183,
+        "load-fold": 648,
+        "load-forwarding": 160,
+        "long-double": 168,
+        "loop-deletion": 1916,
+        "loop-hoist": 3328,
+        "loop-idiom": 1005725,
+        "loop-invariant": 1144,
+        "loop-restructure": 14800,
+        "loop-rotate": 1228,
+        "loop-shape": 803,
+        "loop-unroll": 2764,
+        "loop-unroll-shape": 1864,
+        "loop-unswitch": 971,
+        "mcmodel-kernel": 608,
+        "memory-effects": 37984,
+        "memory-ssa": 86,
+        "mitigations": 1901,
+        "narrow-shift": 4253702,
+        "null-pointer-constant": 577,
+        "objtool-shapes": 5757,
+        "prune": 8174,
+        "register-alloc": 879,
+        "register-pressure": 951,
+        "scheduling": 793,
+        "section-attr": 1577,
+        "selection": 2,
+        "setjmp-longjmp": -68,
+        "short-circuit": 12292,
+        "sigsetjmp": 14356,
+        "simd-lfind": 2018817,
+        "simplify": 191733,
+        "stack-slots": 893,
+        "store-fold": 935,
+        "store-fold-constant": 2226,
+        "switch-dispatch": 81919811,
+        "switch-lowering": 480000473,
+        "switch-runs": 829,
+        "tail-call": 12020,
+        "tail-dispatch": 10230,
+        "target-attribute": 424967,
+        "unreachable-code": 0,
+        "unused-params": 42,
+        "unused-returns": -9,
+        "value-range": 26,
+        "value-replacement": 1126395,
+        "value-settled": 8950,
+        "vla-and-alloca": 58
+      },
+      "broke": []
+    },
+    {
+      "pass": "lanes",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "number",
+      "call": "pays",
+      "changed": 1608,
+      "counted": 1608,
+      "instructions": [
+        863299206,
+        892728368,
+        613467439
+      ],
+      "text": [
+        2341122,
+        2423239
+      ],
+      "compile_micros": [
+        331562629,
+        156088825
+      ],
+      "facets": {
+        "address-fold": 48,
+        "alias-analysis": 22,
+        "asm-goto": 0,
+        "atomics": -198,
+        "barrier": -100,
+        "baseline": -19,
+        "bit-builtins": -56,
+        "block-layout": 0,
+        "branch-probability": 0,
+        "builtin-setjmp": 1181,
+        "bundle": 897,
+        "call-motion": 111988,
+        "code-motion": 15,
+        "common-subexpr": 54,
+        "compare-elim": -5,
+        "compare-fold": -27,
+        "conditional-store": -2944,
+        "const-ice": 805,
+        "constant-args": 93,
+        "constant-fold": -2198,
+        "control-flow": 95,
+        "crc32c": 554463,
+        "declared-purity": 78,
+        "division": 2097162,
+        "dllimport": 304,
+        "float-conversion": -65,
+        "frame-size": 3234,
+        "frontend": -7,
+        "function-purity": -10,
+        "general-regs-only": -7935,
+        "if-conversion": 1,
+        "induction-variable": -6,
+        "inline": -27,
+        "interpreter-dispatch": 68875,
+        "iv-selection": -259,
+        "jump-threading": 2655,
+        "link-time-optimization": -6,
+        "lkmm": 5180642,
+        "load-fold": -3,
+        "load-forwarding": 12,
+        "long-double": 87,
+        "loop-hoist": 810,
+        "loop-idiom": -1401370,
+        "loop-invariant": 1,
+        "loop-restructure": 18436,
+        "loop-shape": 29,
+        "loop-unroll": 0,
+        "loop-unroll-shape": 2,
+        "loop-unswitch": 108,
+        "mcmodel-kernel": 7,
+        "memory-effects": -16027,
+        "narrow-shift": -8372226,
+        "narrowing": -47,
+        "null-pointer-constant": 575,
+        "overflow-builtins": 365,
+        "prune": 893,
+        "reassociate": 118,
+        "register-pressure": -40,
+        "scheduling": 511,
+        "section-attr": 446,
+        "setjmp-longjmp": -5,
+        "short-circuit": -1025,
+        "sigsetjmp": 3606,
+        "simd-lfind": 76769,
+        "simplify": 294966,
+        "stack-slots": -5,
+        "store-fold": 29,
+        "store-fold-constant": 89,
+        "strength": 331,
+        "switch-dispatch": 30719760,
+        "target-attribute": 107329,
+        "unused-params": 23,
+        "unused-returns": -37,
+        "value-range": -21,
+        "value-settled": -14077,
+        "vla-and-alloca": -7
+      },
+      "broke": []
+    },
+    {
+      "pass": "load-forward",
+      "call": "pays",
+      "changed": 158,
+      "counted": 158,
+      "instructions": [
+        28920777,
+        29027295,
+        26426733
+      ],
+      "text": [
+        422298,
+        425647
+      ],
+      "compile_micros": [
+        61796042,
+        21746445
+      ],
+      "facets": {
+        "address-fold": 36,
+        "alias-analysis": 11,
+        "barrier": 3,
+        "common-subexpr": 4,
+        "compare-fold": -1,
+        "crc32c": 98365,
+        "frame-size": 1,
+        "induction-variable": 0,
+        "jump-threading": -1336,
+        "load-forwarding": 6,
+        "loop-restructure": 9476,
+        "mcmodel-kernel": -187,
+        "scheduling": -1,
+        "section-attr": 126,
+        "store-fold": 7,
+        "store-fold-constant": 21,
+        "unused-returns": -12,
+        "vla-and-alloca": -1
+      },
+      "broke": []
+    },
+    {
+      "pass": "redundant-load",
+      "call": "costs",
+      "changed": 350,
+      "counted": 350,
+      "instructions": [
+        58745276,
+        58677552,
+        58046355
+      ],
+      "text": [
+        620505,
+        616973
+      ],
+      "compile_micros": [
+        91734319,
+        38539736
+      ],
+      "facets": {
+        "address-fold": 0,
+        "alias-analysis": 6,
+        "barrier": 0,
+        "baseline": 1,
+        "builtin-setjmp": -1179,
+        "bundle": -284,
+        "const-ice": -321,
+        "crc32c": 36,
+        "dllimport": 106,
+        "frame-size": -101882,
+        "inline": 15,
+        "load-fold": -5,
+        "load-forwarding": 6,
+        "loop-hoist": -3,
+        "loop-shape": 0,
+        "mcmodel-kernel": -64,
+        "memory-effects": 35964,
+        "null-pointer-constant": -107,
+        "reassociate": -8,
+        "register-alloc": -20,
+        "register-pressure": -10,
+        "section-attr": -1,
+        "stack-slots": 5,
+        "target-attribute": 27,
+        "unused-params": -2,
+        "unused-returns": -4
+      },
+      "broke": [],
+      "issue": "tamnd/rucc#3187"
+    },
+    {
+      "pass": "dse",
+      "call": "pays",
+      "changed": 263,
+      "counted": 263,
+      "instructions": [
+        32825782,
+        32828124,
+        32784704
+      ],
+      "text": [
+        463058,
+        474452
+      ],
+      "compile_micros": [
+        47721751,
+        26688280
+      ],
+      "facets": {
+        "address-fold": 55,
+        "alias-analysis": 17,
+        "barrier": 1,
+        "baseline": 3,
+        "builtin-setjmp": 406,
+        "conditional-store": 2,
+        "function-purity": 38,
+        "general-regs-only": 0,
+        "jump-threading": 0,
+        "lkmm": 4,
+        "load-forwarding": 263,
+        "loop-unroll-shape": 34,
+        "overflow-builtins": 1201,
+        "sigsetjmp": 226,
+        "stack-slots": 26,
+        "store-fold": 5,
+        "store-fold-constant": 17,
+        "unused-params": 9,
+        "unused-returns": 35
+      },
+      "broke": []
+    },
+    {
+      "pass": "bswap",
+      "call": "pays",
+      "changed": 91,
+      "counted": 91,
+      "instructions": [
+        19894702,
+        20830940,
+        18199928
+      ],
+      "text": [
+        480861,
+        487763
+      ],
+      "compile_micros": [
+        59878426,
+        22522486
+      ],
+      "facets": {
+        "compare-fold": 2,
+        "crc32c": 900654,
+        "target-attribute": 35582,
+        "value-settled": 0
+      },
+      "broke": []
+    },
+    {
+      "pass": "constant-p",
+      "call": "flat",
+      "changed": 5,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": [
+        "constant-p-after-inline.argument.c17.3809006f",
+        "constant-p-after-inline.expression.c17.a637af06",
+        "constant-p-after-inline.local.c17.29ba077c",
+        "constant-p-after-inline.runtime-argument.c17.6772093a",
+        "constant-p-after-inline.two-levels.c17.03722f1c"
+      ],
+      "issue": "tamnd/rucc#3189"
+    },
+    {
+      "pass": "subscript",
+      "call": "pays",
+      "changed": 38,
+      "counted": 38,
+      "instructions": [
+        4517781,
+        4518111,
+        4492485
+      ],
+      "text": [
+        25839,
+        26089
+      ],
+      "compile_micros": [
+        7148331,
+        4003461
+      ],
+      "facets": {
+        "address-fold": 12,
+        "alias-analysis": 5,
+        "bundle": 234,
+        "common-subexpr": 2,
+        "dllimport": 19,
+        "iv-selection": 0,
+        "store-fold": 18,
+        "store-fold-constant": 26,
+        "unused-returns": 0,
+        "vla-and-alloca": 14
+      },
+      "broke": []
+    },
+    {
+      "pass": "hoist",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "plane-sink",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "split",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "reassoc",
+      "call": "pays",
+      "changed": 730,
+      "counted": 728,
+      "instructions": [
+        114361249,
+        114421616,
+        114055983
+      ],
+      "text": [
+        945289,
+        972273
+      ],
+      "compile_micros": [
+        139701647,
+        68101105
+      ],
+      "facets": {
+        "address-fold": 62,
+        "alias-analysis": 22,
+        "asm-goto": -24,
+        "barrier": -2,
+        "baseline": -1,
+        "builtin-setjmp": -425,
+        "bundle": 71,
+        "calling-convention": 82,
+        "compare-elim": 1,
+        "conditional-store": -1017,
+        "const-ice": -364,
+        "constant-args": 4,
+        "constant-p-after-inline": -64,
+        "control-flow": 216,
+        "dllimport": -146,
+        "frame-address": 19,
+        "frame-size": -789,
+        "frontend": 0,
+        "function-purity": 108,
+        "general-regs-only": 0,
+        "inline": 2474,
+        "interpreter-dispatch": -8,
+        "iv-selection": -320,
+        "jump-threading": 664,
+        "lkmm": 10,
+        "load-fold": -2,
+        "loop-hoist": 859,
+        "loop-invariant": -161,
+        "loop-restructure": -3766,
+        "loop-shape": 15,
+        "loop-unroll": 3,
+        "loop-unroll-shape": 15,
+        "machine-peephole": 6,
+        "memory-effects": 7989,
+        "narrowing": 7,
+        "null-pointer-constant": -108,
+        "objtool-shapes": -1,
+        "overflow-builtins": 1370,
+        "reassociate": 9,
+        "register-alloc": 2245,
+        "register-pressure": 2014,
+        "scalar-replacement": 3,
+        "section-attr": -196,
+        "sigsetjmp": -163,
+        "simplify": 49375,
+        "stack-slots": 249,
+        "target-attribute": 23,
+        "unused-params": 3,
+        "unused-returns": 10,
+        "vla-and-alloca": -4
+      },
+      "broke": []
+    },
+    {
+      "pass": "loop-idiom",
+      "call": "trades",
+      "changed": 17,
+      "counted": 17,
+      "instructions": [
+        7135060,
+        9666342,
+        3196823
+      ],
+      "text": [
+        7810,
+        7610
+      ],
+      "compile_micros": [
+        1138541,
+        1364228
+      ],
+      "facets": {
+        "conditional-store": 486,
+        "loop-idiom": 2530796
+      },
+      "broke": []
+    },
+    {
+      "pass": "vectorize",
+      "call": "trades",
+      "changed": 2,
+      "counted": 2,
+      "instructions": [
+        241406,
+        243960,
+        235617
+      ],
+      "text": [
+        1094,
+        1054
+      ],
+      "compile_micros": [
+        450902,
+        210158
+      ],
+      "facets": {
+        "short-circuit": 2554
+      },
+      "broke": []
+    },
+    {
+      "pass": "widen",
+      "call": "costs",
+      "changed": 698,
+      "counted": 698,
+      "instructions": [
+        8916955658,
+        8776171713,
+        6977388936
+      ],
+      "text": [
+        1179975,
+        1181139
+      ],
+      "compile_micros": [
+        163542436,
+        71196589
+      ],
+      "facets": {
+        "baseline": 6,
+        "bundle": 162,
+        "call-motion": 1999,
+        "called-once": -20709,
+        "computed-goto": -1,
+        "conditional-store": 14594,
+        "crc32c": 246884,
+        "division": -151068641,
+        "dllimport": 1,
+        "frame-size": 3781240,
+        "frontend": 41,
+        "general-regs-only": 4226,
+        "induction-variable": 400,
+        "iv-selection": 1236,
+        "jump-threading": 2560,
+        "lkmm": -309,
+        "loop-hoist": 15,
+        "loop-idiom": 55,
+        "loop-invariant": 202,
+        "loop-restructure": -286,
+        "loop-shape": 133,
+        "loop-unroll-shape": 69,
+        "narrow-shift": -8335362,
+        "prune": 7170,
+        "short-circuit": 12797,
+        "sigsetjmp": 5136,
+        "simd-lfind": 254967,
+        "simplify": 599033,
+        "stack-slots": 5,
+        "switch-dispatch": 86020,
+        "switch-runs": -154,
+        "tail-dispatch": -10247,
+        "target-attribute": -2952,
+        "value-replacement": 13634828,
+        "value-settled": 1037,
+        "vla-and-alloca": -100
+      },
+      "broke": [],
+      "issue": "tamnd/rucc#3185"
+    },
+    {
+      "pass": "ivopts",
+      "call": "pays",
+      "changed": 386,
+      "counted": 386,
+      "instructions": [
+        14606055183,
+        15188108457,
+        13233082498
+      ],
+      "text": [
+        836940,
+        837243
+      ],
+      "compile_micros": [
+        111105809,
+        45877180
+      ],
+      "facets": {
+        "barrier": 100,
+        "baseline": 3,
+        "block-layout": 13000,
+        "branch-probability": 11,
+        "bundle": 222,
+        "call-motion": 15993,
+        "calling-convention": 7,
+        "conditional-store": -8,
+        "crc32c": -49214,
+        "division": 73720,
+        "function-purity": 30,
+        "if-conversion": 359999906,
+        "induction-variable": -2,
+        "interpreter-dispatch": 1743,
+        "iv-selection": -196,
+        "lkmm": -1311395,
+        "long-double": 9,
+        "loop-deletion": 53,
+        "loop-hoist": 3,
+        "loop-restructure": -2045,
+        "memory-effects": 20002,
+        "narrow-shift": -16781314,
+        "register-alloc": 17,
+        "scheduling": 57,
+        "short-circuit": -1538,
+        "switch-lowering": 239999939,
+        "target-attribute": 41574,
+        "value-replacement": 32772,
+        "vla-and-alloca": -175
+      },
+      "broke": []
+    },
+    {
+      "pass": "discharge",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "dead-plane",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "coalesce",
+      "call": "idle",
+      "changed": 0,
+      "counted": 0,
+      "instructions": [
+        0,
+        0,
+        0
+      ],
+      "text": [
+        0,
+        0
+      ],
+      "compile_micros": [
+        0,
+        0
+      ],
+      "facets": {},
+      "broke": []
+    },
+    {
+      "pass": "dce",
+      "call": "costs",
+      "changed": 195,
+      "counted": 195,
+      "instructions": [
+        163810696,
+        155396307,
+        100229008
+      ],
+      "text": [
+        629308,
+        628657
+      ],
+      "compile_micros": [
+        81861831,
+        24898817
+      ],
+      "facets": {
+        "bundle": 274,
+        "conditional-store": -517,
+        "crc32c": -16508,
+        "iv-selection": -462,
+        "loop-restructure": -296,
+        "narrow-shift": -8396807,
+        "null-pointer-constant": -64,
+        "register-pressure": -2,
+        "short-circuit": -519,
+        "sigsetjmp": 77,
+        "simd-lfind": 642,
+        "target-attribute": -74,
+        "vla-and-alloca": -133
+      },
+      "broke": [],
+      "issue": "tamnd/rucc#3186"
+    },
+    {
+      "pass": "gcm",
+      "call": "pays",
+      "changed": 195,
+      "counted": 194,
+      "instructions": [
+        53421608,
+        53554424,
+        50421775
+      ],
+      "text": [
+        392564,
+        395795
+      ],
+      "compile_micros": [
+        48344548,
+        21297486
+      ],
+      "facets": {
+        "bit-liveness": 3,
+        "bundle": 317,
+        "conditional-store": -2049,
+        "frame-size": 101666,
+        "function-purity": 1,
+        "interpreter-dispatch": 688,
+        "null-pointer-constant": -192,
+        "register-pressure": 212,
+        "section-attr": -1023,
+        "short-circuit": 191,
+        "sigsetjmp": 299,
+        "simd-lfind": 27441,
+        "target-attribute": -364,
+        "value-settled": 5633,
+        "vla-and-alloca": -7
+      },
+      "broke": []
+    },
+    {
+      "pass": "loop-delete",
+      "call": "pays",
+      "changed": 105,
+      "counted": 105,
+      "instructions": [
+        43361058,
+        142039442,
+        35100488
+      ],
+      "text": [
+        87484,
+        88977
+      ],
+      "compile_micros": [
+        12638609,
+        8379374
+      ],
+      "facets": {
+        "bit-liveness": 26,
+        "bit-loops": 56242402,
+        "block-layout": 6000,
+        "branch-probability": 95,
+        "conditional-store": 768,
+        "function-purity": 741,
+        "loop-deletion": 40004436,
+        "loop-hoist": -3,
+        "loop-idiom": 2402410,
+        "loop-unroll-shape": 3203,
+        "memory-effects": 15998,
+        "prune": 2308
+      },
+      "broke": []
+    },
+    {
+      "pass": "adce",
+      "call": "pays",
+      "changed": 24,
+      "counted": 24,
+      "instructions": [
+        2739761,
+        2739841,
+        2731628
+      ],
+      "text": [
+        9583,
+        9923
+      ],
+      "compile_micros": [
+        2602995,
+        1764988
+      ],
+      "facets": {
+        "branch-probability": 10,
+        "function-purity": 40,
+        "loop-deletion": 30
+      },
+      "broke": []
+    }
+  ]
+}

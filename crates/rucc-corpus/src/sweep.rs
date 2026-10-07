@@ -170,7 +170,8 @@ pub(crate) struct Moved {
     pub(crate) compile_micros: [u64; 2],
     /// The instructions the moved compiler saved or spent on each facet, moved less as it is.
     pub(crate) facets: BTreeMap<String, i64>,
-    /// The cases the moved compiler got wrong and the compiler as it is did not.
+    /// The cases the moved compiler got wrong or could not build and the compiler as it is did
+    /// not.
     pub(crate) broke: Vec<String>,
 }
 
@@ -707,6 +708,17 @@ impl Compile<'_> {
     }
 }
 
+/// Whether a case went from right to not right when the compiler was moved.
+///
+/// A case that stops compiling on a construct the compiler says it has not been taught is broken
+/// as surely as one that prints the wrong answer, since the program is the same and only the
+/// compiler moved. Counting it as a gap would let a move that leaves an instruction nothing lowers
+/// pass for one that changed nothing, which is how turning off `expect` once read as flat.
+fn breaks(was: Verdict, is: Verdict) -> bool {
+    let wrong = |verdict: Verdict| verdict.is_failure() || verdict.is_gap();
+    wrong(is) && !wrong(was)
+}
+
 /// What the changed cases did, three ways.
 fn measure(manifest: &Manifest, run: &corpus_run::Run, reference: &str, level: Level) -> Moved {
     let mut moved = Moved { changed: manifest.cases.len(), ..Moved::default() };
@@ -716,7 +728,7 @@ fn measure(manifest: &Manifest, run: &corpus_run::Run, reference: &str, level: L
             continue;
         };
         let (was, is) = (run.verdict(base), run.verdict(after));
-        if is.is_failure() && !was.is_failure() {
+        if breaks(was, is) {
             moved.broke.push(case.id.clone());
         }
         if base.compile.ok && after.compile.ok {
@@ -863,7 +875,7 @@ impl Report<'_> {
             let _ = writeln!(out, "\n## Moves that broke a case\n");
             let _ = writeln!(
                 out,
-                "A row moved to a value it takes should never change what a program prints. Each of these is a bug in the pass that reads the row, whatever the row's call above.\n"
+                "A row moved to a value it takes should never change what a program prints or whether it builds. Each of these is a bug in the pass that reads the row, whatever the row's call above.\n"
             );
             for line in broke {
                 let _ = writeln!(
@@ -897,7 +909,8 @@ pub(crate) fn percent(change: Option<f64>) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{Call, End, Moved, Row, call, moves, rows};
+    use super::{Call, End, Moved, Row, breaks, call, moves, rows};
+    use corpus_model::Verdict;
 
     #[test]
     fn the_listing_is_read_as_names_and_values_and_the_rest_of_the_line_is_left() {
@@ -959,6 +972,17 @@ mod tests {
         assert_eq!(call(&[&worse, &better]), Call::Wrong);
         let smaller = end([1000, 1000], [100, 90]);
         assert_eq!(call(&[&smaller]), Call::Wrong);
+    }
+
+    #[test]
+    fn a_case_that_stops_building_after_the_move_is_broken_by_it() {
+        assert!(breaks(Verdict::Pass, Verdict::Wrong));
+        assert!(breaks(Verdict::Pass, Verdict::Unimplemented));
+        assert!(breaks(Verdict::Pass, Verdict::Rejected));
+        assert!(!breaks(Verdict::Pass, Verdict::Pass));
+        // What was not right before the move is not the move's doing.
+        assert!(!breaks(Verdict::Unimplemented, Verdict::Unimplemented));
+        assert!(!breaks(Verdict::Wrong, Verdict::Rejected));
     }
 
     #[test]
