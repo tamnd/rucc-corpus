@@ -290,7 +290,7 @@ impl Report<'_> {
             let _ = writeln!(out, "\n## Passes whose absence broke a case\n");
             let _ = writeln!(
                 out,
-                "Turning a pass off should never change what a program prints. A case that goes wrong without one is a bug in a pass that runs later and counted on it, and each gets an issue of its own.\n"
+                "Turning a pass off should never change what a program prints or whether it builds. A case that goes wrong without one is a bug in a pass that runs later and counted on it, and each gets an issue of its own.\n"
             );
             for line in broke {
                 let cases: Vec<String> =
