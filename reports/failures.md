@@ -175,7 +175,7 @@ Facet [`const-ice`](../programs/correctness/const-ice/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:14:20: error: expression in static assertion is not constant [E0614]\ncase.c:15:20: error: expression in stati...
+actual:   case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]\ncase.c:16:29: error: enumerator ...
 ```
 
 ### `const-ice.const-local.c17.d372496d` at `O1` on `rucc`
@@ -186,7 +186,7 @@ Facet [`const-ice`](../programs/correctness/const-ice/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:14:20: error: expression in static assertion is not constant [E0614]\ncase.c:15:20: error: expression in stati...
+actual:   case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]\ncase.c:16:29: error: enumerator ...
 ```
 
 ### `const-ice.const-local.c17.d372496d` at `O2` on `rucc`
@@ -197,7 +197,7 @@ Facet [`const-ice`](../programs/correctness/const-ice/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:14:20: error: expression in static assertion is not constant [E0614]\ncase.c:15:20: error: expression in stati...
+actual:   case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]\ncase.c:16:29: error: enumerator ...
 ```
 
 ### `const-ice.const-local.c17.d372496d` at `O3` on `rucc`
@@ -208,7 +208,7 @@ Facet [`const-ice`](../programs/correctness/const-ice/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:14:20: error: expression in static assertion is not constant [E0614]\ncase.c:15:20: error: expression in stati...
+actual:   case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]\ncase.c:16:29: error: enumerator ...
 ```
 
 ### `const-ice.const-local.c17.d372496d` at `Os` on `rucc`
@@ -219,7 +219,7 @@ Facet [`const-ice`](../programs/correctness/const-ice/README.md).
 
 ```
 expected: the program compiles
-actual:   case.c:14:20: error: expression in static assertion is not constant [E0614]\ncase.c:15:20: error: expression in stati...
+actual:   case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]\ncase.c:16:29: error: enumerator ...
 ```
 
 ## What the compiler says it has not built yet
