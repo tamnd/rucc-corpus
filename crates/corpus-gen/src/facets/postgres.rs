@@ -2257,6 +2257,9 @@ struct Interp {
     dispatch: &'static str,
     /// `none`, `direct` or `pointer`.
     calls: &'static str,
+    /// Whether the steps are read through the state, sixty four bytes each, and jumped to as
+    /// `&state->steps[op->jump]`, rather than handed in.
+    state: bool,
 }
 
 impl Interp {
@@ -2450,7 +2453,14 @@ impl Interp {
                 ),
             });
         }
-        lines.push("    struct step *op = steps;".to_owned());
+        lines.push(
+            if self.state {
+                "    struct step *op = state->steps;"
+            } else {
+                "    struct step *op = steps;"
+            }
+            .to_owned(),
+        );
         lines.push(String::new());
         lines.push("    EEO_DISPATCH();".to_owned());
         lines.push("    EEO_SWITCH()".to_owned());
@@ -2546,6 +2556,15 @@ impl Interp {
 /// goto and once over a `switch` the way Postgres builds it where `EEO_USE_COMPUTED_GOTO` is
 /// off, and prints what both return for three seeds. Both have to print the answer the model
 /// works out.
+///
+/// The cases with 32 opcodes are built a second time with `steps=state`, where the steps are
+/// read through the state and padded to the sixty four bytes of an `ExprEvalStep`, so a jump is
+/// `op = &state->steps[op->jump]`, a shift and an add over a pointer loaded in the handler. That
+/// is the jump rucc got wrong at `-O2` in tamnd/rucc#3395, where the add wrote the step into
+/// the register the next handler reads it in and the copy of the steps in front of it went over
+/// the index. Whether the index is in that register depends on everything else the function keeps
+/// in registers, and in an interpreter this small the add comes out as a `lea` into a free one, so
+/// these do not crash a rucc without the fix. They hold the shape, which none of the others had.
 fn interpreter_dispatch(sink: &mut Sink<'_>) {
     const LIVE: &[usize] = &[4, 12, 24];
     const DISPATCHES: &[&str] = &["table", "threaded"];
@@ -2568,10 +2587,33 @@ fn interpreter_dispatch(sink: &mut Sink<'_>) {
                         Facet::InterpreterDispatch,
                         axes,
                         Dialect::C17,
-                        dispatch_program(Interp { live, ops, dispatch, calls }),
+                        dispatch_program(Interp { live, ops, dispatch, calls, state: false }),
                         &["gnu", PROVENANCE],
                     );
                 }
+            }
+        }
+    }
+    for &live in LIVE {
+        for &dispatch in DISPATCHES {
+            for &calls in CALLS {
+                if !sink.wants(Facet::InterpreterDispatch) {
+                    return;
+                }
+                let axes = Axes::of([
+                    ("live", &live.to_string()),
+                    ("dispatch", dispatch),
+                    ("calls", calls),
+                    ("ops", "32"),
+                    ("steps", "state"),
+                ]);
+                sink.push_tagged(
+                    Facet::InterpreterDispatch,
+                    axes,
+                    Dialect::C17,
+                    dispatch_program(Interp { live, ops: 32, dispatch, calls, state: true }),
+                    &["gnu", PROVENANCE],
+                );
             }
         }
     }
@@ -2579,11 +2621,12 @@ fn interpreter_dispatch(sink: &mut Sink<'_>) {
 
 /// One `interpreter-dispatch` case.
 fn dispatch_program(interp: Interp) -> Program {
-    let Interp { live, ops, dispatch, calls } = interp;
+    let Interp { live, ops, dispatch, calls, state } = interp;
     let mut program = Program::new(format!(
-        "an interpreter of {ops} opcodes with {live} values alive, dispatched through the {} and \
+        "an interpreter of {ops} opcodes with {live} values alive, dispatched through the {}{} and \
          checked against a switch",
-        if dispatch == "table" { "label table" } else { "threaded steps" }
+        if dispatch == "table" { "label table" } else { "threaded steps" },
+        if state { " from steps read through the state" } else { "" }
     ));
     let threaded = dispatch == "threaded";
     let pointer = calls == "pointer";
@@ -2592,6 +2635,9 @@ fn dispatch_program(interp: Interp) -> Program {
     program.top("    unsigned long long seed;");
     program.top("    unsigned int loops;");
     program.top("    unsigned long long out[8];");
+    if state {
+        program.top("    struct step *steps;");
+    }
     program.top("};");
     program.top("");
     program.top("struct step {");
@@ -2603,6 +2649,14 @@ fn dispatch_program(interp: Interp) -> Program {
     }
     if threaded {
         program.top("    void *code;");
+    }
+    if state {
+        // Sixty four bytes on LP64, the size of an `ExprEvalStep`, so the index is scaled by a
+        // shift and the jump is an add of two registers.
+        program.top(format!(
+            "    unsigned long long pad[{}];",
+            6 - usize::from(pointer) - usize::from(threaded)
+        ));
     }
     program.top("};");
     program.top("");
@@ -2670,7 +2724,12 @@ fn dispatch_program(interp: Interp) -> Program {
         program.top("#define EEO_DISPATCH() goto *((void *) dispatch_table[op->opcode])");
     }
     program.top("#define EEO_NEXT() do { op++; EEO_DISPATCH(); } while (0)");
-    program.top("#define EEO_JUMP(to) do { op = steps + (to); EEO_DISPATCH(); } while (0)");
+    if state {
+        program
+            .top("#define EEO_JUMP(to) do { op = &state->steps[to]; EEO_DISPATCH(); } while (0)");
+    } else {
+        program.top("#define EEO_JUMP(to) do { op = steps + (to); EEO_DISPATCH(); } while (0)");
+    }
     program.top("");
     program.top("__attribute__((noinline))");
     program.top(
@@ -2724,6 +2783,9 @@ fn dispatch_program(interp: Interp) -> Program {
     program.top("    struct exprstate state;");
     program.top("    state.seed = seed;");
     program.top("    state.loops = loops;");
+    if state {
+        program.top("    state.steps = steps;");
+    }
     program.top("    for (int i = 0; i < 8; i++) {");
     program.top("        state.out[i] = (unsigned long long)i;");
     program.top("    }");
@@ -2953,7 +3015,10 @@ mod tests {
             for ops in [8, 32] {
                 for dispatch in ["table", "threaded"] {
                     for calls in ["none", "direct", "pointer"] {
-                        out.push(Interp { live, ops, dispatch, calls });
+                        out.push(Interp { live, ops, dispatch, calls, state: false });
+                        if ops == 32 {
+                            out.push(Interp { live, ops, dispatch, calls, state: true });
+                        }
                     }
                 }
             }
@@ -2965,7 +3030,7 @@ mod tests {
     fn every_interpreter_is_built_twice_and_both_builds_print_the_same_answer() {
         let dispatch: Vec<Case> =
             cases().into_iter().filter(|case| case.facet == Facet::InterpreterDispatch).collect();
-        assert_eq!(dispatch.len(), 36);
+        assert_eq!(dispatch.len(), 54);
         for case in &dispatch {
             assert!(case.has_tag("gnu"), "{}", case.id);
             assert!(case.source.contains("&&CASE_EEOP_DONE"), "{} has no label table", case.id);
@@ -2989,6 +3054,28 @@ mod tests {
             let calls = case.axes.get("calls") != Some("none");
             assert_eq!(case.source.contains("__attribute__((noinline))\nstatic void note("), calls);
             assert_eq!(case.source.contains("op->fn("), case.axes.get("calls") == Some("pointer"));
+        }
+    }
+
+    #[test]
+    fn only_the_state_cases_read_the_steps_through_the_state() {
+        let dispatch: Vec<Case> =
+            cases().into_iter().filter(|case| case.facet == Facet::InterpreterDispatch).collect();
+        assert_eq!(
+            dispatch.iter().filter(|case| case.axes.get("steps") == Some("state")).count(),
+            18
+        );
+        for case in &dispatch {
+            let state = case.axes.get("steps") == Some("state");
+            assert_eq!(case.source.contains("op = &state->steps[to]"), state, "{}", case.id);
+            assert_eq!(
+                case.source.contains("struct step *op = state->steps;"),
+                state,
+                "{}",
+                case.id
+            );
+            assert_eq!(case.source.contains("state.steps = steps;"), state, "{}", case.id);
+            assert_eq!(case.source.contains("unsigned long long pad["), state, "{}", case.id);
         }
     }
 
