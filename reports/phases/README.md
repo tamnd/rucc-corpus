@@ -9,7 +9,7 @@ The phases are the ones in the M4 plan, in the order the plan does them, because
 | [global](global.md) | 12 | 242 | 5,794 | 1210 of 1210 | 7% less |
 | [loops](loops.md) | 13 | 716 | 14,715 | 3580 of 3580 | 8% less |
 | [interprocedural](interprocedural.md) | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6% less |
-| [backend](backend.md) | 27 | 1008 | 57,956 | 5040 of 5040 | 6% less |
+| [backend](backend.md) | 27 | 1026 | 72,023 | 5130 of 5130 | 6% less |
 | [correctness](correctness.md) | 25 | 780 | 97,367 in 846 files | 3280 of 3300 | 3% less |
 
 Each phase has a page of its own with its facets on it, and each facet links to the programs it was generated for.
