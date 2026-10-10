@@ -17,7 +17,7 @@ Everything between the two markers below is written by the last run. Everything 
 | compiler | passed | wrong | rejected | not built yet | crashed |
 |---|---|---|---|---|---|
 | `gcc-16` | 17598 of 17598 | 0 | 0 | 0 | 0 |
-| `rucc` | 17578 of 17598 | 15 | 5 | 0 | 0 |
+| `rucc` | 17422 of 17598 | 49 | 5 | 0 | 122 |
 
 The full report is in [reports/README.md](reports/README.md). What each facet cost is in [reports/cost.md](reports/cost.md), what went wrong is in [reports/failures.md](reports/failures.md), and the breakdown by phase of the plan is in [reports/phases/README.md](reports/phases/README.md).
 

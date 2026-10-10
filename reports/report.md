@@ -1,6 +1,6 @@
 # rucc corpus report
 
-20 case results did not come out as expected. They are listed below, worst first.
+176 case results did not come out as expected. They are listed below, worst first.
 
 The corpus holds 3646 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `fc0c2efa3c9c0b1e`.
 
@@ -9,15 +9,15 @@ That is 224,111 lines of C, 7.2 MiB, in 3,780 files, and it is the denominator f
 | compiler | version | role |
 |---|---|---|
 | `gcc-16` | gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee] | reference |
-| `rucc` | rucc 0.29.5 | under test |
+| `rucc` | rucc 0.30.0 | under test |
 
 ## Did it meet the targets
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 20 failures | no |
-| `code-quality:rucc` | within 10 percent | 8 percent more | yes |
-| `compile-throughput:rucc` | no worse | 47 percent less | yes |
+| `correctness` | 0 failures | 176 failures | no |
+| `code-quality:rucc` | within 10 percent | 5 percent more | yes |
+| `compile-throughput:rucc` | no worse | 46 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -30,374 +30,561 @@ That is 224,111 lines of C, 7.2 MiB, in 3,780 files, and it is the denominator f
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
 | `gcc-16` | 17598 | 17598 | 0 | 0 | 0 | 0 | 0 | 600 |
-| `rucc` | 17598 | 17578 | 15 | 5 | 0 | 0 | 0 | 600 |
+| `rucc` | 17598 | 17422 | 49 | 5 | 0 | 0 | 122 | 600 |
 
 ## What went wrong
 
-### `null-pointer-constant.conditional-type.c17.b33903a7`
+### `frame-size.32.0.0.recursive.c17.9f29e71b`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O0`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-34503
+17544215089135596182
+13042404743448559650
+8540594397761523118
 ```
 
 Got:
 
 ```
-238279
+12817989783689332188
+12037310266167352651
+16787426633707461649
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.0.0.recursive.c17.9f29e71b.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.conditional-type.c17.b33903a7`
+### `frame-size.32.0.0.recursive.c17.9f29e71b`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O1`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-34503
+17544215089135596182
+13042404743448559650
+8540594397761523118
 ```
 
 Got:
 
 ```
-238279
+12817989783689332188
+12037310266167352651
+16787426633707461649
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.0.0.recursive.c17.9f29e71b.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.conditional-type.c17.b33903a7`
+### `frame-size.32.0.4.recursive.c17.e6ef12e2`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O2`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-34503
+18004756046062187166
+9958783140959817738
+1912810235857448310
 ```
 
 Got:
 
 ```
-238279
+114317629995517465
+18290657204083505103
+18020252704461941125
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.0.4.recursive.c17.e6ef12e2.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.conditional-type.c17.b33903a7`
+### `frame-size.32.0.4.recursive.c17.e6ef12e2`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O3`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-34503
+18004756046062187166
+9958783140959817738
+1912810235857448310
 ```
 
 Got:
 
 ```
-238279
+114317629995517465
+18290657204083505103
+18020252704461941125
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.0.4.recursive.c17.e6ef12e2.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.conditional-type.c17.b33903a7`
+### `frame-size.32.16384.0.recursive.c17.cc38c3c8`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-Os`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-34503
+14605878548905459038
+355367555857586930
+4551600636519266438
 ```
 
 Got:
 
 ```
-238279
+12208367387447608303
+2496048629004182191
+17105885554550856057
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.conditional-type.c17.b33903a7.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.16384.0.recursive.c17.cc38c3c8.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-const.c17.0749e5ff`
+### `frame-size.32.16384.0.recursive.c17.cc38c3c8`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O0`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-2515880359
+14605878548905459038
+355367555857586930
+4551600636519266438
 ```
 
 Got:
 
 ```
-2563465191
+12208367387447608303
+2496048629004182191
+17105885554550856057
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.16384.0.recursive.c17.cc38c3c8.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-const.c17.0749e5ff`
+### `frame-size.32.16384.4.recursive.c17.b5246490`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O1`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-2515880359
+14153985134923419238
+957015107617444314
+6206789154021021006
 ```
 
 Got:
 
 ```
-2563465191
+16315832771611730681
+8937481076744509875
+1559129381877289069
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.16384.4.recursive.c17.b5246490.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-const.c17.0749e5ff`
+### `frame-size.32.16384.4.recursive.c17.b5246490`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O2`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-2515880359
+14153985134923419238
+957015107617444314
+6206789154021021006
 ```
 
 Got:
 
 ```
-2563465191
+16315832771611730681
+8937481076744509875
+1559129381877289069
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.16384.4.recursive.c17.b5246490.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-const.c17.0749e5ff`
+### `frame-size.32.256.0.recursive.c17.179cbc6d`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O3`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-2515880359
+1303485669281181534
+11022921358625118450
+2295612974259503750
 ```
 
 Got:
 
 ```
-2563465191
+16057742581381467375
+5532991614815353775
+1950879230648326265
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.256.0.recursive.c17.179cbc6d.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-const.c17.0749e5ff`
+### `frame-size.32.256.0.recursive.c17.179cbc6d`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-Os`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-2515880359
+1303485669281181534
+11022921358625118450
+2295612974259503750
 ```
 
 Got:
 
 ```
-2563465191
+16057742581381467375
+5532991614815353775
+1950879230648326265
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-const.c17.0749e5ff.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.256.0.recursive.c17.179cbc6d.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+### `frame-size.32.256.4.recursive.c17.f62151d1`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O0`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-991576615
+8101870703100006
+7723436081431891930
+15438770292160683854
 ```
 
 Got:
 
 ```
-81932839
+9367854141794588153
+267659735295455923
+9614209402505875309
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.256.4.recursive.c17.f62151d1.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+### `frame-size.32.256.4.recursive.c17.f62151d1`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O1`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-991576615
+8101870703100006
+7723436081431891930
+15438770292160683854
 ```
 
 Got:
 
 ```
-81932839
+9367854141794588153
+267659735295455923
+9614209402505875309
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.32.256.4.recursive.c17.f62151d1.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+### `frame-size.8.0.4.recursive.c17.a683ef59`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O2`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-991576615
+632521784743817966
+273982260998848058
+18362186810963429766
 ```
 
 Got:
 
 ```
-81932839
+9896143589705690705
+10404419519353576695
+10912695449001462685
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.0.4.recursive.c17.a683ef59.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+### `frame-size.8.0.4.recursive.c17.a683ef59`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-O3`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-991576615
+632521784743817966
+273982260998848058
+18362186810963429766
 ```
 
 Got:
 
 ```
-81932839
+9896143589705690705
+10404419519353576695
+10912695449001462685
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.0.4.recursive.c17.a683ef59.c` and the working directory of the failing build was kept under the run directory.
 
-### `null-pointer-constant.is-constexpr.c17.b3a54e24`
+### `frame-size.8.16384.0.recursive.c17.f10c7c2e`
 
-rucc printed the wrong answer for a case about __is_constexpr, is_const and the null pointer constants they rest on. This is a case about __is_constexpr, is_const and the null pointer constants they rest on, built at `-Os`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-991576615
+11918958673968163758
+345707603754418978
+7219200607250225814
 ```
 
 Got:
 
 ```
-81932839
+2305861104240737580
+15075769856573468364
+12124698492521155087
 ```
 
-The program is `programs/correctness/null-pointer-constant/null-pointer-constant.is-constexpr.c17.b3a54e24.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.16384.0.recursive.c17.f10c7c2e.c` and the working directory of the failing build was kept under the run directory.
 
-### `const-ice.const-local.c17.d372496d`
+### `frame-size.8.16384.0.recursive.c17.f10c7c2e`
 
-rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O0`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-the program compiles
+11918958673968163758
+345707603754418978
+7219200607250225814
 ```
 
 Got:
 
 ```
-case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
-case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+2305861104240737580
+15075769856573468364
+12124698492521155087
 ```
 
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.16384.0.recursive.c17.f10c7c2e.c` and the working directory of the failing build was kept under the run directory.
 
-### `const-ice.const-local.c17.d372496d`
+### `frame-size.8.16384.4.recursive.c17.670143fd`
 
-rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O1`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-the program compiles
+16423959872060018870
+303768801085335050
+2630321803820202846
 ```
 
 Got:
 
 ```
-case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
-case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+18192049486109150769
+14063656279224723419
+9935263072340296069
 ```
 
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.16384.4.recursive.c17.670143fd.c` and the working directory of the failing build was kept under the run directory.
 
-### `const-ice.const-local.c17.d372496d`
+### `frame-size.8.16384.4.recursive.c17.670143fd`
 
-rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O2`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-the program compiles
+16423959872060018870
+303768801085335050
+2630321803820202846
 ```
 
 Got:
 
 ```
-case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
-case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+18192049486109150769
+14063656279224723419
+9935263072340296069
 ```
 
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.16384.4.recursive.c17.670143fd.c` and the working directory of the failing build was kept under the run directory.
 
-### `const-ice.const-local.c17.d372496d`
+### `frame-size.8.256.0.recursive.c17.aaa57773`
 
-rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O3`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
 
 Expected:
 
 ```
-the program compiles
+3024358552295710126
+2770674995190202658
+2516991438084695190
 ```
 
 Got:
 
 ```
-case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
-case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+3575651980501864748
+16412561827543995084
+14179085560825719567
 ```
 
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.256.0.recursive.c17.aaa57773.c` and the working directory of the failing build was kept under the run directory.
 
-### `const-ice.const-local.c17.d372496d`
+### `frame-size.8.256.0.recursive.c17.aaa57773`
 
-rucc would not compile a valid program about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-Os`.
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
 
 Expected:
 
 ```
-the program compiles
+3024358552295710126
+2770674995190202658
+2516991438084695190
 ```
 
 Got:
 
 ```
-case.c:16:19: error: enumerator value for 'RK_N' is not an integer constant [E0564]
-case.c:16:29: error: enumerator value for 'RK_M' is not an integer constant [E0564]
+3575651980501864748
+16412561827543995084
+14179085560825719567
 ```
 
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
+The program is `programs/backend/frame-size/frame-size.8.256.0.recursive.c17.aaa57773.c` and the working directory of the failing build was kept under the run directory.
+
+### `frame-size.8.256.4.recursive.c17.02cd7138`
+
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
+
+Expected:
+
+```
+10624635573159822006
+11747104840446911498
+12869574107734000990
+```
+
+Got:
+
+```
+5790465917139058993
+6721114599854817499
+7651763282570576005
+```
+
+The program is `programs/backend/frame-size/frame-size.8.256.4.recursive.c17.02cd7138.c` and the working directory of the failing build was kept under the run directory.
+
+### `frame-size.8.256.4.recursive.c17.02cd7138`
+
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
+
+Expected:
+
+```
+10624635573159822006
+11747104840446911498
+12869574107734000990
+```
+
+Got:
+
+```
+5790465917139058993
+6721114599854817499
+7651763282570576005
+```
+
+The program is `programs/backend/frame-size/frame-size.8.256.4.recursive.c17.02cd7138.c` and the working directory of the failing build was kept under the run directory.
+
+### `frame-size.96.0.0.recursive.c17.b7b16d1f`
+
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
+
+Expected:
+
+```
+2218240954345130774
+3671841702888010658
+5125442451430890542
+```
+
+Got:
+
+```
+7648506854538237253
+8717350164974408075
+9786193475410578897
+```
+
+The program is `programs/backend/frame-size/frame-size.96.0.0.recursive.c17.b7b16d1f.c` and the working directory of the failing build was kept under the run directory.
+
+### `frame-size.96.0.0.recursive.c17.b7b16d1f`
+
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-Os`.
+
+Expected:
+
+```
+2218240954345130774
+3671841702888010658
+5125442451430890542
+```
+
+Got:
+
+```
+7648506854538237253
+8717350164974408075
+9786193475410578897
+```
+
+The program is `programs/backend/frame-size/frame-size.96.0.0.recursive.c17.b7b16d1f.c` and the working directory of the failing build was kept under the run directory.
+
+### `frame-size.96.0.4.recursive.c17.c3929b06`
+
+rucc printed the wrong answer for a case about large frames with a simple answer, to hold against gcc -fstack-usage. This is a case about large frames with a simple answer, to hold against gcc -fstack-usage, built at `-O1`.
+
+Expected:
+
+```
+16601906061824879390
+7784817870164517770
+17414473752213707766
+```
+
+Got:
+
+```
+12392023311882398937
+17533324470129818639
+4227881554667686725
+```
+
+The program is `programs/backend/frame-size/frame-size.96.0.4.recursive.c17.c3929b06.c` and the working directory of the failing build was kept under the run directory.
+
+And 151 more, which are all in `findings.sarif` and in `report.json`.
 
 ## How big the code is
 
@@ -409,32 +596,32 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces 8 percent more. The middle facet is 6 percent less, over 106 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces 5 percent more. The middle facet is 6 percent less, over 106 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
 | `simd-lfind` | correctness | 30 | 86 percent more | not measured | inside the noise | 57 percent less |
-| `interpreter-dispatch` | backend | 54 | 73 percent more | not measured | inside the noise | 70 percent less |
-| `overflow-builtins` | correctness | 144 | 49 percent more | not measured | inside the noise | 56 percent less |
-| `scheduling` | backend | 20 | 40 percent more | not measured | inside the noise | 45 percent less |
-| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 45 percent less |
-| `bit-builtins` | backend | 22 | 16 percent more | not measured | inside the noise | 52 percent less |
-| `tail-call` | interprocedural | 36 | 12 percent more | not measured | level | 45 percent less |
+| `interpreter-dispatch` | backend | 54 | 72 percent more | not measured | inside the noise | 69 percent less |
+| `scheduling` | backend | 20 | 40 percent more | not measured | inside the noise | 46 percent less |
+| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 44 percent less |
+| `overflow-builtins` | correctness | 144 | 27 percent more | not measured | inside the noise | 56 percent less |
+| `bit-builtins` | backend | 22 | 16 percent more | not measured | inside the noise | 53 percent less |
+| `tail-call` | interprocedural | 36 | 12 percent more | not measured | inside the noise | 46 percent less |
 | `tail-dispatch` | interprocedural | 5 | 10 percent more | not measured | inside the noise | 64 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 40 percent less | not measured | inside the noise | 53 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 59 percent less |
-| `conditional-store` | local | 20 | 38 percent less | not measured | inside the noise | 56 percent less |
+| `short-circuit` | local | 26 | 40 percent less | not measured | inside the noise | 52 percent less |
+| `narrow-shift` | backend | 8 | 39 percent less | not measured | inside the noise | 61 percent less |
+| `conditional-store` | local | 20 | 38 percent less | not measured | inside the noise | 55 percent less |
 | `prune` | global | 15 | 36 percent less | not measured | inside the noise | 51 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 53 percent less |
-| `value-replacement` | global | 13 | 34 percent less | not measured | inside the noise | 52 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | level | 47 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 48 percent less |
+| `value-replacement` | global | 13 | 34 percent less | not measured | 93 percent more | 49 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 45 percent less |
 | `iv-selection` | loops | 36 | 27 percent less | not measured | inside the noise | 52 percent less |
 
 ## What `-Os` does
@@ -444,7 +631,7 @@ Every other number in this report is one compiler against another at the same le
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
 | `gcc-16` | 3518 | 4 percent less | 1157 |
-| `rucc` | 3517 | level | 1114 |
+| `rucc` | 3517 | level | 1110 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -483,7 +670,7 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | global | 12 | 242 | 5,794 | 1210 of 1210 | 7 percent less |
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 8 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
-| backend | 27 | 1026 | 72,023 | 5130 of 5130 | 6 percent less |
+| backend | 27 | 1026 | 72,023 | 4974 of 5130 | 6 percent less |
 | correctness | 25 | 780 | 97,367 in 846 files | 3280 of 3300 | 3 percent less |
 
 ## What gcc-16 said about these programs
