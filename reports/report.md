@@ -602,27 +602,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 86 percent more | not measured | inside the noise | 58 percent less |
-| `interpreter-dispatch` | backend | 54 | 72 percent more | not measured | inside the noise | 69 percent less |
-| `scheduling` | backend | 20 | 40 percent more | not measured | inside the noise | 46 percent less |
-| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 47 percent less |
-| `overflow-builtins` | correctness | 144 | 27 percent more | not measured | level | 57 percent less |
-| `bit-builtins` | backend | 22 | 16 percent more | not measured | inside the noise | 51 percent less |
-| `tail-call` | interprocedural | 36 | 12 percent more | not measured | inside the noise | 49 percent less |
-| `tail-dispatch` | interprocedural | 5 | 10 percent more | not measured | inside the noise | 60 percent less |
+| `simd-lfind` | correctness | 30 | 86 percent more | not measured | inside the noise | 59 percent less |
+| `interpreter-dispatch` | backend | 54 | 72 percent more | not measured | inside the noise | 71 percent less |
+| `scheduling` | backend | 20 | 40 percent more | not measured | inside the noise | 45 percent less |
+| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 45 percent less |
+| `overflow-builtins` | correctness | 144 | 27 percent more | not measured | inside the noise | 58 percent less |
+| `bit-builtins` | backend | 22 | 16 percent more | not measured | level | 53 percent less |
+| `tail-call` | interprocedural | 36 | 12 percent more | not measured | inside the noise | 46 percent less |
+| `tail-dispatch` | interprocedural | 5 | 10 percent more | not measured | inside the noise | 59 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
 | `short-circuit` | local | 26 | 40 percent less | not measured | inside the noise | 53 percent less |
-| `narrow-shift` | backend | 8 | 39 percent less | not measured | inside the noise | 65 percent less |
+| `narrow-shift` | backend | 8 | 39 percent less | not measured | inside the noise | 62 percent less |
 | `conditional-store` | local | 20 | 38 percent less | not measured | inside the noise | 56 percent less |
-| `prune` | global | 15 | 36 percent less | not measured | inside the noise | 53 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 53 percent less |
+| `prune` | global | 15 | 36 percent less | not measured | inside the noise | 52 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 54 percent less |
 | `value-replacement` | global | 13 | 34 percent less | not measured | inside the noise | 51 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 47 percent less |
-| `iv-selection` | loops | 36 | 27 percent less | not measured | inside the noise | 53 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 48 percent less |
+| `iv-selection` | loops | 36 | 27 percent less | not measured | level | 52 percent less |
 
 ## What `-Os` does
 
