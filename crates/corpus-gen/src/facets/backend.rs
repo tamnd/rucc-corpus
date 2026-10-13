@@ -47,6 +47,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     compare_fold(sink);
     frame_address(sink);
     stack_slots(sink);
+    block_copy(sink);
 }
 
 /// Expressions that a target usually has one instruction for.
@@ -3723,6 +3724,111 @@ fn stack_slots(sink: &mut Sink<'_>) {
     }
 }
 
+/// A copy or a clear of a block whose size the compiler knows, at the sizes where writing it out
+/// as moves and calling the C library trade places.
+///
+/// Every compiler turns a structure assignment or a `memcpy` of a constant size into loads and
+/// stores up to some size and into a call past it, and the same for a fill. Where it stops is a
+/// number in a table, `MOVE_RATIO` and `CLEAR_RATIO` in gcc and the block copy rows of rucc's
+/// heuristics, and the only way to know whether the number is right is to time both sides of it.
+/// The sizes run from well under the usual thresholds to well over them in steps of sixteen bytes,
+/// so a report read down a column shows where the time changes slope, and three sizes that are no
+/// multiple of a word check the tail a plan of whole words leaves.
+///
+/// Each copy or clear is alone in a function that is not inlined, so there is nothing to fold it
+/// into, and it runs in a loop that changes one byte of the source every turn and reads bytes
+/// back, so no turn can be skipped. The `literal` shape writes the clear as an assignment of a
+/// compound literal, which is how a lot of C clears a structure. A compiler may build the literal
+/// in a temporary and copy it across, which is a clear that costs a fill and a copy, and that is
+/// the reason it is a shape of its own rather than a spelling of `memset`.
+fn block_copy(sink: &mut Sink<'_>) {
+    const SHAPES: &[&str] = &["assign", "memcpy", "memset", "literal"];
+    // The bytes and the alignment of the block. Sixteen to two hundred and fifty six covers two
+    // words to thirty two, which is either side of every threshold gcc or rucc has used.
+    const SIZES: &[(usize, usize)] = &[
+        (16, 8),
+        (32, 8),
+        (48, 8),
+        (64, 8),
+        (80, 8),
+        (96, 8),
+        (128, 8),
+        (256, 8),
+        (13, 1),
+        (61, 1),
+        (100, 1),
+    ];
+    // Enough turns that the loop is the time of the program and not the start of the process.
+    const TURNS: usize = 1_000_000;
+    const SEED: i128 = 3;
+
+    for &shape in SHAPES {
+        for &(bytes, align) in SIZES {
+            if !sink.wants(Facet::BlockCopy) {
+                return;
+            }
+            let copies = matches!(shape, "assign" | "memcpy");
+            let what = if copies { "copy" } else { "clear" };
+            let mut program =
+                Program::new(format!("a {what} of {bytes} bytes aligned to {align}, {shape}"));
+            program.top(format!(
+                "typedef struct {{ unsigned char b[{bytes}]; }} __attribute__((aligned({align}))) block;"
+            ));
+            program.top("static block from, to;");
+            program.top("__attribute__((noinline))");
+            program.top("static void block_move(block *d, const block *s) {");
+            match shape {
+                "assign" => program.top("    *d = *s;"),
+                "memcpy" => program.top(format!("    __builtin_memcpy(d, s, {bytes});")),
+                "memset" => {
+                    program.top("    (void)s;");
+                    program.top(format!("    __builtin_memset(d, 0, {bytes});"));
+                }
+                _ => {
+                    program.top("    (void)s;");
+                    program.top("    *d = (block){ { 0 } };");
+                }
+            }
+            program.top("}");
+            program.input(Ty::I32, "seed", SEED);
+            program.blank();
+            program.line("long long total = 0;");
+            program.line(format!("for (int i = 0; i < {bytes}; i++) {{"));
+            program.line_at(1, "from.b[i] = (unsigned char)(seed + i);");
+            program.line("}");
+            program.line(format!("for (int r = 0; r < {TURNS}; r++) {{"));
+            program.line_at(1, format!("from.b[r % {bytes}] += 1;"));
+            if !copies {
+                // A byte the clear has to wipe, so a clear that was dropped prints something else.
+                program.line_at(1, format!("to.b[r % {bytes}] = (unsigned char)(seed + r);"));
+            }
+            program.line_at(1, "block_move(&to, &from);");
+            program.line_at(1, format!("total += to.b[(r * 7) % {bytes}] + from.b[r % {bytes}];"));
+            program.line("}");
+
+            // The same loop, worked out here. After a copy the destination is the source, and
+            // after a clear it is all zero, so only the source needs keeping.
+            let mut from: Vec<u8> = (0..bytes).map(|i| (SEED as usize + i) as u8).collect();
+            let mut total: i128 = 0;
+            for r in 0..TURNS {
+                from[r % bytes] = from[r % bytes].wrapping_add(1);
+                let read = if copies { from[(r * 7) % bytes] } else { 0 };
+                total += i128::from(read) + i128::from(from[r % bytes]);
+            }
+            program.blank();
+            program.check(Ty::I64, "total", total);
+            let size = bytes.to_string();
+            let aligned = align.to_string();
+            sink.push(
+                Facet::BlockCopy,
+                Axes::of([("shape", shape), ("bytes", size.as_str()), ("align", aligned.as_str())]),
+                Dialect::C17,
+                program,
+            );
+        }
+    }
+}
+
 /// How many generator states a division case draws before it starts dividing, which stays in the
 /// first level cache.
 const DIVISION_STREAM: u32 = 2048;
@@ -5076,6 +5182,31 @@ mod tests {
             // An index would take the slot a folded address needs, so there is never one.
             assert!(!case.source.contains("room[i]"), "{}", case.id);
         }
+    }
+
+    #[test]
+    fn the_block_copies_reach_either_side_of_every_threshold_for_every_shape() {
+        let cases = cases_for(Facet::BlockCopy);
+        for shape in ["assign", "memcpy", "memset", "literal"] {
+            let bytes: Vec<u32> = cases
+                .iter()
+                .filter(|c| c.axes.get("shape") == Some(shape))
+                .filter_map(|c| c.axes.get("bytes")?.parse().ok())
+                .collect();
+            assert!(bytes.contains(&16) && bytes.contains(&256), "{shape}: {bytes:?}");
+        }
+        // A copy and a clear of the same block print different numbers, so a compiler that wrote
+        // one where the other was asked for is caught, and the two spellings of each agree.
+        let printed = |shape: &str| {
+            let case = cases
+                .iter()
+                .find(|c| c.axes.get("shape") == Some(shape) && c.axes.get("bytes") == Some("64"))
+                .unwrap();
+            output(case).to_owned()
+        };
+        assert_eq!(printed("assign"), printed("memcpy"));
+        assert_eq!(printed("memset"), printed("literal"));
+        assert_ne!(printed("assign"), printed("memset"));
     }
 
     #[test]
