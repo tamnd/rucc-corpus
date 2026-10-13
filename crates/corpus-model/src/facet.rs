@@ -525,6 +525,14 @@ pub enum Facet {
     /// else. Only builds and runs on x86-64.
     GeneralRegsOnly,
 
+    /// Programs built with the flags of an i386 kernel, which must not call a libgcc helper.
+    ///
+    /// `-m32 -march=i686 -mregparm=3 -freg-struct-return` and no PIE, with calls under each
+    /// `regparm` count, through pointers and with structures returned in registers, and the 64 bit
+    /// operations GCC keeps inline. Each case defines the libgcc helpers to count their calls.
+    /// Needs a 32 bit C library, so the cases carry the `i386` tag.
+    I386Kernel,
+
     /// Programs with the code shapes objtool has to follow through a kernel object.
     ///
     /// objtool walks every function in every object and refuses one whose stack it cannot
@@ -701,6 +709,7 @@ impl Facet {
         Self::ConstantPAfterInline,
         Self::McmodelKernel,
         Self::GeneralRegsOnly,
+        Self::I386Kernel,
         Self::ObjtoolShapes,
         Self::NullPointerConstant,
         Self::ConstIce,
@@ -815,6 +824,7 @@ impl Facet {
             Self::ConstantPAfterInline => "constant-p-after-inline",
             Self::McmodelKernel => "mcmodel-kernel",
             Self::GeneralRegsOnly => "general-regs-only",
+            Self::I386Kernel => "i386-kernel",
             Self::ObjtoolShapes => "objtool-shapes",
             Self::NullPointerConstant => "null-pointer-constant",
             Self::ConstIce => "const-ice",
@@ -978,6 +988,9 @@ impl Facet {
             Self::GeneralRegsOnly => {
                 "programs built with -mgeneral-regs-only that check no vector register moved"
             }
+            Self::I386Kernel => {
+                "programs built as an i386 kernel is, with regparm and no libgcc helper"
+            }
             Self::ObjtoolShapes => "the code shapes objtool follows through a kernel object",
             Self::NullPointerConstant => {
                 "__is_constexpr, is_const and the null pointer constants they rest on"
@@ -1103,6 +1116,7 @@ impl Facet {
             | Self::ConstantPAfterInline
             | Self::McmodelKernel
             | Self::GeneralRegsOnly
+            | Self::I386Kernel
             | Self::ObjtoolShapes
             | Self::NullPointerConstant
             | Self::ConstIce

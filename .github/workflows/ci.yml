@@ -132,7 +132,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --reference gcc-16 \
             --level O0 --level O2 --repeats 1 \
-            --exclude-tag aarch64 \
+            --exclude-tag aarch64 --exclude-tag i386 \
             --out reports-ci --no-pages
       - name: keep the reports
         if: always()
@@ -191,7 +191,7 @@ jobs:
           cargo run --release -p rucc-corpus -- run \
             --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
             --reference gcc-16 --level O0 --level O2 --repeats 3 \
-            --exclude-tag aarch64 \
+            --exclude-tag aarch64 --exclude-tag i386 \
             --out reports-ci --no-pages
       - name: what it said
         if: always()
@@ -245,6 +245,50 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: arm-reports
+          path: reports-ci/
+          if-no-files-found: ignore
+
+  # The cases built the way an i386 kernel is built, against both compilers.
+  #
+  # They need a 32-bit C library to link, so the other x86-64 jobs leave them out with
+  # `--exclude-tag i386`. GCC 16 links through its multilib package and rucc links through the
+  # i686 cross layout, so this job installs both. The cases define the libgcc helpers themselves
+  # and count each call, so a compiler that calls one gives a wrong answer here.
+  # rucc is built from the tip of its own repository, for the same reason as above.
+  i386:
+    name: rucc against gcc 16 on i386
+    needs: quick
+    runs-on: ubuntu-24.04
+    steps:
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16 gcc-16-multilib gcc-i686-linux-gnu
+          gcc-16 --version | head -1
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: run the corpus
+        run: |
+          cargo run --release -p rucc-corpus -- run \
+            --facet i386-kernel \
+            --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
+            --reference gcc-16 --level O0 --level O2 --repeats 1 \
+            --out reports-ci --no-pages --no-cache
+      - name: what it said
+        if: always()
+        run: cat reports-ci/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: i386-reports
           path: reports-ci/
           if-no-files-found: ignore
 
@@ -314,7 +358,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [quick, generated, reference, compiler, arm, windows]
+    needs: [quick, generated, reference, compiler, arm, i386, windows]
     runs-on: ubuntu-24.04
     steps:
       - name: every required job passed
