@@ -12,12 +12,12 @@ Everything between the two markers below is written by the last run. Everything 
 
 <!-- corpus:begin -->
 
-3646 programs, 3,780 files between them and 224,111 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `fc0c2efa3c9c0b1e`.
+3699 programs, 3,833 files between them and 226,055 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `788e7b880465a0a1`.
 
 | compiler | passed | wrong | rejected | not built yet | crashed |
 |---|---|---|---|---|---|
-| `gcc-16` | 17598 of 17598 | 0 | 0 | 0 | 0 |
-| `rucc` | 17422 of 17598 | 49 | 5 | 0 | 122 |
+| `gcc-16` | 17818 of 17818 | 0 | 0 | 0 | 0 |
+| `rucc` | 17811 of 17818 | 7 | 0 | 0 | 0 |
 
 The full report is in [reports/README.md](reports/README.md). What each facet cost is in [reports/cost.md](reports/cost.md), what went wrong is in [reports/failures.md](reports/failures.md), and the breakdown by phase of the plan is in [reports/phases/README.md](reports/phases/README.md).
 
