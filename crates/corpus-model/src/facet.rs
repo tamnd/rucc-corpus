@@ -323,6 +323,13 @@ pub enum Facet {
     /// after the name went out of use, and giving its bytes to something else there is a
     /// miscompilation rather than a frame that came out too big.
     StackSlots,
+    /// A copy or a clear of a block of known size, as loads and stores or as a call.
+    ///
+    /// A structure assignment, a `memcpy` or a `memset` of a size the compiler knows becomes a
+    /// run of moves up to a threshold and a call to the C library past it. The threshold is a
+    /// number in a table and it is only right if both sides of it were timed, which is what these
+    /// programs are for: the same copy and the same clear at sizes from two words to thirty two.
+    BlockCopy,
     /// Functions with a large frame, many locals, arrays, structs and calls, and a simple answer.
     ///
     /// A back end facet whose number is the frame rather than the time. Postgres has functions
@@ -685,6 +692,7 @@ impl Facet {
         Self::CompareFold,
         Self::FrameAddress,
         Self::StackSlots,
+        Self::BlockCopy,
         Self::FrameSize,
         Self::InterpreterDispatch,
         Self::BitBuiltins,
@@ -800,6 +808,7 @@ impl Facet {
             Self::CompareFold => "compare-fold",
             Self::FrameAddress => "frame-address",
             Self::StackSlots => "stack-slots",
+            Self::BlockCopy => "block-copy",
             Self::FrameSize => "frame-size",
             Self::InterpreterDispatch => "interpreter-dispatch",
             Self::BitBuiltins => "bit-builtins",
@@ -938,6 +947,7 @@ impl Facet {
             }
             Self::FrameAddress => "one local, used at a counted number of offsets",
             Self::StackSlots => "two things in the frame that may be the same bytes",
+            Self::BlockCopy => "a copy or a clear of a block of known size, as moves or as a call",
             Self::FrameSize => {
                 "large frames with a simple answer, to hold against gcc -fstack-usage"
             }
@@ -1092,6 +1102,7 @@ impl Facet {
             | Self::CompareFold
             | Self::FrameAddress
             | Self::StackSlots
+            | Self::BlockCopy
             | Self::FrameSize
             | Self::InterpreterDispatch
             | Self::BitBuiltins

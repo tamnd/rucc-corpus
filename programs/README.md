@@ -1,10 +1,10 @@
 # The corpus
 
-3655 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3699 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `8de94549a2d229efdb247b48493f4f468cc37727d5b164b41ba2b61db3458f9a`.
+Corpus digest `788e7b880465a0a16a35429af3a88c96a8781ab3ec20e391d7c9c8ec04d92cad`.
 
 ## floor (118 programs)
 
@@ -97,7 +97,7 @@ Transformations that need to look at more than one function at a time.
 | [`call-motion`](interprocedural/call-motion/README.md) | 36 | whether a call came out of a loop |
 | [`link-time-optimization`](interprocedural/link-time-optimization/README.md) | 20 | optimizing across a translation unit boundary |
 
-## backend (1026 programs)
+## backend (1070 programs)
 
 Everything below the machine independent IR, where the cost of a decision is measured in instructions rather than in operations.
 
@@ -125,6 +125,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`compare-fold`](backend/compare-fold/README.md) | 118 | a load and a comparison that reads it, on either side and against a constant |
 | [`frame-address`](backend/frame-address/README.md) | 6 | one local, used at a counted number of offsets |
 | [`stack-slots`](backend/stack-slots/README.md) | 6 | two things in the frame that may be the same bytes |
+| [`block-copy`](backend/block-copy/README.md) | 44 | a copy or a clear of a block of known size, as moves or as a call |
 | [`frame-size`](backend/frame-size/README.md) | 59 | large frames with a simple answer, to hold against gcc -fstack-usage |
 | [`interpreter-dispatch`](backend/interpreter-dispatch/README.md) | 54 | a threaded bytecode interpreter with many values alive across every dispatch |
 | [`bit-builtins`](backend/bit-builtins/README.md) | 22 | the bit counting builtins, over every position at both widths |
