@@ -1,19 +1,19 @@
 # The corpus
 
-3699 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3700 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `788e7b880465a0a16a35429af3a88c96a8781ab3ec20e391d7c9c8ec04d92cad`.
+Corpus digest `f6d19f2f1108a75e8d3dcd617bd91d2329472316eb8ef91baaf09859885dc9c4`.
 
-## floor (118 programs)
+## floor (119 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
 | facet | programs | what it is about |
 |---|---|---|
 | [`baseline`](floor/baseline/README.md) | 10 | programs with no optimization target, which every level must get right |
-| [`control-flow`](floor/control-flow/README.md) | 10 | the graph shapes the analyses under every pass have to get right |
+| [`control-flow`](floor/control-flow/README.md) | 11 | the graph shapes the analyses under every pass have to get right |
 | [`branch-probability`](floor/branch-probability/README.md) | 34 | the odds put on an edge before the program has ever run |
 | [`computed-goto`](floor/computed-goto/README.md) | 25 | the address of a label, and the indirect jump through it |
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |

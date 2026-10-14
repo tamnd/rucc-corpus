@@ -235,6 +235,7 @@ pub(crate) fn control_flow(sink: &mut Sink<'_>) {
         "switch-shared-arms",
         "computed-goto",
         "many-returns",
+        "no-return",
         "wide-if-chain",
         "two-exit-loop",
         "continue-and-break",
@@ -419,6 +420,33 @@ pub(crate) fn control_flow(sink: &mut Sink<'_>) {
                 program.check(Ty::I32, "classify(seed)", 3);
                 program.check(Ty::I32, "classify(seed * 7)", 4);
                 program.check(Ty::I32, "classify(seed * 100)", 5);
+            }
+            "no-return" => {
+                // Two functions with no `return` in them. The first falls off its end on both
+                // paths, so its exit is a block no statement names and the two arms meet there.
+                // The second never comes back: it ends in `exit`, so the reverse graph has no
+                // root for it until the fake exit is added. It is called only under a volatile
+                // zero, which keeps the program finishing while the graph keeps its shape.
+                program.top("_Noreturn void exit(int);");
+                program.top("static void bump(int *total, int by) {");
+                program.top("    if (by > 3)");
+                program.top("        *total += by * 2;");
+                program.top("    else");
+                program.top("        *total += by;");
+                program.top("}");
+                program.top("static _Noreturn void give_up(int code) {");
+                program.top("    exit(code);");
+                program.top("}");
+                program.input(Ty::I32, "seed", 5);
+                program.input(Ty::I32, "never", 0);
+                program.blank();
+                program.line("int total = 0;");
+                program.line("bump(&total, seed);");
+                program.line("bump(&total, seed - 3);");
+                program.line("if (never)");
+                program.line_at(1, "give_up(3);");
+                program.blank();
+                program.check(Ty::I32, "total", 12);
             }
             "wide-if-chain" => {
                 // Sixteen branches in a row, none of them nested. The dominator tree is one
