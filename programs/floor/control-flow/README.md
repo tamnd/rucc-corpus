@@ -2,7 +2,7 @@
 
 the graph shapes the analyses under every pass have to get right. Part of the floor phase of the M4 plan.
 
-10 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+11 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
@@ -13,6 +13,7 @@ the graph shapes the analyses under every pass have to get right. Part of the fl
 | [`control-flow.loop-with-no-exit.c17.c65b95a8`](control-flow.loop-with-no-exit.c17.c65b95a8.c) | shape=loop-with-no-exit | c17 | `1` |
 | [`control-flow.many-returns.c17.bc0f4b9a`](control-flow.many-returns.c17.bc0f4b9a.c) | shape=many-returns | c17 | `1 2 3 ...` and 2 more lines |
 | [`control-flow.nested-five-deep.c17.32b2c0c2`](control-flow.nested-five-deep.c17.32b2c0c2.c) | shape=nested-five-deep | c17 | `1215` |
+| [`control-flow.no-return.c17.f16ede41`](control-flow.no-return.c17.f16ede41.c) | shape=no-return | c17 | `12` |
 | [`control-flow.switch-shared-arms.c17.fbfcdf3d`](control-flow.switch-shared-arms.c17.fbfcdf3d.c) | shape=switch-shared-arms | c17 | `23` |
 | [`control-flow.two-exit-loop.c17.23b51e46`](control-flow.two-exit-loop.c17.23b51e46.c) | shape=two-exit-loop | c17 | `15 1` |
 | [`control-flow.wide-if-chain.c17.4cc10cde`](control-flow.wide-if-chain.c17.4cc10cde.c) | shape=wide-if-chain | c17 | `15` |
