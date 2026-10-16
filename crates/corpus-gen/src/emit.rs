@@ -141,6 +141,15 @@ impl Program {
         let _ = writeln!(self.expected, "{value}");
     }
 
+    /// Records that a line already added will print this text rather than a number.
+    ///
+    /// For the cases whose output is the point, such as a call to `printf` that a compiler may
+    /// turn into a call to `puts`. The same care as [`Self::expects`] applies.
+    pub fn expects_text(&mut self, text: &str) {
+        self.prints = true;
+        self.expected.push_str(text);
+    }
+
     /// Whether anything has been printed yet.
     #[must_use]
     pub const fn is_empty(&self) -> bool {
