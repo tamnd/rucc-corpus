@@ -67,6 +67,13 @@ pub enum Facet {
     DeadStore,
     /// Removing a branch whose condition is known, and the block it guarded.
     UnreachableCode,
+    /// Calls to `printf` and the string functions that gcc turns into other calls or constants.
+    ///
+    /// A `printf` of a format with no conversion in it is a `puts`, a `putchar` or nothing, a
+    /// `strlen` of a literal is a number, and a `strstr` for one character is a `strchr`. None of
+    /// it changes what the program prints, which is why every case prints what the calls wrote and
+    /// what they answered, so a fold that got the text or the number wrong is a wrong answer.
+    LibcallFold,
 
     /// Replacing a redundant computation with the earlier one that already produced it.
     CommonSubexpr,
@@ -631,6 +638,7 @@ impl Facet {
         Self::DeadCode,
         Self::DeadStore,
         Self::UnreachableCode,
+        Self::LibcallFold,
         Self::CommonSubexpr,
         Self::LoadForwarding,
         Self::CodeMotion,
@@ -747,6 +755,7 @@ impl Facet {
             Self::DeadCode => "dead-code",
             Self::DeadStore => "dead-store",
             Self::UnreachableCode => "unreachable-code",
+            Self::LibcallFold => "libcall-fold",
             Self::CommonSubexpr => "common-subexpr",
             Self::LoadForwarding => "load-forwarding",
             Self::CodeMotion => "code-motion",
@@ -868,6 +877,9 @@ impl Facet {
             Self::DeadCode => "removing a computation whose result nothing reads",
             Self::DeadStore => "removing a store a later store makes invisible",
             Self::UnreachableCode => "removing a branch with a known condition and its dead arm",
+            Self::LibcallFold => {
+                "calls to printf and the string functions that fold into other calls"
+            }
             Self::CommonSubexpr => "reusing an earlier computation instead of repeating it",
             Self::LoadForwarding => "replacing a load with the value already in that place",
             Self::CodeMotion => "moving a computation to where it runs no more often",
@@ -1040,7 +1052,8 @@ impl Facet {
             | Self::Reassociate
             | Self::DeadCode
             | Self::DeadStore
-            | Self::UnreachableCode => Phase::Local,
+            | Self::UnreachableCode
+            | Self::LibcallFold => Phase::Local,
             Self::CommonSubexpr
             | Self::LoadForwarding
             | Self::CodeMotion

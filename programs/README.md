@@ -1,10 +1,10 @@
 # The corpus
 
-3700 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3720 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `f6d19f2f1108a75e8d3dcd617bd91d2329472316eb8ef91baaf09859885dc9c4`.
+Corpus digest `0895b50ffef63eabdea10a20c232fa0b06a7bb7ce40f0c971331d107cf9df898`.
 
 ## floor (119 programs)
 
@@ -19,7 +19,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
 
-## local (413 programs)
+## local (433 programs)
 
 Transformations that need to see no further than one basic block, which is where the cheapest wins are.
 
@@ -36,6 +36,7 @@ Transformations that need to see no further than one basic block, which is where
 | [`dead-code`](local/dead-code/README.md) | 12 | removing a computation whose result nothing reads |
 | [`dead-store`](local/dead-store/README.md) | 12 | removing a store a later store makes invisible |
 | [`unreachable-code`](local/unreachable-code/README.md) | 8 | removing a branch with a known condition and its dead arm |
+| [`libcall-fold`](local/libcall-fold/README.md) | 20 | calls to printf and the string functions that fold into other calls |
 
 ## global (242 programs)
 

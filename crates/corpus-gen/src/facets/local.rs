@@ -25,6 +25,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     dead_code(sink);
     dead_store(sink);
     unreachable_code(sink);
+    libcall_fold(sink);
 }
 
 /// Every operation on every pair of literal operands.
@@ -2301,6 +2302,229 @@ fn unreachable_code(sink: &mut Sink<'_>) {
     }
 }
 
+/// The `libcall-fold` shapes that write something: the shape, and the call that writes it.
+///
+/// `p` and `c` are a word and a letter the compiler cannot see, and every other operand is a
+/// literal. What each one writes is [`libcall_writes`].
+const LIBCALL_PRINTS: &[(&str, &str)] = &[
+    ("printf-empty", "printf(\"\");"),
+    ("printf-char", "printf(\"x\");"),
+    ("printf-line", "printf(\"a line\\n\");"),
+    ("printf-text", "printf(\"no newline\");"),
+    ("printf-string-line", "printf(\"%s\\n\", p);"),
+    ("printf-letter", "printf(\"%c\", c);"),
+    ("fprintf-char", "fprintf(stdout, \"x\");"),
+    ("fprintf-text", "fprintf(stdout, \"some text\");"),
+    ("fprintf-string", "fprintf(stdout, \"%s\", p);"),
+    ("fprintf-letter", "fprintf(stdout, \"%c\", c);"),
+    ("fputs-char", "fputs(\"x\", stdout);"),
+    ("fputs-text", "fputs(\"some text\", stdout);"),
+];
+
+/// The words and letters each `libcall-fold` print shape is called with. The empty word is there
+/// because `puts("")` still writes the newline.
+const LIBCALL_WORDS: [(&str, char); 3] = [("alpha", 'a'), ("be", 'z'), ("", '!')];
+
+/// What one call of a `libcall-fold` print shape writes.
+fn libcall_writes(shape: &str, word: &str, letter: char) -> String {
+    match shape {
+        "printf-empty" => String::new(),
+        "printf-char" | "fprintf-char" | "fputs-char" => "x".to_owned(),
+        "printf-line" => "a line\n".to_owned(),
+        "printf-text" => "no newline".to_owned(),
+        "printf-string-line" => format!("{word}\n"),
+        "printf-letter" | "fprintf-letter" => letter.to_string(),
+        "fprintf-text" | "fputs-text" => "some text".to_owned(),
+        "fprintf-string" => word.to_owned(),
+        _ => unreachable!("{shape} is not a print shape"),
+    }
+}
+
+/// Where `found` is in `text` as the `AT` macro of a `libcall-fold` case prints it, with minus
+/// one for not there.
+fn libcall_at(found: Option<usize>) -> i128 {
+    found.map_or(-1, |at| at as i128)
+}
+
+/// The string functions of `libcall-fold` whose answer is a constant: the shape, and the calls
+/// with what each answers.
+fn libcall_answers() -> Vec<(&'static str, Vec<(String, i128)>)> {
+    let sign = |a: &str, b: &str| match a.cmp(b) {
+        std::cmp::Ordering::Less => -1,
+        std::cmp::Ordering::Equal => 0,
+        std::cmp::Ordering::Greater => 1,
+    };
+    let span =
+        |text: &str, set: &str| text.chars().take_while(|c| set.contains(*c)).count() as i128;
+    let hello = "hello";
+    let world = "hello world";
+    vec![
+        (
+            "strlen",
+            ["", "a", "hello, world"]
+                .iter()
+                .map(|text| (format!("strlen(\"{text}\")"), text.len() as i128))
+                .collect(),
+        ),
+        (
+            "strcmp",
+            [("abc", "abd"), ("abc", "abc"), ("b", "abc"), ("", "a")]
+                .iter()
+                .map(|(a, b)| (format!("sign(strcmp(\"{a}\", \"{b}\"))"), sign(a, b)))
+                .collect(),
+        ),
+        (
+            "strchr",
+            [('l', hello.find('l')), ('o', hello.find('o')), ('z', None)]
+                .iter()
+                .map(|(c, at)| (format!("AT(strchr(s, '{c}'), s)"), libcall_at(*at)))
+                .chain([("AT(strchr(s, 0), s)".to_owned(), libcall_at(Some(hello.len())))])
+                .collect(),
+        ),
+        (
+            "strstr",
+            ["wor", "", "xyz", "o"]
+                .iter()
+                .map(|needle| {
+                    (format!("AT(strstr(t, \"{needle}\"), t)"), libcall_at(world.find(needle)))
+                })
+                .collect(),
+        ),
+        (
+            "strspn",
+            [("aaabc", "ab"), ("abc", ""), ("xyz", "abc")]
+                .iter()
+                .map(|(text, set)| (format!("strspn(\"{text}\", \"{set}\")"), span(text, set)))
+                .collect(),
+        ),
+        (
+            "memchr",
+            [('l', 5), ('o', 4), ('h', 0)]
+                .iter()
+                .map(|(c, n)| {
+                    (format!("AT(memchr(s, '{c}', {n}), s)"), libcall_at(hello[..*n].find(*c)))
+                })
+                .collect(),
+        ),
+    ]
+}
+
+/// The `libcall-fold` shapes that look for one character with a function for looking for many,
+/// in a string the compiler cannot see: the shape, the call, and the strings it is asked about.
+const LIBCALL_SEARCHES: &[(&str, &str, char, [&str; 3])] = &[
+    ("strstr-one", "strstr(s, \"w\")", 'w', ["a wide window", "no match here", "w"]),
+    ("strpbrk-one", "strpbrk(s, \"c\")", 'c', ["abc", "xyz", "cc"]),
+];
+
+/// Calls to `printf` and the string functions, in the shapes gcc folds into other calls or into
+/// constants.
+///
+/// The print shapes are each alone in a function that is not inlined and handed a word and a
+/// letter it cannot know, so the call left in the assembly is the one the compiler chose for the
+/// format and not for the operands, and the program prints exactly what the calls wrote. The
+/// constant shapes ask the string functions about literals and print each answer, with `AT`
+/// turning a pointer into where it points, or minus one for none. The search shapes look for one
+/// character with `strstr` and `strpbrk`, which gcc turns into `strchr`, in strings it cannot see.
+fn libcall_fold(sink: &mut Sink<'_>) {
+    const AT: &str =
+        "#define AT(found, base) ((found) ? (long long)((const char *)(found) - (base)) : -1LL)";
+    for (shape, call) in LIBCALL_PRINTS {
+        if !sink.wants(Facet::LibcallFold) {
+            return;
+        }
+        let mut program = Program::new(format!("{call} with a word and a letter it cannot see"));
+        program.include("stdio.h");
+        let words: Vec<String> =
+            LIBCALL_WORDS.iter().map(|(word, _)| format!("\"{word}\"")).collect();
+        let letters: Vec<String> =
+            LIBCALL_WORDS.iter().map(|(_, letter)| format!("'{letter}'")).collect();
+        program.top(format!("static const char *const words[3] = {{ {} }};", words.join(", ")));
+        program.top(format!("static const char letters[3] = {{ {} }};", letters.join(", ")));
+        program.top("__attribute__((noinline))");
+        program.top("static void say(const char *p, int c) {");
+        program.top("    (void)p;");
+        program.top("    (void)c;");
+        program.top(format!("    {call}"));
+        program.top("}");
+        program.input(Ty::I32, "first", 0);
+        program.line("int calls = 0;");
+        program.line("for (int k = 0; k < 3; k++) {");
+        program.line_at(1, "say(words[first + k], letters[first + k]);");
+        program.line_at(1, "calls = calls + 1;");
+        program.line("}");
+        let written: String = LIBCALL_WORDS
+            .iter()
+            .map(|(word, letter)| libcall_writes(shape, word, *letter))
+            .collect();
+        program.expects_text(&written);
+        program.check(Ty::I32, "calls", 3);
+        sink.push_tagged(
+            Facet::LibcallFold,
+            Axes::of([("shape", *shape)]),
+            Dialect::C17,
+            program,
+            &["headers"],
+        );
+    }
+    for (shape, answers) in libcall_answers() {
+        if !sink.wants(Facet::LibcallFold) {
+            return;
+        }
+        let mut program =
+            Program::new(format!("{shape} of string literals, whose answer is a constant"));
+        program.include("string.h");
+        program.top(AT);
+        if shape == "strcmp" {
+            program.top("static int sign(int r) {");
+            program.top("    return (r > 0) - (r < 0);");
+            program.top("}");
+        }
+        program.line("const char *s = \"hello\";");
+        program.line("const char *t = \"hello world\";");
+        program.line("(void)s;");
+        program.line("(void)t;");
+        for (expr, value) in answers {
+            program.check(Ty::I64, &expr, value);
+        }
+        sink.push_tagged(
+            Facet::LibcallFold,
+            Axes::of([("shape", shape)]),
+            Dialect::C17,
+            program,
+            &["headers"],
+        );
+    }
+    for (shape, call, letter, texts) in LIBCALL_SEARCHES {
+        if !sink.wants(Facet::LibcallFold) {
+            return;
+        }
+        let mut program = Program::new(format!("{call} in a string it cannot see"));
+        program.include("string.h");
+        program.top(AT);
+        let quoted: Vec<String> = texts.iter().map(|text| format!("\"{text}\"")).collect();
+        program.top(format!("static const char *const texts[3] = {{ {} }};", quoted.join(", ")));
+        program.top("__attribute__((noinline))");
+        program.top("static long long find(const char *s) {");
+        program.top(format!("    return AT({call}, s);"));
+        program.top("}");
+        program.input(Ty::I32, "first", 0);
+        for (k, text) in texts.iter().enumerate() {
+            program.check(
+                Ty::I64,
+                &format!("find(texts[first + {k}])"),
+                libcall_at(text.find(*letter)),
+            );
+        }
+        sink.push_tagged(
+            Facet::LibcallFold,
+            Axes::of([("shape", *shape)]),
+            Dialect::C17,
+            program,
+            &["headers"],
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Options, Sink};
@@ -2311,6 +2535,32 @@ mod tests {
         let mut sink = Sink::new(&opts);
         super::generate(&mut sink);
         sink.into_cases()
+    }
+
+    #[test]
+    fn every_libcall_shape_prints_what_its_calls_wrote_and_answered() {
+        let cases = cases_for(Facet::LibcallFold);
+        assert_eq!(cases.len(), 12 + 6 + 2);
+        let output = |shape: &str| {
+            let case = cases.iter().find(|c| c.axes.get("shape") == Some(shape)).unwrap();
+            match &case.expect {
+                Expect::Output(text) => text.clone(),
+                Expect::Rejected(_) => panic!("{} should run", case.id),
+            }
+        };
+        assert_eq!(output("printf-empty"), "3\n");
+        assert_eq!(output("printf-string-line"), "alpha\nbe\n\n3\n");
+        assert_eq!(output("fprintf-letter"), "az!3\n");
+        assert_eq!(output("fputs-char"), "xxx3\n");
+        assert_eq!(output("strcmp"), "-1\n0\n1\n-1\n");
+        assert_eq!(output("strchr"), "2\n4\n-1\n5\n");
+        assert_eq!(output("strstr"), "6\n0\n-1\n4\n");
+        assert_eq!(output("memchr"), "2\n-1\n-1\n");
+        assert_eq!(output("strstr-one"), "2\n-1\n0\n");
+        assert_eq!(output("strpbrk-one"), "2\n-1\n0\n");
+        for case in &cases {
+            assert!(case.tags.iter().any(|tag| tag == "headers"), "{}", case.id);
+        }
     }
 
     #[test]
