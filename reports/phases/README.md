@@ -5,7 +5,7 @@ The phases are the ones in the M4 plan, in the order the plan does them, because
 | phase | facets | cases | lines | `rucc` passed | `rucc` code |
 |---|---|---|---|---|---|
 | [floor](floor.md) | 6 | 119 | 3,489 | 563 of 563 | 6% less |
-| [local](local.md) | 11 | 413 | 20,581 | 2065 of 2065 | 7% less |
+| [local](local.md) | 12 | 433 | 21,069 | 2165 of 2165 | 7% less |
 | [global](global.md) | 12 | 242 | 5,794 | 1210 of 1210 | 7% less |
 | [loops](loops.md) | 13 | 716 | 14,715 | 3580 of 3580 | 8% less |
 | [interprocedural](interprocedural.md) | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6% less |
