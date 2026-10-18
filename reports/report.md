@@ -1,6 +1,6 @@
 # rucc corpus report
 
-7 case results did not come out as expected. They are listed below, worst first.
+5 case results did not come out as expected. They are listed below, worst first.
 
 The corpus holds 3720 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `0895b50ffef63eab`.
 
@@ -15,9 +15,9 @@ That is 226,574 lines of C, 7.3 MiB, in 3,854 files, and it is the denominator f
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 7 failures | no |
+| `correctness` | 0 failures | 5 failures | no |
 | `code-quality:rucc` | within 10 percent | 4 percent more | yes |
-| `compile-throughput:rucc` | no worse | 45 percent less | yes |
+| `compile-throughput:rucc` | no worse | 46 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -30,7 +30,7 @@ That is 226,574 lines of C, 7.3 MiB, in 3,854 files, and it is the denominator f
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
 | `gcc-16` | 17923 | 17923 | 0 | 0 | 0 | 0 | 0 | 645 |
-| `rucc` | 17923 | 17916 | 7 | 0 | 0 | 0 | 0 | 645 |
+| `rucc` | 17923 | 17918 | 5 | 0 | 0 | 0 | 0 | 645 |
 
 ## What went wrong
 
@@ -124,42 +124,6 @@ Got:
 
 The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
-### `general-regs-only.struct-copy.c17.85360170`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved. This is a case about programs built with -mgeneral-regs-only that check no vector register moved, built at `-Os`.
-
-Expected:
-
-```
-2188897103
-```
-
-Got:
-
-```
-0
-```
-
-The program is `programs/correctness/general-regs-only/general-regs-only.struct-copy.c17.85360170.c` and the working directory of the failing build was kept under the run directory.
-
-### `general-regs-only.zeroed.c17.ca262554`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved. This is a case about programs built with -mgeneral-regs-only that check no vector register moved, built at `-Os`.
-
-Expected:
-
-```
-3575246495
-```
-
-Got:
-
-```
-0
-```
-
-The program is `programs/correctness/general-regs-only/general-regs-only.zeroed.c17.ca262554.c` and the working directory of the failing build was kept under the run directory.
-
 ## How big the code is
 
 Code size is the size of the executable sections, not the size of the file, so the runtime and the symbol table do not get counted as somebody's optimizer. Everything below is at `-O2` against `gcc-16` at `-O2`. The per facet figures are medians over the cases in that facet, because a facet holds programs of very different sizes and one tiny program should not set the facet's number. The headline for each compiler is the corpus total instead, every byte counted once, because that is the number that does not move when somebody adds a facet.
@@ -176,27 +140,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 82 percent more | not measured | inside the noise | 60 percent less |
-| `interpreter-dispatch` | backend | 54 | 66 percent more | not measured | inside the noise | 71 percent less |
+| `simd-lfind` | correctness | 30 | 82 percent more | not measured | inside the noise | 57 percent less |
+| `interpreter-dispatch` | backend | 54 | 66 percent more | not measured | inside the noise | 68 percent less |
 | `scheduling` | backend | 20 | 40 percent more | not measured | inside the noise | 45 percent less |
-| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 44 percent less |
-| `overflow-builtins` | correctness | 144 | 27 percent more | not measured | level | 57 percent less |
-| `bit-builtins` | backend | 22 | 16 percent more | not measured | inside the noise | 51 percent less |
-| `tail-call` | interprocedural | 36 | 12 percent more | not measured | inside the noise | 47 percent less |
-| `tail-dispatch` | interprocedural | 5 | 10 percent more | not measured | inside the noise | 62 percent less |
+| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 38 percent less |
+| `overflow-builtins` | correctness | 144 | 27 percent more | not measured | level | 53 percent less |
+| `bit-builtins` | backend | 22 | 16 percent more | not measured | inside the noise | 49 percent less |
+| `tail-call` | interprocedural | 36 | 12 percent more | not measured | inside the noise | 46 percent less |
+| `tail-dispatch` | interprocedural | 5 | 10 percent more | not measured | inside the noise | 64 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 41 percent less | not measured | inside the noise | 53 percent less |
-| `narrow-shift` | backend | 8 | 39 percent less | not measured | inside the noise | 63 percent less |
-| `conditional-store` | local | 20 | 38 percent less | not measured | inside the noise | 55 percent less |
-| `prune` | global | 15 | 36 percent less | not measured | inside the noise | 50 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 51 percent less |
-| `value-replacement` | global | 13 | 34 percent less | not measured | 88 percent more | 51 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | level | 45 percent less |
-| `frame-size` | backend | 59 | 27 percent less | not measured | inside the noise | 71 percent less |
+| `short-circuit` | local | 26 | 41 percent less | not measured | inside the noise | 54 percent less |
+| `narrow-shift` | backend | 8 | 39 percent less | not measured | inside the noise | 62 percent less |
+| `conditional-store` | local | 20 | 38 percent less | not measured | inside the noise | 54 percent less |
+| `prune` | global | 15 | 36 percent less | not measured | inside the noise | 47 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 54 percent less |
+| `value-replacement` | global | 13 | 34 percent less | not measured | inside the noise | 54 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 45 percent less |
+| `frame-size` | backend | 59 | 27 percent less | not measured | inside the noise | 68 percent less |
 
 ## What `-Os` does
 
@@ -245,7 +209,7 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 8 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
 | backend | 28 | 1070 | 73,343 | 5350 of 5350 | 6 percent less |
-| correctness | 26 | 789 | 97,991 in 855 files | 3293 of 3300 | 4 percent less |
+| correctness | 26 | 789 | 97,991 in 855 files | 3295 of 3300 | 4 percent less |
 
 ## What gcc-16 said about these programs
 
