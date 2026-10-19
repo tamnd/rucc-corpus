@@ -45,6 +45,11 @@
 //! a dozen more values alive across every jump and every call a handler makes. The same
 //! interpreter built over a `switch` sits beside it in each program and has to agree with it.
 //!
+//! `choice-across-call` is the third. It is `estimate_path_cost_size` from `postgres_fdw` cut
+//! down to the smaller of two costs, one of them back from a call, read after another call
+//! with both costs still alive, which is the shape rucc got wrong on AArch64 in
+//! tamnd/rucc#3722. Every case is plain C and runs anywhere.
+//!
 //! `crc32c-armv8` and `simd-lfind-neon` are the AArch64 halves of `crc32c` and `simd-lfind`,
 //! the ARMv8 CRC instructions from `arm_acle.h` and the NEON paths through `port/simd.h`. They
 //! live in [`arm`].
@@ -88,6 +93,7 @@ pub(crate) fn generate(sink: &mut Sink<'_>) {
     arm::generate(sink);
     frame_size(sink);
     interpreter_dispatch(sink);
+    choice_across_call(sink);
     bundle::generate(sink);
     dllimport::generate(sink);
 }
@@ -2815,9 +2821,142 @@ fn dispatch_program(interp: Interp) -> Program {
     program
 }
 
+/// The types a `choice-across-call` case is built over, as the axis names them and as C does.
+const CHOICE_TYPES: &[(&str, &str)] =
+    &[("double", "double"), ("float", "float"), ("long", "long long"), ("int", "int")];
+
+/// The arguments each `choice-across-call` case passes, `a`, `b`, `c` and `d` in turn.
+///
+/// The quotient `a / d` is exact in every one, and against the product `b * c` it comes out
+/// smaller, larger, equal and both negative, so each comparison takes each arm at least once.
+const CHOICE_INPUTS: &[[i128; 4]] = &[[2, 2, 3, 2], [24, 2, 3, 2], [12, 2, 3, 2], [-8, 3, -1, 4]];
+
+/// What `pick` returns for one set of arguments.
+///
+/// `pick` is `lt` for the smaller of the two and `ge` for the larger, `calls` is how many
+/// times `touch` stores one into a local between the choice and its use, and `kept` is how
+/// many of the quotient and the product are read again after those calls, the quotient on
+/// its own for one and their product for two.
+fn choice_model(input: [i128; 4], pick: &str, calls: usize, kept: usize) -> i128 {
+    let [a, b, c, d] = input;
+    let m = b * c;
+    let r = a / d;
+    let takes_r = if pick == "lt" { r < m } else { r >= m };
+    let x = if takes_r { r } else { m };
+    let touched = i128::try_from(calls).unwrap_or(0);
+    match kept {
+        0 => x * touched,
+        1 => x * touched + r,
+        _ => x * touched + r * m,
+    }
+}
+
+/// A value picked between two, one from a call, and read again after more calls.
+///
+/// This is `estimate_path_cost_size` from `postgres_fdw` cut down to the part rucc got wrong
+/// in tamnd/rucc#3722. `pick` multiplies two of its arguments into `m`, passes the quotient of
+/// the other two through a call into `r`, keeps one of them in `x` and calls out again before
+/// it reads `x`. The axes are the type of all four, the comparison that picks, how many calls
+/// stand between the choice and its use, and how many of `r` and `m` are read again after
+/// them, which is what keeps them in the registers a call preserves next to `x`. With both
+/// kept, one call, `double`, `lt` and `-O2` on AArch64, rucc 0.30.9 moved the copy for each
+/// arm in front of the branch, one after the other, and returned twelve where the answer is
+/// seven.
+///
+/// Every argument is a small integer and every quotient is exact, so the answer is the same
+/// integer in every type and is checked as one.
+fn choice_across_call(sink: &mut Sink<'_>) {
+    const PICKS: &[&str] = &["lt", "ge"];
+    const CALLS: &[usize] = &[1, 2];
+    const KEPT: &[usize] = &[0, 1, 2];
+    for &(name, c_type) in CHOICE_TYPES {
+        for &pick in PICKS {
+            for &calls in CALLS {
+                for &kept in KEPT {
+                    if !sink.wants(Facet::ChoiceAcrossCall) {
+                        return;
+                    }
+                    let axes = Axes::of([
+                        ("type", name),
+                        ("pick", pick),
+                        ("calls", &calls.to_string()),
+                        ("kept", &kept.to_string()),
+                    ]);
+                    sink.push_tagged(
+                        Facet::ChoiceAcrossCall,
+                        axes,
+                        Dialect::C17,
+                        choice_program(c_type, pick, calls, kept),
+                        &["gnu", PROVENANCE],
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// One `choice-across-call` case.
+fn choice_program(ty: &str, pick: &str, calls: usize, kept: usize) -> Program {
+    let after = if calls == 1 { "one more call" } else { "two more calls" };
+    let alive = match kept {
+        0 => "neither",
+        1 => "the one from the call",
+        _ => "both",
+    };
+    let mut program = Program::new(format!(
+        "the {pick} pick of two {ty} values, one from a call, read after {after} with {alive} \
+         still alive"
+    ));
+    program.top("__attribute__((noinline))");
+    program.top(format!("static {ty} clamp({ty} v) {{"));
+    program.top("    return v;");
+    program.top("}");
+    program.top("__attribute__((noinline))");
+    program.top(format!("static void touch({ty} *p) {{"));
+    program.top("    *p = 1;");
+    program.top("}");
+    program.top("__attribute__((noinline))");
+    program.top(format!("static {ty} pick({ty} a, {ty} b, {ty} c, {ty} d) {{"));
+    program.top(format!("    {ty} m = b * c;"));
+    program.top(format!("    {ty} r = clamp(a / d);"));
+    let op = if pick == "lt" { "<" } else { ">=" };
+    program.top(format!("    {ty} x = r {op} m ? r : m;"));
+    let mut touched = Vec::new();
+    for i in 0..calls {
+        program.top(format!("    {ty} t{i};"));
+        program.top(format!("    touch(&t{i});"));
+        touched.push(format!("t{i}"));
+    }
+    let mut result =
+        if calls == 1 { "x * t0".to_string() } else { format!("x * ({})", touched.join(" + ")) };
+    match kept {
+        0 => {}
+        1 => result.push_str(" + r"),
+        _ => result.push_str(" + r * m"),
+    }
+    program.top(format!("    return {result};"));
+    program.top("}");
+
+    for (k, input) in CHOICE_INPUTS.iter().enumerate() {
+        for (arg, value) in ["a", "b", "c", "d"].iter().zip(input) {
+            program.input(Ty::I64, &format!("{arg}{k}"), *value);
+        }
+    }
+    for (k, input) in CHOICE_INPUTS.iter().enumerate() {
+        program.check(
+            Ty::I64,
+            &format!("(long long)pick(({ty})a{k}, ({ty})b{k}, ({ty})c{k}, ({ty})d{k})"),
+            choice_model(*input, pick, calls, kept),
+        );
+    }
+    program
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Exact, INTS, Int, Interp, crc32c, int_literal, operand_types};
+    use super::{
+        CHOICE_INPUTS, Exact, INTS, Int, Interp, choice_model, crc32c, int_literal, operand_types,
+    };
     use crate::{Options, Sink};
     use corpus_model::{Case, Facet};
 
@@ -2847,6 +2986,7 @@ mod tests {
             Facet::SimdLfind,
             Facet::FrameSize,
             Facet::InterpreterDispatch,
+            Facet::ChoiceAcrossCall,
         ] {
             assert!(cases.iter().any(|case| case.facet == facet), "nothing for {facet}");
         }
@@ -2861,6 +3001,23 @@ mod tests {
             let needs =
                 matches!(case.facet, Facet::TargetAttribute | Facet::Crc32c | Facet::SimdLfind);
             assert_eq!(case.has_tag("x86-64"), needs, "{}", case.id);
+        }
+    }
+
+    #[test]
+    fn the_reduced_case_gives_seven_and_twelve_is_the_wrong_arm() {
+        let reduced = CHOICE_INPUTS[0];
+        // rucc 0.30.9 returned twelve, the product taken as the smaller.
+        assert_eq!(choice_model(reduced, "lt", 1, 2), 7);
+        for pick in ["lt", "ge"] {
+            let arms: Vec<i128> =
+                CHOICE_INPUTS.iter().map(|input| choice_model(*input, pick, 1, 0)).collect();
+            let r: Vec<i128> = CHOICE_INPUTS.iter().map(|[a, _, _, d]| a / d).collect();
+            assert!(arms.iter().zip(&r).any(|(x, r)| x == r), "{pick} never takes r");
+            assert!(arms.iter().zip(&r).any(|(x, r)| x != r), "{pick} never takes m");
+        }
+        for [a, _, _, d] in CHOICE_INPUTS {
+            assert_eq!(a % d, 0, "{a} / {d} is not exact");
         }
     }
 
