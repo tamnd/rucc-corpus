@@ -4,20 +4,20 @@ Transformations that need to look at more than one function at a time.
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`inline`](../../programs/interprocedural/inline/README.md) | 36 | 1,200 | 180 of 180 | 5% less | 39% less | 66% more |
-| [`tail-call`](../../programs/interprocedural/tail-call/README.md) | 36 | 876 | 180 of 180 | 12% more | 46% less | 66% more |
-| [`tail-dispatch`](../../programs/interprocedural/tail-dispatch/README.md) | 5 | 893 | 25 of 25 | 10% more | 64% less | 48% less |
-| [`called-once`](../../programs/interprocedural/called-once/README.md) | 5 | 413 | 25 of 25 | 1% less | 59% less | level |
-| [`function-purity`](../../programs/interprocedural/function-purity/README.md) | 28 | 636 | 140 of 140 | 7% less | 43% less | level |
-| [`constant-args`](../../programs/interprocedural/constant-args/README.md) | 36 | 792 | 180 of 180 | 6% less | 42% less | 66% more |
-| [`unused-params`](../../programs/interprocedural/unused-params/README.md) | 44 | 948 | 220 of 220 | 7% less | 39% less | 67% more |
-| [`unused-returns`](../../programs/interprocedural/unused-returns/README.md) | 36 | 912 | 180 of 180 | 7% less | 44% less | 67% more |
-| [`declared-purity`](../../programs/interprocedural/declared-purity/README.md) | 32 | 856 in 64 files | 160 of 160 | 14% less | 55% less | 64% more |
-| [`reachability`](../../programs/interprocedural/reachability/README.md) | 9 | 247 | 45 of 45 | 7% less | 36% less | 65% more |
-| [`devirtualize`](../../programs/interprocedural/devirtualize/README.md) | 4 | 80 | 20 of 20 | 6% less | 42% less | 40% less |
-| [`memory-effects`](../../programs/interprocedural/memory-effects/README.md) | 24 | 760 | 120 of 120 | 6% less | 48% less | 42% less |
-| [`call-motion`](../../programs/interprocedural/call-motion/README.md) | 36 | 1,004 in 48 files | 180 of 180 | 5% less | 49% less | 39% less |
-| [`link-time-optimization`](../../programs/interprocedural/link-time-optimization/README.md) | 20 | 556 in 44 files | 100 of 100 | 6% less | 63% less | level |
+| [`inline`](../../programs/interprocedural/inline/README.md) | 36 | 1,200 | 180 of 180 | 5% less | 42% less | 19% less |
+| [`tail-call`](../../programs/interprocedural/tail-call/README.md) | 36 | 876 | 180 of 180 | 12% more | 44% less | 24% less |
+| [`tail-dispatch`](../../programs/interprocedural/tail-dispatch/README.md) | 5 | 893 | 25 of 25 | 10% more | 58% less | level |
+| [`called-once`](../../programs/interprocedural/called-once/README.md) | 5 | 413 | 25 of 25 | 1% less | 62% less | 1035% more |
+| [`function-purity`](../../programs/interprocedural/function-purity/README.md) | 28 | 636 | 140 of 140 | 7% less | 42% less | 24% less |
+| [`constant-args`](../../programs/interprocedural/constant-args/README.md) | 36 | 792 | 180 of 180 | 6% less | 42% less | 21% less |
+| [`unused-params`](../../programs/interprocedural/unused-params/README.md) | 44 | 948 | 220 of 220 | 7% less | 43% less | 19% less |
+| [`unused-returns`](../../programs/interprocedural/unused-returns/README.md) | 36 | 912 | 180 of 180 | 7% less | 43% less | 21% less |
+| [`declared-purity`](../../programs/interprocedural/declared-purity/README.md) | 32 | 856 in 64 files | 160 of 160 | 14% less | 57% less | 20% less |
+| [`reachability`](../../programs/interprocedural/reachability/README.md) | 9 | 247 | 45 of 45 | 7% less | 41% less | 17% less |
+| [`devirtualize`](../../programs/interprocedural/devirtualize/README.md) | 4 | 80 | 20 of 20 | 6% less | 46% less | 1085% more |
+| [`memory-effects`](../../programs/interprocedural/memory-effects/README.md) | 24 | 760 | 120 of 120 | 6% less | 48% less | 44% less |
+| [`call-motion`](../../programs/interprocedural/call-motion/README.md) | 36 | 1,004 in 48 files | 180 of 180 | 5% less | 49% less | 27% less |
+| [`link-time-optimization`](../../programs/interprocedural/link-time-optimization/README.md) | 20 | 556 in 44 files | 100 of 100 | 6% less | 67% less | 32% less |
 
 The reference compiler said it took 2121 transformations in this phase and wanted 5369 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
 
