@@ -363,6 +363,18 @@ pub enum Facet {
     /// interpreter is built a second time over a `switch`, the way Postgres builds it for a
     /// compiler without computed goto, and the two have to agree.
     InterpreterDispatch,
+    /// A value picked between two, one of them from a call, and read again after more calls.
+    ///
+    /// A back end facet, because what goes wrong is where the choice lives across the calls.
+    /// `estimate_path_cost_size` in `postgres_fdw` takes the smaller of two costs, one of them
+    /// back from a call, and reads it after calling out again, with both costs still alive. A
+    /// back end that moves the copy for each arm of the choice in front of the branch has to
+    /// know the register it writes is dead on the other arm. rucc lost that for the floating
+    /// registers a call preserves on AArch64, wrote both arms one after the other, and the cost
+    /// came out as the larger one. The cases are that function cut down, over the types, the
+    /// comparison, the calls between the choice and its use and how many of the two values are
+    /// read again after them.
+    ChoiceAcrossCall,
     /// The bit counting builtins, which a back end has to have an instruction for.
     BitBuiltins,
     /// Conversions between the floating types and the integer ones, in both directions.
@@ -703,6 +715,7 @@ impl Facet {
         Self::BlockCopy,
         Self::FrameSize,
         Self::InterpreterDispatch,
+        Self::ChoiceAcrossCall,
         Self::BitBuiltins,
         Self::FloatConversion,
         Self::LongDouble,
@@ -820,6 +833,7 @@ impl Facet {
             Self::BlockCopy => "block-copy",
             Self::FrameSize => "frame-size",
             Self::InterpreterDispatch => "interpreter-dispatch",
+            Self::ChoiceAcrossCall => "choice-across-call",
             Self::BitBuiltins => "bit-builtins",
             Self::FloatConversion => "float-conversion",
             Self::LongDouble => "long-double",
@@ -965,6 +979,9 @@ impl Facet {
             }
             Self::InterpreterDispatch => {
                 "a threaded bytecode interpreter with many values alive across every dispatch"
+            }
+            Self::ChoiceAcrossCall => {
+                "the smaller or larger of two values, one from a call, read after more calls"
             }
             Self::BitBuiltins => "the bit counting builtins, over every position at both widths",
             Self::FloatConversion => "conversions between the floating types and the integer ones",
@@ -1118,6 +1135,7 @@ impl Facet {
             | Self::BlockCopy
             | Self::FrameSize
             | Self::InterpreterDispatch
+            | Self::ChoiceAcrossCall
             | Self::BitBuiltins
             | Self::FloatConversion
             | Self::LongDouble => Phase::Backend,
