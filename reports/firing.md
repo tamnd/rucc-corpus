@@ -18,12 +18,13 @@ A pass that never fires on programs written for the transformations it makes is 
 
 ## `rucc` at -O1
 
-29 passes ran on 3615 cases, and 6 of them never fired.
+30 passes ran on 3615 cases, and 7 of them never fired.
 
 ### Never fired
 
 | pass | ran on | missed | what it said |
 |---|--:|--:|---|
+| `rejoin` | 3615 | 0 |  |
 | `constant-p` | 3615 | 0 |  |
 | `hoist` | 3615 | 0 |  |
 | `discharge` | 3615 | 0 |  |
@@ -54,26 +55,28 @@ A pass that never fires on programs written for the transformations it makes is 
 | `header-copy` | 2055 of 3615 | 7882 | 979 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | loop header copied in front of the loop so the test is at the bottom (4344) |
 | `licm` | 716 of 3615 | 4942 | 6350 | division 72, crc32c 64, loop-unswitch 64 | computation moved in front of the loop, nothing in the loop changes it (4942) |
 | `simplify-cfg` | 2637 of 3615 | 52968 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (25396) |
-| `number` | 3296 of 3615 | 183000 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (154365) |
+| `number` | 3369 of 3615 | 209295 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (154365) |
 | `load-forward` | 410 of 3615 | 5015 | 218 | interpreter-dispatch 54, builtin-setjmp 48, induction-variable 32 | load replaced by what an earlier load of the same address read (2763) |
+| `rejoin` | 0 of 3615 | 0 | 0 |  |  |
 | `constant-p` | 0 of 3615 | 0 | 0 |  |  |
 | `hoist` | 0 of 3615 | 0 | 0 |  |  |
 | `discharge` | 0 of 3615 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3615 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
 | `plane-sink` | 0 of 3615 | 0 | 0 |  |  |
-| `dce` | 3234 of 3615 | 57181 | 45507 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with no effects and no users removed (57180) |
+| `dce` | 3234 of 3615 | 57179 | 45507 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with no effects and no users removed (57178) |
 | `loop-delete` | 143 of 3615 | 562 | 4378 | loop-deletion 64, function-purity 24, register-pressure 12 | block nothing reaches removed (294) |
 
 ## `rucc` at -O2
 
-49 passes ran on 3631 cases, and 7 of them never fired.
+50 passes ran on 3631 cases, and 8 of them never fired.
 
 ### Never fired
 
 | pass | ran on | missed | what it said |
 |---|--:|--:|---|
 | `lanes` | 3631 | 0 |  |
+| `rejoin` | 3631 | 0 |  |
 | `hoist` | 3631 | 0 |  |
 | `plane-sink` | 3631 | 0 |  |
 | `split` | 3631 | 0 |  |
@@ -112,11 +115,12 @@ A pass that never fires on programs written for the transformations it makes is 
 | `unroll` | 1173 of 3631 | 3284 | 3143 | compare-fold 118, store-fold-constant 110, crc32c 64 | block nothing reaches removed (1642) |
 | `simplify-cfg` | 2669 of 3631 | 158452 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (66658) |
 | `lanes` | 0 of 3631 | 0 | 0 |  |  |
-| `number` | 3375 of 3631 | 309769 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (271726) |
+| `number` | 3445 of 3631 | 336049 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (271726) |
 | `load-forward` | 529 of 3631 | 6914 | 250 | crc32c 64, interpreter-dispatch 54, builtin-setjmp 48 | load replaced by the value a store in the same block wrote there (3889) |
 | `redundant-load` | 165 of 3631 | 408 | 30427 | builtin-setjmp 48, frame-size 27, target-attribute 26 | load replaced by the value of the store the walk found (232) |
-| `dse` | 273 of 3631 | 1863 | 733 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1859) |
+| `dse` | 273 of 3631 | 1863 | 720 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1859) |
 | `bswap` | 107 of 3631 | 273 | 0 | crc32c 64, target-attribute 24, bit-liveness 8 | loads of neighbouring bytes merged into one load (188) |
+| `rejoin` | 0 of 3631 | 0 | 0 |  |  |
 | `constant-p` | 1 of 3631 | 5 | 1 | constant-p-after-inline 1 | __builtin_constant_p answered (1) |
 | `subscript` | 44 of 3631 | 77 | 0 | libcall-fold 6, store-fold-constant 6, vla-and-alloca 5 | constant of a narrow subscript moved out into the address (77) |
 | `hoist` | 0 of 3631 | 0 | 0 |  |  |
@@ -130,20 +134,21 @@ A pass that never fires on programs written for the transformations it makes is 
 | `discharge` | 0 of 3631 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3631 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3631 | 0 | 0 |  |  |
-| `dce` | 3325 of 3631 | 86327 | 49219 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86327) |
+| `dce` | 3325 of 3631 | 86325 | 49219 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86325) |
 | `gcm` | 196 of 3631 | 6149 | 601 | frame-size 48, sigsetjmp 42, simd-lfind 30 | computation moved down to where its reads need it (5932) |
 | `loop-delete` | 105 of 3631 | 512 | 3057 | loop-deletion 48, loop-idiom 16, bit-loops 8 | block nothing reaches removed (282) |
 | `adce` | 52 of 3631 | 207 | 0 | frame-size 27, loop-deletion 16, branch-probability 4 | instruction nothing necessary reads removed (123) |
 
 ## `rucc` at -O3
 
-49 passes ran on 3615 cases, and 8 of them never fired.
+50 passes ran on 3615 cases, and 9 of them never fired.
 
 ### Never fired
 
 | pass | ran on | missed | what it said |
 |---|--:|--:|---|
 | `lanes` | 3615 | 0 |  |
+| `rejoin` | 3615 | 0 |  |
 | `constant-p` | 3615 | 0 |  |
 | `hoist` | 3615 | 0 |  |
 | `plane-sink` | 3615 | 0 |  |
@@ -183,11 +188,12 @@ A pass that never fires on programs written for the transformations it makes is 
 | `unroll` | 1167 of 3615 | 3382 | 3133 | compare-fold 118, store-fold-constant 110, crc32c 64 | block nothing reaches removed (1691) |
 | `simplify-cfg` | 2653 of 3615 | 163585 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (68190) |
 | `lanes` | 0 of 3615 | 0 | 0 |  |  |
-| `number` | 3363 of 3615 | 317546 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (278658) |
+| `number` | 3433 of 3615 | 343791 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (278658) |
 | `load-forward` | 523 of 3615 | 7005 | 250 | crc32c 64, interpreter-dispatch 54, builtin-setjmp 48 | load replaced by the value a store in the same block wrote there (3868) |
 | `redundant-load` | 197 of 3615 | 458 | 32593 | builtin-setjmp 48, crc32c 32, frame-size 27 | load replaced by the value of the store the walk found (264) |
-| `dse` | 273 of 3615 | 1863 | 733 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1859) |
+| `dse` | 273 of 3615 | 1863 | 720 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1859) |
 | `bswap` | 107 of 3615 | 357 | 0 | crc32c 64, target-attribute 24, bit-liveness 8 | loads of neighbouring bytes merged into one load (160) |
+| `rejoin` | 0 of 3615 | 0 | 0 |  |  |
 | `constant-p` | 0 of 3615 | 0 | 0 |  |  |
 | `subscript` | 44 of 3615 | 77 | 0 | libcall-fold 6, store-fold-constant 6, vla-and-alloca 5 | constant of a narrow subscript moved out into the address (77) |
 | `hoist` | 0 of 3615 | 0 | 0 |  |  |
@@ -201,19 +207,20 @@ A pass that never fires on programs written for the transformations it makes is 
 | `discharge` | 0 of 3615 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3615 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
-| `dce` | 3309 of 3615 | 86807 | 49390 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86807) |
+| `dce` | 3309 of 3615 | 86805 | 49390 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86805) |
 | `gcm` | 196 of 3615 | 6049 | 649 | frame-size 48, sigsetjmp 42, simd-lfind 30 | computation moved down to where its reads need it (5832) |
 | `loop-delete` | 105 of 3615 | 512 | 3028 | loop-deletion 48, loop-idiom 16, bit-loops 8 | block nothing reaches removed (282) |
 | `adce` | 52 of 3615 | 207 | 0 | frame-size 27, loop-deletion 16, branch-probability 4 | instruction nothing necessary reads removed (123) |
 
 ## `rucc` at -Os
 
-36 passes ran on 3615 cases, and 5 of them never fired.
+37 passes ran on 3615 cases, and 6 of them never fired.
 
 ### Never fired
 
 | pass | ran on | missed | what it said |
 |---|--:|--:|---|
+| `rejoin` | 3615 | 0 |  |
 | `constant-p` | 3615 | 0 |  |
 | `discharge` | 3615 | 0 |  |
 | `dead-plane` | 3615 | 0 |  |
@@ -246,10 +253,11 @@ A pass that never fires on programs written for the transformations it makes is 
 | `canon` | 2144 of 3615 | 9808 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | back edges to one header routed through one latch (4471) |
 | `header-copy-small` | 2094 of 3615 | 8003 | 973 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | loop header copied in front of the loop so the test is at the bottom (4390) |
 | `simplify-cfg` | 2636 of 3615 | 53965 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (26517) |
-| `number` | 3296 of 3615 | 182175 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (153404) |
+| `number` | 3369 of 3615 | 208470 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (153404) |
 | `load-forward` | 450 of 3615 | 5054 | 218 | interpreter-dispatch 54, builtin-setjmp 48, loop-restructure 36 | load replaced by what an earlier load of the same address read (2763) |
-| `dse` | 245 of 3615 | 1706 | 374 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1702) |
+| `dse` | 245 of 3615 | 1706 | 361 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1702) |
 | `bswap` | 107 of 3615 | 129 | 0 | crc32c 64, target-attribute 24, bit-liveness 8 | loads of neighbouring bytes merged into one load (92) |
+| `rejoin` | 0 of 3615 | 0 | 0 |  |  |
 | `constant-p` | 0 of 3615 | 0 | 0 |  |  |
 | `reassoc` | 703 of 3615 | 1648 | 0 | register-pressure 60, sigsetjmp 56, interpreter-dispatch 54 | integer tree rebuilt in rank order (1012) |
 | `discharge` | 0 of 3615 | 0 | 0 |  |  |
@@ -257,7 +265,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
 | `plane-sink` | 0 of 3615 | 0 | 0 |  |  |
 | `loop-idiom` | 53 of 3615 | 53 | 1885 | loop-idiom 40, alias-analysis 8, load-forwarding 4 | loop that stores one byte over a range replaced by memset (29) |
-| `dce` | 3254 of 3615 | 60271 | 43845 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (60271) |
+| `dce` | 3254 of 3615 | 60269 | 43845 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (60269) |
 | `loop-delete` | 166 of 3615 | 601 | 4424 | loop-deletion 64, loop-idiom 40, register-pressure 12 | block nothing reaches removed (340) |
 | `adce` | 28 of 3615 | 112 | 0 | loop-deletion 16, branch-probability 8, function-purity 4 | instruction nothing necessary reads removed (48) |
 

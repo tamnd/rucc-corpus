@@ -42,8 +42,8 @@ Every count is per case per level, so a corpus of a thousand programs built at f
 | target | wanted | this run | met |
 |---|---|---|---|
 | `correctness` | every case prints the answer the generator computed, on every compiler, at every level | 7.000 | no |
-| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2, counted over the whole corpus by byte | 1.024 | yes |
-| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.538 | yes |
+| `code-quality:rucc` | the code rucc produces at -O2 is within ten percent of what gcc-16 produces at -O2, counted over the whole corpus by byte | 1.018 | yes |
+| `compile-throughput:rucc` | rucc compiles the corpus at least as fast as gcc-16 does, which is the corpus proxy for the throughput target in spec 00 | 0.566 | yes |
 | `size-model:rucc` | the code rucc produces at -Os is no larger than the code it produces at -O2, and where gcc-16 found something to trade away rucc found something too, since -Os is a different cost function and not a cheaper -O2 | 1.000 | yes |
 
 ## Running this yourself

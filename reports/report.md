@@ -17,7 +17,7 @@ That is 229,598 lines of C, 7.4 MiB, in 3,902 files, and it is the denominator f
 |---|---|---|---|
 | `correctness` | 0 failures | 7 failures | no |
 | `code-quality:rucc` | within 10 percent | 2 percent more | yes |
-| `compile-throughput:rucc` | no worse | 46 percent less | yes |
+| `compile-throughput:rucc` | no worse | 43 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -176,27 +176,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 82 percent more | not measured | inside the noise | 60 percent less |
-| `interpreter-dispatch` | backend | 54 | 61 percent more | not measured | inside the noise | 70 percent less |
-| `scheduling` | backend | 20 | 40 percent more | not measured | inside the noise | 47 percent less |
-| `long-double` | backend | 10 | 37 percent more | not measured | inside the noise | 44 percent less |
-| `overflow-builtins` | correctness | 144 | 26 percent more | not measured | inside the noise | 58 percent less |
-| `bit-builtins` | backend | 22 | 16 percent more | not measured | level | 50 percent less |
-| `tail-call` | interprocedural | 36 | 12 percent more | not measured | inside the noise | 45 percent less |
-| `tail-dispatch` | interprocedural | 5 | 10 percent more | not measured | inside the noise | 62 percent less |
+| `simd-lfind` | correctness | 30 | 76 percent more | not measured | inside the noise | 55 percent less |
+| `interpreter-dispatch` | backend | 54 | 60 percent more | not measured | inside the noise | 67 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 42 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 37 percent less |
+| `overflow-builtins` | correctness | 144 | 26 percent more | not measured | inside the noise | 54 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 47 percent less |
+| `tail-dispatch` | interprocedural | 5 | 7 percent more | not measured | inside the noise | 57 percent less |
+| `tail-call` | interprocedural | 36 | 6 percent more | not measured | inside the noise | 39 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 41 percent less | not measured | inside the noise | 53 percent less |
-| `conditional-store` | local | 20 | 39 percent less | not measured | inside the noise | 56 percent less |
-| `narrow-shift` | backend | 8 | 39 percent less | not measured | inside the noise | 62 percent less |
-| `prune` | global | 15 | 36 percent less | not measured | inside the noise | 48 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 54 percent less |
-| `value-replacement` | global | 13 | 34 percent less | not measured | 83 percent more | 52 percent less |
-| `value-settled` | local | 13 | 30 percent less | not measured | inside the noise | 52 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 45 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 50 percent less |
+| `short-circuit` | local | 26 | 41 percent less | not measured | inside the noise | 48 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 55 percent less |
+| `prune` | global | 15 | 37 percent less | not measured | inside the noise | 49 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 49 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 48 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 46 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 43 percent less |
 
 ## What `-Os` does
 
@@ -205,7 +205,7 @@ Every other number in this report is one compiler against another at the same le
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
 | `gcc-16` | 3631 | 4 percent less | 1161 |
-| `rucc` | 3631 | level | 1179 |
+| `rucc` | 3631 | level | 1934 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -217,21 +217,21 @@ Where `-Os` saves the most:
 |---|---|---|
 | `simd-lfind` | 30 | 19 percent less |
 | `scheduling` | 20 | 17 percent less |
-| `compare-fold` | 118 | 10 percent less |
-| `store-fold-constant` | 118 | 9 percent less |
-| `tail-call` | 36 | 9 percent less |
-| `load-fold` | 40 | 7 percent less |
+| `compare-fold` | 118 | 11 percent less |
+| `store-fold-constant` | 118 | 10 percent less |
+| `block-copy` | 44 | 8 percent less |
+| `load-fold` | 40 | 8 percent less |
 
 Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
+| `loop-unroll-shape` | 80 | 5 percent more |
 | `loop-rotate` | 64 | 5 percent more |
-| `loop-invariant` | 32 | 5 percent more |
-| `stack-slots` | 6 | 8 percent more |
-| `loop-restructure` | 48 | 10 percent more |
-| `induction-variable` | 42 | 11 percent more |
-| `loop-idiom` | 78 | 11 percent more |
+| `stack-slots` | 6 | 6 percent more |
+| `induction-variable` | 42 | 8 percent more |
+| `loop-idiom` | 78 | 8 percent more |
+| `loop-restructure` | 48 | 9 percent more |
 
 ## By phase of the plan
 
@@ -240,12 +240,12 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | phase | facets | cases | lines | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|---|
 | floor | 6 | 119 | 3,489 | 563 of 563 | 6 percent less |
-| local | 12 | 433 | 21,069 | 2165 of 2165 | 7 percent less |
-| global | 12 | 242 | 5,794 | 1210 of 1210 | 7 percent less |
-| loops | 13 | 716 | 14,715 | 3580 of 3580 | 8 percent less |
+| local | 12 | 433 | 21,069 | 2165 of 2165 | 6 percent less |
+| global | 12 | 242 | 5,794 | 1210 of 1210 | 6 percent less |
+| loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
-| backend | 29 | 1118 | 76,367 | 5590 of 5590 | 6 percent less |
-| correctness | 26 | 789 | 97,991 in 855 files | 3293 of 3300 | 4 percent less |
+| backend | 29 | 1118 | 76,367 | 5590 of 5590 | 8 percent less |
+| correctness | 26 | 789 | 97,991 in 855 files | 3293 of 3300 | 7 percent less |
 
 ## What gcc-16 said about these programs
 
