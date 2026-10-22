@@ -208,8 +208,10 @@ jobs:
   #
   # Every other job runs on x86-64 and leaves these out with `--exclude-tag aarch64`, the same
   # way a run on anything but x86-64 leaves out the `x86-64` ones. This one runs the two
-  # facets that carry the tag and nothing else, so it is the only place their expected answers
-  # are checked against GCC 16 and the only place rucc's AArch64 back end is asked about them.
+  # facets that carry the tag, so it is the only place their expected answers are checked
+  # against GCC 16 and the only place rucc's AArch64 back end is asked about them. It also runs
+  # `choice-across-call`, which builds anywhere but went wrong only on AArch64, where a call
+  # keeps the low half of v8 to v15 (tamnd/rucc#3722).
   # rucc is built from the tip of its own repository, for the same reason as above.
   arm:
     name: rucc against gcc 16 on aarch64
@@ -233,7 +235,7 @@ jobs:
       - name: run the corpus
         run: |
           cargo run --release -p rucc-corpus -- run \
-            --facet crc32c-armv8 --facet simd-lfind-neon \
+            --facet crc32c-armv8 --facet simd-lfind-neon --facet choice-across-call \
             --toolchain gcc-16 --toolchain rucc=rucc/target/release/rucc \
             --reference gcc-16 --level O0 --level O2 --repeats 1 \
             --out reports-ci --no-pages --no-cache
