@@ -42,8 +42,8 @@ A pass that never fires on programs written for the transformations it makes is 
 | `fold` | 3022 of 3615 | 88721 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with constant operands folded to a constant (88721) |
 | `image` | 28 of 3615 | 46 | 0 | function-purity 12, constant-args 4, unused-params 4 | load from a read only object folded to what it was initialized to (17) |
 | `sroa` | 470 of 3615 | 1623 | 73 | overflow-builtins 120, crc32c 56, target-attribute 44 | local replaced by values, one for each piece of it the function uses (1623) |
-| `simplify` | 2417 of 3615 | 25392 | 0 | overflow-builtins 144, simplify 114, sigsetjmp 112 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8121) |
-| `sccp` | 446 of 3615 | 3809 | 0 | interpreter-dispatch 54, frame-size 45, loop-idiom 40 | access alignment raised to what its address is proved to be (2206) |
+| `simplify` | 2421 of 3615 | 25397 | 0 | overflow-builtins 144, simplify 114, sigsetjmp 112 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8121) |
+| `sccp` | 800 of 3615 | 10216 | 0 | overflow-builtins 108, sigsetjmp 96, interpreter-dispatch 54 | access alignment raised to what its address is proved to be (8611) |
 | `narrow` | 286 of 3615 | 1319 | 0 | compare-fold 58, store-fold-constant 58, block-copy 44 | arithmetic redone at the width the program truncates it to (1319) |
 | `short-circuit-free` | 1 of 3615 | 2 | 244 | value-range 1 | both halves of an and-and or an or-or worked out at once, and the branch went (2) |
 | `thread` | 130 of 3615 | 319 | 3605 | crc32c 64, target-attribute 32, short-circuit 14 | edge pointed straight at the arm of the branch it arrives at that it decides (315) |
@@ -55,7 +55,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `header-copy` | 2055 of 3615 | 7882 | 979 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | loop header copied in front of the loop so the test is at the bottom (4344) |
 | `licm` | 716 of 3615 | 4942 | 6350 | division 72, crc32c 64, loop-unswitch 64 | computation moved in front of the loop, nothing in the loop changes it (4942) |
 | `simplify-cfg` | 2637 of 3615 | 52968 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (25396) |
-| `number` | 3369 of 3615 | 209295 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (154365) |
+| `number` | 3369 of 3615 | 209297 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (154367) |
 | `load-forward` | 410 of 3615 | 5015 | 218 | interpreter-dispatch 54, builtin-setjmp 48, induction-variable 32 | load replaced by what an earlier load of the same address read (2763) |
 | `rejoin` | 0 of 3615 | 0 | 0 |  |  |
 | `constant-p` | 0 of 3615 | 0 | 0 |  |  |
@@ -64,7 +64,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `dead-plane` | 0 of 3615 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
 | `plane-sink` | 0 of 3615 | 0 | 0 |  |  |
-| `dce` | 3234 of 3615 | 57179 | 45507 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with no effects and no users removed (57178) |
+| `dce` | 3234 of 3615 | 57192 | 45507 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with no effects and no users removed (57191) |
 | `loop-delete` | 143 of 3615 | 562 | 4378 | loop-deletion 64, function-purity 24, register-pressure 12 | block nothing reaches removed (294) |
 
 ## `rucc` at -O2
@@ -88,7 +88,7 @@ A pass that never fires on programs written for the transformations it makes is 
 
 | pass | fired on | rewrites | missed | facets it fired on most | what it did most |
 |---|--:|--:|--:|---|---|
-| `inline` | 811 of 3631 | 2678 | 4201 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (1367) |
+| `inline` | 811 of 3631 | 2678 | 4200 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (1377) |
 | `libcall` | 17 of 3631 | 40 | 0 | libcall-fold 17 | call to the library whose answer is known folded (25) |
 | `ipa-cp` | 94 of 3631 | 182 | 0 | tail-call 36, frame-size 35, builtin-setjmp 8 | parameter is the same constant at every call and is now a constant in the body (105) |
 | `ipa-sra` | 137 of 3631 | 178 | 0 | frame-size 53, builtin-setjmp 40, block-copy 22 | parameter nothing reads removed, and the argument at every call with it (170) |
@@ -97,8 +97,8 @@ A pass that never fires on programs written for the transformations it makes is 
 | `fold` | 3070 of 3631 | 155390 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with constant operands folded to a constant (155390) |
 | `image` | 32 of 3631 | 96 | 0 | function-purity 12, constant-args 4, unused-params 4 | load from a read only object folded to the address it was initialized to (42) |
 | `sroa` | 555 of 3631 | 1799 | 185 | overflow-builtins 120, loop-idiom 62, crc32c 56 | local replaced by values, one for each piece of it the function uses (1799) |
-| `simplify` | 2546 of 3631 | 29059 | 0 | overflow-builtins 144, compare-fold 118, simplify 114 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8946) |
-| `sccp` | 532 of 3631 | 4643 | 0 | crc32c 64, interpreter-dispatch 54, frame-size 45 | access alignment raised to what its address is proved to be (2238) |
+| `simplify` | 2550 of 3631 | 29064 | 0 | overflow-builtins 144, compare-fold 118, simplify 114 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8946) |
+| `sccp` | 886 of 3631 | 11050 | 0 | overflow-builtins 108, sigsetjmp 96, crc32c 64 | access alignment raised to what its address is proved to be (8643) |
 | `narrow` | 287 of 3631 | 1320 | 0 | compare-fold 58, store-fold-constant 58, block-copy 44 | arithmetic redone at the width the program truncates it to (1320) |
 | `tail-recursion` | 51 of 3631 | 69 | 0 | tail-call 36, constant-args 4, unused-params 4 | a call to the function itself in tail position became a jump to its top (69) |
 | `switch-conv` | 37 of 3631 | 42 | 140 | switch-dispatch 20, switch-lowering 11, switch-runs 6 | switch replaced by a range check and a load from a table of its answers (23) |
@@ -115,7 +115,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `unroll` | 1173 of 3631 | 3284 | 3143 | compare-fold 118, store-fold-constant 110, crc32c 64 | block nothing reaches removed (1642) |
 | `simplify-cfg` | 2669 of 3631 | 158452 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (66658) |
 | `lanes` | 0 of 3631 | 0 | 0 |  |  |
-| `number` | 3445 of 3631 | 336049 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (271726) |
+| `number` | 3445 of 3631 | 336075 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (271752) |
 | `load-forward` | 529 of 3631 | 6914 | 250 | crc32c 64, interpreter-dispatch 54, builtin-setjmp 48 | load replaced by the value a store in the same block wrote there (3889) |
 | `redundant-load` | 165 of 3631 | 408 | 30427 | builtin-setjmp 48, frame-size 27, target-attribute 26 | load replaced by the value of the store the walk found (232) |
 | `dse` | 273 of 3631 | 1863 | 720 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1859) |
@@ -134,7 +134,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `discharge` | 0 of 3631 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3631 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3631 | 0 | 0 |  |  |
-| `dce` | 3325 of 3631 | 86325 | 49219 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86325) |
+| `dce` | 3325 of 3631 | 86330 | 49219 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86330) |
 | `gcm` | 196 of 3631 | 6149 | 601 | frame-size 48, sigsetjmp 42, simd-lfind 30 | computation moved down to where its reads need it (5932) |
 | `loop-delete` | 105 of 3631 | 512 | 3057 | loop-deletion 48, loop-idiom 16, bit-loops 8 | block nothing reaches removed (282) |
 | `adce` | 52 of 3631 | 207 | 0 | frame-size 27, loop-deletion 16, branch-probability 4 | instruction nothing necessary reads removed (123) |
@@ -161,7 +161,7 @@ A pass that never fires on programs written for the transformations it makes is 
 
 | pass | fired on | rewrites | missed | facets it fired on most | what it did most |
 |---|--:|--:|--:|---|---|
-| `inline` | 803 of 3615 | 3537 | 3266 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (2389) |
+| `inline` | 803 of 3615 | 3537 | 3266 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (2397) |
 | `libcall` | 17 of 3615 | 40 | 0 | libcall-fold 17 | call to the library whose answer is known folded (25) |
 | `ipa-cp` | 88 of 3615 | 176 | 0 | tail-call 36, frame-size 30, builtin-setjmp 8 | parameter is the same constant at every call and is now a constant in the body (99) |
 | `ipa-sra` | 131 of 3615 | 172 | 0 | frame-size 48, builtin-setjmp 40, block-copy 22 | parameter nothing reads removed, and the argument at every call with it (164) |
@@ -170,8 +170,8 @@ A pass that never fires on programs written for the transformations it makes is 
 | `fold` | 3054 of 3615 | 157520 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with constant operands folded to a constant (157520) |
 | `image` | 32 of 3615 | 96 | 0 | function-purity 12, constant-args 4, unused-params 4 | load from a read only object folded to the address it was initialized to (42) |
 | `sroa` | 555 of 3615 | 1803 | 185 | overflow-builtins 120, loop-idiom 62, crc32c 56 | local replaced by values, one for each piece of it the function uses (1803) |
-| `simplify` | 2539 of 3615 | 29259 | 0 | overflow-builtins 144, compare-fold 118, simplify 114 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8962) |
-| `sccp` | 533 of 3615 | 4661 | 0 | crc32c 64, interpreter-dispatch 54, frame-size 45 | access alignment raised to what its address is proved to be (2246) |
+| `simplify` | 2543 of 3615 | 29264 | 0 | overflow-builtins 144, compare-fold 118, simplify 114 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8962) |
+| `sccp` | 887 of 3615 | 11068 | 0 | overflow-builtins 108, sigsetjmp 96, crc32c 64 | access alignment raised to what its address is proved to be (8651) |
 | `narrow` | 286 of 3615 | 1319 | 0 | compare-fold 58, store-fold-constant 58, block-copy 44 | arithmetic redone at the width the program truncates it to (1319) |
 | `tail-recursion` | 51 of 3615 | 69 | 0 | tail-call 36, constant-args 4, unused-params 4 | a call to the function itself in tail position became a jump to its top (69) |
 | `switch-conv` | 37 of 3615 | 42 | 136 | switch-dispatch 20, switch-lowering 11, switch-runs 6 | switch replaced by a range check and a load from a table of its answers (23) |
@@ -188,7 +188,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `unroll` | 1167 of 3615 | 3382 | 3133 | compare-fold 118, store-fold-constant 110, crc32c 64 | block nothing reaches removed (1691) |
 | `simplify-cfg` | 2653 of 3615 | 163585 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (68190) |
 | `lanes` | 0 of 3615 | 0 | 0 |  |  |
-| `number` | 3433 of 3615 | 343791 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (278658) |
+| `number` | 3433 of 3615 | 343817 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction removed, an earlier one in the block computes the same thing (278684) |
 | `load-forward` | 523 of 3615 | 7005 | 250 | crc32c 64, interpreter-dispatch 54, builtin-setjmp 48 | load replaced by the value a store in the same block wrote there (3868) |
 | `redundant-load` | 197 of 3615 | 458 | 32593 | builtin-setjmp 48, crc32c 32, frame-size 27 | load replaced by the value of the store the walk found (264) |
 | `dse` | 273 of 3615 | 1863 | 720 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1859) |
@@ -207,7 +207,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `discharge` | 0 of 3615 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3615 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
-| `dce` | 3309 of 3615 | 86805 | 49390 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86805) |
+| `dce` | 3309 of 3615 | 86810 | 49390 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86810) |
 | `gcm` | 196 of 3615 | 6049 | 649 | frame-size 48, sigsetjmp 42, simd-lfind 30 | computation moved down to where its reads need it (5832) |
 | `loop-delete` | 105 of 3615 | 512 | 3028 | loop-deletion 48, loop-idiom 16, bit-loops 8 | block nothing reaches removed (282) |
 | `adce` | 52 of 3615 | 207 | 0 | frame-size 27, loop-deletion 16, branch-probability 4 | instruction nothing necessary reads removed (123) |
@@ -240,8 +240,8 @@ A pass that never fires on programs written for the transformations it makes is 
 | `fold` | 3020 of 3615 | 88576 | 0 | overflow-builtins 144, compare-fold 118, store-fold-constant 116 | instruction with constant operands folded to a constant (88576) |
 | `image` | 28 of 3615 | 46 | 0 | function-purity 12, constant-args 4, unused-params 4 | load from a read only object folded to what it was initialized to (17) |
 | `sroa` | 470 of 3615 | 1623 | 73 | overflow-builtins 120, crc32c 56, target-attribute 44 | local replaced by values, one for each piece of it the function uses (1623) |
-| `simplify` | 2407 of 3615 | 25306 | 0 | overflow-builtins 144, simplify 114, sigsetjmp 112 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8115) |
-| `sccp` | 446 of 3615 | 3809 | 0 | interpreter-dispatch 54, frame-size 45, loop-idiom 40 | access alignment raised to what its address is proved to be (2206) |
+| `simplify` | 2411 of 3615 | 25311 | 0 | overflow-builtins 144, simplify 114, sigsetjmp 112 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8115) |
+| `sccp` | 800 of 3615 | 10216 | 0 | overflow-builtins 108, sigsetjmp 96, interpreter-dispatch 54 | access alignment raised to what its address is proved to be (8611) |
 | `narrow` | 286 of 3615 | 1319 | 0 | compare-fold 58, store-fold-constant 58, block-copy 44 | arithmetic redone at the width the program truncates it to (1319) |
 | `tail-recursion` | 51 of 3615 | 69 | 0 | tail-call 36, constant-args 4, unused-params 4 | a call to the function itself in tail position became a jump to its top (69) |
 | `switch-conv` | 37 of 3615 | 42 | 136 | switch-dispatch 20, switch-lowering 11, switch-runs 6 | switch replaced by a range check and a load from a table of its answers (23) |
@@ -253,7 +253,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `canon` | 2144 of 3615 | 9808 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | back edges to one header routed through one latch (4471) |
 | `header-copy-small` | 2094 of 3615 | 8003 | 973 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | loop header copied in front of the loop so the test is at the bottom (4390) |
 | `simplify-cfg` | 2636 of 3615 | 53965 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (26517) |
-| `number` | 3369 of 3615 | 208470 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (153404) |
+| `number` | 3369 of 3615 | 208472 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (153406) |
 | `load-forward` | 450 of 3615 | 5054 | 218 | interpreter-dispatch 54, builtin-setjmp 48, loop-restructure 36 | load replaced by what an earlier load of the same address read (2763) |
 | `dse` | 245 of 3615 | 1706 | 361 | sigsetjmp 112, builtin-setjmp 48, overflow-builtins 24 | store removed, nothing reads it before it is overwritten or goes out of scope (1702) |
 | `bswap` | 107 of 3615 | 129 | 0 | crc32c 64, target-attribute 24, bit-liveness 8 | loads of neighbouring bytes merged into one load (92) |
@@ -265,7 +265,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
 | `plane-sink` | 0 of 3615 | 0 | 0 |  |  |
 | `loop-idiom` | 53 of 3615 | 53 | 1885 | loop-idiom 40, alias-analysis 8, load-forwarding 4 | loop that stores one byte over a range replaced by memset (29) |
-| `dce` | 3254 of 3615 | 60269 | 43845 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (60269) |
+| `dce` | 3254 of 3615 | 60282 | 43845 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (60282) |
 | `loop-delete` | 166 of 3615 | 601 | 4424 | loop-deletion 64, loop-idiom 40, register-pressure 12 | block nothing reaches removed (340) |
 | `adce` | 28 of 3615 | 112 | 0 | loop-deletion 16, branch-probability 8, function-purity 4 | instruction nothing necessary reads removed (48) |
 
