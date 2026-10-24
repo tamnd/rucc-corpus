@@ -2,10 +2,16 @@
 
 the NEON search loops from port/simd.h and pg_lfind.h. Part of the correctness phase of the M4 plan.
 
-48 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
+54 programs. Each row gives the axis point the program was generated for and the output it must produce. A compiler that prints anything else has a bug, whatever optimization level it was asked for.
 
 | program | axes | dialect | must print |
 |---|---|---|---|
+| [`simd-lfind-neon.index8-ge-min.high.0.c17.116c063a`](simd-lfind-neon.index8-ge-min.high.0.c17.116c063a.c) | search=index8-ge-min, values=high, offset=0 | c17 | `53 53 53 ...` and 4 more lines |
+| [`simd-lfind-neon.index8-ge-min.high.1.c17.67cf3608`](simd-lfind-neon.index8-ge-min.high.1.c17.67cf3608.c) | search=index8-ge-min, values=high, offset=1 | c17 | `53 53 53 ...` and 4 more lines |
+| [`simd-lfind-neon.index8-ge-min.high.3.c17.a4ea4e5e`](simd-lfind-neon.index8-ge-min.high.3.c17.a4ea4e5e.c) | search=index8-ge-min, values=high, offset=3 | c17 | `53 53 53 ...` and 4 more lines |
+| [`simd-lfind-neon.index8-ge-min.low.0.c17.acf7a612`](simd-lfind-neon.index8-ge-min.low.0.c17.acf7a612.c) | search=index8-ge-min, values=low, offset=0 | c17 | `53 53 53 ...` and 4 more lines |
+| [`simd-lfind-neon.index8-ge-min.low.1.c17.c64aec9d`](simd-lfind-neon.index8-ge-min.low.1.c17.c64aec9d.c) | search=index8-ge-min, values=low, offset=1 | c17 | `53 53 53 ...` and 4 more lines |
+| [`simd-lfind-neon.index8-ge-min.low.3.c17.d100fabd`](simd-lfind-neon.index8-ge-min.low.3.c17.d100fabd.c) | search=index8-ge-min, values=low, offset=3 | c17 | `53 53 53 ...` and 4 more lines |
 | [`simd-lfind-neon.index8-mask.high.0.c17.0a8950bd`](simd-lfind-neon.index8-mask.high.0.c17.0a8950bd.c) | search=index8-mask, values=high, offset=0 | c17 | `53 53 53 ...` and 4 more lines |
 | [`simd-lfind-neon.index8-mask.high.1.c17.69c46999`](simd-lfind-neon.index8-mask.high.1.c17.69c46999.c) | search=index8-mask, values=high, offset=1 | c17 | `53 53 53 ...` and 4 more lines |
 | [`simd-lfind-neon.index8-mask.high.3.c17.414d874f`](simd-lfind-neon.index8-mask.high.3.c17.414d874f.c) | search=index8-mask, values=high, offset=3 | c17 | `53 53 53 ...` and 4 more lines |

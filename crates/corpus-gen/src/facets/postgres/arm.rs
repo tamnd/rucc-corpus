@@ -268,10 +268,15 @@ enum Neon {
     Index8Mask,
     /// The index of the first match, through the narrowing shift and a 64 bit lane.
     Index8Shrn,
+    /// The index of the first element at or above the key, which is where the radix tree puts
+    /// a new key in a node of sixteen. There is no unsigned byte comparison in SSE2, so
+    /// `RT_NODE_16_GET_INSERTPOS` takes the smaller of the key and each element with
+    /// `vector8_min`, which is `vminq_u8` here, and asks where that is the key.
+    Index8GeMin,
 }
 
 impl Neon {
-    const ALL: [Self; 8] = [
+    const ALL: [Self; 9] = [
         Self::Find32One,
         Self::Find32Four,
         Self::Find8,
@@ -280,6 +285,7 @@ impl Neon {
         Self::Find8LeSubs,
         Self::Index8Mask,
         Self::Index8Shrn,
+        Self::Index8GeMin,
     ];
 
     const fn name(self) -> &'static str {
@@ -292,6 +298,7 @@ impl Neon {
             Self::Find8LeSubs => "lfind8-le-subs",
             Self::Index8Mask => "index8-mask",
             Self::Index8Shrn => "index8-shrn",
+            Self::Index8GeMin => "index8-ge-min",
         }
     }
 
@@ -303,8 +310,12 @@ impl Neon {
         matches!(self, Self::Find8LeMin | Self::Find8LeSubs)
     }
 
+    const fn ge(self) -> bool {
+        matches!(self, Self::Index8GeMin)
+    }
+
     const fn index(self) -> bool {
-        matches!(self, Self::Index8Mask | Self::Index8Shrn)
+        matches!(self, Self::Index8Mask | Self::Index8Shrn | Self::Index8GeMin)
     }
 
     /// What a search that found nothing returns.
@@ -320,7 +331,8 @@ impl Neon {
     ///
     /// Each is on the far side of the sign bit from the data, so a loop that compared signed
     /// where it had to compare unsigned finds it. For the at-or-below searches it is below
-    /// every element, so the planted one is the only match.
+    /// every element, and for the at-or-above one it is above every element, so the planted one
+    /// is the only match.
     const fn absent(self, high: bool) -> u32 {
         match (self.wide(), self.le(), high) {
             (true, _, false) => 0x8000_0001,
@@ -334,7 +346,15 @@ impl Neon {
 
     /// What the search returns over these elements, worked out one element at a time.
     fn scalar(self, key: u32, elems: &[u32]) -> i64 {
-        let hit = |e: u32| if self.le() { e <= key } else { e == key };
+        let hit = |e: u32| {
+            if self.le() {
+                e <= key
+            } else if self.ge() {
+                e >= key
+            } else {
+                e == key
+            }
+        };
         let first = elems.iter().position(|&e| hit(e));
         match (self.index(), first) {
             (true, Some(at)) => i64::try_from(at).unwrap_or(i64::MAX),
@@ -412,7 +432,7 @@ fn simd_lfind_neon(sink: &mut Sink<'_>) {
 /// Writes `search_simd`, the NEON loop for one search, and its scalar tail.
 fn neon_search(program: &mut Program, search: Neon) {
     let elem = search.elem();
-    if search == Neon::Index8Mask {
+    if matches!(search, Neon::Index8Mask | Neon::Index8GeMin) {
         // vector8_highbit_mask from port/simd.h.
         program.top("static unsigned int highbit_mask(const uint8x16_t v) {");
         program.top("    static const unsigned char mask[16] = {");
@@ -504,6 +524,15 @@ fn neon_search(program: &mut Program, search: Neon) {
                     program.top("        if (mask != 0) {");
                     program.top("            return (int)(i + (unsigned int)__builtin_ctz(mask));");
                 }
+                // RT_NODE_16_GET_INSERTPOS: the key is the smaller of the two where the
+                // element is at or above it.
+                Neon::Index8GeMin => {
+                    program.top(
+                        "        const unsigned int mask = highbit_mask(vceqq_u8(keys, vminq_u8(keys, chunk)));",
+                    );
+                    program.top("        if (mask != 0) {");
+                    program.top("            return (int)(i + (unsigned int)__builtin_ctz(mask));");
+                }
                 _ => {
                     program.top(
                         "        const uint8x8_t narrowed = vshrn_n_u16(vreinterpretq_u16_u8(vceqq_u8(chunk, keys)), 4);",
@@ -521,7 +550,13 @@ fn neon_search(program: &mut Program, search: Neon) {
     }
     program.top("        }");
     program.top("    }");
-    let compare = if search.le() { "base[i] <= key" } else { "base[i] == key" };
+    let compare = if search.le() {
+        "base[i] <= key"
+    } else if search.ge() {
+        "base[i] >= key"
+    } else {
+        "base[i] == key"
+    };
     let hit = if search.index() { "            return (int)i;" } else { found };
     program.top("    for (; i < nelem; i++) {");
     program.top(format!("        if ({compare}) {{"));
@@ -662,7 +697,7 @@ mod tests {
     fn every_case_is_tagged_for_aarch64_and_only_the_march_ones_carry_the_flag() {
         let cases = cases();
         assert_eq!(cases.iter().filter(|case| case.facet == Facet::Crc32cArmv8).count(), 72);
-        assert_eq!(cases.iter().filter(|case| case.facet == Facet::SimdLfindNeon).count(), 48);
+        assert_eq!(cases.iter().filter(|case| case.facet == Facet::SimdLfindNeon).count(), 54);
         for case in &cases {
             assert!(case.has_tag(AARCH64), "{}", case.id);
             assert!(case.has_tag("provenance:postgres"), "{}", case.id);
@@ -696,6 +731,9 @@ mod tests {
                 assert!(elems.iter().all(|&e| e != absent), "{search:?}");
                 if search.le() {
                     assert!(elems.iter().all(|&e| e > absent), "{search:?}");
+                }
+                if search.ge() {
+                    assert!(elems.iter().all(|&e| e < absent), "{search:?}");
                 }
                 for p in [0, 5, 16, 17, 999] {
                     let mut planted = elems.clone();
