@@ -12,7 +12,7 @@ Everything between the two markers below is written by the last run. Everything 
 
 <!-- corpus:begin -->
 
-3768 programs, 3,902 files between them and 229,598 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `295c34b74f044b68`.
+3774 programs, 3,908 files between them and 230,144 lines of C in all, built at `O0`, `O1`, `O2`, `O3` and `Os`, against gcc-16 (Ubuntu 16-20260315-1ubuntu1~24~ppa1) 16.0.1 20260315 (experimental) [trunk r16-8100-g3aca3bae8ee]. Corpus digest `0d6adc41dd6176ac`.
 
 | compiler | passed | wrong | rejected | not built yet | crashed |
 |---|---|---|---|---|---|
