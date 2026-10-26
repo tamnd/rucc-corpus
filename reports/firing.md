@@ -134,7 +134,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `discharge` | 0 of 3631 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3631 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3631 | 0 | 0 |  |  |
-| `dce` | 3325 of 3631 | 86543 | 49195 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86543) |
+| `dce` | 3325 of 3631 | 86571 | 49171 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (86571) |
 | `gcm` | 224 of 3631 | 6881 | 601 | frame-size 48, sigsetjmp 42, simd-lfind 30 | computation moved down to where its reads need it (5932) |
 | `loop-delete` | 105 of 3631 | 512 | 3057 | loop-deletion 48, loop-idiom 16, bit-loops 8 | block nothing reaches removed (282) |
 | `adce` | 52 of 3631 | 207 | 0 | frame-size 27, loop-deletion 16, branch-probability 4 | instruction nothing necessary reads removed (123) |
@@ -207,7 +207,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `discharge` | 0 of 3615 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3615 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
-| `dce` | 3309 of 3615 | 87023 | 49366 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (87023) |
+| `dce` | 3309 of 3615 | 87051 | 49342 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (87051) |
 | `gcm` | 224 of 3615 | 6781 | 649 | frame-size 48, sigsetjmp 42, simd-lfind 30 | computation moved down to where its reads need it (5832) |
 | `loop-delete` | 105 of 3615 | 512 | 3028 | loop-deletion 48, loop-idiom 16, bit-loops 8 | block nothing reaches removed (282) |
 | `adce` | 52 of 3615 | 207 | 0 | frame-size 27, loop-deletion 16, branch-probability 4 | instruction nothing necessary reads removed (123) |
@@ -265,7 +265,7 @@ A pass that never fires on programs written for the transformations it makes is 
 | `coalesce` | 0 of 3615 | 0 | 0 |  |  |
 | `plane-sink` | 0 of 3615 | 0 | 0 |  |  |
 | `loop-idiom` | 53 of 3615 | 53 | 1885 | loop-idiom 40, alias-analysis 8, load-forwarding 4 | loop that stores one byte over a range replaced by memset (29) |
-| `dce` | 3254 of 3615 | 60532 | 43821 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (60532) |
+| `dce` | 3254 of 3615 | 60560 | 43797 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (60560) |
 | `loop-delete` | 166 of 3615 | 601 | 4424 | loop-deletion 64, loop-idiom 40, register-pressure 12 | block nothing reaches removed (340) |
 | `adce` | 28 of 3615 | 112 | 0 | loop-deletion 16, branch-probability 8, function-purity 4 | instruction nothing necessary reads removed (48) |
 
