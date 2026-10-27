@@ -17,7 +17,7 @@ That is 230,144 lines of C, 7.4 MiB, in 3,908 files, and it is the denominator f
 |---|---|---|---|
 | `correctness` | 0 failures | 5 failures | no |
 | `code-quality:rucc` | within 10 percent | 2 percent more | yes |
-| `compile-throughput:rucc` | no worse | 44 percent less | yes |
+| `compile-throughput:rucc` | no worse | 43 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -140,27 +140,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 76 percent more | not measured | inside the noise | 54 percent less |
-| `interpreter-dispatch` | backend | 54 | 60 percent more | not measured | inside the noise | 63 percent less |
+| `simd-lfind` | correctness | 30 | 76 percent more | not measured | inside the noise | 56 percent less |
+| `interpreter-dispatch` | backend | 54 | 60 percent more | not measured | inside the noise | 64 percent less |
 | `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 42 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 44 percent less |
-| `overflow-builtins` | correctness | 144 | 26 percent more | not measured | inside the noise | 53 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 45 percent less |
-| `tail-dispatch` | interprocedural | 5 | 7 percent more | not measured | inside the noise | 58 percent less |
-| `tail-call` | interprocedural | 36 | 6 percent more | not measured | level | 41 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 42 percent less |
+| `overflow-builtins` | correctness | 144 | 26 percent more | not measured | inside the noise | 51 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | level | 45 percent less |
+| `tail-dispatch` | interprocedural | 5 | 7 percent more | not measured | inside the noise | 57 percent less |
+| `tail-call` | interprocedural | 36 | 6 percent more | not measured | inside the noise | 40 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 55 percent less |
-| `short-circuit` | local | 26 | 41 percent less | not measured | level | 48 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 56 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 52 percent less |
+| `short-circuit` | local | 26 | 41 percent less | not measured | inside the noise | 51 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 54 percent less |
 | `prune` | global | 15 | 37 percent less | not measured | inside the noise | 44 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 48 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 49 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 47 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 45 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 52 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 46 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | level | 43 percent less |
 
 ## What `-Os` does
 

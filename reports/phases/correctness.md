@@ -4,32 +4,32 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`barrier`](../../programs/correctness/barrier/README.md) | 13 | 241 | 65 of 65 | 6% less | 37% less | 24% less |
-| [`atomics`](../../programs/correctness/atomics/README.md) | 31 | 1,334 | 155 of 155 | 4% less | 44% less | 26% less |
-| [`setjmp-longjmp`](../../programs/correctness/setjmp-longjmp/README.md) | 8 | 219 | 40 of 40 | 12% less | 40% less | level |
-| [`sigsetjmp`](../../programs/correctness/sigsetjmp/README.md) | 112 | 12,712 | 560 of 560 | 1% less | 55% less | 45% less |
-| [`builtin-setjmp`](../../programs/correctness/builtin-setjmp/README.md) | 48 | 5,660 | 240 of 240 | 5% more | 57% less | 50% less |
-| [`overflow-builtins`](../../programs/correctness/overflow-builtins/README.md) | 144 | 13,992 | 720 of 720 | 26% more | 53% less | 36% less |
-| [`target-attribute`](../../programs/correctness/target-attribute/README.md) | 52 | 4,940 | 260 of 260 | 5% more | 59% less | 42% less |
-| [`crc32c`](../../programs/correctness/crc32c/README.md) | 64 | 15,632 | 320 of 320 | level | 59% less | 42% less |
-| [`simd-lfind`](../../programs/correctness/simd-lfind/README.md) | 30 | 2,232 | 150 of 150 | 76% more | 54% less | 39% less |
+| [`barrier`](../../programs/correctness/barrier/README.md) | 13 | 241 | 65 of 65 | 6% less | 37% less | 25% less |
+| [`atomics`](../../programs/correctness/atomics/README.md) | 31 | 1,334 | 155 of 155 | 4% less | 44% less | 32% less |
+| [`setjmp-longjmp`](../../programs/correctness/setjmp-longjmp/README.md) | 8 | 219 | 40 of 40 | 12% less | 35% less | 979% more |
+| [`sigsetjmp`](../../programs/correctness/sigsetjmp/README.md) | 112 | 12,712 | 560 of 560 | 1% less | 55% less | 46% less |
+| [`builtin-setjmp`](../../programs/correctness/builtin-setjmp/README.md) | 48 | 5,660 | 240 of 240 | 5% more | 57% less | 48% less |
+| [`overflow-builtins`](../../programs/correctness/overflow-builtins/README.md) | 144 | 13,992 | 720 of 720 | 26% more | 51% less | 33% less |
+| [`target-attribute`](../../programs/correctness/target-attribute/README.md) | 52 | 4,940 | 260 of 260 | 5% more | 61% less | 41% less |
+| [`crc32c`](../../programs/correctness/crc32c/README.md) | 64 | 15,632 | 320 of 320 | level | 60% less | 44% less |
+| [`simd-lfind`](../../programs/correctness/simd-lfind/README.md) | 30 | 2,232 | 150 of 150 | 76% more | 56% less | 36% less |
 | [`crc32c-armv8`](../../programs/correctness/crc32c-armv8/README.md) | 72 | 25,314 | 0 of 0 | not measured | not measured | not measured |
 | [`simd-lfind-neon`](../../programs/correctness/simd-lfind-neon/README.md) | 54 | 4,590 | 0 of 0 | not measured | not measured | not measured |
-| [`lkmm`](../../programs/correctness/lkmm/README.md) | 24 | 1,164 | 120 of 120 | 16% less | 43% less | 22% less |
-| [`mitigations`](../../programs/correctness/mitigations/README.md) | 25 | 1,510 | 125 of 125 | 3% less | 48% less | 35% less |
-| [`asm-goto`](../../programs/correctness/asm-goto/README.md) | 6 | 172 | 30 of 30 | 10% less | 39% less | 96% less |
-| [`asm-local-labels`](../../programs/correctness/asm-local-labels/README.md) | 5 | 135 | 25 of 25 | 9% less | 44% less | 38% less |
-| [`gas-macros`](../../programs/correctness/gas-macros/README.md) | 6 | 151 | 30 of 30 | 9% less | 43% less | 38% less |
-| [`constant-p-after-inline`](../../programs/correctness/constant-p-after-inline/README.md) | 5 | 168 | 25 of 25 | 10% less | 46% less | 39% less |
-| [`mcmodel-kernel`](../../programs/correctness/mcmodel-kernel/README.md) | 6 | 165 | 30 of 30 | 7% less | 48% less | 38% less |
-| [`general-regs-only`](../../programs/correctness/general-regs-only/README.md) | 5 | 463 | 25 of 25 | 5% less | 47% less | 43% less |
+| [`lkmm`](../../programs/correctness/lkmm/README.md) | 24 | 1,164 | 120 of 120 | 16% less | 44% less | 5% less |
+| [`mitigations`](../../programs/correctness/mitigations/README.md) | 25 | 1,510 | 125 of 125 | 3% less | 46% less | 37% less |
+| [`asm-goto`](../../programs/correctness/asm-goto/README.md) | 6 | 172 | 30 of 30 | 10% less | 43% less | 36% less |
+| [`asm-local-labels`](../../programs/correctness/asm-local-labels/README.md) | 5 | 135 | 25 of 25 | 9% less | 44% less | level |
+| [`gas-macros`](../../programs/correctness/gas-macros/README.md) | 6 | 151 | 30 of 30 | 9% less | 44% less | 37% less |
+| [`constant-p-after-inline`](../../programs/correctness/constant-p-after-inline/README.md) | 5 | 168 | 25 of 25 | 10% less | 43% less | 38% less |
+| [`mcmodel-kernel`](../../programs/correctness/mcmodel-kernel/README.md) | 6 | 165 | 30 of 30 | 7% less | 45% less | 17% less |
+| [`general-regs-only`](../../programs/correctness/general-regs-only/README.md) | 5 | 463 | 25 of 25 | 5% less | 47% less | 34% less |
 | [`i386-kernel`](../../programs/correctness/i386-kernel/README.md) | 9 | 624 | 0 of 0 | not measured | not measured | not measured |
-| [`objtool-shapes`](../../programs/correctness/objtool-shapes/README.md) | 5 | 170 | 25 of 25 | 9% less | 41% less | 35% less |
-| [`null-pointer-constant`](../../programs/correctness/null-pointer-constant/README.md) | 6 | 302 | 30 of 30 | 7% less | 50% less | level |
-| [`const-ice`](../../programs/correctness/const-ice/README.md) | 8 | 408 | 35 of 40 | 7% less | 49% less | 23% less |
-| [`section-attr`](../../programs/correctness/section-attr/README.md) | 6 | 320 | 30 of 30 | 9% less | 47% less | 49% less |
-| [`bundle`](../../programs/correctness/bundle/README.md) | 33 | 3,651 in 78 files | 165 of 165 | 8% less | 45% less | level |
-| [`dllimport`](../../programs/correctness/dllimport/README.md) | 18 | 2,268 in 39 files | 90 of 90 | 9% less | 44% less | level |
+| [`objtool-shapes`](../../programs/correctness/objtool-shapes/README.md) | 5 | 170 | 25 of 25 | 9% less | 51% less | 36% less |
+| [`null-pointer-constant`](../../programs/correctness/null-pointer-constant/README.md) | 6 | 302 | 30 of 30 | 7% less | 50% less | 39% less |
+| [`const-ice`](../../programs/correctness/const-ice/README.md) | 8 | 408 | 35 of 40 | 7% less | 48% less | 32% less |
+| [`section-attr`](../../programs/correctness/section-attr/README.md) | 6 | 320 | 30 of 30 | 9% less | 55% less | 44% less |
+| [`bundle`](../../programs/correctness/bundle/README.md) | 33 | 3,651 in 78 files | 165 of 165 | 8% less | 46% less | 46% less |
+| [`dllimport`](../../programs/correctness/dllimport/README.md) | 18 | 2,268 in 39 files | 90 of 90 | 9% less | 44% less | 24% less |
 
 The reference compiler said it took 14008 transformations in this phase and wanted 122073 more that it could not take. That is not a pass or fail signal for anybody. It says whether the transformation a case was written for was available in that program at all, which is what tells a case the compiler ignored apart from a case that had nothing in it to do.
 
