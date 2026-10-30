@@ -17,7 +17,7 @@ That is 230,144 lines of C, 7.4 MiB, in 3,908 files, and it is the denominator f
 |---|---|---|---|
 | `correctness` | 0 failures | 7 failures | no |
 | `code-quality:rucc` | within 10 percent | 1 percent more | yes |
-| `compile-throughput:rucc` | no worse | 42 percent less | yes |
+| `compile-throughput:rucc` | no worse | 41 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -176,27 +176,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 72 percent more | not measured | inside the noise | 56 percent less |
-| `interpreter-dispatch` | backend | 54 | 53 percent more | not measured | inside the noise | 66 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 41 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 41 percent less |
-| `overflow-builtins` | correctness | 144 | 26 percent more | not measured | inside the noise | 53 percent less |
+| `simd-lfind` | correctness | 30 | 72 percent more | not measured | inside the noise | 54 percent less |
+| `interpreter-dispatch` | backend | 54 | 53 percent more | not measured | level | 64 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 42 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 38 percent less |
+| `overflow-builtins` | correctness | 144 | 26 percent more | not measured | inside the noise | 52 percent less |
 | `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 45 percent less |
 | `tail-dispatch` | interprocedural | 5 | 7 percent more | not measured | inside the noise | 56 percent less |
-| `tail-call` | interprocedural | 36 | 6 percent more | not measured | level | 44 percent less |
+| `tail-call` | interprocedural | 36 | 6 percent more | not measured | inside the noise | 41 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 50 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 52 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 55 percent less |
-| `prune` | global | 15 | 37 percent less | not measured | inside the noise | 45 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 47 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 47 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 45 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 44 percent less |
+| `short-circuit` | local | 26 | 42 percent less | not measured | level | 49 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 51 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 59 percent less |
+| `prune` | global | 15 | 37 percent less | not measured | inside the noise | 44 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | level | 49 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 46 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 42 percent less |
 
 ## What `-Os` does
 
@@ -205,7 +205,7 @@ Every other number in this report is one compiler against another at the same le
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
 | `gcc-16` | 3631 | 4 percent less | 1161 |
-| `rucc` | 3631 | level | 1933 |
+| `rucc` | 3631 | level | 1934 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
