@@ -88,7 +88,7 @@ A pass that never fires on programs written for the transformations it makes is 
 
 | pass | fired on | rewrites | missed | facets it fired on most | what it did most |
 |---|--:|--:|--:|---|---|
-| `inline` | 811 of 3631 | 2826 | 4154 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (1094) |
+| `inline` | 811 of 3631 | 2698 | 4152 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (1222) |
 | `libcall` | 17 of 3631 | 40 | 0 | libcall-fold 17 | call to the library whose answer is known folded (25) |
 | `ipa-cp` | 94 of 3631 | 182 | 0 | tail-call 36, frame-size 35, builtin-setjmp 8 | parameter is the same constant at every call and is now a constant in the body (105) |
 | `ipa-sra` | 137 of 3631 | 178 | 0 | frame-size 53, builtin-setjmp 40, block-copy 22 | parameter nothing reads removed, and the argument at every call with it (170) |
@@ -161,7 +161,7 @@ A pass that never fires on programs written for the transformations it makes is 
 
 | pass | fired on | rewrites | missed | facets it fired on most | what it did most |
 |---|--:|--:|--:|---|---|
-| `inline` | 803 of 3615 | 3569 | 3236 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (2202) |
+| `inline` | 803 of 3615 | 3569 | 3235 | sigsetjmp 112, crc32c 64, target-attribute 52 | call to a small function inlined (2202) |
 | `libcall` | 17 of 3615 | 40 | 0 | libcall-fold 17 | call to the library whose answer is known folded (25) |
 | `ipa-cp` | 88 of 3615 | 176 | 0 | tail-call 36, frame-size 30, builtin-setjmp 8 | parameter is the same constant at every call and is now a constant in the body (99) |
 | `ipa-sra` | 131 of 3615 | 172 | 0 | frame-size 48, builtin-setjmp 40, block-copy 22 | parameter nothing reads removed, and the argument at every call with it (164) |
