@@ -176,26 +176,26 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | level | 55 percent less |
-| `interpreter-dispatch` | backend | 54 | 50 percent more | not measured | inside the noise | 64 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 38 percent less |
-| `long-double` | backend | 10 | 36 percent more | not measured | inside the noise | 42 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 55 percent less |
+| `interpreter-dispatch` | backend | 54 | 44 percent more | not measured | inside the noise | 66 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 40 percent less |
+| `long-double` | backend | 10 | 36 percent more | not measured | inside the noise | 40 percent less |
 | `overflow-builtins` | correctness | 144 | 24 percent more | not measured | inside the noise | 52 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 46 percent less |
-| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 57 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 40 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 45 percent less |
+| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 59 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 42 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 48 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 52 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 56 percent less |
+| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 49 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | level | 51 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 57 percent less |
 | `prune` | global | 15 | 39 percent less | not measured | inside the noise | 44 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 46 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 47 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 51 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | level | 47 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 50 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
 | `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 42 percent less |
 
 ## What `-Os` does
@@ -281,10 +281,10 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 | compiler | level | cases | same | different |
 |---|---|---|---|---|
 | rucc | O0 | 136 | 91 | 45 |
-| rucc | O1 | 134 | 68 | 66 |
-| rucc | O2 | 135 | 69 | 66 |
-| rucc | O3 | 135 | 69 | 66 |
-| rucc | Os | 134 | 72 | 62 |
+| rucc | O1 | 133 | 67 | 66 |
+| rucc | O2 | 134 | 68 | 66 |
+| rucc | O3 | 134 | 68 | 66 |
+| rucc | Os | 133 | 71 | 62 |
 
 ### rucc at O0 against gcc-16
 
