@@ -593,6 +593,14 @@ pub enum Facet {
     /// page aligned data sections. They need an ELF linker to define the start and stop symbols.
     SectionAttr,
 
+    /// The file scope `asm` that the FreeBSD and NetBSD headers write, run with rucc's reader of file scope `asm` on and off.
+    ///
+    /// A weak alias made by `.weak` and `.equ` in two blocks, as `__weak_reference` does, and the NetBSD forms with `=`.
+    /// The `.ident` strings of `__FBSDID` and `__RCSID`, a note section made with `.pushsection`, and the section stack across blocks with `.section`, `.previous`, `.pushsection` and `.popsection`.
+    /// The cases read the section headers of their own file and walk the notes of their own program headers, so they need an ELF64 target.
+    /// The cases build and run only on x86-64.
+    FileScopeAsm,
+
     /// An executable and the modules it loads with `dlopen`, which call back into it.
     ///
     /// The shape of every Postgres extension. The server opens a module, the module calls
@@ -743,6 +751,7 @@ impl Facet {
         Self::NullPointerConstant,
         Self::ConstIce,
         Self::SectionAttr,
+        Self::FileScopeAsm,
         Self::Bundle,
         Self::Dllimport,
         Self::Frontend,
@@ -861,6 +870,7 @@ impl Facet {
             Self::NullPointerConstant => "null-pointer-constant",
             Self::ConstIce => "const-ice",
             Self::SectionAttr => "section-attr",
+            Self::FileScopeAsm => "file-scope-asm",
             Self::Bundle => "bundle",
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
@@ -1038,6 +1048,9 @@ impl Facet {
             Self::SectionAttr => {
                 "functions and data in named sections, walked from __start_ to __stop_"
             }
+            Self::FileScopeAsm => {
+                "the file scope asm of the BSD headers: aliases, .ident, notes and the section stack"
+            }
             Self::Bundle => "modules loaded with dlopen that call back into the executable",
             Self::Dllimport => {
                 "modules importing the executable's functions and data the way Windows Postgres does"
@@ -1163,6 +1176,7 @@ impl Facet {
             | Self::NullPointerConstant
             | Self::ConstIce
             | Self::SectionAttr
+            | Self::FileScopeAsm
             | Self::Bundle
             | Self::Dllimport => Phase::Correctness,
         }

@@ -109,6 +109,19 @@ fn module_flags() -> Vec<String> {
     }
 }
 
+/// The prefix of the flags that only rucc knows.
+const RUCC_ONLY: &str = "-frucc-";
+
+/// The flags of a case that this toolchain gets.
+///
+/// A case can ask for a flag that starts with `-frucc-`, to turn a part of rucc off.
+/// Only rucc gets such a flag.
+/// The reference does not know it, and for the reference the case is the same program without it.
+fn case_flags(case: &Case, spec: &Spec) -> Vec<String> {
+    let rucc = shape::says_what_it_did(spec);
+    case.flags.iter().filter(|flag| rucc || !flag.starts_with(RUCC_ONLY)).cloned().collect()
+}
+
 /// Everything one build produced.
 #[derive(Debug, Clone)]
 pub struct Built {
@@ -173,7 +186,7 @@ pub fn build_and_run(
     ];
     // The flags the case asks for come before the ones the run asks for, so that a person who
     // adds a flag on the command line can still override what a case wanted.
-    args.extend(case.flags.iter().cloned());
+    args.extend(case_flags(case, spec));
     if !modules.is_empty() {
         args.extend(LOADER.iter().map(|flag| (*flag).to_owned()));
     }
@@ -221,7 +234,7 @@ pub fn build_and_run(
             "-o".to_owned(),
             module_name.clone(),
         ];
-        module_args.extend(case.flags.iter().cloned());
+        module_args.extend(case_flags(case, spec));
         module_args.extend(module_flags());
         if wants_opinions {
             let said = format!("{source_name}.opt-info");
@@ -282,7 +295,7 @@ pub fn build_and_run(
     // timed compile wrote. `-S` writes somewhere else.
     let switches = if produced && shape::wanted(case) {
         let mut asked = vec![case.dialect.std_flag().to_owned(), level.flag().to_owned()];
-        asked.extend(case.flags.iter().cloned());
+        asked.extend(case_flags(case, spec));
         asked.extend(spec.extra.iter().cloned());
         shape::shapes(spec, asked, dir)
     } else {
@@ -423,7 +436,7 @@ fn trim_diagnostics(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{build_and_run, record, trim_diagnostics, work_dir};
+    use super::{build_and_run, case_flags, record, trim_diagnostics, work_dir};
     use crate::toolchain::Spec;
     use corpus_model::{Axes, Case, Dialect, Expect, Facet, Level, Unit};
 
@@ -457,6 +470,14 @@ mod tests {
             std::env::temp_dir().join(format!("rucc-corpus-test-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
+    }
+
+    #[test]
+    fn only_rucc_gets_a_flag_of_rucc() {
+        let mut case = hello();
+        case.flags = vec!["-O2".to_owned(), "-frucc-asm-reader=off".to_owned()];
+        assert_eq!(case_flags(&case, &Spec::parse("gcc-16")), vec!["-O2".to_owned()]);
+        assert_eq!(case_flags(&case, &Spec::parse("rucc=/opt/rucc/bin/rucc")), case.flags);
     }
 
     #[test]
