@@ -601,6 +601,19 @@ pub enum Facet {
     /// The cases build and run only on x86-64.
     FileScopeAsm,
 
+    /// The linker sets of FreeBSD and NetBSD: tables of pointers in a named section, walked from the start and stop symbols that the linker makes.
+    ///
+    /// FreeBSD's `DATA_SET` and `SET_DECLARE` with weak bounds, and NetBSD's `__link_set_add_data` and `__link_set_decl` with hidden bounds.
+    /// Sets filled from more than one unit, sets of functions and of structs, an empty set, and sets that `--gc-sections` must keep.
+    /// The cases need an ELF linker.
+    LinkerSets,
+
+    /// What runs before `main` and what marks a BSD binary.
+    ///
+    /// The FreeBSD ABI tag note and the NetBSD PaX note made from C, the order of `.preinit_array`, `.init` and constructors with and without a priority, and a static program with its own `_start`.
+    /// The cases need an ELF target, and the `.init` and `_start` cases need x86-64.
+    CrtAndBrand,
+
     /// An executable and the modules it loads with `dlopen`, which call back into it.
     ///
     /// The shape of every Postgres extension. The server opens a module, the module calls
@@ -752,6 +765,8 @@ impl Facet {
         Self::ConstIce,
         Self::SectionAttr,
         Self::FileScopeAsm,
+        Self::LinkerSets,
+        Self::CrtAndBrand,
         Self::Bundle,
         Self::Dllimport,
         Self::Frontend,
@@ -871,6 +886,8 @@ impl Facet {
             Self::ConstIce => "const-ice",
             Self::SectionAttr => "section-attr",
             Self::FileScopeAsm => "file-scope-asm",
+            Self::LinkerSets => "linker-sets",
+            Self::CrtAndBrand => "crt-and-brand",
             Self::Bundle => "bundle",
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
@@ -1051,6 +1068,12 @@ impl Facet {
             Self::FileScopeAsm => {
                 "the file scope asm of the BSD headers: aliases, .ident, notes and the section stack"
             }
+            Self::LinkerSets => {
+                "the BSD linker sets: pointers in a named section, walked start to stop"
+            }
+            Self::CrtAndBrand => {
+                "the BSD start files: the brand notes, init order and a bare _start"
+            }
             Self::Bundle => "modules loaded with dlopen that call back into the executable",
             Self::Dllimport => {
                 "modules importing the executable's functions and data the way Windows Postgres does"
@@ -1177,6 +1200,8 @@ impl Facet {
             | Self::ConstIce
             | Self::SectionAttr
             | Self::FileScopeAsm
+            | Self::LinkerSets
+            | Self::CrtAndBrand
             | Self::Bundle
             | Self::Dllimport => Phase::Correctness,
         }
