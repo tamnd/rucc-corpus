@@ -10,6 +10,20 @@
     },
     {
       "toolchain": "rucc",
+      "family": "crt-and-brand.note-pax.c17",
+      "verdict": "wrong",
+      "issue": "tamnd/rucc#4128",
+      "why": "rucc gives a C object in a .note section the type SHT_PROGBITS, so the linker does not put the note in PT_NOTE and the walk finds nothing"
+    },
+    {
+      "toolchain": "rucc",
+      "family": "crt-and-brand.note-tag.c17",
+      "verdict": "wrong",
+      "issue": "tamnd/rucc#4128",
+      "why": "rucc gives a C object in a .note section the type SHT_PROGBITS, so the linker does not put the note in PT_NOTE and the walk finds nothing"
+    },
+    {
+      "toolchain": "rucc",
       "family": "null-pointer-constant.conditional-type.c17",
       "verdict": "wrong",
       "issue": "tamnd/rucc#3053",

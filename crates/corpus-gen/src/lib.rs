@@ -244,6 +244,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::kernel_i386::generate(&mut sink);
     facets::kernel_front::generate(&mut sink);
     facets::bsd_asm::generate(&mut sink);
+    facets::bsd_link::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }

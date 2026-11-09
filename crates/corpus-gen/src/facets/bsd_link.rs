@@ -1,0 +1,625 @@
+//! The linker sets of FreeBSD and NetBSD, and the start up code and notes of their C runtime.
+//!
+//! `linker-sets` is the tables that FreeBSD and NetBSD build out of named sections.
+//! FreeBSD's `DATA_SET` puts a pointer in the section `set_<name>`, marks the start and stop symbols weak with a top level `asm`, and `SET_DECLARE` declares them as weak objects.
+//! A set with no entry is then two null symbols and the walk does nothing.
+//! NetBSD's `__link_set_add_data` puts a pointer in `link_set_<name>` and `__link_set_decl` declares the bounds as hidden arrays.
+//! The cases fill sets from more than one unit, walk sets of functions and of structs, count a set that is empty, and link with `--gc-sections`, which must keep every entry that a walk reaches.
+//!
+//! `crt-and-brand` is what runs before `main` and what marks the binary.
+//! The crtbrand.c of FreeBSD 13 puts a note in `.note.tag` from C, and NetBSD puts its PaX note in `.note.netbsd.pax`.
+//! The linker gives such a section the type `SHT_NOTE` and puts it in a `PT_NOTE` segment only when the object file has it as a note, so the cases walk their own notes from `__ehdr_start`.
+//! The other cases check the order of `.preinit_array`, `.init`, and constructors with and without a priority, and one case is a static program with its own `_start` and no C library.
+//!
+//! All of these need an ELF target.
+//! The `.init` fragment and `_start` are x86-64 code, so those cases carry the `x86-64` tag as well.
+
+use crate::Sink;
+use crate::emit::Program;
+use crate::facets::bsd_asm::{ALLOC, ELF_TYPES, NOTE, NOTE_WALK, SECTION_WALK, section};
+use crate::lang::Ty;
+use corpus_model::{Axes, Case, Dialect, Expect, Facet, Unit};
+
+/// The FreeBSD release the FreeBSD cases come from.
+const FREEBSD: &str = "provenance:freebsd";
+/// The NetBSD release the NetBSD cases come from.
+const NETBSD: &str = "provenance:netbsd";
+
+/// The flags of a case that links with `--gc-sections`.
+const GC: &[&str] = &["-ffunction-sections", "-fdata-sections", "-Wl,--gc-sections"];
+
+/// The shapes of `linker-sets`.
+const SETS: &[&str] = &[
+    "data-set",
+    "data-set-units",
+    "data-set-empty",
+    "data-set-structs",
+    "data-set-gc",
+    "link-set",
+    "link-set-units",
+    "link-set-text",
+    "link-set-gc",
+];
+
+/// The shapes of `crt-and-brand`.
+const CRT: &[&str] = &[
+    "note-tag",
+    "note-pax",
+    "preinit-array",
+    "init-priority",
+    "init-priority-units",
+    "init-fragment",
+    "start-nostdlib",
+];
+
+/// What a case is.
+struct Shape {
+    /// Where the code comes from.
+    after: &'static str,
+    /// The provenance tag.
+    from: &'static str,
+    /// The C above `main`.
+    top: Vec<String>,
+    /// The other units, by name.
+    units: Vec<(&'static str, Vec<String>)>,
+    /// What `main` prints, as an `unsigned int` expression and its value.
+    checks: Vec<(&'static str, i128)>,
+    /// The flags the case is built with.
+    flags: &'static [&'static str],
+    /// Whether the case is x86-64 code.
+    x86: bool,
+}
+
+impl Shape {
+    fn new(after: &'static str, from: &'static str, top: Vec<String>) -> Self {
+        Self { after, from, top, units: Vec::new(), checks: Vec::new(), flags: &[], x86: false }
+    }
+
+    fn unit(mut self, name: &'static str, text: Vec<String>) -> Self {
+        self.units.push((name, text));
+        self
+    }
+
+    fn check(mut self, expr: &'static str, value: i128) -> Self {
+        self.checks.push((expr, value));
+        self
+    }
+
+    fn flags(mut self, flags: &'static [&'static str]) -> Self {
+        self.flags = flags;
+        self
+    }
+
+    fn x86(mut self) -> Self {
+        self.x86 = true;
+        self
+    }
+}
+
+/// Emits every case of both facets.
+pub(crate) fn generate(sink: &mut Sink<'_>) {
+    for (facet, shapes) in [(Facet::LinkerSets, SETS), (Facet::CrtAndBrand, CRT)] {
+        for &shape in shapes {
+            if !sink.wants(facet) {
+                break;
+            }
+            let found = if facet == Facet::LinkerSets { linker_set(shape) } else { crt(shape) };
+            if shape == "start-nostdlib" {
+                sink.push_case(start(found));
+                continue;
+            }
+            let mut program = Program::new(format!("{shape} after {}", found.after));
+            for line in &found.top {
+                program.top(line.clone());
+            }
+            for &(expr, value) in &found.checks {
+                program.check(Ty::U32, expr, value);
+            }
+            let (source, expected) = program.finish();
+            sink.push_case(build(facet, shape, &found, source, expected));
+        }
+    }
+}
+
+/// The case of a shape, from its source and what it prints.
+fn build(facet: Facet, shape: &str, found: &Shape, source: String, expected: String) -> Case {
+    let units = found
+        .units
+        .iter()
+        .map(|(name, text)| {
+            let mut out = format!(
+                "// The {name} unit of the {shape} case.\n// Generated by rucc-corpus. Edit the generator, not this file.\n\n"
+            );
+            for line in text {
+                out.push_str(line);
+                out.push('\n');
+            }
+            Unit::new(*name, out)
+        })
+        .collect();
+    let mut tags = vec!["gnu", "elf", found.from];
+    if found.x86 {
+        tags.push("x86-64");
+    }
+    Case::linked(
+        facet,
+        Axes::of([("shape", shape)]),
+        Dialect::C17,
+        source,
+        units,
+        found.flags.iter().map(|flag| (*flag).to_owned()).collect(),
+        Expect::Output(expected),
+    )
+    .tagged(&tags)
+}
+
+/// Owned lines from string slices.
+fn lines(parts: &[&[&str]]) -> Vec<String> {
+    parts.concat().iter().map(|line| (*line).to_owned()).collect()
+}
+
+/// FreeBSD's `sys/sys/linker_set.h`, with the parts of `sys/sys/cdefs.h` it uses.
+const LINKER_SET_H: &[&str] = &[
+    "#define __CONCAT(x, y) x##y",
+    "#define __STRING(x) #x",
+    "#define __XSTRING(x) __STRING(x)",
+    "#define __WEAK(sym) __asm__(\".weak \" __XSTRING(sym))",
+    "#define __weak_symbol __attribute__((__weak__))",
+    "#define __used __attribute__((__used__))",
+    "#define __section(x) __attribute__((__section__(x)))",
+    "",
+    "#define __MAKE_SET_QV(set, sym, qv) \\",
+    "    __WEAK(__CONCAT(__start_set_, set)); \\",
+    "    __WEAK(__CONCAT(__stop_set_, set)); \\",
+    "    static void const *qv __set_##set##_sym_##sym __section(\"set_\" #set) __used = &(sym)",
+    "#define __MAKE_SET(set, sym) __MAKE_SET_QV(set, sym, const)",
+    "#define DATA_SET(set, sym) __MAKE_SET(set, sym)",
+    "#define SET_DECLARE(set, ptype) \\",
+    "    extern ptype __weak_symbol *__CONCAT(__start_set_, set); \\",
+    "    extern ptype __weak_symbol *__CONCAT(__stop_set_, set)",
+    "#define SET_BEGIN(set) (&__CONCAT(__start_set_, set))",
+    "#define SET_LIMIT(set) (&__CONCAT(__stop_set_, set))",
+    "#define SET_FOREACH(pvar, set) for (pvar = SET_BEGIN(set); pvar < SET_LIMIT(set); pvar++)",
+    "#define SET_COUNT(set) ((unsigned int)(SET_LIMIT(set) - SET_BEGIN(set)))",
+    "",
+];
+
+/// NetBSD's link sets from `sys/sys/cdefs_elf.h`.
+const LINK_SET_H: &[&str] = &[
+    "#define __used __attribute__((__used__))",
+    "#define __section(x) __attribute__((__section__(x)))",
+    "#define __dso_hidden __attribute__((__visibility__(\"hidden\")))",
+    "",
+    "#define __link_set_make_entry(set, sym) \\",
+    "    static void const *const __link_set_##set##_sym_##sym __section(\"link_set_\" #set) \\",
+    "        __used = (const void *)&sym",
+    "#define __link_set_make_entry2(set, sym, n) \\",
+    "    static void const *const __link_set_##set##_sym_##sym##_##n __section(\"link_set_\" #set) \\",
+    "        __used = (const void *)&sym[n]",
+    "#define __link_set_add_text(set, sym) __link_set_make_entry(set, sym)",
+    "#define __link_set_add_data(set, sym) __link_set_make_entry(set, sym)",
+    "#define __link_set_add_data2(set, sym, n) __link_set_make_entry2(set, sym, n)",
+    "#define __link_set_decl(set, ptype) \\",
+    "    extern ptype *const __start_link_set_##set[] __dso_hidden; \\",
+    "    extern ptype *const __stop_link_set_##set[] __dso_hidden",
+    "#define __link_set_start(set) (__start_link_set_##set)",
+    "#define __link_set_end(set) (__stop_link_set_##set)",
+    "#define __link_set_count(set) ((unsigned int)(__link_set_end(set) - __link_set_start(set)))",
+    "#define __link_set_foreach(pvar, set) \\",
+    "    for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)",
+    "#define __link_set_entry(set, idx) (__link_set_start(set)[idx])",
+    "",
+];
+
+/// A set of three numbers in the main unit and the walk that adds them up.
+const NUMBERS: &[&str] = &[
+    "static unsigned int a = 3u, b = 40u, c = 500u;",
+    "DATA_SET(corpus_nums, a);",
+    "DATA_SET(corpus_nums, b);",
+    "DATA_SET(corpus_nums, c);",
+    "SET_DECLARE(corpus_nums, unsigned int);",
+    "",
+    "static unsigned int nums_sum(void) {",
+    "    unsigned int **p, sum = 0;",
+    "    SET_FOREACH(p, corpus_nums) {",
+    "        sum += **p;",
+    "    }",
+    "    return sum;",
+    "}",
+];
+
+/// A unit that adds two numbers to the FreeBSD set.
+const MORE_NUMBERS: &[&str] = &[
+    "static unsigned int d = 6000u, e = 70000u;",
+    "DATA_SET(corpus_nums, d);",
+    "DATA_SET(corpus_nums, e);",
+];
+
+/// The NetBSD set of three values, one of them an element of an array.
+const VALUES: &[&str] = &[
+    "static unsigned int x = 11u, y = 22u;",
+    "static unsigned int arr[3] = {100u, 200u, 300u};",
+    "__link_set_add_data(corpus_vals, x);",
+    "__link_set_add_data(corpus_vals, y);",
+    "__link_set_add_data2(corpus_vals, arr, 2);",
+    "__link_set_decl(corpus_vals, unsigned int);",
+    "",
+    "static unsigned int vals_sum(void) {",
+    "    unsigned int *const *p;",
+    "    unsigned int sum = 0;",
+    "    __link_set_foreach(p, corpus_vals) {",
+    "        sum += **p;",
+    "    }",
+    "    return sum;",
+    "}",
+];
+
+/// A unit that adds one value to the NetBSD set.
+const MORE_VALUES: &[&str] =
+    &["static unsigned int z = 4000u;", "__link_set_add_data(corpus_vals, z);"];
+
+fn linker_set(shape: &str) -> Shape {
+    let freebsd = "sys/sys/linker_set.h in FreeBSD 15.1";
+    let netbsd = "sys/sys/cdefs_elf.h in NetBSD 11.1";
+    match shape {
+        "data-set" => Shape::new(freebsd, FREEBSD, lines(&[LINKER_SET_H, NUMBERS]))
+            .check("SET_COUNT(corpus_nums)", 3)
+            .check("nums_sum()", 543),
+        "data-set-units" => Shape::new(freebsd, FREEBSD, lines(&[LINKER_SET_H, NUMBERS]))
+            .unit("more", lines(&[LINKER_SET_H, MORE_NUMBERS]))
+            .check("SET_COUNT(corpus_nums)", 5)
+            .check("nums_sum()", 76_543),
+        "data-set-empty" => Shape::new(
+            freebsd,
+            FREEBSD,
+            lines(&[
+                LINKER_SET_H,
+                &[
+                    "SET_DECLARE(corpus_none, unsigned int);",
+                    "",
+                    "static unsigned int none_walked(void) {",
+                    "    unsigned int **p, seen = 0;",
+                    "    SET_FOREACH(p, corpus_none) {",
+                    "        seen += 1u + **p;",
+                    "    }",
+                    "    return seen;",
+                    "}",
+                ],
+            ]),
+        )
+        .check("SET_COUNT(corpus_none)", 0)
+        .check("none_walked()", 0),
+        "data-set-structs" => Shape::new(
+            "the SYSINIT tables of sys/sys/kernel.h in FreeBSD 15.1",
+            FREEBSD,
+            lines(&[
+                LINKER_SET_H,
+                &[
+                    "struct corpus_init {",
+                    "    unsigned int order;",
+                    "    unsigned int (*fn)(unsigned int);",
+                    "};",
+                    "",
+                    "static unsigned int twice(unsigned int x) {",
+                    "    return x * 2u;",
+                    "}",
+                    "",
+                    "static unsigned int plus7(unsigned int x) {",
+                    "    return x + 7u;",
+                    "}",
+                    "",
+                    "static const struct corpus_init late = {2u, twice}, early = {1u, plus7};",
+                    "DATA_SET(corpus_inits, late);",
+                    "DATA_SET(corpus_inits, early);",
+                    "SET_DECLARE(corpus_inits, const struct corpus_init);",
+                    "",
+                    "static unsigned int run_inits(void) {",
+                    "    const struct corpus_init **q;",
+                    "    unsigned int v = 1u;",
+                    "    for (unsigned int want = 1u; want <= 2u; want++) {",
+                    "        SET_FOREACH(q, corpus_inits) {",
+                    "            if ((*q)->order == want) {",
+                    "                v = (*q)->fn(v);",
+                    "            }",
+                    "        }",
+                    "    }",
+                    "    return v;",
+                    "}",
+                ],
+            ]),
+        )
+        .check("SET_COUNT(corpus_inits)", 2)
+        .check("run_inits()", 16),
+        "data-set-gc" => Shape::new(freebsd, FREEBSD, lines(&[LINKER_SET_H, NUMBERS]))
+            .unit("more", lines(&[LINKER_SET_H, MORE_NUMBERS]))
+            .check("SET_COUNT(corpus_nums)", 5)
+            .check("nums_sum()", 76_543)
+            .flags(GC),
+        "link-set" => Shape::new(netbsd, NETBSD, lines(&[LINK_SET_H, VALUES]))
+            .check("__link_set_count(corpus_vals)", 3)
+            .check("vals_sum()", 333),
+        "link-set-units" => Shape::new(netbsd, NETBSD, lines(&[LINK_SET_H, VALUES]))
+            .unit("more", lines(&[LINK_SET_H, MORE_VALUES]))
+            .check("__link_set_count(corpus_vals)", 4)
+            .check("vals_sum()", 4333),
+        "link-set-text" => Shape::new(
+            netbsd,
+            NETBSD,
+            lines(&[
+                LINK_SET_H,
+                &[
+                    "typedef unsigned int corpus_fn(void);",
+                    "",
+                    "static unsigned int one(void) {",
+                    "    return 1u;",
+                    "}",
+                    "",
+                    "static unsigned int twenty(void) {",
+                    "    return 20u;",
+                    "}",
+                    "",
+                    "__link_set_add_text(corpus_fns, one);",
+                    "__link_set_add_text(corpus_fns, twenty);",
+                    "__link_set_decl(corpus_fns, corpus_fn);",
+                    "",
+                    "static unsigned int call_all(void) {",
+                    "    corpus_fn *const *f;",
+                    "    unsigned int total = 0;",
+                    "    __link_set_foreach(f, corpus_fns) {",
+                    "        total += (*f)();",
+                    "    }",
+                    "    return total;",
+                    "}",
+                    "",
+                    "static unsigned int first_two(void) {",
+                    "    return __link_set_entry(corpus_fns, 0)() + __link_set_entry(corpus_fns, 1)();",
+                    "}",
+                ],
+            ]),
+        )
+        .check("call_all()", 21)
+        .check("first_two()", 21),
+        _ => Shape::new(netbsd, NETBSD, lines(&[LINK_SET_H, VALUES]))
+            .unit("more", lines(&[LINK_SET_H, MORE_VALUES]))
+            .check("__link_set_count(corpus_vals)", 4)
+            .check("vals_sum()", 4333)
+            .flags(GC),
+    }
+}
+
+/// The order things ran in, one digit for each.
+const ORDER: &[&str] = &[
+    "static unsigned int order;",
+    "",
+    "static void mark(unsigned int digit) {",
+    "    order = order * 10u + digit;",
+    "}",
+    "",
+];
+
+fn crt(shape: &str) -> Shape {
+    match shape {
+        "note-tag" => Shape::new(
+            "lib/csu/common/crtbrand.c in FreeBSD 13",
+            FREEBSD,
+            lines(&[
+                ELF_TYPES,
+                NOTE_WALK,
+                SECTION_WALK,
+                &[
+                    "static const struct {",
+                    "    int namesz;",
+                    "    int descsz;",
+                    "    int type;",
+                    "    char name[8];",
+                    "    int desc;",
+                    "} abitag __attribute__((section(\".note.tag\"), aligned(4), used)) = {",
+                    "    8, 4, 1, \"FreeBSD\", 1501000};",
+                ],
+            ]),
+        )
+        .check("note_desc(\"FreeBSD\", 1u)", 1_501_000)
+        .check("section_of(\".note.tag\", \"FreeBSD\")", section(NOTE, ALLOC)),
+        "note-pax" => Shape::new(
+            "lib/csu/common/sysident.S in NetBSD 11.1, written in C",
+            NETBSD,
+            lines(&[
+                ELF_TYPES,
+                NOTE_WALK,
+                SECTION_WALK,
+                &[
+                    "static const struct {",
+                    "    unsigned int namesz, descsz, type;",
+                    "    char name[4];",
+                    "    unsigned int desc;",
+                    "} pax_note __attribute__((section(\".note.netbsd.pax\"), aligned(4), used)) = {",
+                    "    4u, 4u, 3u, \"PaX\", 2u};",
+                ],
+            ]),
+        )
+        .check("note_desc(\"PaX\", 3u)", 2)
+        .check("section_of(\".note.netbsd.pax\", \"PaX\")", section(NOTE, ALLOC)),
+        "preinit-array" => Shape::new(
+            "lib/csu/common/crt0-common.c in NetBSD 11.1",
+            NETBSD,
+            lines(&[
+                ORDER,
+                &[
+                    "static void first(void) {",
+                    "    mark(1u);",
+                    "}",
+                    "",
+                    "static void (*first_entry)(void)",
+                    "    __attribute__((section(\".preinit_array\"), used)) = first;",
+                    "",
+                    "__attribute__((constructor)) static void second(void) {",
+                    "    mark(2u);",
+                    "}",
+                    "",
+                    "static void third(void) {",
+                    "    mark(3u);",
+                    "}",
+                    "",
+                    "static void (*third_entry)(void)",
+                    "    __attribute__((section(\".init_array\"), used)) = third;",
+                ],
+            ]),
+        )
+        .check("order / 100u", 1)
+        .check("order % 100u == 23u || order % 100u == 32u", 1),
+        "init-priority" => Shape::new(
+            "lib/libc/csu/libc_start1.c in FreeBSD 15.1",
+            FREEBSD,
+            lines(&[
+                ORDER,
+                &[
+                    "__attribute__((constructor(102))) static void third(void) {",
+                    "    mark(3u);",
+                    "}",
+                    "",
+                    "__attribute__((constructor(101))) static void second(void) {",
+                    "    mark(2u);",
+                    "}",
+                    "",
+                    "__attribute__((constructor)) static void last(void) {",
+                    "    mark(4u);",
+                    "}",
+                    "",
+                    "static void first(void) {",
+                    "    mark(1u);",
+                    "}",
+                    "",
+                    "static void (*first_entry)(void)",
+                    "    __attribute__((section(\".preinit_array\"), used)) = first;",
+                ],
+            ]),
+        )
+        .check("order", 1234),
+        "init-priority-units" => Shape::new(
+            "lib/libc/csu/libc_start1.c in FreeBSD 15.1",
+            FREEBSD,
+            lines(&[
+                &["void corpus_mark(unsigned int digit);", ""],
+                &[
+                    "static unsigned int order;",
+                    "",
+                    "void corpus_mark(unsigned int digit) {",
+                    "    order = order * 10u + digit;",
+                    "}",
+                    "",
+                    "__attribute__((constructor(300))) static void third(void) {",
+                    "    corpus_mark(3u);",
+                    "}",
+                    "",
+                    "__attribute__((constructor(101))) static void first(void) {",
+                    "    corpus_mark(1u);",
+                    "}",
+                ],
+            ]),
+        )
+        .unit(
+            "early",
+            lines(&[&[
+                "void corpus_mark(unsigned int digit);",
+                "",
+                "__attribute__((constructor(200))) static void second(void) {",
+                "    corpus_mark(2u);",
+                "}",
+                "",
+                "__attribute__((constructor(400))) static void fourth(void) {",
+                "    corpus_mark(4u);",
+                "}",
+            ]]),
+        )
+        .check("order", 1234),
+        _ => Shape::new(
+            "lib/csu/amd64/crti.S in FreeBSD 15.1",
+            FREEBSD,
+            lines(&[
+                ORDER,
+                &[
+                    "__attribute__((used, visibility(\"hidden\"))) void corpus_init_hook(void) {",
+                    "    mark(1u);",
+                    "}",
+                    "",
+                    "__asm__(\".section .init,\\\"ax\\\",@progbits\\n\"",
+                    "        \"\\tcall corpus_init_hook\\n\"",
+                    "        \".previous\");",
+                    "",
+                    "__attribute__((constructor)) static void second(void) {",
+                    "    mark(2u);",
+                    "}",
+                ],
+            ]),
+        )
+        .check("order", 12)
+        .x86(),
+    }
+}
+
+/// The case with its own `_start`, written by hand since it has no `printf`.
+/// Its `_start` calls `main` and gives the result to `exit`, as the `__libc_start1` of FreeBSD does.
+fn start(_found: Shape) -> Case {
+    let source = [
+        "// start-nostdlib after lib/csu/amd64/crt1_s.S in FreeBSD 15.1, linked with no C library",
+        "// Generated by rucc-corpus. Edit the generator, not this file.",
+        "",
+        "static long corpus_syscall(long n, long a, long b, long c) {",
+        "    long r;",
+        "    __asm__ volatile(\"syscall\"",
+        "                     : \"=a\"(r)",
+        "                     : \"a\"(n), \"D\"(a), \"S\"(b), \"d\"(c)",
+        "                     : \"rcx\", \"r11\", \"memory\");",
+        "    return r;",
+        "}",
+        "",
+        "static unsigned int counter = 40u;",
+        "static const char digits[] = \"0123456789\";",
+        "",
+        "int main(void) {",
+        "    char out[3];",
+        "    counter += 2u;",
+        "    out[0] = digits[counter / 10u];",
+        "    out[1] = digits[counter % 10u];",
+        "    out[2] = '\\n';",
+        "    corpus_syscall(1, 1, (long)out, 3);",
+        "    return 0;",
+        "}",
+        "",
+        "void _start(void) {",
+        "    corpus_syscall(60, main(), 0, 0);",
+        "    for (;;) {",
+        "    }",
+        "}",
+        "",
+    ]
+    .join("\n");
+    Case::linked(
+        Facet::CrtAndBrand,
+        Axes::of([("shape", "start-nostdlib")]),
+        Dialect::C17,
+        source,
+        Vec::new(),
+        vec!["-nostdlib".to_owned(), "-static".to_owned()],
+        Expect::Output("42\n".to_owned()),
+    )
+    .tagged(&["gnu", "elf", "x86-64", FREEBSD])
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Options, generate};
+    use corpus_model::Facet;
+
+    #[test]
+    fn every_shape_is_there_with_its_tags() {
+        let manifest = generate(&Options::all()).unwrap();
+        for (facet, count) in [(Facet::LinkerSets, 9), (Facet::CrtAndBrand, 7)] {
+            let cases: Vec<_> = manifest.cases.iter().filter(|case| case.facet == facet).collect();
+            assert_eq!(cases.len(), count, "{facet:?}");
+            for case in cases {
+                assert!(case.has_tag("elf"), "{}", case.id);
+            }
+        }
+    }
+}

@@ -1,10 +1,10 @@
 # The corpus
 
-3798 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3814 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `1904df9f3d5e525248a0f99ea4b1dac456c46c6272cc7cc2ce0bfe2f09c7a763`.
+Corpus digest `eb36fdfaa15aa0dc4b8349c2389987b53f57c3a5e78d8b8c675566f9344c115f`.
 
 ## floor (119 programs)
 
@@ -134,7 +134,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (819 programs)
+## correctness (835 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -165,6 +165,8 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`const-ice`](correctness/const-ice/README.md) | 8 | sizeof, offsetof and const objects in integer constant expressions |
 | [`section-attr`](correctness/section-attr/README.md) | 6 | functions and data in named sections, walked from __start_ to __stop_ |
 | [`file-scope-asm`](correctness/file-scope-asm/README.md) | 24 | the file scope asm of the BSD headers: aliases, .ident, notes and the section stack |
+| [`linker-sets`](correctness/linker-sets/README.md) | 9 | the BSD linker sets: pointers in a named section, walked start to stop |
+| [`crt-and-brand`](correctness/crt-and-brand/README.md) | 7 | the BSD start files: the brand notes, init order and a bare _start |
 | [`bundle`](correctness/bundle/README.md) | 33 | modules loaded with dlopen that call back into the executable |
 | [`dllimport`](correctness/dllimport/README.md) | 18 | modules importing the executable's functions and data the way Windows Postgres does |
 
