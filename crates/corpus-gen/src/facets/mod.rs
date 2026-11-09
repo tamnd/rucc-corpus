@@ -18,6 +18,7 @@ pub(crate) mod kernel_i386;
 pub(crate) mod link;
 pub(crate) mod local;
 pub(crate) mod loops;
+pub(crate) mod netbsd_kernel;
 pub(crate) mod postgres;
 pub(crate) mod runtime;
 pub(crate) mod special;

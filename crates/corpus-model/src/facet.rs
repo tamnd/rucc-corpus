@@ -614,6 +614,12 @@ pub enum Facet {
     /// The cases need an ELF target, and the `.init` and `_start` cases need x86-64.
     CrtAndBrand,
 
+    /// Programs built with the flag line of an amd64 NetBSD kernel unit, and the kernel's own uses of named sections.
+    ///
+    /// `-fno-zero-initialized-in-bss` with objects in `.data` and `.bss`, `__KERNEL_RCSID` and `__KERNEL_COPYRIGHT` strings, `MODULE` and `SYSCTL_SETUP` entries in their link sets, and a jump table under `-mcmodel=kernel` and the retpoline thunks.
+    /// The cases need an ELF linker and x86-64.
+    NetbsdKernel,
+
     /// An executable and the modules it loads with `dlopen`, which call back into it.
     ///
     /// The shape of every Postgres extension. The server opens a module, the module calls
@@ -767,6 +773,7 @@ impl Facet {
         Self::FileScopeAsm,
         Self::LinkerSets,
         Self::CrtAndBrand,
+        Self::NetbsdKernel,
         Self::Bundle,
         Self::Dllimport,
         Self::Frontend,
@@ -888,6 +895,7 @@ impl Facet {
             Self::FileScopeAsm => "file-scope-asm",
             Self::LinkerSets => "linker-sets",
             Self::CrtAndBrand => "crt-and-brand",
+            Self::NetbsdKernel => "netbsd-kernel",
             Self::Bundle => "bundle",
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
@@ -1074,6 +1082,9 @@ impl Facet {
             Self::CrtAndBrand => {
                 "the BSD start files: the brand notes, init order and a bare _start"
             }
+            Self::NetbsdKernel => {
+                "the NetBSD kernel flag line, its link sets and its ident strings"
+            }
             Self::Bundle => "modules loaded with dlopen that call back into the executable",
             Self::Dllimport => {
                 "modules importing the executable's functions and data the way Windows Postgres does"
@@ -1202,6 +1213,7 @@ impl Facet {
             | Self::FileScopeAsm
             | Self::LinkerSets
             | Self::CrtAndBrand
+            | Self::NetbsdKernel
             | Self::Bundle
             | Self::Dllimport => Phase::Correctness,
         }
