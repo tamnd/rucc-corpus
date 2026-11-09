@@ -1,10 +1,10 @@
 # The corpus
 
-3819 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3832 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `2d56e2cbbccc6148d387da512adce3ac2ee20ce957b21084b5a2b848eef8f2dc`.
+Corpus digest `94b4049bd9aa578283d9930c1bd6828b1b5e7260bf113f5a81d7e25b7c945eb0`.
 
 ## floor (119 programs)
 
@@ -134,7 +134,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (840 programs)
+## correctness (853 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -168,6 +168,8 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`linker-sets`](correctness/linker-sets/README.md) | 9 | the BSD linker sets: pointers in a named section, walked start to stop |
 | [`crt-and-brand`](correctness/crt-and-brand/README.md) | 7 | the BSD start files: the brand notes, init order and a bare _start |
 | [`netbsd-kernel`](correctness/netbsd-kernel/README.md) | 5 | the NetBSD kernel flag line, its link sets and its ident strings |
+| [`werror-shapes`](correctness/werror-shapes/README.md) | 6 | the FreeBSD units that failed under -Werror with rucc and not with GCC |
+| [`kprintf-format`](correctness/kprintf-format/README.md) | 7 | the FreeBSD kernel printf: %b, %D, %r and %y under -Werror |
 | [`bundle`](correctness/bundle/README.md) | 33 | modules loaded with dlopen that call back into the executable |
 | [`dllimport`](correctness/dllimport/README.md) | 18 | modules importing the executable's functions and data the way Windows Postgres does |
 

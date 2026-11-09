@@ -620,6 +620,19 @@ pub enum Facet {
     /// The cases need an ELF linker and x86-64.
     NetbsdKernel,
 
+    /// The units that failed the FreeBSD build under `-Werror` with rucc and not with GCC.
+    ///
+    /// Each case is the shape of one failure in the warning parity run of tamnd/rucc-bsd, built with the GCC warning line of a FreeBSD world unit at `WARNS=6`.
+    /// The shapes are a `.symver` of a name the unit only declares, a weak `.equ` to a name in another unit, a `.symver` default with `-g`, a chain of macros 340 brackets deep, and an empty `--sysroot=`.
+    /// The answer is the output, so a warning that GCC does not give fails the case.
+    WerrorShapes,
+
+    /// The kernel printf of FreeBSD and its `%b`, `%D`, `%r` and `%y` conversions.
+    ///
+    /// A copy of `kvprintf` from `sys/kern/subr_prf.c`, called through a declaration with the `__freebsd_kprintf__` format on FreeBSD, under the kernel's warning line and `-Werror`.
+    /// The cases check what each conversion writes, with its flags, widths and lengths.
+    KprintfFormat,
+
     /// An executable and the modules it loads with `dlopen`, which call back into it.
     ///
     /// The shape of every Postgres extension. The server opens a module, the module calls
@@ -774,6 +787,8 @@ impl Facet {
         Self::LinkerSets,
         Self::CrtAndBrand,
         Self::NetbsdKernel,
+        Self::WerrorShapes,
+        Self::KprintfFormat,
         Self::Bundle,
         Self::Dllimport,
         Self::Frontend,
@@ -896,6 +911,8 @@ impl Facet {
             Self::LinkerSets => "linker-sets",
             Self::CrtAndBrand => "crt-and-brand",
             Self::NetbsdKernel => "netbsd-kernel",
+            Self::WerrorShapes => "werror-shapes",
+            Self::KprintfFormat => "kprintf-format",
             Self::Bundle => "bundle",
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
@@ -1085,6 +1102,10 @@ impl Facet {
             Self::NetbsdKernel => {
                 "the NetBSD kernel flag line, its link sets and its ident strings"
             }
+            Self::WerrorShapes => {
+                "the FreeBSD units that failed under -Werror with rucc and not with GCC"
+            }
+            Self::KprintfFormat => "the FreeBSD kernel printf: %b, %D, %r and %y under -Werror",
             Self::Bundle => "modules loaded with dlopen that call back into the executable",
             Self::Dllimport => {
                 "modules importing the executable's functions and data the way Windows Postgres does"
@@ -1214,6 +1235,8 @@ impl Facet {
             | Self::LinkerSets
             | Self::CrtAndBrand
             | Self::NetbsdKernel
+            | Self::WerrorShapes
+            | Self::KprintfFormat
             | Self::Bundle
             | Self::Dllimport => Phase::Correctness,
         }
