@@ -1,10 +1,10 @@
 # rucc corpus report
 
-7 case results did not come out as expected. They are listed below, worst first.
+2 case results did not come out as expected. They are listed below, worst first.
 
-The corpus holds 3774 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `0d6adc41dd6176ac`.
+The corpus holds 3832 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `94b4049bd9aa5782`.
 
-That is 230,144 lines of C, 7.4 MiB, in 3,908 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 236,654 lines of C, 7.6 MiB, in 3,996 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
@@ -15,9 +15,9 @@ That is 230,144 lines of C, 7.4 MiB, in 3,908 files, and it is the denominator f
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 7 failures | no |
+| `correctness` | 0 failures | 2 failures | no |
 | `code-quality:rucc` | within 10 percent | level | yes |
-| `compile-throughput:rucc` | no worse | 40 percent less | yes |
+| `compile-throughput:rucc` | no worse | 42 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -29,100 +29,10 @@ That is 230,144 lines of C, 7.4 MiB, in 3,908 files, and it is the denominator f
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 18163 | 18163 | 0 | 0 | 0 | 0 | 0 | 675 |
-| `rucc` | 18163 | 18156 | 7 | 0 | 0 | 0 | 0 | 675 |
+| `gcc-16` | 18453 | 18453 | 0 | 0 | 0 | 0 | 0 | 675 |
+| `rucc` | 18453 | 18451 | 2 | 0 | 0 | 0 | 0 | 675 |
 
 ## What went wrong
-
-### `const-ice.const-local.c17.d372496d`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O0`.
-
-Expected:
-
-```
-16992
-```
-
-Got:
-
-```
-15083
-```
-
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
-
-### `const-ice.const-local.c17.d372496d`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O1`.
-
-Expected:
-
-```
-16992
-```
-
-Got:
-
-```
-15083
-```
-
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
-
-### `const-ice.const-local.c17.d372496d`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O2`.
-
-Expected:
-
-```
-16992
-```
-
-Got:
-
-```
-15083
-```
-
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
-
-### `const-ice.const-local.c17.d372496d`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-O3`.
-
-Expected:
-
-```
-16992
-```
-
-Got:
-
-```
-15083
-```
-
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
-
-### `const-ice.const-local.c17.d372496d`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions. This is a case about sizeof, offsetof and const objects in integer constant expressions, built at `-Os`.
-
-Expected:
-
-```
-16992
-```
-
-Got:
-
-```
-15083
-```
-
-The program is `programs/correctness/const-ice/const-ice.const-local.c17.d372496d.c` and the working directory of the failing build was kept under the run directory.
 
 ### `general-regs-only.struct-copy.c17.85360170`
 
@@ -170,33 +80,33 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 109 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 115 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 54 percent less |
-| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 64 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 38 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 37 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 50 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 55 percent less |
+| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 65 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | level | 38 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | level | 39 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 52 percent less |
 | `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 46 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 41 percent less |
-| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 56 percent less |
+| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 59 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 39 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 46 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 49 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 58 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 45 percent less |
+| `short-circuit` | local | 26 | 42 percent less | not measured | level | 47 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 51 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 56 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 44 percent less |
 | `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 46 percent less |
 | `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 47 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 48 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 41 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 42 percent less |
 
 ## What `-Os` does
 
@@ -204,8 +114,8 @@ Every other number in this report is one compiler against another at the same le
 
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
-| `gcc-16` | 3631 | 4 percent less | 1161 |
-| `rucc` | 3631 | level | 1911 |
+| `gcc-16` | 3689 | 4 percent less | 1162 |
+| `rucc` | 3689 | level | 1933 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -245,7 +155,7 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
 | backend | 29 | 1118 | 76,367 | 5590 of 5590 | 6 percent less |
-| correctness | 26 | 795 | 98,537 in 861 files | 3293 of 3300 | 8 percent less |
+| correctness | 32 | 853 | 105,047 in 949 files | 3588 of 3590 | 9 percent less |
 
 ## What gcc-16 said about these programs
 
@@ -262,6 +172,7 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `frame-size` | backend | 2311 | 2503 |
 | `bundle` | correctness | 396 | 3735 |
 | `atomics` | correctness | 0 | 4026 |
+| `kprintf-format` | correctness | 930 | 2929 |
 | `bit-builtins` | backend | 0 | 3352 |
 | `choice-across-call` | backend | 0 | 2928 |
 | `simd-lfind` | correctness | 1290 | 1386 |
@@ -272,7 +183,6 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `inline` | interprocedural | 900 | 372 |
 | `store-fold-constant` | backend | 444 | 820 |
 | `compare-fold` | backend | 472 | 584 |
-| `division` | backend | 203 | 802 |
 
 ## What each switch became
 
@@ -280,17 +190,17 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 
 | compiler | level | cases | same | different |
 |---|---|---|---|---|
-| rucc | O0 | 136 | 91 | 45 |
-| rucc | O1 | 133 | 67 | 66 |
-| rucc | O2 | 134 | 68 | 66 |
-| rucc | O3 | 134 | 68 | 66 |
-| rucc | Os | 133 | 71 | 62 |
+| rucc | O0 | 138 | 92 | 46 |
+| rucc | O1 | 134 | 67 | 67 |
+| rucc | O2 | 135 | 68 | 67 |
+| rucc | O3 | 135 | 68 | 67 |
+| rucc | Os | 134 | 71 | 63 |
 
 ### rucc at O0 against gcc-16
 
 | rucc | gcc-16 | cases |
 |---|---|---|
-| table | compares | 26 |
+| table | compares | 27 |
 | compares | table | 19 |
 
 | case | facet | rucc | gcc-16 |
@@ -313,15 +223,15 @@ Every case with a `switch` in it is compiled once more with `-S` to see what its
 | `interpreter-dispatch.4.threaded.direct.8.c17.81bbc59c` | `interpreter-dispatch` | compares | table |
 | `interpreter-dispatch.4.threaded.none.8.c17.47a678c0` | `interpreter-dispatch` | compares | table |
 | `interpreter-dispatch.4.threaded.pointer.8.c17.77dc9ec0` | `interpreter-dispatch` | compares | table |
+| `netbsd-kernel.switch-thunk.c17.b691e324` | `netbsd-kernel` | table | compares |
 | `objtool-shapes.jump-table.c17.9da06433` | `objtool-shapes` | compares | table |
 | `switch-dispatch.affine.in-order.c17.3de0f02c` | `switch-dispatch` | table | compares |
 | `switch-dispatch.affine.unpredictable.c17.1095fab2` | `switch-dispatch` | table | compares |
 | `switch-dispatch.below-zero.unpredictable.c17.0348e7c3` | `switch-dispatch` | table | compares |
 | `switch-dispatch.holes.unpredictable.c17.343584c6` | `switch-dispatch` | table | compares |
 | `switch-dispatch.into-letters.unpredictable.c17.6275bbd4` | `switch-dispatch` | table | compares |
-| `switch-dispatch.masked.unpredictable.c17.fcb9805f` | `switch-dispatch` | table | compares |
 
-And 20 more, all in `reports/report.json`.
+And 21 more, all in `reports/report.json`.
 
 ### rucc at O1 against gcc-16
 
@@ -330,6 +240,7 @@ And 20 more, all in `reports/report.json`.
 | table | bit-test, table | 36 |
 | compares | bit-test, table | 18 |
 | compares | table | 12 |
+| table | compares | 1 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -359,7 +270,7 @@ And 20 more, all in `reports/report.json`.
 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | `interpreter-dispatch` | compares | bit-test, table |
 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | `interpreter-dispatch` | table | bit-test, table |
 
-And 41 more, all in `reports/report.json`.
+And 42 more, all in `reports/report.json`.
 
 ### rucc at O2 against gcc-16
 
@@ -369,6 +280,7 @@ And 41 more, all in `reports/report.json`.
 | compares | bit-test, table | 18 |
 | compares | table | 9 |
 | lookup | compares | 3 |
+| table | compares | 1 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -398,7 +310,7 @@ And 41 more, all in `reports/report.json`.
 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | `interpreter-dispatch` | compares | bit-test, table |
 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | `interpreter-dispatch` | table | bit-test, table |
 
-And 41 more, all in `reports/report.json`.
+And 42 more, all in `reports/report.json`.
 
 ### rucc at O3 against gcc-16
 
@@ -408,6 +320,7 @@ And 41 more, all in `reports/report.json`.
 | compares | bit-test, table | 18 |
 | compares | table | 9 |
 | lookup | compares | 3 |
+| table | compares | 1 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -437,7 +350,7 @@ And 41 more, all in `reports/report.json`.
 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | `interpreter-dispatch` | compares | bit-test, table |
 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | `interpreter-dispatch` | table | bit-test, table |
 
-And 41 more, all in `reports/report.json`.
+And 42 more, all in `reports/report.json`.
 
 ### rucc at Os against gcc-16
 
@@ -446,7 +359,7 @@ And 41 more, all in `reports/report.json`.
 | table | bit-test, table | 54 |
 | compares | table | 4 |
 | lookup | compares | 3 |
-| table | compares | 1 |
+| table | compares | 2 |
 
 | case | facet | rucc | gcc-16 |
 |---|---|---|---|
@@ -476,7 +389,7 @@ And 41 more, all in `reports/report.json`.
 | `interpreter-dispatch.24.table.none.8.c17.dd956486` | `interpreter-dispatch` | table | bit-test, table |
 | `interpreter-dispatch.24.table.pointer.32.c17.11a0293b` | `interpreter-dispatch` | table | bit-test, table |
 
-And 37 more, all in `reports/report.json`.
+And 38 more, all in `reports/report.json`.
 
 ## Running this yourself
 
@@ -487,4 +400,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3774 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3832 programs with the same digest, and a report that disagrees with this one is a report about a different commit.

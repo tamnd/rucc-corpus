@@ -1,61 +1,6 @@
 # What went wrong
 
-7 findings, worst first. A finding is one case, one compiler, one level.
-
-### `const-ice.const-local.c17.d372496d` at `O0` on `rucc`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions
-
-Facet [`const-ice`](../programs/correctness/const-ice/README.md).
-
-```
-expected: 16992
-actual:   15083
-```
-
-### `const-ice.const-local.c17.d372496d` at `O1` on `rucc`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions
-
-Facet [`const-ice`](../programs/correctness/const-ice/README.md).
-
-```
-expected: 16992
-actual:   15083
-```
-
-### `const-ice.const-local.c17.d372496d` at `O2` on `rucc`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions
-
-Facet [`const-ice`](../programs/correctness/const-ice/README.md).
-
-```
-expected: 16992
-actual:   15083
-```
-
-### `const-ice.const-local.c17.d372496d` at `O3` on `rucc`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions
-
-Facet [`const-ice`](../programs/correctness/const-ice/README.md).
-
-```
-expected: 16992
-actual:   15083
-```
-
-### `const-ice.const-local.c17.d372496d` at `Os` on `rucc`
-
-rucc printed the wrong answer for a case about sizeof, offsetof and const objects in integer constant expressions
-
-Facet [`const-ice`](../programs/correctness/const-ice/README.md).
-
-```
-expected: 16992
-actual:   15083
-```
+2 findings, worst first. A finding is one case, one compiler, one level.
 
 ### `general-regs-only.struct-copy.c17.85360170` at `Os` on `rucc`
 

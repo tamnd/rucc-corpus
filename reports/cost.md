@@ -21,117 +21,123 @@ The `lines` column is the odd one out, because it is not a ratio and not a cost.
 | facet | cases | lines | code | on disk | data | compile | instructions | run | memory |
 |---|---|---|---|---|---|---|---|---|---|
 | [`baseline`](../programs/floor/baseline/README.md) | 10 | 241 | 5% less | level | 4% less | 38% less | not measured | inside the noise | 12% less |
-| [`control-flow`](../programs/floor/control-flow/README.md) | 11 | 291 | 6% less | level | 4% less | 40% less | not measured | inside the noise | 31% less |
-| [`branch-probability`](../programs/floor/branch-probability/README.md) | 34 | 704 | 6% less | level | 4% less | 35% less | not measured | inside the noise | 10% less |
-| [`computed-goto`](../programs/floor/computed-goto/README.md) | 25 | 1,614 | 27% less | level | 9% less | 45% less | not measured | inside the noise | 40% less |
-| [`vla-and-alloca`](../programs/floor/vla-and-alloca/README.md) | 9 | 236 | 27% less | level | 9% less | 53% less | not measured | inside the noise | 39% less |
-| [`constant-fold`](../programs/local/constant-fold/README.md) | 112 | 6,438 | 2% less | level | 4% less | 43% less | not measured | inside the noise | 26% less |
-| [`strength`](../programs/local/strength/README.md) | 24 | 2,656 | 3% more | level | 5% less | 57% less | not measured | inside the noise | 34% less |
-| [`narrowing`](../programs/local/narrowing/README.md) | 52 | 2,204 | 2% less | level | 4% less | 39% less | not measured | inside the noise | 8% less |
-| [`simplify`](../programs/local/simplify/README.md) | 114 | 6,416 | 3% less | level | 4% less | 46% less | not measured | inside the noise | 33% less |
-| [`short-circuit`](../programs/local/short-circuit/README.md) | 26 | 704 | 42% less | level | 11% less | 46% less | not measured | inside the noise | 40% less |
-| [`conditional-store`](../programs/local/conditional-store/README.md) | 20 | 705 | 42% less | level | 11% less | 49% less | not measured | inside the noise | 42% less |
-| [`value-settled`](../programs/local/value-settled/README.md) | 13 | 372 | 32% less | level | 11% less | 48% less | not measured | inside the noise | 35% less |
-| [`reassociate`](../programs/local/reassociate/README.md) | 20 | 440 | 2% more | level | 2% less | 36% less | not measured | level | 7% less |
-| [`dead-code`](../programs/local/dead-code/README.md) | 12 | 264 | 6% less | level | 4% less | 38% less | not measured | inside the noise | 8% less |
-| [`dead-store`](../programs/local/dead-store/README.md) | 12 | 220 | 6% less | level | 4% less | 39% less | not measured | inside the noise | 8% less |
-| [`unreachable-code`](../programs/local/unreachable-code/README.md) | 8 | 162 | 6% less | level | 4% less | 35% less | not measured | inside the noise | 7% less |
-| [`libcall-fold`](../programs/local/libcall-fold/README.md) | 20 | 488 | 7% less | level | 4% less | 41% less | not measured | inside the noise | 17% less |
-| [`common-subexpr`](../programs/global/common-subexpr/README.md) | 32 | 740 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 10% less |
-| [`load-forwarding`](../programs/global/load-forwarding/README.md) | 40 | 1,008 | 6% less | level | 4% less | 34% less | not measured | inside the noise | 9% less |
-| [`code-motion`](../programs/global/code-motion/README.md) | 12 | 288 | 6% less | level | 3% less | 34% less | not measured | inside the noise | 10% less |
-| [`copy-propagation`](../programs/global/copy-propagation/README.md) | 12 | 336 | 8% less | level | 4% less | 38% less | not measured | inside the noise | 8% less |
-| [`constant-propagation`](../programs/global/constant-propagation/README.md) | 16 | 268 | 6% less | level | 4% less | 37% less | not measured | inside the noise | 9% less |
-| [`value-range`](../programs/global/value-range/README.md) | 13 | 310 | 2% more | level | 4% less | 33% less | not measured | inside the noise | 9% less |
-| [`prune`](../programs/global/prune/README.md) | 15 | 472 | 39% less | level | 11% less | 45% less | not measured | inside the noise | 34% less |
-| [`jump-threading`](../programs/global/jump-threading/README.md) | 5 | 224 | 21% less | level | 11% less | 51% less | not measured | inside the noise | 41% less |
+| [`control-flow`](../programs/floor/control-flow/README.md) | 11 | 291 | 6% less | level | 4% less | 41% less | not measured | inside the noise | 26% less |
+| [`branch-probability`](../programs/floor/branch-probability/README.md) | 34 | 704 | 6% less | level | 4% less | 39% less | not measured | inside the noise | 9% less |
+| [`computed-goto`](../programs/floor/computed-goto/README.md) | 25 | 1,614 | 27% less | level | 9% less | 44% less | not measured | inside the noise | 39% less |
+| [`vla-and-alloca`](../programs/floor/vla-and-alloca/README.md) | 9 | 236 | 27% less | level | 9% less | 50% less | not measured | inside the noise | 40% less |
+| [`constant-fold`](../programs/local/constant-fold/README.md) | 112 | 6,438 | 2% less | level | 4% less | 44% less | not measured | inside the noise | 26% less |
+| [`strength`](../programs/local/strength/README.md) | 24 | 2,656 | 3% more | level | 5% less | 59% less | not measured | inside the noise | 32% less |
+| [`narrowing`](../programs/local/narrowing/README.md) | 52 | 2,204 | 2% less | level | 4% less | 39% less | not measured | inside the noise | 7% less |
+| [`simplify`](../programs/local/simplify/README.md) | 114 | 6,416 | 3% less | level | 4% less | 47% less | not measured | level | 32% less |
+| [`short-circuit`](../programs/local/short-circuit/README.md) | 26 | 704 | 42% less | level | 11% less | 47% less | not measured | level | 39% less |
+| [`conditional-store`](../programs/local/conditional-store/README.md) | 20 | 705 | 42% less | level | 11% less | 51% less | not measured | inside the noise | 40% less |
+| [`value-settled`](../programs/local/value-settled/README.md) | 13 | 372 | 32% less | level | 11% less | 44% less | not measured | inside the noise | 35% less |
+| [`reassociate`](../programs/local/reassociate/README.md) | 20 | 440 | 2% more | level | 2% less | 35% less | not measured | inside the noise | 6% less |
+| [`dead-code`](../programs/local/dead-code/README.md) | 12 | 264 | 6% less | level | 4% less | 35% less | not measured | level | 8% less |
+| [`dead-store`](../programs/local/dead-store/README.md) | 12 | 220 | 6% less | level | 4% less | 34% less | not measured | inside the noise | 7% less |
+| [`unreachable-code`](../programs/local/unreachable-code/README.md) | 8 | 162 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 7% less |
+| [`libcall-fold`](../programs/local/libcall-fold/README.md) | 20 | 488 | 7% less | level | 4% less | 40% less | not measured | inside the noise | 18% less |
+| [`common-subexpr`](../programs/global/common-subexpr/README.md) | 32 | 740 | 6% less | level | 4% less | 37% less | not measured | inside the noise | 9% less |
+| [`load-forwarding`](../programs/global/load-forwarding/README.md) | 40 | 1,008 | 6% less | level | 4% less | 40% less | not measured | level | 8% less |
+| [`code-motion`](../programs/global/code-motion/README.md) | 12 | 288 | 6% less | level | 3% less | 38% less | not measured | inside the noise | 8% less |
+| [`copy-propagation`](../programs/global/copy-propagation/README.md) | 12 | 336 | 8% less | level | 4% less | 39% less | not measured | inside the noise | 7% less |
+| [`constant-propagation`](../programs/global/constant-propagation/README.md) | 16 | 268 | 6% less | level | 4% less | 40% less | not measured | level | 7% less |
+| [`value-range`](../programs/global/value-range/README.md) | 13 | 310 | 2% more | level | 4% less | 38% less | not measured | level | 8% less |
+| [`prune`](../programs/global/prune/README.md) | 15 | 472 | 39% less | level | 11% less | 44% less | not measured | inside the noise | 34% less |
+| [`jump-threading`](../programs/global/jump-threading/README.md) | 5 | 224 | 21% less | level | 11% less | 47% less | not measured | inside the noise | 40% less |
 | [`value-replacement`](../programs/global/value-replacement/README.md) | 13 | 360 | 35% less | level | 11% less | 47% less | not measured | inside the noise | 34% less |
-| [`alias-analysis`](../programs/global/alias-analysis/README.md) | 36 | 792 | 6% less | level | 4% less | 39% less | not measured | inside the noise | 10% less |
-| [`memory-ssa`](../programs/global/memory-ssa/README.md) | 28 | 620 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 11% less |
-| [`scalar-replacement`](../programs/global/scalar-replacement/README.md) | 20 | 376 | 6% less | level | 4% less | 33% less | not measured | inside the noise | 9% less |
-| [`loop-invariant`](../programs/loops/loop-invariant/README.md) | 32 | 640 | 6% less | level | 4% less | 34% less | not measured | level | 13% less |
-| [`loop-hoist`](../programs/loops/loop-hoist/README.md) | 64 | 1,620 | 6% less | level | 4% less | 39% less | not measured | level | 14% less |
-| [`induction-variable`](../programs/loops/induction-variable/README.md) | 42 | 863 | 6% less | level | 4% less | 35% less | not measured | level | 14% less |
-| [`iv-selection`](../programs/loops/iv-selection/README.md) | 36 | 760 | 29% less | level | 11% less | 46% less | not measured | inside the noise | 34% less |
-| [`loop-unswitch`](../programs/loops/loop-unswitch/README.md) | 64 | 1,408 | 4% less | level | 4% less | 41% less | not measured | inside the noise | 31% less |
+| [`alias-analysis`](../programs/global/alias-analysis/README.md) | 36 | 792 | 6% less | level | 4% less | 38% less | not measured | inside the noise | 9% less |
+| [`memory-ssa`](../programs/global/memory-ssa/README.md) | 28 | 620 | 6% less | level | 4% less | 39% less | not measured | level | 9% less |
+| [`scalar-replacement`](../programs/global/scalar-replacement/README.md) | 20 | 376 | 6% less | level | 4% less | 40% less | not measured | inside the noise | 8% less |
+| [`loop-invariant`](../programs/loops/loop-invariant/README.md) | 32 | 640 | 6% less | level | 4% less | 38% less | not measured | inside the noise | 12% less |
+| [`loop-hoist`](../programs/loops/loop-hoist/README.md) | 64 | 1,620 | 6% less | level | 4% less | 40% less | not measured | inside the noise | 13% less |
+| [`induction-variable`](../programs/loops/induction-variable/README.md) | 42 | 863 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 13% less |
+| [`iv-selection`](../programs/loops/iv-selection/README.md) | 36 | 760 | 29% less | level | 11% less | 46% less | not measured | inside the noise | 37% less |
+| [`loop-unswitch`](../programs/loops/loop-unswitch/README.md) | 64 | 1,408 | 4% less | level | 4% less | 42% less | not measured | level | 30% less |
 | [`loop-unroll`](../programs/loops/loop-unroll/README.md) | 64 | 1,056 | 10% less | level | 4% less | 39% less | not measured | inside the noise | 13% less |
-| [`loop-unroll-shape`](../programs/loops/loop-unroll-shape/README.md) | 80 | 1,348 | 10% less | level | 4% less | 36% less | not measured | inside the noise | 12% less |
-| [`loop-idiom`](../programs/loops/loop-idiom/README.md) | 78 | 1,600 | 29% less | level | 10% less | 41% less | not measured | inside the noise | 31% less |
-| [`loop-deletion`](../programs/loops/loop-deletion/README.md) | 64 | 1,408 | 6% less | level | 4% less | 34% less | not measured | inside the noise | 13% less |
-| [`bit-loops`](../programs/loops/bit-loops/README.md) | 16 | 564 | 1% less | level | 2% less | 47% less | not measured | inside the noise | 39% less |
-| [`loop-rotate`](../programs/loops/loop-rotate/README.md) | 64 | 1,072 | 10% less | level | 4% less | 35% less | not measured | level | 12% less |
-| [`loop-shape`](../programs/loops/loop-shape/README.md) | 64 | 1,416 | 9% less | level | 4% less | 40% less | not measured | inside the noise | 33% less |
-| [`loop-restructure`](../programs/loops/loop-restructure/README.md) | 48 | 960 | 10% less | level | 4% less | 37% less | not measured | inside the noise | 16% less |
-| [`inline`](../programs/interprocedural/inline/README.md) | 36 | 1,200 | 6% less | level | 3% less | 35% less | not measured | level | 8% less |
-| [`tail-call`](../programs/interprocedural/tail-call/README.md) | 36 | 876 | 5% more | level | 2% less | 41% less | not measured | inside the noise | 15% less |
-| [`tail-dispatch`](../programs/interprocedural/tail-dispatch/README.md) | 5 | 893 | level | level | 3% less | 56% less | not measured | inside the noise | 37% less |
-| [`called-once`](../programs/interprocedural/called-once/README.md) | 5 | 413 | 5% less | level | 4% less | 59% less | not measured | inside the noise | 36% less |
-| [`function-purity`](../programs/interprocedural/function-purity/README.md) | 28 | 636 | 6% less | level | 4% less | 34% less | not measured | inside the noise | 14% less |
+| [`loop-unroll-shape`](../programs/loops/loop-unroll-shape/README.md) | 80 | 1,348 | 10% less | level | 4% less | 35% less | not measured | level | 12% less |
+| [`loop-idiom`](../programs/loops/loop-idiom/README.md) | 78 | 1,600 | 29% less | level | 10% less | 42% less | not measured | inside the noise | 30% less |
+| [`loop-deletion`](../programs/loops/loop-deletion/README.md) | 64 | 1,408 | 6% less | level | 4% less | 37% less | not measured | inside the noise | 12% less |
+| [`bit-loops`](../programs/loops/bit-loops/README.md) | 16 | 564 | 1% less | level | 2% less | 50% less | not measured | inside the noise | 37% less |
+| [`loop-rotate`](../programs/loops/loop-rotate/README.md) | 64 | 1,072 | 10% less | level | 4% less | 37% less | not measured | level | 11% less |
+| [`loop-shape`](../programs/loops/loop-shape/README.md) | 64 | 1,416 | 9% less | level | 4% less | 44% less | not measured | inside the noise | 33% less |
+| [`loop-restructure`](../programs/loops/loop-restructure/README.md) | 48 | 960 | 10% less | level | 4% less | 40% less | not measured | level | 19% less |
+| [`inline`](../programs/interprocedural/inline/README.md) | 36 | 1,200 | 6% less | level | 3% less | 38% less | not measured | inside the noise | 8% less |
+| [`tail-call`](../programs/interprocedural/tail-call/README.md) | 36 | 876 | 5% more | level | 2% less | 39% less | not measured | inside the noise | 14% less |
+| [`tail-dispatch`](../programs/interprocedural/tail-dispatch/README.md) | 5 | 893 | level | level | 3% less | 59% less | not measured | inside the noise | 37% less |
+| [`called-once`](../programs/interprocedural/called-once/README.md) | 5 | 413 | 5% less | level | 4% less | 62% less | not measured | inside the noise | 37% less |
+| [`function-purity`](../programs/interprocedural/function-purity/README.md) | 28 | 636 | 6% less | level | 4% less | 39% less | not measured | inside the noise | 13% less |
 | [`constant-args`](../programs/interprocedural/constant-args/README.md) | 36 | 792 | 6% less | level | 4% less | 39% less | not measured | inside the noise | 10% less |
-| [`unused-params`](../programs/interprocedural/unused-params/README.md) | 44 | 948 | 6% less | level | 4% less | 35% less | not measured | inside the noise | 9% less |
-| [`unused-returns`](../programs/interprocedural/unused-returns/README.md) | 36 | 912 | 6% less | level | 3% less | 37% less | not measured | inside the noise | 12% less |
-| [`declared-purity`](../programs/interprocedural/declared-purity/README.md) | 32 | 856 in 64 files | 14% less | level | 6% less | 53% less | not measured | inside the noise | 8% less |
-| [`reachability`](../programs/interprocedural/reachability/README.md) | 9 | 247 | 6% less | level | 4% less | 35% less | not measured | level | 7% less |
-| [`devirtualize`](../programs/interprocedural/devirtualize/README.md) | 4 | 80 | 6% less | level | 4% less | 43% less | not measured | inside the noise | 22% less |
-| [`memory-effects`](../programs/interprocedural/memory-effects/README.md) | 24 | 760 | 8% less | level | 3% less | 42% less | not measured | level | 36% less |
-| [`call-motion`](../programs/interprocedural/call-motion/README.md) | 36 | 1,004 in 48 files | 6% less | level | 3% less | 44% less | not measured | level | 34% less |
-| [`link-time-optimization`](../programs/interprocedural/link-time-optimization/README.md) | 20 | 556 in 44 files | 6% less | level | 3% less | 62% less | not measured | inside the noise | 10% less |
-| [`selection`](../programs/backend/selection/README.md) | 40 | 680 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 7% less |
-| [`register-pressure`](../programs/backend/register-pressure/README.md) | 60 | 3,120 | 6% less | level | 4% less | 38% less | not measured | level | 9% less |
-| [`register-alloc`](../programs/backend/register-alloc/README.md) | 40 | 2,664 | 4% less | level | 4% less | 38% less | not measured | inside the noise | 13% less |
-| [`scheduling`](../programs/backend/scheduling/README.md) | 20 | 1,046 | 42% more | level | 4% less | 38% less | not measured | inside the noise | 32% less |
-| [`block-layout`](../programs/backend/block-layout/README.md) | 16 | 421 | 10% less | 1% more | 2% less | 40% less | not measured | inside the noise | 34% less |
-| [`if-conversion`](../programs/backend/if-conversion/README.md) | 38 | 945 | 13% less | level | 4% less | 43% less | not measured | inside the noise | 32% less |
-| [`switch-lowering`](../programs/backend/switch-lowering/README.md) | 27 | 1,521 | 5% less | level | 4% less | 46% less | not measured | inside the noise | 34% less |
-| [`switch-runs`](../programs/backend/switch-runs/README.md) | 15 | 1,356 | 9% less | level | 4% less | 42% less | not measured | inside the noise | 32% less |
-| [`switch-dispatch`](../programs/backend/switch-dispatch/README.md) | 21 | 942 | 28% less | level | 10% less | 46% less | not measured | 39% more | 33% less |
-| [`division`](../programs/backend/division/README.md) | 72 | 2,020 | 23% less | level | 4% less | 53% less | not measured | inside the noise | 39% less |
-| [`narrow-shift`](../programs/backend/narrow-shift/README.md) | 8 | 256 | 40% less | level | 5% less | 58% less | not measured | inside the noise | 40% less |
-| [`calling-convention`](../programs/backend/calling-convention/README.md) | 10 | 216 | 6% less | level | 4% less | 40% less | not measured | level | 11% less |
-| [`machine-peephole`](../programs/backend/machine-peephole/README.md) | 22 | 402 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 8% less |
-| [`bit-liveness`](../programs/backend/bit-liveness/README.md) | 28 | 628 | 2% less | level | 4% less | 38% less | not measured | inside the noise | 10% less |
-| [`compare-elim`](../programs/backend/compare-elim/README.md) | 26 | 526 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 10% less |
-| [`address-fold`](../programs/backend/address-fold/README.md) | 28 | 584 | 6% less | level | 4% less | 37% less | not measured | inside the noise | 10% less |
-| [`load-fold`](../programs/backend/load-fold/README.md) | 40 | 924 | 16% less | level | 12% less | 39% less | not measured | level | 39% less |
-| [`store-fold`](../programs/backend/store-fold/README.md) | 56 | 1,416 | 16% less | level | 11% less | 39% less | not measured | level | 39% less |
-| [`store-fold-constant`](../programs/backend/store-fold-constant/README.md) | 118 | 2,960 | 14% less | level | 11% less | 39% less | not measured | inside the noise | 39% less |
-| [`compare-fold`](../programs/backend/compare-fold/README.md) | 118 | 2,742 | 12% less | level | 11% less | 39% less | not measured | inside the noise | 39% less |
-| [`frame-address`](../programs/backend/frame-address/README.md) | 6 | 117 | 6% less | level | 4% less | 32% less | not measured | inside the noise | 10% less |
-| [`stack-slots`](../programs/backend/stack-slots/README.md) | 6 | 201 | 35% less | level | 13% less | 46% less | not measured | inside the noise | 33% less |
-| [`block-copy`](../programs/backend/block-copy/README.md) | 44 | 1,320 | 26% less | level | 3% less | 49% less | not measured | inside the noise | 39% less |
-| [`frame-size`](../programs/backend/frame-size/README.md) | 59 | 8,808 | 28% less | level | 10% less | 66% less | not measured | inside the noise | 43% less |
-| [`interpreter-dispatch`](../programs/backend/interpreter-dispatch/README.md) | 54 | 34,509 | 43% more | level | 4% less | 64% less | not measured | inside the noise | 38% less |
-| [`choice-across-call`](../programs/backend/choice-across-call/README.md) | 48 | 3,024 | 8% less | 1% less | 8% less | 46% less | not measured | inside the noise | 37% less |
-| [`bit-builtins`](../programs/backend/bit-builtins/README.md) | 22 | 1,316 | 14% more | level | 4% less | 46% less | not measured | inside the noise | 31% less |
-| [`float-conversion`](../programs/backend/float-conversion/README.md) | 66 | 1,477 | 4% less | level | 4% less | 37% less | not measured | inside the noise | 10% less |
-| [`long-double`](../programs/backend/long-double/README.md) | 10 | 226 | 38% more | level | 4% less | 37% less | not measured | inside the noise | 15% less |
-| [`barrier`](../programs/correctness/barrier/README.md) | 13 | 241 | 6% less | level | 4% less | 35% less | not measured | inside the noise | 9% less |
-| [`atomics`](../programs/correctness/atomics/README.md) | 31 | 1,334 | 4% less | level | 4% less | 45% less | not measured | inside the noise | 34% less |
-| [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md) | 8 | 219 | 12% less | level | 5% less | 38% less | not measured | inside the noise | 20% less |
-| [`sigsetjmp`](../programs/correctness/sigsetjmp/README.md) | 112 | 12,712 | 2% less | level | 11% less | 52% less | not measured | inside the noise | 42% less |
-| [`builtin-setjmp`](../programs/correctness/builtin-setjmp/README.md) | 48 | 5,660 | 5% more | level | 13% less | 56% less | not measured | inside the noise | 46% less |
-| [`overflow-builtins`](../programs/correctness/overflow-builtins/README.md) | 144 | 13,992 | 23% more | level | 3% less | 50% less | not measured | inside the noise | 33% less |
+| [`unused-params`](../programs/interprocedural/unused-params/README.md) | 44 | 948 | 6% less | level | 4% less | 39% less | not measured | level | 9% less |
+| [`unused-returns`](../programs/interprocedural/unused-returns/README.md) | 36 | 912 | 6% less | level | 4% less | 39% less | not measured | inside the noise | 11% less |
+| [`declared-purity`](../programs/interprocedural/declared-purity/README.md) | 32 | 856 in 64 files | 14% less | level | 6% less | 52% less | not measured | inside the noise | 8% less |
+| [`reachability`](../programs/interprocedural/reachability/README.md) | 9 | 247 | 6% less | level | 4% less | 32% less | not measured | inside the noise | 7% less |
+| [`devirtualize`](../programs/interprocedural/devirtualize/README.md) | 4 | 80 | 6% less | level | 4% less | 41% less | not measured | inside the noise | 9% less |
+| [`memory-effects`](../programs/interprocedural/memory-effects/README.md) | 24 | 760 | 8% less | level | 3% less | 43% less | not measured | inside the noise | 35% less |
+| [`call-motion`](../programs/interprocedural/call-motion/README.md) | 36 | 1,004 in 48 files | 6% less | level | 3% less | 47% less | not measured | inside the noise | 33% less |
+| [`link-time-optimization`](../programs/interprocedural/link-time-optimization/README.md) | 20 | 556 in 44 files | 6% less | level | 3% less | 63% less | not measured | inside the noise | 8% less |
+| [`selection`](../programs/backend/selection/README.md) | 40 | 680 | 6% less | level | 4% less | 41% less | not measured | inside the noise | 7% less |
+| [`register-pressure`](../programs/backend/register-pressure/README.md) | 60 | 3,120 | 6% less | level | 4% less | 38% less | not measured | level | 10% less |
+| [`register-alloc`](../programs/backend/register-alloc/README.md) | 40 | 2,664 | 4% less | level | 4% less | 39% less | not measured | inside the noise | 13% less |
+| [`scheduling`](../programs/backend/scheduling/README.md) | 20 | 1,046 | 42% more | level | 4% less | 38% less | not measured | level | 32% less |
+| [`block-layout`](../programs/backend/block-layout/README.md) | 16 | 421 | 10% less | 1% more | 2% less | 41% less | not measured | inside the noise | 32% less |
+| [`if-conversion`](../programs/backend/if-conversion/README.md) | 38 | 945 | 13% less | level | 4% less | 42% less | not measured | inside the noise | 33% less |
+| [`switch-lowering`](../programs/backend/switch-lowering/README.md) | 27 | 1,521 | 5% less | level | 4% less | 49% less | not measured | inside the noise | 33% less |
+| [`switch-runs`](../programs/backend/switch-runs/README.md) | 15 | 1,356 | 9% less | level | 4% less | 44% less | not measured | inside the noise | 31% less |
+| [`switch-dispatch`](../programs/backend/switch-dispatch/README.md) | 21 | 942 | 28% less | level | 10% less | 45% less | not measured | inside the noise | 35% less |
+| [`division`](../programs/backend/division/README.md) | 72 | 2,020 | 23% less | level | 4% less | 54% less | not measured | inside the noise | 38% less |
+| [`narrow-shift`](../programs/backend/narrow-shift/README.md) | 8 | 256 | 40% less | level | 5% less | 56% less | not measured | inside the noise | 40% less |
+| [`calling-convention`](../programs/backend/calling-convention/README.md) | 10 | 216 | 6% less | level | 4% less | 35% less | not measured | inside the noise | 10% less |
+| [`machine-peephole`](../programs/backend/machine-peephole/README.md) | 22 | 402 | 6% less | level | 4% less | 37% less | not measured | inside the noise | 8% less |
+| [`bit-liveness`](../programs/backend/bit-liveness/README.md) | 28 | 628 | 2% less | level | 4% less | 38% less | not measured | inside the noise | 9% less |
+| [`compare-elim`](../programs/backend/compare-elim/README.md) | 26 | 526 | 6% less | level | 4% less | 36% less | not measured | inside the noise | 9% less |
+| [`address-fold`](../programs/backend/address-fold/README.md) | 28 | 584 | 6% less | level | 4% less | 38% less | not measured | inside the noise | 9% less |
+| [`load-fold`](../programs/backend/load-fold/README.md) | 40 | 924 | 16% less | level | 12% less | 41% less | not measured | inside the noise | 30% less |
+| [`store-fold`](../programs/backend/store-fold/README.md) | 56 | 1,416 | 16% less | level | 11% less | 40% less | not measured | inside the noise | 38% less |
+| [`store-fold-constant`](../programs/backend/store-fold-constant/README.md) | 118 | 2,960 | 14% less | level | 11% less | 40% less | not measured | level | 38% less |
+| [`compare-fold`](../programs/backend/compare-fold/README.md) | 118 | 2,742 | 12% less | level | 11% less | 40% less | not measured | inside the noise | 39% less |
+| [`frame-address`](../programs/backend/frame-address/README.md) | 6 | 117 | 6% less | level | 4% less | 42% less | not measured | inside the noise | 9% less |
+| [`stack-slots`](../programs/backend/stack-slots/README.md) | 6 | 201 | 35% less | level | 13% less | 46% less | not measured | inside the noise | 36% less |
+| [`block-copy`](../programs/backend/block-copy/README.md) | 44 | 1,320 | 26% less | level | 3% less | 48% less | not measured | inside the noise | 39% less |
+| [`frame-size`](../programs/backend/frame-size/README.md) | 59 | 8,808 | 28% less | level | 10% less | 67% less | not measured | inside the noise | 43% less |
+| [`interpreter-dispatch`](../programs/backend/interpreter-dispatch/README.md) | 54 | 34,509 | 43% more | level | 4% less | 65% less | not measured | inside the noise | 37% less |
+| [`choice-across-call`](../programs/backend/choice-across-call/README.md) | 48 | 3,024 | 8% less | 1% less | 8% less | 44% less | not measured | inside the noise | 37% less |
+| [`bit-builtins`](../programs/backend/bit-builtins/README.md) | 22 | 1,316 | 14% more | level | 4% less | 46% less | not measured | inside the noise | 30% less |
+| [`float-conversion`](../programs/backend/float-conversion/README.md) | 66 | 1,477 | 4% less | level | 4% less | 40% less | not measured | inside the noise | 9% less |
+| [`long-double`](../programs/backend/long-double/README.md) | 10 | 226 | 38% more | level | 4% less | 39% less | not measured | level | 26% less |
+| [`barrier`](../programs/correctness/barrier/README.md) | 13 | 241 | 6% less | level | 4% less | 37% less | not measured | inside the noise | 9% less |
+| [`atomics`](../programs/correctness/atomics/README.md) | 31 | 1,334 | 4% less | level | 4% less | 43% less | not measured | level | 32% less |
+| [`setjmp-longjmp`](../programs/correctness/setjmp-longjmp/README.md) | 8 | 219 | 12% less | level | 5% less | 34% less | not measured | inside the noise | 15% less |
+| [`sigsetjmp`](../programs/correctness/sigsetjmp/README.md) | 112 | 12,712 | 2% less | level | 11% less | 55% less | not measured | inside the noise | 42% less |
+| [`builtin-setjmp`](../programs/correctness/builtin-setjmp/README.md) | 48 | 5,660 | 5% more | level | 13% less | 59% less | not measured | inside the noise | 45% less |
+| [`overflow-builtins`](../programs/correctness/overflow-builtins/README.md) | 144 | 13,992 | 23% more | level | 3% less | 52% less | not measured | inside the noise | 30% less |
 | [`target-attribute`](../programs/correctness/target-attribute/README.md) | 52 | 4,940 | 5% more | level | 2% less | 58% less | not measured | inside the noise | 39% less |
-| [`crc32c`](../programs/correctness/crc32c/README.md) | 64 | 15,632 | 2% more | level | 4% less | 57% less | not measured | inside the noise | 43% less |
-| [`simd-lfind`](../programs/correctness/simd-lfind/README.md) | 30 | 2,232 | 67% more | level | 7% less | 54% less | not measured | inside the noise | 34% less |
+| [`crc32c`](../programs/correctness/crc32c/README.md) | 64 | 15,632 | 2% more | level | 4% less | 57% less | not measured | inside the noise | 42% less |
+| [`simd-lfind`](../programs/correctness/simd-lfind/README.md) | 30 | 2,232 | 67% more | level | 7% less | 55% less | not measured | inside the noise | 33% less |
 | [`crc32c-armv8`](../programs/correctness/crc32c-armv8/README.md) | 72 | 25,314 | not measured | not measured | not measured | not measured | not measured | not measured | not measured |
 | [`simd-lfind-neon`](../programs/correctness/simd-lfind-neon/README.md) | 54 | 4,590 | not measured | not measured | not measured | not measured | not measured | not measured | not measured |
-| [`lkmm`](../programs/correctness/lkmm/README.md) | 24 | 1,164 | 17% less | level | 6% less | 43% less | not measured | level | 33% less |
-| [`mitigations`](../programs/correctness/mitigations/README.md) | 25 | 1,510 | 4% less | level | 3% less | 46% less | not measured | inside the noise | 35% less |
-| [`asm-goto`](../programs/correctness/asm-goto/README.md) | 6 | 172 | 10% less | level | 3% less | 42% less | not measured | inside the noise | 37% less |
-| [`asm-local-labels`](../programs/correctness/asm-local-labels/README.md) | 5 | 135 | 9% less | level | 3% less | 40% less | not measured | inside the noise | 37% less |
-| [`gas-macros`](../programs/correctness/gas-macros/README.md) | 6 | 151 | 10% less | level | 3% less | 40% less | not measured | inside the noise | 36% less |
-| [`constant-p-after-inline`](../programs/correctness/constant-p-after-inline/README.md) | 5 | 168 | 10% less | level | 3% less | 43% less | not measured | inside the noise | 35% less |
-| [`mcmodel-kernel`](../programs/correctness/mcmodel-kernel/README.md) | 6 | 165 | 7% less | level | 3% less | 40% less | not measured | inside the noise | 36% less |
-| [`general-regs-only`](../programs/correctness/general-regs-only/README.md) | 5 | 463 | 7% less | level | 6% less | 49% less | not measured | inside the noise | 42% less |
+| [`lkmm`](../programs/correctness/lkmm/README.md) | 24 | 1,164 | 17% less | level | 6% less | 45% less | not measured | inside the noise | 34% less |
+| [`mitigations`](../programs/correctness/mitigations/README.md) | 25 | 1,510 | 4% less | level | 3% less | 45% less | not measured | inside the noise | 35% less |
+| [`asm-goto`](../programs/correctness/asm-goto/README.md) | 6 | 172 | 10% less | level | 3% less | 40% less | not measured | level | 26% less |
+| [`asm-local-labels`](../programs/correctness/asm-local-labels/README.md) | 5 | 135 | 9% less | level | 3% less | 39% less | not measured | inside the noise | 35% less |
+| [`gas-macros`](../programs/correctness/gas-macros/README.md) | 6 | 151 | 10% less | level | 3% less | 47% less | not measured | inside the noise | 35% less |
+| [`constant-p-after-inline`](../programs/correctness/constant-p-after-inline/README.md) | 5 | 168 | 10% less | level | 3% less | 46% less | not measured | inside the noise | 18% less |
+| [`mcmodel-kernel`](../programs/correctness/mcmodel-kernel/README.md) | 6 | 165 | 7% less | level | 3% less | 44% less | not measured | inside the noise | 35% less |
+| [`general-regs-only`](../programs/correctness/general-regs-only/README.md) | 5 | 463 | 7% less | level | 6% less | 50% less | not measured | inside the noise | 40% less |
 | [`i386-kernel`](../programs/correctness/i386-kernel/README.md) | 9 | 624 | not measured | not measured | not measured | not measured | not measured | not measured | not measured |
-| [`objtool-shapes`](../programs/correctness/objtool-shapes/README.md) | 5 | 170 | 9% less | level | 3% less | 42% less | not measured | inside the noise | 34% less |
+| [`objtool-shapes`](../programs/correctness/objtool-shapes/README.md) | 5 | 170 | 9% less | level | 3% less | 48% less | not measured | inside the noise | 34% less |
 | [`null-pointer-constant`](../programs/correctness/null-pointer-constant/README.md) | 6 | 302 | 8% less | level | 3% less | 44% less | not measured | inside the noise | 36% less |
-| [`const-ice`](../programs/correctness/const-ice/README.md) | 8 | 408 | 8% less | level | 3% less | 45% less | not measured | inside the noise | 33% less |
+| [`const-ice`](../programs/correctness/const-ice/README.md) | 8 | 408 | 8% less | level | 3% less | 44% less | not measured | inside the noise | 32% less |
 | [`section-attr`](../programs/correctness/section-attr/README.md) | 6 | 320 | 10% less | level | 3% less | 49% less | not measured | inside the noise | 37% less |
-| [`bundle`](../programs/correctness/bundle/README.md) | 33 | 3,651 in 78 files | 10% less | level | 1% more | 43% less | not measured | inside the noise | 37% less |
-| [`dllimport`](../programs/correctness/dllimport/README.md) | 18 | 2,268 in 39 files | 9% less | level | 1% more | 41% less | not measured | level | 34% less |
-| [`frontend`](../programs/floor/frontend/README.md) | 30 | 403 | 6% less | level | 4% less | 34% less | not measured | inside the noise | 8% less |
+| [`file-scope-asm`](../programs/correctness/file-scope-asm/README.md) | 24 | 1,316 in 38 files | 10% less | level | 4% less | 54% less | not measured | inside the noise | 29% less |
+| [`linker-sets`](../programs/correctness/linker-sets/README.md) | 9 | 562 in 13 files | 8% less | level | 3% less | 46% less | not measured | inside the noise | 36% less |
+| [`crt-and-brand`](../programs/correctness/crt-and-brand/README.md) | 7 | 410 in 8 files | 9% less | level | 3% less | 45% less | not measured | inside the noise | 33% less |
+| [`netbsd-kernel`](../programs/correctness/netbsd-kernel/README.md) | 5 | 531 in 8 files | 9% less | level | level | 55% less | not measured | inside the noise | 33% less |
+| [`werror-shapes`](../programs/correctness/werror-shapes/README.md) | 6 | 353 in 7 files | 10% less | level | 4% less | 39% less | not measured | inside the noise | 12% less |
+| [`kprintf-format`](../programs/correctness/kprintf-format/README.md) | 7 | 3,338 in 14 files | 9% less | 17% less | 7% less | 79% less | not measured | inside the noise | 46% less |
+| [`bundle`](../programs/correctness/bundle/README.md) | 33 | 3,651 in 78 files | 10% less | level | 1% more | 46% less | not measured | inside the noise | 36% less |
+| [`dllimport`](../programs/correctness/dllimport/README.md) | 18 | 2,268 in 39 files | 9% less | level | 1% more | 44% less | not measured | inside the noise | 33% less |
+| [`frontend`](../programs/floor/frontend/README.md) | 30 | 403 | 6% less | level | 4% less | 38% less | not measured | inside the noise | 7% less |
 
-3631 cases had a size to compare and 3631 had a memory figure.
+3689 cases had a size to compare and 3689 had a memory figure.
 
