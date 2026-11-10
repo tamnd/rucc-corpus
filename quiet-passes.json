@@ -45,6 +45,13 @@
     },
     {
       "toolchain": "rucc",
+      "level": "O1",
+      "pass": "rejoin",
+      "issue": "",
+      "why": "The pass runs only on AArch64 with NEON, and the whole corpus runs on x86-64. The aarch64 job runs three facets and is not a run of the whole corpus."
+    },
+    {
+      "toolchain": "rucc",
       "level": "O2",
       "pass": "coalesce",
       "issue": "tamnd/rucc-corpus#133",
@@ -84,6 +91,13 @@
       "pass": "plane-sink",
       "issue": "tamnd/rucc-corpus#133",
       "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O2",
+      "pass": "rejoin",
+      "issue": "",
+      "why": "The pass runs only on AArch64 with NEON, and the whole corpus runs on x86-64. The aarch64 job runs three facets and is not a run of the whole corpus."
     },
     {
       "toolchain": "rucc",
@@ -144,6 +158,13 @@
     {
       "toolchain": "rucc",
       "level": "O3",
+      "pass": "rejoin",
+      "issue": "",
+      "why": "The pass runs only on AArch64 with NEON, and the whole corpus runs on x86-64. The aarch64 job runs three facets and is not a run of the whole corpus."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "O3",
       "pass": "split",
       "issue": "tamnd/rucc-corpus#133",
       "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
@@ -182,6 +203,13 @@
       "pass": "plane-sink",
       "issue": "tamnd/rucc-corpus#133",
       "why": "The corpus builds at the default -fsafety=off, so no case has a safety check or a plane write for this pass to move or take out."
+    },
+    {
+      "toolchain": "rucc",
+      "level": "Os",
+      "pass": "rejoin",
+      "issue": "",
+      "why": "The pass runs only on AArch64 with NEON, and the whole corpus runs on x86-64. The aarch64 job runs three facets and is not a run of the whole corpus."
     }
   ]
 }
