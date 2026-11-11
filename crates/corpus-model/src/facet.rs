@@ -673,6 +673,13 @@ pub enum Facet {
     /// A string literal fills an array as a whole only where the elements are characters.
     /// The cases declare the object at file scope and in a block, and print each element.
     BraceElision,
+
+    /// The unnamed members of kencc, as `struct Ref { Lock; long ref; }` in the 9front tree.
+    ///
+    /// The members of such a member are members of the record, and the type name names the member itself.
+    /// A shape that gcc can compile is built under `-fplan9-extensions` and the two compilers are compared.
+    /// Each shape is built under `-fkencc` too, and has the tag `rucc-dialect`, so that only rucc gets it.
+    KenccMembers,
 }
 
 impl Facet {
@@ -800,6 +807,7 @@ impl Facet {
         Self::Dllimport,
         Self::Frontend,
         Self::BraceElision,
+        Self::KenccMembers,
     ];
 
     /// The name that goes in a file name, a command line and a stored record.
@@ -925,6 +933,7 @@ impl Facet {
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
             Self::BraceElision => "brace-elision",
+            Self::KenccMembers => "kencc-members",
         }
     }
 
@@ -1121,6 +1130,7 @@ impl Facet {
             }
             Self::Frontend => "language shape rather than optimization, including C23",
             Self::BraceElision => "initializers that leave out the inner braces of an aggregate",
+            Self::KenccMembers => "the unnamed members of kencc that the Plan 9 tree depends on",
         }
     }
 
@@ -1137,7 +1147,8 @@ impl Facet {
             | Self::ComputedGoto
             | Self::VlaAndAlloca
             | Self::Frontend
-            | Self::BraceElision => Phase::Floor,
+            | Self::BraceElision
+            | Self::KenccMembers => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
