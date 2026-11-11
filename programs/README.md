@@ -1,12 +1,12 @@
 # The corpus
 
-3958 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+4022 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `aa3ea605dc867c0092041e6d73721aaf3cba288a9febf7982cdc0ddbdccdafd2`.
+Corpus digest `19bae98975addd24584bb9d994fa33d77a8895a573ad42da0c46c2c83962e620`.
 
-## floor (245 programs)
+## floor (309 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
@@ -21,6 +21,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`brace-elision`](floor/brace-elision/README.md) | 20 | initializers that leave out the inner braces of an aggregate |
 | [`kencc-members`](floor/kencc-members/README.md) | 17 | the unnamed members of kencc that the Plan 9 tree depends on |
 | [`kencc-varargck`](floor/kencc-varargck/README.md) | 89 | the format check of kencc for each verb that the Plan 9 tree registers |
+| [`kencc-conversions`](floor/kencc-conversions/README.md) | 64 | the unsigned preserving arithmetic conversions of kencc for each pair of types |
 
 ## local (433 programs)
 
