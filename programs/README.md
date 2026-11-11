@@ -1,12 +1,12 @@
 # The corpus
 
-4076 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+4082 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `870798e5c61f9be985d0d76eb62c5369ed0e5efd20382ed900077e56b629b409`.
+Corpus digest `9379d8726d72d0f377573d365c73fdc0d14cb6fa7582e6a8961d86e5dc0310cf`.
 
-## floor (324 programs)
+## floor (330 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
@@ -23,6 +23,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`kencc-varargck`](floor/kencc-varargck/README.md) | 89 | the format check of kencc for each verb that the Plan 9 tree registers |
 | [`kencc-conversions`](floor/kencc-conversions/README.md) | 64 | the unsigned preserving arithmetic conversions of kencc for each pair of types |
 | [`kencc-layout`](floor/kencc-layout/README.md) | 15 | the record layout and the bit-fields of kencc for each shape |
+| [`kencc-regs`](floor/kencc-regs/README.md) | 6 | the extern register variables of kencc across calls and longjmp |
 
 ## local (433 programs)
 
