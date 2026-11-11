@@ -725,6 +725,12 @@ pub enum Facet {
     /// Each verb has a case with an argument of its type, which must compile with no warning, and a case with an argument of another type.
     /// The cases are built with `-Werror` under `-fkencc -fkencc-format`, so a warning is a rejection, and only rucc gets them.
     KenccVarargck,
+
+    /// The arithmetic conversions of kencc, the table `tab` of `cc/sub.c`, which keep the sign of an unsigned operand.
+    ///
+    /// Each case is one pair of operand types and prints the result of each operator in the type of the table.
+    /// The cases are built under `-fkencc`, and only rucc gets them.
+    KenccConversions,
 }
 
 impl Facet {
@@ -860,6 +866,7 @@ impl Facet {
         Self::BraceElision,
         Self::KenccMembers,
         Self::KenccVarargck,
+        Self::KenccConversions,
     ];
 
     /// The name that goes in a file name, a command line and a stored record.
@@ -993,6 +1000,7 @@ impl Facet {
             Self::BraceElision => "brace-elision",
             Self::KenccMembers => "kencc-members",
             Self::KenccVarargck => "kencc-varargck",
+            Self::KenccConversions => "kencc-conversions",
         }
     }
 
@@ -1205,6 +1213,9 @@ impl Facet {
             Self::KenccVarargck => {
                 "the format check of kencc for each verb that the Plan 9 tree registers"
             }
+            Self::KenccConversions => {
+                "the unsigned preserving arithmetic conversions of kencc for each pair of types"
+            }
         }
     }
 
@@ -1223,7 +1234,8 @@ impl Facet {
             | Self::Frontend
             | Self::BraceElision
             | Self::KenccMembers
-            | Self::KenccVarargck => Phase::Floor,
+            | Self::KenccVarargck
+            | Self::KenccConversions => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
