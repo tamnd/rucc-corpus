@@ -320,12 +320,18 @@ mod tests {
             // it. They only take sizes that are the same on every target, which a test next to
             // them checks, and never print one. `brace-elision` prints the number of elements of
             // an array, as one size over another, and that number is the same on every target.
+            // `kencc-varargck` checks the formats of calls to a `print` that formats nothing, so
+            // its `%p` and its `sizeof` never reach the output.
             let sizes = matches!(
                 case.facet,
-                Facet::NullPointerConstant | Facet::ConstIce | Facet::BraceElision
+                Facet::NullPointerConstant
+                    | Facet::ConstIce
+                    | Facet::BraceElision
+                    | Facet::KenccVarargck
             );
+            let formats = case.facet == Facet::KenccVarargck;
             for banned in ["%p", "sizeof", "__FILE__", "__LINE__", "__TIME__", "__DATE__"] {
-                if sizes && banned == "sizeof" {
+                if (sizes && banned == "sizeof") || (formats && banned == "%p") {
                     continue;
                 }
                 // Every file the compiler is handed, not only the one with main in it. A helper
