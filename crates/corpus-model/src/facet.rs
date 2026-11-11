@@ -680,6 +680,12 @@ pub enum Facet {
     /// A shape that gcc can compile is built under `-fplan9-extensions` and the two compilers are compared.
     /// Each shape is built under `-fkencc` too, and has the tag `rucc-dialect`, so that only rucc gets it.
     KenccMembers,
+
+    /// The format check of kencc `-F`, as the `#pragma varargck` lines of `libc.h` give it.
+    ///
+    /// Each verb has a case with an argument of its type, which must compile with no warning, and a case with an argument of another type.
+    /// The cases are built with `-Werror` under `-fkencc -fkencc-format`, so a warning is a rejection, and only rucc gets them.
+    KenccVarargck,
 }
 
 impl Facet {
@@ -808,6 +814,7 @@ impl Facet {
         Self::Frontend,
         Self::BraceElision,
         Self::KenccMembers,
+        Self::KenccVarargck,
     ];
 
     /// The name that goes in a file name, a command line and a stored record.
@@ -934,6 +941,7 @@ impl Facet {
             Self::Frontend => "frontend",
             Self::BraceElision => "brace-elision",
             Self::KenccMembers => "kencc-members",
+            Self::KenccVarargck => "kencc-varargck",
         }
     }
 
@@ -1131,6 +1139,9 @@ impl Facet {
             Self::Frontend => "language shape rather than optimization, including C23",
             Self::BraceElision => "initializers that leave out the inner braces of an aggregate",
             Self::KenccMembers => "the unnamed members of kencc that the Plan 9 tree depends on",
+            Self::KenccVarargck => {
+                "the format check of kencc for each verb that the Plan 9 tree registers"
+            }
         }
     }
 
@@ -1148,7 +1159,8 @@ impl Facet {
             | Self::VlaAndAlloca
             | Self::Frontend
             | Self::BraceElision
-            | Self::KenccMembers => Phase::Floor,
+            | Self::KenccMembers
+            | Self::KenccVarargck => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing

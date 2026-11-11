@@ -12,6 +12,7 @@ pub(crate) mod bsd_warn;
 pub(crate) mod global;
 pub(crate) mod interproc;
 pub(crate) mod kencc_members;
+pub(crate) mod kencc_varargck;
 pub(crate) mod kernel;
 pub(crate) mod kernel_asm;
 pub(crate) mod kernel_build;
