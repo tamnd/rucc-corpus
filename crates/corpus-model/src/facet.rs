@@ -666,6 +666,13 @@ pub enum Facet {
     /// The C23 constructs, the awkward corners of the type system, and everything that has
     /// to parse and typecheck before an optimization can be asked about it.
     Frontend,
+
+    /// Initializers that leave out the inner braces of an array or a record.
+    ///
+    /// The tables of the 9front tree, such as `char *d[][2] = { "a", "b" }`, where each string literal is the value of one pointer.
+    /// A string literal fills an array as a whole only where the elements are characters.
+    /// The cases declare the object at file scope and in a block, and print each element.
+    BraceElision,
 }
 
 impl Facet {
@@ -792,6 +799,7 @@ impl Facet {
         Self::Bundle,
         Self::Dllimport,
         Self::Frontend,
+        Self::BraceElision,
     ];
 
     /// The name that goes in a file name, a command line and a stored record.
@@ -916,6 +924,7 @@ impl Facet {
             Self::Bundle => "bundle",
             Self::Dllimport => "dllimport",
             Self::Frontend => "frontend",
+            Self::BraceElision => "brace-elision",
         }
     }
 
@@ -1111,6 +1120,7 @@ impl Facet {
                 "modules importing the executable's functions and data the way Windows Postgres does"
             }
             Self::Frontend => "language shape rather than optimization, including C23",
+            Self::BraceElision => "initializers that leave out the inner braces of an aggregate",
         }
     }
 
@@ -1126,7 +1136,8 @@ impl Facet {
             | Self::BranchProbability
             | Self::ComputedGoto
             | Self::VlaAndAlloca
-            | Self::Frontend => Phase::Floor,
+            | Self::Frontend
+            | Self::BraceElision => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
