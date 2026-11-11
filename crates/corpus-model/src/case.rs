@@ -4,6 +4,11 @@ use crate::Json;
 use crate::facet::{Facet, Phase};
 use crate::sha256;
 
+/// The tag of a case whose flags are a dialect that only rucc has, such as `-fkencc`.
+///
+/// A run gives such a case only to rucc, and checks it against the answer that the case has.
+pub const RUCC_DIALECT: &str = "rucc-dialect";
+
 /// Which C the program is written in.
 ///
 /// The dialect is a property of the case rather than a flag on the run, because a program that

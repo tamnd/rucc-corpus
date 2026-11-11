@@ -248,6 +248,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::netbsd_kernel::generate(&mut sink);
     facets::bsd_warn::generate(&mut sink);
     facets::plan9::generate(&mut sink);
+    facets::kencc_members::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }

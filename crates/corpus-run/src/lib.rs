@@ -320,7 +320,11 @@ fn run_one(
     keys: &Keys,
     at: usize,
 ) -> (RunRecord, Verdict) {
-    if plan.excludes(case) {
+    // A case with the tag `rucc-dialect` asks for a flag that only rucc has, such as `-fkencc`, so
+    // another compiler cannot be asked about it.
+    if plan.excludes(case)
+        || (case.has_tag(corpus_model::RUCC_DIALECT) && !shape::says_what_it_did(spec))
+    {
         return (RunRecord::skipped(case, &spec.id, level), Verdict::Skipped);
     }
     let key = keys.records.is_on().then(|| keys.key(case, spec, level, plan, at)).flatten();
@@ -456,6 +460,20 @@ mod tests {
         let mut plan = plan(&dir);
         plan.exclude_tags = vec!["gnu".to_owned()];
         let run = execute(&manifest, &plan, &|_, _, _| {}).unwrap();
+        assert_eq!(run.records.len(), 2);
+        for record in &run.records {
+            assert_eq!(run.verdict(record), Verdict::Skipped);
+        }
+        assert!(!run.failed());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_case_in_a_dialect_of_rucc_is_given_only_to_rucc() {
+        let dir = scratch("dialect");
+        let case = prints("1").tagged(&[corpus_model::RUCC_DIALECT]);
+        let manifest = Manifest::new(vec![case]).unwrap();
+        let run = execute(&manifest, &plan(&dir), &|_, _, _| {}).unwrap();
         assert_eq!(run.records.len(), 2);
         for record in &run.records {
             assert_eq!(run.verdict(record), Verdict::Skipped);
