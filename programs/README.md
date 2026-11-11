@@ -1,12 +1,12 @@
 # The corpus
 
-3832 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3852 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `94b4049bd9aa578283d9930c1bd6828b1b5e7260bf113f5a81d7e25b7c945eb0`.
+Corpus digest `d2c4c97c63dcdcc482a21e8093266d562b24747a644e1ebf3854ccf11f98e3d7`.
 
-## floor (119 programs)
+## floor (139 programs)
 
 The pass infrastructure, the verifiers and the cost model, which is what every later phase is built on.
 
@@ -18,6 +18,7 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 | [`computed-goto`](floor/computed-goto/README.md) | 25 | the address of a label, and the indirect jump through it |
 | [`vla-and-alloca`](floor/vla-and-alloca/README.md) | 9 | an object whose size is not known until the program runs |
 | [`frontend`](floor/frontend/README.md) | 30 | language shape rather than optimization, including C23 |
+| [`brace-elision`](floor/brace-elision/README.md) | 20 | initializers that leave out the inner braces of an aggregate |
 
 ## local (433 programs)
 

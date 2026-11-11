@@ -247,6 +247,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::bsd_link::generate(&mut sink);
     facets::netbsd_kernel::generate(&mut sink);
     facets::bsd_warn::generate(&mut sink);
+    facets::plan9::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }
@@ -315,8 +316,12 @@ mod tests {
         for case in &corpus.cases {
             // Two facets are about sizeof itself, since the kernel builds its constants out of
             // it. They only take sizes that are the same on every target, which a test next to
-            // them checks, and never print one.
-            let sizes = matches!(case.facet, Facet::NullPointerConstant | Facet::ConstIce);
+            // them checks, and never print one. `brace-elision` prints the number of elements of
+            // an array, as one size over another, and that number is the same on every target.
+            let sizes = matches!(
+                case.facet,
+                Facet::NullPointerConstant | Facet::ConstIce | Facet::BraceElision
+            );
             for banned in ["%p", "sizeof", "__FILE__", "__LINE__", "__TIME__", "__DATE__"] {
                 if sizes && banned == "sizeof" {
                     continue;
