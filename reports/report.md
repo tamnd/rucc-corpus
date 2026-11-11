@@ -1,10 +1,10 @@
 # rucc corpus report
 
-2 case results did not come out as expected. They are listed below, worst first.
+Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
 
-The corpus holds 3832 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `94b4049bd9aa5782`.
+The corpus holds 3869 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `1261216aa415fcee`.
 
-That is 236,654 lines of C, 7.6 MiB, in 3,996 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 237,308 lines of C, 7.6 MiB, in 4,033 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
@@ -15,9 +15,9 @@ That is 236,654 lines of C, 7.6 MiB, in 3,996 files, and it is the denominator f
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 2 failures | no |
+| `correctness` | 0 failures | 0 failures | yes |
 | `code-quality:rucc` | within 10 percent | level | yes |
-| `compile-throughput:rucc` | no worse | 42 percent less | yes |
+| `compile-throughput:rucc` | no worse | 39 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -29,46 +29,8 @@ That is 236,654 lines of C, 7.6 MiB, in 3,996 files, and it is the denominator f
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 18453 | 18453 | 0 | 0 | 0 | 0 | 0 | 675 |
-| `rucc` | 18453 | 18451 | 2 | 0 | 0 | 0 | 0 | 675 |
-
-## What went wrong
-
-### `general-regs-only.struct-copy.c17.85360170`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved. This is a case about programs built with -mgeneral-regs-only that check no vector register moved, built at `-Os`.
-
-Expected:
-
-```
-2188897103
-```
-
-Got:
-
-```
-0
-```
-
-The program is `programs/correctness/general-regs-only/general-regs-only.struct-copy.c17.85360170.c` and the working directory of the failing build was kept under the run directory.
-
-### `general-regs-only.zeroed.c17.ca262554`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved. This is a case about programs built with -mgeneral-regs-only that check no vector register moved, built at `-Os`.
-
-Expected:
-
-```
-3575246495
-```
-
-Got:
-
-```
-0
-```
-
-The program is `programs/correctness/general-regs-only/general-regs-only.zeroed.c17.ca262554.c` and the working directory of the failing build was kept under the run directory.
+| `gcc-16` | 18583 | 18583 | 0 | 0 | 0 | 0 | 0 | 726 |
+| `rucc` | 18634 | 18634 | 0 | 0 | 0 | 0 | 0 | 675 |
 
 ## How big the code is
 
@@ -80,33 +42,33 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 115 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 117 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
 | `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 55 percent less |
-| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 65 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | level | 38 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | level | 39 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 52 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 46 percent less |
-| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 59 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 39 percent less |
+| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 62 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 40 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 32 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 47 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 39 percent less |
+| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 54 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 37 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 42 percent less | not measured | level | 47 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 51 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 56 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 44 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 46 percent less |
+| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 46 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 49 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 49 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 46 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 44 percent less |
 | `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 47 percent less |
 | `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 42 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 38 percent less |
 
 ## What `-Os` does
 
@@ -114,8 +76,8 @@ Every other number in this report is one compiler against another at the same le
 
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
-| `gcc-16` | 3689 | 4 percent less | 1162 |
-| `rucc` | 3689 | level | 1933 |
+| `gcc-16` | 3715 | 4 percent less | 1177 |
+| `rucc` | 3725 | level | 1969 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -149,13 +111,13 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | lines | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|---|
-| floor | 6 | 119 | 3,489 | 563 of 563 | 6 percent less |
+| floor | 8 | 156 | 4,143 | 744 of 744 | 6 percent less |
 | local | 12 | 433 | 21,069 | 2165 of 2165 | 6 percent less |
 | global | 12 | 242 | 5,794 | 1210 of 1210 | 6 percent less |
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
 | backend | 29 | 1118 | 76,367 | 5590 of 5590 | 6 percent less |
-| correctness | 32 | 853 | 105,047 in 949 files | 3588 of 3590 | 9 percent less |
+| correctness | 32 | 853 | 105,047 in 949 files | 3590 of 3590 | 9 percent less |
 
 ## What gcc-16 said about these programs
 
@@ -400,4 +362,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3832 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3869 programs with the same digest, and a report that disagrees with this one is a report about a different commit.

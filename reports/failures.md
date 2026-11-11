@@ -1,28 +1,6 @@
 # What went wrong
 
-2 findings, worst first. A finding is one case, one compiler, one level.
-
-### `general-regs-only.struct-copy.c17.85360170` at `Os` on `rucc`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved
-
-Facet [`general-regs-only`](../programs/correctness/general-regs-only/README.md).
-
-```
-expected: 2188897103
-actual:   0
-```
-
-### `general-regs-only.zeroed.c17.ca262554` at `Os` on `rucc`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved
-
-Facet [`general-regs-only`](../programs/correctness/general-regs-only/README.md).
-
-```
-expected: 3575246495
-actual:   0
-```
+Nothing. Every case produced the answer the generator computed.
 
 ## What the compiler says it has not built yet
 
