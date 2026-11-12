@@ -16,6 +16,7 @@ pub(crate) mod interproc;
 pub(crate) mod kencc_conversions;
 pub(crate) mod kencc_layout;
 pub(crate) mod kencc_members;
+pub(crate) mod kencc_regs;
 pub(crate) mod kencc_varargck;
 pub(crate) mod kernel;
 pub(crate) mod kernel_asm;

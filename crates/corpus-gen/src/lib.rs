@@ -254,6 +254,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::kencc_varargck::generate(&mut sink);
     facets::kencc_conversions::generate(&mut sink);
     facets::kencc_layout::generate(&mut sink);
+    facets::kencc_regs::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }

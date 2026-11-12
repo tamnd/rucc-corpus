@@ -737,6 +737,12 @@ pub enum Facet {
     /// Each case is one shape and prints the size and the offsets of its records, and the bytes that its bit-fields set.
     /// The cases are built under `-fkencc -fkencc-layout`, and only rucc gets them.
     KenccLayout,
+
+    /// The `extern register` variables of kencc, which no code generator of kencc gives to a value and no prologue saves.
+    ///
+    /// Each case is one shape and prints what the registers hold after calls, a recursion, a function with many live values and a `longjmp`.
+    /// The cases are built under `-fkencc`, and only rucc gets them.
+    KenccRegs,
 }
 
 impl Facet {
@@ -874,6 +880,7 @@ impl Facet {
         Self::KenccVarargck,
         Self::KenccConversions,
         Self::KenccLayout,
+        Self::KenccRegs,
     ];
 
     /// The name that goes in a file name, a command line and a stored record.
@@ -1009,6 +1016,7 @@ impl Facet {
             Self::KenccVarargck => "kencc-varargck",
             Self::KenccConversions => "kencc-conversions",
             Self::KenccLayout => "kencc-layout",
+            Self::KenccRegs => "kencc-regs",
         }
     }
 
@@ -1225,6 +1233,7 @@ impl Facet {
                 "the unsigned preserving arithmetic conversions of kencc for each pair of types"
             }
             Self::KenccLayout => "the record layout and the bit-fields of kencc for each shape",
+            Self::KenccRegs => "the extern register variables of kencc across calls and longjmp",
         }
     }
 
@@ -1245,7 +1254,8 @@ impl Facet {
             | Self::KenccMembers
             | Self::KenccVarargck
             | Self::KenccConversions
-            | Self::KenccLayout => Phase::Floor,
+            | Self::KenccLayout
+            | Self::KenccRegs => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
