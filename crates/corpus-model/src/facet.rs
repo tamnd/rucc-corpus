@@ -614,6 +614,24 @@ pub enum Facet {
     /// The cases need an ELF target, and the `.init` and `_start` cases need x86-64.
     CrtAndBrand,
 
+    /// The symbol versions of FreeBSD's libraries: hidden and default versions from `__sym_compat` and `__sym_default`, the `symver` attribute, and versioned aliases.
+    ///
+    /// Each case calls the default version by its plain name and reads its own `.symtab` for the versioned names, their binding and their values.
+    /// The cases need an ELF linker and x86-64.
+    SymbolVersions,
+
+    /// The ifunc resolvers of FreeBSD's `DEFINE_UIFUNC`, as `libc` uses them for `memcpy` and its family, in static and dynamic programs.
+    ///
+    /// A static program must have an `IRELATIVE` relocation for each, and the resolver must run before the constructors and `main`.
+    /// The cases need an ELF linker and x86-64.
+    IfuncStatic,
+
+    /// The calling convention of FreeBSD's i386 boot code: `-mrtd` and `-mregparm=3` as defaults, with assembly that assumes them.
+    ///
+    /// Callee pops and register arguments, a 64-bit argument in two registers, assembly that calls C, a variadic function that stays caller pops, and `cdecl` with `regparm(0)`.
+    /// The cases are 32-bit programs with no C library, so they need x86 and no 32-bit `libc`.
+    BootAbi,
+
     /// Programs built with the flag line of an amd64 NetBSD kernel unit, and the kernel's own uses of named sections.
     ///
     /// `-fno-zero-initialized-in-bss` with objects in `.data` and `.bss`, `__KERNEL_RCSID` and `__KERNEL_COPYRIGHT` strings, `MODULE` and `SYSCTL_SETUP` entries in their link sets, and a jump table under `-mcmodel=kernel` and the retpoline thunks.
@@ -806,6 +824,9 @@ impl Facet {
         Self::FileScopeAsm,
         Self::LinkerSets,
         Self::CrtAndBrand,
+        Self::SymbolVersions,
+        Self::IfuncStatic,
+        Self::BootAbi,
         Self::NetbsdKernel,
         Self::WerrorShapes,
         Self::KprintfFormat,
@@ -933,6 +954,9 @@ impl Facet {
             Self::FileScopeAsm => "file-scope-asm",
             Self::LinkerSets => "linker-sets",
             Self::CrtAndBrand => "crt-and-brand",
+            Self::SymbolVersions => "symbol-versions",
+            Self::IfuncStatic => "ifunc-static",
+            Self::BootAbi => "boot-abi",
             Self::NetbsdKernel => "netbsd-kernel",
             Self::WerrorShapes => "werror-shapes",
             Self::KprintfFormat => "kprintf-format",
@@ -1125,6 +1149,11 @@ impl Facet {
             Self::CrtAndBrand => {
                 "the BSD start files: the brand notes, init order and a bare _start"
             }
+            Self::SymbolVersions => {
+                "FreeBSD symbol versions: __sym_compat, __sym_default, symver and versioned aliases"
+            }
+            Self::IfuncStatic => "FreeBSD ifunc resolvers in static and dynamic programs",
+            Self::BootAbi => "the i386 boot code convention: -mrtd and -mregparm=3 with assembly",
             Self::NetbsdKernel => {
                 "the NetBSD kernel flag line, its link sets and its ident strings"
             }
@@ -1268,6 +1297,9 @@ impl Facet {
             | Self::FileScopeAsm
             | Self::LinkerSets
             | Self::CrtAndBrand
+            | Self::SymbolVersions
+            | Self::IfuncStatic
+            | Self::BootAbi
             | Self::NetbsdKernel
             | Self::WerrorShapes
             | Self::KprintfFormat
