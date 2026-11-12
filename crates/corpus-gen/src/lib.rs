@@ -253,6 +253,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::kencc_members::generate(&mut sink);
     facets::kencc_varargck::generate(&mut sink);
     facets::kencc_conversions::generate(&mut sink);
+    facets::kencc_layout::generate(&mut sink);
     facets::special::frontend(&mut sink);
     Manifest::new(sink.into_cases())
 }
@@ -326,7 +327,8 @@ mod tests {
             // `kencc-varargck` checks the formats of calls to a `print` that formats nothing, so
             // its `%p` and its `sizeof` never reach the output. `kencc-conversions` prints the
             // size of a conditional, whose type is a `char`, a `short`, an `int` or a `long long`,
-            // and those sizes are the same on every target.
+            // and those sizes are the same on every target. `kencc-layout` prints the size of a
+            // record under the layout of kencc, which is the same on every target.
             let sizes = matches!(
                 case.facet,
                 Facet::NullPointerConstant
@@ -334,6 +336,7 @@ mod tests {
                     | Facet::BraceElision
                     | Facet::KenccVarargck
                     | Facet::KenccConversions
+                    | Facet::KenccLayout
             );
             let formats = case.facet == Facet::KenccVarargck;
             for banned in ["%p", "sizeof", "__FILE__", "__LINE__", "__TIME__", "__DATE__"] {

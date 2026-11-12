@@ -731,6 +731,12 @@ pub enum Facet {
     /// Each case is one pair of operand types and prints the result of each operator in the type of the table.
     /// The cases are built under `-fkencc`, and only rucc gets them.
     KenccConversions,
+
+    /// The record layout of kencc, `sualign` of `cc/dcl.c`, which puts a record member at a multiple of 8 and rounds each record up to 8.
+    ///
+    /// Each case is one shape and prints the size and the offsets of its records, and the bytes that its bit-fields set.
+    /// The cases are built under `-fkencc -fkencc-layout`, and only rucc gets them.
+    KenccLayout,
 }
 
 impl Facet {
@@ -867,6 +873,7 @@ impl Facet {
         Self::KenccMembers,
         Self::KenccVarargck,
         Self::KenccConversions,
+        Self::KenccLayout,
     ];
 
     /// The name that goes in a file name, a command line and a stored record.
@@ -1001,6 +1008,7 @@ impl Facet {
             Self::KenccMembers => "kencc-members",
             Self::KenccVarargck => "kencc-varargck",
             Self::KenccConversions => "kencc-conversions",
+            Self::KenccLayout => "kencc-layout",
         }
     }
 
@@ -1216,6 +1224,7 @@ impl Facet {
             Self::KenccConversions => {
                 "the unsigned preserving arithmetic conversions of kencc for each pair of types"
             }
+            Self::KenccLayout => "the record layout and the bit-fields of kencc for each shape",
         }
     }
 
@@ -1235,7 +1244,8 @@ impl Facet {
             | Self::BraceElision
             | Self::KenccMembers
             | Self::KenccVarargck
-            | Self::KenccConversions => Phase::Floor,
+            | Self::KenccConversions
+            | Self::KenccLayout => Phase::Floor,
             Self::ConstantFold
             | Self::Strength
             | Self::Narrowing
