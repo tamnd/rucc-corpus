@@ -58,7 +58,7 @@ const BOOT: &[&str] = &[
 /// The flag line of `stand/i386/boot2/Makefile` in FreeBSD 15.1, with no PIE and no C library.
 ///
 /// The case pins `-Os`, as the boot code does, so the level of the run does not change it.
-const BOOT_FLAGS: &[&str] = &[
+pub(crate) const BOOT_FLAGS: &[&str] = &[
     "-m32",
     "-march=i386",
     "-ffreestanding",
@@ -594,6 +594,9 @@ const BOOT_RUNTIME: &[&str] = &[
     "        \"    int $0x80\\n\");",
     "",
 ];
+
+/// The `write` system call and the decimal printer of [`BOOT_RUNTIME`], for a program with a start of its own.
+pub(crate) const BOOT_IO: &[&str] = BOOT_RUNTIME.split_at(16).0;
 
 /// What a `boot-abi` shape adds, the loop body of its `main`, and its source in FreeBSD.
 struct Boot {

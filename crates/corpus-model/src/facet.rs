@@ -632,6 +632,27 @@ pub enum Facet {
     /// The cases are 32-bit programs with no C library, so they need x86 and no 32-bit `libc`.
     BootAbi,
 
+    /// The four TLS access models, as the run time linkers of NetBSD and FreeBSD serve them.
+    ///
+    /// Local exec and initial exec in the executable, linked dynamic and static, and global dynamic and local dynamic in a module the program opens with `dlopen`.
+    /// Each case runs in two threads and in `main`, and checks that each thread has its own aligned copy with the initial values.
+    /// The cases need an ELF linker, x86-64 and POSIX threads.
+    TlsModels,
+
+    /// The unwinder of the C runtime: `_Unwind_Backtrace` over the frames of the program, and the forced unwind of `pthread_exit` and `pthread_cancel`.
+    ///
+    /// The frames have `alloca`, a realigned local, callee saved registers in use, or a signal handler between the unwinder and the caller.
+    /// The cleanup cases need `-fexceptions`, and the `cleanup` attribute of each frame must run in order.
+    /// The cases need an ELF linker and x86-64.
+    Unwinder,
+
+    /// Code in the shape of the BSD boot blocks, built with the flag line of FreeBSD's `boot2` and measured against a budget.
+    ///
+    /// `fsread` and `lookup` after `ufsread.c`, the `printf` of `libsa`, and the argument parser of `boot2.c`, each in a section of its own.
+    /// The budget is the largest size from GCC 13, GCC 15 and Clang 18, plus a quarter.
+    /// The cases are 32-bit programs with no C library, so they need x86 and no 32-bit `libc`.
+    BootSizes,
+
     /// Programs built with the flag line of an amd64 NetBSD kernel unit, and the kernel's own uses of named sections.
     ///
     /// `-fno-zero-initialized-in-bss` with objects in `.data` and `.bss`, `__KERNEL_RCSID` and `__KERNEL_COPYRIGHT` strings, `MODULE` and `SYSCTL_SETUP` entries in their link sets, and a jump table under `-mcmodel=kernel` and the retpoline thunks.
@@ -827,6 +848,9 @@ impl Facet {
         Self::SymbolVersions,
         Self::IfuncStatic,
         Self::BootAbi,
+        Self::TlsModels,
+        Self::Unwinder,
+        Self::BootSizes,
         Self::NetbsdKernel,
         Self::WerrorShapes,
         Self::KprintfFormat,
@@ -957,6 +981,9 @@ impl Facet {
             Self::SymbolVersions => "symbol-versions",
             Self::IfuncStatic => "ifunc-static",
             Self::BootAbi => "boot-abi",
+            Self::TlsModels => "tls-models",
+            Self::Unwinder => "unwinder",
+            Self::BootSizes => "boot-sizes",
             Self::NetbsdKernel => "netbsd-kernel",
             Self::WerrorShapes => "werror-shapes",
             Self::KprintfFormat => "kprintf-format",
@@ -1154,6 +1181,13 @@ impl Facet {
             }
             Self::IfuncStatic => "FreeBSD ifunc resolvers in static and dynamic programs",
             Self::BootAbi => "the i386 boot code convention: -mrtd and -mregparm=3 with assembly",
+            Self::TlsModels => {
+                "the four TLS models in executables, static programs and dlopen modules"
+            }
+            Self::Unwinder => {
+                "_Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel"
+            }
+            Self::BootSizes => "boot block shapes under the boot2 flag line, within a size budget",
             Self::NetbsdKernel => {
                 "the NetBSD kernel flag line, its link sets and its ident strings"
             }
@@ -1300,6 +1334,9 @@ impl Facet {
             | Self::SymbolVersions
             | Self::IfuncStatic
             | Self::BootAbi
+            | Self::TlsModels
+            | Self::Unwinder
+            | Self::BootSizes
             | Self::NetbsdKernel
             | Self::WerrorShapes
             | Self::KprintfFormat

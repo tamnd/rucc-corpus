@@ -9,6 +9,7 @@ pub(crate) mod backend;
 pub(crate) mod bsd_abi;
 pub(crate) mod bsd_asm;
 pub(crate) mod bsd_link;
+pub(crate) mod bsd_runtime;
 pub(crate) mod bsd_warn;
 pub(crate) mod global;
 pub(crate) mod interproc;
