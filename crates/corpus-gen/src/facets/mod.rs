@@ -13,6 +13,7 @@ pub(crate) mod bsd_runtime;
 pub(crate) mod bsd_warn;
 pub(crate) mod global;
 pub(crate) mod interproc;
+pub(crate) mod kencc_conversions;
 pub(crate) mod kencc_members;
 pub(crate) mod kencc_varargck;
 pub(crate) mod kernel;
