@@ -246,6 +246,7 @@ pub fn generate(opts: &Options) -> Result<Manifest, String> {
     facets::bsd_asm::generate(&mut sink);
     facets::bsd_link::generate(&mut sink);
     facets::bsd_abi::generate(&mut sink);
+    facets::bsd_runtime::generate(&mut sink);
     facets::netbsd_kernel::generate(&mut sink);
     facets::bsd_warn::generate(&mut sink);
     facets::plan9::generate(&mut sink);
