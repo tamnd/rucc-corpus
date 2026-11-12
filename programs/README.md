@@ -1,10 +1,10 @@
 # The corpus
 
-3958 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
+3980 programs. Every one of them was written for exactly one named transformation, prints an answer this repository computed in Rust before any C was compiled, and prints nothing that depends on the machine it runs on. That last part is what lets one expected output be right everywhere.
 
 These files are generated. Editing one here changes nothing, because the next run of `rucc-corpus gen` writes it back. The thing to edit is the generator in `crates/corpus-gen`, and the reason the output is kept in the repository anyway is so that a change to the generator shows up as a diff of the programs it produces.
 
-Corpus digest `aa3ea605dc867c0092041e6d73721aaf3cba288a9febf7982cdc0ddbdccdafd2`.
+Corpus digest `25060bd0d777088fc0396cc17b71708f6382769419f33acbb14d45f097e6f441`.
 
 ## floor (245 programs)
 
@@ -137,7 +137,7 @@ Everything below the machine independent IR, where the cost of a decision is mea
 | [`float-conversion`](backend/float-conversion/README.md) | 66 | conversions between the floating types and the integer ones |
 | [`long-double`](backend/long-double/README.md) | 10 | the widest floating type, whose shape the target rather than C decides |
 
-## correctness (853 programs)
+## correctness (875 programs)
 
 The cases whose job is to prove that nothing happened, and the ones about the shape of the language rather than about code generation.
 
@@ -170,6 +170,9 @@ The cases whose job is to prove that nothing happened, and the ones about the sh
 | [`file-scope-asm`](correctness/file-scope-asm/README.md) | 24 | the file scope asm of the BSD headers: aliases, .ident, notes and the section stack |
 | [`linker-sets`](correctness/linker-sets/README.md) | 9 | the BSD linker sets: pointers in a named section, walked start to stop |
 | [`crt-and-brand`](correctness/crt-and-brand/README.md) | 7 | the BSD start files: the brand notes, init order and a bare _start |
+| [`symbol-versions`](correctness/symbol-versions/README.md) | 6 | FreeBSD symbol versions: __sym_compat, __sym_default, symver and versioned aliases |
+| [`ifunc-static`](correctness/ifunc-static/README.md) | 10 | FreeBSD ifunc resolvers in static and dynamic programs |
+| [`boot-abi`](correctness/boot-abi/README.md) | 6 | the i386 boot code convention: -mrtd and -mregparm=3 with assembly |
 | [`netbsd-kernel`](correctness/netbsd-kernel/README.md) | 5 | the NetBSD kernel flag line, its link sets and its ident strings |
 | [`werror-shapes`](correctness/werror-shapes/README.md) | 6 | the FreeBSD units that failed under -Werror with rucc and not with GCC |
 | [`kprintf-format`](correctness/kprintf-format/README.md) | 7 | the FreeBSD kernel printf: %b, %D, %r and %y under -Werror |

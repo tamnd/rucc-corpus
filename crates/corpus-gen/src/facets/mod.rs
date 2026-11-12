@@ -6,6 +6,7 @@
 //! which matters because a bug in a generator is a case that quietly tests nothing.
 
 pub(crate) mod backend;
+pub(crate) mod bsd_abi;
 pub(crate) mod bsd_asm;
 pub(crate) mod bsd_link;
 pub(crate) mod bsd_warn;
