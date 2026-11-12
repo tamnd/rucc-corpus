@@ -2,9 +2,9 @@
 
 Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
 
-The corpus holds 3869 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `1261216aa415fcee`.
+The corpus holds 3958 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `aa3ea605dc867c00`.
 
-That is 237,308 lines of C, 7.6 MiB, in 4,033 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 244,922 lines of C, 7.9 MiB, in 4,122 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
@@ -29,8 +29,8 @@ That is 237,308 lines of C, 7.6 MiB, in 4,033 files, and it is the denominator f
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 18583 | 18583 | 0 | 0 | 0 | 0 | 0 | 726 |
-| `rucc` | 18634 | 18634 | 0 | 0 | 0 | 0 | 0 | 675 |
+| `gcc-16` | 18583 | 18583 | 0 | 0 | 0 | 0 | 0 | 987 |
+| `rucc` | 18895 | 18895 | 0 | 0 | 0 | 0 | 0 | 675 |
 
 ## How big the code is
 
@@ -48,27 +48,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 55 percent less |
-| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 62 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 40 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 32 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 47 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 39 percent less |
-| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 54 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 53 percent less |
+| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 63 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | level | 35 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 34 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 50 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 45 percent less |
+| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 57 percent less |
 | `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 37 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 46 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 49 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 49 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 46 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 44 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 47 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
-| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 38 percent less |
+| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 47 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 48 percent less |
+| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 60 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 45 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 43 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 46 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 45 percent less |
+| `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 39 percent less |
 
 ## What `-Os` does
 
@@ -77,7 +77,7 @@ Every other number in this report is one compiler against another at the same le
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
 | `gcc-16` | 3715 | 4 percent less | 1177 |
-| `rucc` | 3725 | level | 1969 |
+| `rucc` | 3768 | level | 1782 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -91,8 +91,8 @@ Where `-Os` saves the most:
 | `simd-lfind` | 30 | 16 percent less |
 | `compare-fold` | 118 | 11 percent less |
 | `store-fold-constant` | 118 | 10 percent less |
+| `block-copy` | 44 | 8 percent less |
 | `load-fold` | 40 | 8 percent less |
-| `store-fold` | 56 | 7 percent less |
 
 Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
 
@@ -111,7 +111,7 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | lines | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|---|
-| floor | 8 | 156 | 4,143 | 744 of 744 | 6 percent less |
+| floor | 9 | 245 | 11,757 | 1005 of 1005 | 6 percent less |
 | local | 12 | 433 | 21,069 | 2165 of 2165 | 6 percent less |
 | global | 12 | 242 | 5,794 | 1210 of 1210 | 6 percent less |
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
@@ -362,4 +362,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3869 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3958 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
