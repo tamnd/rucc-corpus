@@ -8,10 +8,10 @@ These programs are more than one translation unit each. The other units are list
 
 | program | linked with | also built with | axes | dialect | must print |
 |---|---|---|---|---|---|
-| [`symbol-versions.sym-compat-reader-off.c17.40918079`](symbol-versions.sym-compat-reader-off.c17.40918079.c) | nothing, it is one file | `-frucc-asm-reader=off` | shape=sym-compat-reader-off | c17 | `42 102 112 ...` and 2 more lines |
-| [`symbol-versions.sym-compat.c17.6c00097a`](symbol-versions.sym-compat.c17.6c00097a.c) | nothing, it is one file | nothing extra | shape=sym-compat | c17 | `42 102 112 ...` and 2 more lines |
-| [`symbol-versions.symver-attribute.c17.d20195e6`](symbol-versions.symver-attribute.c17.d20195e6.c) | nothing, it is one file | nothing extra | shape=symver-attribute | c17 | `8 102 112 1` |
-| [`symbol-versions.symver-units.c17.ae88306a`](symbol-versions.symver-units.c17.ae88306a.c) | [`compat`](symbol-versions.symver-units.c17.ae88306a.compat.c) | nothing extra | shape=symver-units | c17 | `42 102 112 ...` and 2 more lines |
-| [`symbol-versions.versioned-alias.c17.26b18f12`](symbol-versions.versioned-alias.c17.26b18f12.c) | nothing, it is one file | nothing extra | shape=versioned-alias | c17 | `15 102 112 1` |
-| [`symbol-versions.weak-version.c17.bf6e8651`](symbol-versions.weak-version.c17.bf6e8651.c) | nothing, it is one file | nothing extra | shape=weak-version | c17 | `111 102 112 1` |
+| [`symbol-versions.sym-compat-reader-off.c17.70dc27ca`](symbol-versions.sym-compat-reader-off.c17.70dc27ca.c) | nothing, it is one file | `-frucc-asm-reader=off` | shape=sym-compat-reader-off | c17 | `42 102 112 ...` and 2 more lines |
+| [`symbol-versions.sym-compat.c17.4763f806`](symbol-versions.sym-compat.c17.4763f806.c) | nothing, it is one file | nothing extra | shape=sym-compat | c17 | `42 102 112 ...` and 2 more lines |
+| [`symbol-versions.symver-attribute.c17.95910aa8`](symbol-versions.symver-attribute.c17.95910aa8.c) | nothing, it is one file | nothing extra | shape=symver-attribute | c17 | `8 102 112 1` |
+| [`symbol-versions.symver-units.c17.a478a664`](symbol-versions.symver-units.c17.a478a664.c) | [`compat`](symbol-versions.symver-units.c17.a478a664.compat.c) | nothing extra | shape=symver-units | c17 | `42 102 112 ...` and 2 more lines |
+| [`symbol-versions.versioned-alias.c17.6244e64e`](symbol-versions.versioned-alias.c17.6244e64e.c) | nothing, it is one file | nothing extra | shape=versioned-alias | c17 | `15 102 112 1` |
+| [`symbol-versions.weak-version.c17.eac019c7`](symbol-versions.weak-version.c17.eac019c7.c) | nothing, it is one file | nothing extra | shape=weak-version | c17 | `111 102 112 1` |
 

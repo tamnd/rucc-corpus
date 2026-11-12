@@ -61,7 +61,7 @@ static const elf_sym *symbol(const char *name) {
         }
         const char *names = (const char *)file + sh[sh[i].link].offset;
         const elf_sym *sym = (const elf_sym *)(file + sh[i].offset);
-        unsigned long count = sh[i].size / sizeof(elf_sym);
+        unsigned long count = sh[i].size / sh[i].entsize;
         for (unsigned long s = 0; s < count; s++) {
             const char *n = names + sym[s].name;
             int k = 0;
