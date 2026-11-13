@@ -1,10 +1,10 @@
 # rucc corpus report
 
-Every case in the corpus produced the answer the generator computed, on every compiler, at every level.
+59 case results did not come out as expected. They are listed below, worst first.
 
-The corpus holds 3958 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `aa3ea605dc867c00`.
+The corpus holds 4082 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `9379d8726d72d0f3`.
 
-That is 244,922 lines of C, 7.9 MiB, in 4,122 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
+That is 252,331 lines of C, 8.1 MiB, in 4,253 files, and it is the denominator for every time and every size below. A compile time with no size next to it cannot be read.
 
 | compiler | version | role |
 |---|---|---|
@@ -15,7 +15,7 @@ That is 244,922 lines of C, 7.9 MiB, in 4,122 files, and it is the denominator f
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 0 failures | yes |
+| `correctness` | 0 failures | 59 failures | no |
 | `code-quality:rucc` | within 10 percent | level | yes |
 | `compile-throughput:rucc` | no worse | 39 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
@@ -29,8 +29,484 @@ That is 244,922 lines of C, 7.9 MiB, in 4,122 files, and it is the denominator f
 
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
-| `gcc-16` | 18583 | 18583 | 0 | 0 | 0 | 0 | 0 | 987 |
-| `rucc` | 18895 | 18895 | 0 | 0 | 0 | 0 | 0 | 675 |
+| `gcc-16` | 18778 | 18778 | 0 | 0 | 0 | 0 | 0 | 1412 |
+| `rucc` | 19515 | 19456 | 9 | 50 | 0 | 0 | 0 | 675 |
+
+## What went wrong
+
+### `ifunc-static.address.dynamic.c17.77ed423b`
+
+rucc printed the wrong answer for a case about FreeBSD ifunc resolvers in static and dynamic programs. This is a case about FreeBSD ifunc resolvers in static and dynamic programs, built at `-O0`.
+
+Expected:
+
+```
+1
+1923506687
+1
+120
+```
+
+Got:
+
+```
+0
+1923506687
+1
+120
+```
+
+The program is `programs/correctness/ifunc-static/ifunc-static.address.dynamic.c17.77ed423b.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-cancel.c17.78497b80`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-O1`.
+
+Expected:
+
+```
+1
+321
+```
+
+Got:
+
+```
+1
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-cancel.c17.78497b80.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-cancel.c17.78497b80`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-O2`.
+
+Expected:
+
+```
+1
+321
+```
+
+Got:
+
+```
+1
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-cancel.c17.78497b80.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-cancel.c17.78497b80`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-O3`.
+
+Expected:
+
+```
+1
+321
+```
+
+Got:
+
+```
+1
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-cancel.c17.78497b80.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-cancel.c17.78497b80`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-Os`.
+
+Expected:
+
+```
+1
+321
+```
+
+Got:
+
+```
+1
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-cancel.c17.78497b80.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-exit.c17.dee38085`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-O1`.
+
+Expected:
+
+```
+46
+321
+```
+
+Got:
+
+```
+46
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-exit.c17.dee38085.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-exit.c17.dee38085`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-O2`.
+
+Expected:
+
+```
+46
+321
+```
+
+Got:
+
+```
+46
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-exit.c17.dee38085.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-exit.c17.dee38085`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-O3`.
+
+Expected:
+
+```
+46
+321
+```
+
+Got:
+
+```
+46
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-exit.c17.dee38085.c` and the working directory of the failing build was kept under the run directory.
+
+### `unwinder.cleanup-exit.c17.dee38085`
+
+rucc printed the wrong answer for a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel. This is a case about _Unwind_Backtrace over odd frames, and cleanups under pthread_exit and cancel, built at `-Os`.
+
+Expected:
+
+```
+46
+321
+```
+
+Got:
+
+```
+46
+3
+```
+
+The program is `programs/correctness/unwinder/unwinder.cleanup-exit.c17.dee38085.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-pops.c17.2c1bb800`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-pops.c17.2c1bb800.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-pops.c17.2c1bb800`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-pops.c17.2c1bb800.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-pops.c17.2c1bb800`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-pops.c17.2c1bb800.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-pops.c17.2c1bb800`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-pops.c17.2c1bb800.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-pops.c17.2c1bb800`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-pops.c17.2c1bb800.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-registers.c17.d1ba49bc`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-registers.c17.d1ba49bc.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-registers.c17.d1ba49bc`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-registers.c17.d1ba49bc.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-registers.c17.d1ba49bc`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-registers.c17.d1ba49bc.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-registers.c17.d1ba49bc`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-registers.c17.d1ba49bc.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-callee-registers.c17.d1ba49bc`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-callee-registers.c17.d1ba49bc.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-caller.c17.e8cbb0e2`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-caller.c17.e8cbb0e2`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O1`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-caller.c17.e8cbb0e2`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O2`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-caller.c17.e8cbb0e2`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O3`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.asm-caller.c17.e8cbb0e2`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.cdecl-override.c17.09fafae6`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.cdecl-override.c17.09fafae6.c` and the working directory of the failing build was kept under the run directory.
+
+And 34 more, which are all in `findings.sarif` and in `report.json`.
 
 ## How big the code is
 
@@ -42,32 +518,32 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 117 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 121 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 53 percent less |
-| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 63 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | level | 35 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 34 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 50 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 45 percent less |
-| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | inside the noise | 57 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 37 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 51 percent less |
+| `interpreter-dispatch` | backend | 54 | 43 percent more | not measured | inside the noise | 61 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 37 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 36 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 45 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 41 percent less |
+| `builtin-setjmp` | correctness | 48 | 5 percent more | not measured | level | 53 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 34 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 47 percent less |
+| `short-circuit` | local | 26 | 42 percent less | not measured | inside the noise | 43 percent less |
 | `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 48 percent less |
-| `narrow-shift` | backend | 8 | 40 percent less | not measured | inside the noise | 60 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 45 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 43 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 46 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 45 percent less |
+| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 56 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 39 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 42 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 36 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 40 percent less |
 | `loop-idiom` | loops | 78 | 29 percent less | not measured | inside the noise | 39 percent less |
 
 ## What `-Os` does
@@ -76,8 +552,8 @@ Every other number in this report is one compiler against another at the same le
 
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
-| `gcc-16` | 3715 | 4 percent less | 1177 |
-| `rucc` | 3768 | level | 1782 |
+| `gcc-16` | 3754 | 4 percent less | 1187 |
+| `rucc` | 3882 | level | 1807 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -87,12 +563,12 @@ Where `-Os` saves the most:
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
+| `unwinder` | 7 | 17 percent less |
 | `scheduling` | 20 | 17 percent less |
 | `simd-lfind` | 30 | 16 percent less |
 | `compare-fold` | 118 | 11 percent less |
 | `store-fold-constant` | 118 | 10 percent less |
 | `block-copy` | 44 | 8 percent less |
-| `load-fold` | 40 | 8 percent less |
 
 Where it saves the least, which is where it is spending size and getting nothing for it when the number is above level:
 
@@ -111,13 +587,13 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 
 | phase | facets | cases | lines | `rucc` passed | `rucc` code size |
 |---|---|---|---|---|---|
-| floor | 9 | 245 | 11,757 | 1005 of 1005 | 6 percent less |
+| floor | 12 | 330 | 14,745 | 1430 of 1430 | 6 percent less |
 | local | 12 | 433 | 21,069 | 2165 of 2165 | 6 percent less |
 | global | 12 | 242 | 5,794 | 1210 of 1210 | 6 percent less |
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
 | backend | 29 | 1118 | 76,367 | 5590 of 5590 | 6 percent less |
-| correctness | 32 | 853 | 105,047 in 949 files | 3590 of 3590 | 9 percent less |
+| correctness | 38 | 892 | 109,468 in 995 files | 3726 of 3785 | 9 percent less |
 
 ## What gcc-16 said about these programs
 
@@ -141,10 +617,10 @@ Asked with `-fopt-info`, gcc-16 reports what it optimized and what it wanted to 
 | `tail-dispatch` | interprocedural | 0 | 1792 |
 | `dllimport` | correctness | 175 | 1427 |
 | `block-copy` | backend | 192 | 1248 |
+| `ifunc-static` | correctness | 357 | 1080 |
 | `simplify` | local | 161 | 1135 |
 | `inline` | interprocedural | 900 | 372 |
 | `store-fold-constant` | backend | 444 | 820 |
-| `compare-fold` | backend | 472 | 584 |
 
 ## What each switch became
 
@@ -362,4 +838,4 @@ cargo run --release -p rucc-corpus -- run \
     --reference gcc-16
 ```
 
-The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 3958 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
+The corpus is generated from the crates in this repository, so it is a function of the source and nothing else. Any run of the same commit produces the same 4082 programs with the same digest, and a report that disagrees with this one is a report about a different commit.
