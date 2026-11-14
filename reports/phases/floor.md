@@ -4,14 +4,14 @@ The pass infrastructure, the verifiers and the cost model, which is what every l
 
 | facet | cases | lines | `rucc` passed | `rucc` code | `rucc` compile | `rucc` memory |
 |---|---|---|---|---|---|---|
-| [`baseline`](../../programs/floor/baseline/README.md) | 10 | 241 | 50 of 50 | 5% less | 35% less | 25% less |
-| [`control-flow`](../../programs/floor/control-flow/README.md) | 11 | 291 | 55 of 55 | 6% less | 37% less | 17% less |
-| [`branch-probability`](../../programs/floor/branch-probability/README.md) | 34 | 704 | 170 of 170 | 6% less | 35% less | 21% less |
-| [`computed-goto`](../../programs/floor/computed-goto/README.md) | 25 | 1,614 | 125 of 125 | 27% less | 40% less | 29% less |
-| [`vla-and-alloca`](../../programs/floor/vla-and-alloca/README.md) | 9 | 236 | 45 of 45 | 27% less | 45% less | 34% less |
-| [`frontend`](../../programs/floor/frontend/README.md) | 30 | 403 | 118 of 118 | 6% less | 32% less | 14% less |
-| [`brace-elision`](../../programs/floor/brace-elision/README.md) | 20 | 329 | 100 of 100 | 6% less | 34% less | 103% more |
-| [`kencc-members`](../../programs/floor/kencc-members/README.md) | 17 | 325 | 81 of 81 | 6% less | 30% less | 106% more |
+| [`baseline`](../../programs/floor/baseline/README.md) | 10 | 241 | 50 of 50 | 5% less | 39% less | 2% less |
+| [`control-flow`](../../programs/floor/control-flow/README.md) | 11 | 291 | 55 of 55 | 6% less | 43% less | 23% less |
+| [`branch-probability`](../../programs/floor/branch-probability/README.md) | 34 | 704 | 170 of 170 | 6% less | 37% less | level |
+| [`computed-goto`](../../programs/floor/computed-goto/README.md) | 25 | 1,614 | 125 of 125 | 27% less | 41% less | 33% less |
+| [`vla-and-alloca`](../../programs/floor/vla-and-alloca/README.md) | 9 | 236 | 45 of 45 | 27% less | 54% less | 35% less |
+| [`frontend`](../../programs/floor/frontend/README.md) | 30 | 403 | 118 of 118 | 6% less | 37% less | 1% more |
+| [`brace-elision`](../../programs/floor/brace-elision/README.md) | 20 | 329 | 100 of 100 | 6% less | 36% less | 1% less |
+| [`kencc-members`](../../programs/floor/kencc-members/README.md) | 17 | 325 | 81 of 81 | 6% less | 28% less | level |
 | [`kencc-varargck`](../../programs/floor/kencc-varargck/README.md) | 89 | 7,614 | 261 of 261 | not measured | not measured | not measured |
 | [`kencc-conversions`](../../programs/floor/kencc-conversions/README.md) | 64 | 2,560 | 320 of 320 | not measured | not measured | not measured |
 | [`kencc-layout`](../../programs/floor/kencc-layout/README.md) | 15 | 288 | 75 of 75 | not measured | not measured | not measured |

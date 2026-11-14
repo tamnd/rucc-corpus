@@ -1,6 +1,28 @@
 # What went wrong
 
-59 findings, worst first. A finding is one case, one compiler, one level.
+61 findings, worst first. A finding is one case, one compiler, one level.
+
+### `general-regs-only.struct-copy.c17.85360170` at `Os` on `rucc`
+
+rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved
+
+Facet [`general-regs-only`](../programs/correctness/general-regs-only/README.md).
+
+```
+expected: 2188897103
+actual:   0
+```
+
+### `general-regs-only.zeroed.c17.ca262554` at `Os` on `rucc`
+
+rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved
+
+Facet [`general-regs-only`](../programs/correctness/general-regs-only/README.md).
+
+```
+expected: 3575246495
+actual:   0
+```
 
 ### `ifunc-static.address.dynamic.c17.77ed423b` at `O0` on `rucc`
 
@@ -420,29 +442,7 @@ expected: the program compiles
 actual:   rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub...
 ```
 
-### `boot-abi.wide-argument.c17.73591d8b` at `Os` on `rucc`
-
-rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly
-
-Facet [`boot-abi`](../programs/correctness/boot-abi/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub...
-```
-
-### `boot-sizes.fsread.c17.7e69ebd1` at `O0` on `rucc`
-
-rucc would not compile a valid program about boot block shapes under the boot2 flag line, within a size budget
-
-Facet [`boot-sizes`](../programs/correctness/boot-sizes/README.md).
-
-```
-expected: the program compiles
-actual:   rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub...
-```
-
-And 19 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
+And 21 more. The whole list is in `findings.sarif` and `report.json`, both of which are uploaded as artifacts by the run that produced this page.
 
 ## What the compiler says it has not built yet
 
