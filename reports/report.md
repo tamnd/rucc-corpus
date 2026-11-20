@@ -1,6 +1,6 @@
 # rucc corpus report
 
-61 case results did not come out as expected. They are listed below, worst first.
+59 case results did not come out as expected. They are listed below, worst first.
 
 The corpus holds 4082 programs, each written for one named transformation and each carrying the answer the generator worked out before any C was compiled. Corpus digest `9379d8726d72d0f3`.
 
@@ -15,9 +15,9 @@ That is 252,331 lines of C, 8.1 MiB, in 4,253 files, and it is the denominator f
 
 | target | wanted | got | met |
 |---|---|---|---|
-| `correctness` | 0 failures | 61 failures | no |
+| `correctness` | 0 failures | 59 failures | no |
 | `code-quality:rucc` | within 10 percent | level | yes |
-| `compile-throughput:rucc` | no worse | 40 percent less | yes |
+| `compile-throughput:rucc` | no worse | 36 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
 - `correctness`: every case prints the answer the generator computed, on every compiler, at every level.
@@ -30,45 +30,9 @@ That is 252,331 lines of C, 8.1 MiB, in 4,253 files, and it is the denominator f
 | compiler | ran | passed | wrong answer | wrongly rejected | not built yet | wrongly accepted | crashed | skipped |
 |---|---|---|---|---|---|---|---|---|
 | `gcc-16` | 18778 | 18778 | 0 | 0 | 0 | 0 | 0 | 1412 |
-| `rucc` | 19515 | 19454 | 11 | 50 | 0 | 0 | 0 | 675 |
+| `rucc` | 19515 | 19456 | 9 | 50 | 0 | 0 | 0 | 675 |
 
 ## What went wrong
-
-### `general-regs-only.struct-copy.c17.85360170`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved. This is a case about programs built with -mgeneral-regs-only that check no vector register moved, built at `-Os`.
-
-Expected:
-
-```
-2188897103
-```
-
-Got:
-
-```
-0
-```
-
-The program is `programs/correctness/general-regs-only/general-regs-only.struct-copy.c17.85360170.c` and the working directory of the failing build was kept under the run directory.
-
-### `general-regs-only.zeroed.c17.ca262554`
-
-rucc printed the wrong answer for a case about programs built with -mgeneral-regs-only that check no vector register moved. This is a case about programs built with -mgeneral-regs-only that check no vector register moved, built at `-Os`.
-
-Expected:
-
-```
-3575246495
-```
-
-Got:
-
-```
-0
-```
-
-The program is `programs/correctness/general-regs-only/general-regs-only.zeroed.c17.ca262554.c` and the working directory of the failing build was kept under the run directory.
 
 ### `ifunc-static.address.dynamic.c17.77ed423b`
 
@@ -506,7 +470,43 @@ rucc: error: i686-linux-gnu cannot be linked statically against a generated sysr
 
 The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
 
-And 36 more, which are all in `findings.sarif` and in `report.json`.
+### `boot-abi.asm-caller.c17.e8cbb0e2`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-Os`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.asm-caller.c17.e8cbb0e2.c` and the working directory of the failing build was kept under the run directory.
+
+### `boot-abi.cdecl-override.c17.09fafae6`
+
+rucc would not compile a valid program about the i386 boot code convention: -mrtd and -mregparm=3 with assembly. This is a case about the i386 boot code convention: -mrtd and -mregparm=3 with assembly, built at `-O0`.
+
+Expected:
+
+```
+the program compiles
+```
+
+Got:
+
+```
+rucc: error: i686-linux-gnu cannot be linked statically against a generated sysroot, because its libc there is a stub: it carries the names the platform's libc exports and none of the code behind them, which is what a dynamic link reads and not what a static one needs. Link it dynamically, or use a musl target, which ships a real libc.a
+```
+
+The program is `programs/correctness/boot-abi/boot-abi.cdecl-override.c17.09fafae6.c` and the working directory of the failing build was kept under the run directory.
+
+And 34 more, which are all in `findings.sarif` and in `report.json`.
 
 ## How big the code is
 
@@ -524,26 +524,26 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 55 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 40 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 36 percent less |
-| `interpreter-dispatch` | backend | 54 | 36 percent more | not measured | inside the noise | 64 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 52 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 45 percent less |
-| `target-attribute` | correctness | 52 | 5 percent more | not measured | level | 57 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 39 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | level | 54 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 33 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 41 percent less |
+| `interpreter-dispatch` | backend | 54 | 36 percent more | not measured | inside the noise | 61 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 49 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 39 percent less |
+| `target-attribute` | correctness | 52 | 5 percent more | not measured | inside the noise | 57 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 35 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 48 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 49 percent less |
-| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 59 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 42 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 47 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 44 percent less |
-| `kprintf-format` | correctness | 7 | 32 percent less | not measured | inside the noise | 78 percent less |
+| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 44 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 45 percent less |
+| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 53 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 41 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 42 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 45 percent less |
+| `kprintf-format` | correctness | 7 | 32 percent less | not measured | inside the noise | 76 percent less |
 | `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
 
 ## What `-Os` does
@@ -593,7 +593,7 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
 | backend | 29 | 1118 | 76,367 | 5590 of 5590 | 6 percent less |
-| correctness | 38 | 892 | 109,468 in 995 files | 3724 of 3785 | 9 percent less |
+| correctness | 38 | 892 | 109,468 in 995 files | 3726 of 3785 | 9 percent less |
 
 ## What gcc-16 said about these programs
 
