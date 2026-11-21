@@ -16,7 +16,7 @@ That is 252,331 lines of C, 8.1 MiB, in 4,253 files, and it is the denominator f
 | target | wanted | got | met |
 |---|---|---|---|
 | `correctness` | 0 failures | 59 failures | no |
-| `code-quality:rucc` | within 10 percent | level | yes |
+| `code-quality:rucc` | within 10 percent | 1 percent less | yes |
 | `compile-throughput:rucc` | no worse | 36 percent less | yes |
 | `size-model:rucc` | no worse | level | yes |
 
@@ -518,33 +518,33 @@ The instructions column is how many instructions this compiler's programs ran ac
 
 ### `rucc`
 
-Over the whole corpus, `rucc` produces level. The middle facet is 6 percent less, over 121 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
+Over the whole corpus, `rucc` produces 1 percent less. The middle facet is 6 percent less, over 121 facets. The two differ when the larger facets are the ones going badly, and the total is the one to believe.
 
 Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | level | 54 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 33 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 41 percent less |
-| `interpreter-dispatch` | backend | 54 | 36 percent more | not measured | inside the noise | 61 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 49 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 39 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 53 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 34 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 34 percent less |
+| `interpreter-dispatch` | backend | 54 | 35 percent more | not measured | inside the noise | 61 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 47 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 44 percent less |
 | `target-attribute` | correctness | 52 | 5 percent more | not measured | inside the noise | 57 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 35 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 33 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 44 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 45 percent less |
-| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 53 percent less |
+| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 43 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 44 percent less |
+| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 54 percent less |
 | `prune` | global | 15 | 39 percent less | not measured | inside the noise | 41 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 42 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 45 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 45 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 42 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 41 percent less |
 | `kprintf-format` | correctness | 7 | 32 percent less | not measured | inside the noise | 76 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 44 percent less |
 
 ## What `-Os` does
 
@@ -553,7 +553,7 @@ Every other number in this report is one compiler against another at the same le
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
 | `gcc-16` | 3754 | 4 percent less | 1187 |
-| `rucc` | 3882 | level | 1827 |
+| `rucc` | 3882 | level | 1801 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -593,7 +593,7 @@ The phases are the ones in the M4 plan, so this table is the one to read when de
 | loops | 13 | 716 | 14,715 | 3580 of 3580 | 9 percent less |
 | interprocedural | 14 | 351 | 10,173 in 419 files | 1755 of 1755 | 6 percent less |
 | backend | 29 | 1118 | 76,367 | 5590 of 5590 | 6 percent less |
-| correctness | 38 | 892 | 109,468 in 995 files | 3726 of 3785 | 9 percent less |
+| correctness | 38 | 892 | 109,468 in 995 files | 3726 of 3785 | 7 percent less |
 
 ## What gcc-16 said about these programs
 
