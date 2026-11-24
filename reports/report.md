@@ -524,27 +524,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 53 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 34 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 31 percent less |
-| `interpreter-dispatch` | backend | 54 | 37 percent more | not measured | inside the noise | 62 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | level | 52 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 32 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 34 percent less |
+| `interpreter-dispatch` | backend | 54 | 37 percent more | not measured | inside the noise | 61 percent less |
 | `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 48 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 38 percent less |
-| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 33 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 41 percent less |
+| `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 32 percent less |
 | `target-attribute` | correctness | 52 | 4 percent more | not measured | inside the noise | 57 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 41 percent less |
+| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 43 percent less |
 | `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 45 percent less |
-| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 55 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 41 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 41 percent less |
+| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 54 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 42 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 45 percent less |
 | `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 42 percent less |
-| `kprintf-format` | correctness | 7 | 32 percent less | not measured | level | 76 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 42 percent less |
+| `kprintf-format` | correctness | 7 | 32 percent less | not measured | inside the noise | 76 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | level | 40 percent less |
 
 ## What `-Os` does
 
@@ -553,7 +553,7 @@ Every other number in this report is one compiler against another at the same le
 | compiler | cases compared | code size at `-Os` | came out the same size |
 |---|---|---|---|
 | `gcc-16` | 3754 | 4 percent less | 1187 |
-| `rucc` | 3882 | level | 1802 |
+| `rucc` | 3882 | level | 1891 |
 
 The row for `gcc-16` is the control. It is a compiler with a size cost model that works, so it says what this measurement looks like when the flag is doing something.
 
@@ -574,12 +574,12 @@ Where it saves the least, which is where it is spending size and getting nothing
 
 | facet | cases | code size at `-Os` |
 |---|---|---|
-| `loop-unroll-shape` | 80 | 5 percent more |
-| `loop-rotate` | 64 | 5 percent more |
+| `induction-variable` | 42 | 4 percent more |
+| `function-purity` | 28 | 4 percent more |
+| `loop-unroll-shape` | 80 | 4 percent more |
 | `stack-slots` | 6 | 6 percent more |
-| `induction-variable` | 42 | 8 percent more |
-| `loop-idiom` | 78 | 8 percent more |
 | `loop-restructure` | 48 | 9 percent more |
+| `loop-idiom` | 78 | 13 percent more |
 
 ## By phase of the plan
 

@@ -216,7 +216,7 @@ A pass that never fires on programs written for the transformations it makes is 
 
 ## `rucc` at -Os
 
-41 passes ran on 3866 cases, and 6 of them never fired.
+42 passes ran on 3866 cases, and 6 of them never fired.
 
 ### Never fired
 
@@ -239,11 +239,11 @@ A pass that never fires on programs written for the transformations it makes is 
 | `ipa-sra` | 132 of 3866 | 175 | 0 | frame-size 48, builtin-setjmp 40, block-copy 22 | parameter nothing reads removed, and the argument at every call with it (167) |
 | `ipa-vrp` | 279 of 3866 | 398 | 768 | crc32c 64, interpreter-dispatch 36, tail-call 36 | range every call agrees on written on a parameter (397) |
 | `expect` | 32 of 3866 | 36 | 0 | if-conversion 10, block-layout 8, switch-lowering 8 | branch weight written from a __builtin_expect on its condition (36) |
-| `fold` | 2589 of 3866 | 88846 | 0 | overflow-builtins 144, constant-fold 112, sigsetjmp 112 | instruction with constant operands folded to a constant (88761) |
-| `image` | 91 of 3866 | 224 | 0 | kencc-varargck 43, brace-elision 16, function-purity 12 | load from a read only object folded to what it was initialized to (129) |
-| `simplify-cfg` | 2866 of 3866 | 66605 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (30229) |
+| `fold` | 2661 of 3866 | 92028 | 0 | overflow-builtins 144, constant-fold 112, sigsetjmp 112 | instruction with constant operands folded to a constant (91943) |
+| `image` | 95 of 3866 | 269 | 0 | kencc-varargck 43, brace-elision 16, function-purity 12 | load from a read only object folded to what it was initialized to (153) |
+| `simplify-cfg` | 2866 of 3866 | 72987 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | block parameter that arrives as the same value every way in removed (32212) |
 | `sroa` | 543 of 3866 | 1700 | 43 | overflow-builtins 144, crc32c 56, target-attribute 44 | local replaced by values, one for each piece of it the function uses (1700) |
-| `simplify` | 2590 of 3866 | 27962 | 0 | overflow-builtins 144, simplify 114, sigsetjmp 112 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8606) |
+| `simplify` | 2600 of 3866 | 28572 | 0 | overflow-builtins 144, simplify 114, sigsetjmp 112 | (mul.i64 (value.i64 x) (iconst.i64 k)) (8606) |
 | `sccp` | 926 of 3866 | 11233 | 0 | overflow-builtins 108, sigsetjmp 96, crc32c 64 | access alignment raised to what its address is proved to be (8746) |
 | `pinned` | 13 of 3866 | 15 | 0 | computed-goto 5, loop-unroll 4, value-range 4 | parameter the value ranges pin to one number replaced by that number (11) |
 | `narrow` | 355 of 3866 | 1539 | 0 | compare-fold 58, store-fold-constant 58, block-copy 44 | arithmetic redone at the width the program truncates it to (1485) |
@@ -253,25 +253,26 @@ A pass that never fires on programs written for the transformations it makes is 
 | `thread` | 199 of 3866 | 966 | 7415 | crc32c 64, target-attribute 28, bundle 25 | edge pointed straight at the arm of the branch it arrives at that it decides (833) |
 | `phiopt` | 753 of 3866 | 3062 | 882 | compare-fold 118, crc32c 64, kencc-conversions 64 | branch whose two arms only work out a value replaced by the value and no branch (2893) |
 | `rangetest` | 13 of 3866 | 27 | 0 | kprintf-format 7, short-circuit 3, lkmm 2 | branches on comparisons of one value merged into one test (27) |
-| `prune` | 98 of 3866 | 112 | 8310 | crc32c 32, target-attribute 28, prune 14 | branch the value ranges settle whichever way control reached it replaced by a jump (80) |
+| `prune` | 108 of 3866 | 175 | 17232 | crc32c 32, target-attribute 28, prune 14 | branch the value ranges settle whichever way control reached it replaced by a jump (127) |
 | `canon` | 2221 of 3866 | 11649 | 0 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | back edges to one header routed through one latch (4767) |
 | `header-copy-small` | 2162 of 3866 | 8810 | 1333 | compare-fold 118, sigsetjmp 112, store-fold-constant 110 | loop header copied in front of the loop so the test is at the bottom (4764) |
-| `number` | 3629 of 3866 | 217560 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (160372) |
-| `load-forward` | 448 of 3866 | 3809 | 219 | interpreter-dispatch 54, builtin-setjmp 48, loop-restructure 36 | load replaced by what an earlier load of the same address read (2756) |
-| `redundant-load` | 212 of 3866 | 553 | 25842 | builtin-setjmp 48, frame-size 27, target-attribute 14 | load replaced by the value an earlier load of the same address already had (305) |
+| `unroll-small` | 252 of 3866 | 562 | 4790 | interpreter-dispatch 54, loop-idiom 32, loop-rotate 28 | block nothing reaches removed (281) |
+| `number` | 3631 of 3866 | 226066 | 0 | overflow-builtins 144, simplify 114, constant-fold 112 | instruction removed, an earlier one in the block computes the same thing (168316) |
+| `load-forward` | 460 of 3866 | 3839 | 219 | interpreter-dispatch 54, builtin-setjmp 48, loop-restructure 36 | load replaced by what an earlier load of the same address read (2756) |
+| `redundant-load` | 234 of 3866 | 619 | 25836 | builtin-setjmp 48, frame-size 27, loop-idiom 16 | load replaced by the value of the store the walk found (314) |
 | `dse` | 232 of 3866 | 1143 | 368 | sigsetjmp 112, builtin-setjmp 48, unused-returns 20 | store removed, nothing reads it before it is overwritten or goes out of scope (1139) |
-| `dce` | 3507 of 3866 | 65560 | 92158 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (65560) |
+| `dce` | 3515 of 3866 | 68077 | 93582 | overflow-builtins 144, compare-fold 118, store-fold-constant 118 | instruction with no effects and no users removed (68077) |
 | `bswap` | 93 of 3866 | 102 | 0 | crc32c 64, target-attribute 24, bit-liveness 2 | loads of neighbouring bytes merged into one load (92) |
 | `rejoin` | 0 of 3866 | 0 | 0 |  |  |
 | `constant-p` | 0 of 3866 | 0 | 0 |  |  |
 | `arm-hoist` | 38 of 3866 | 61 | 0 | value-settled 11, kprintf-format 7, file-scope-asm 4 | instruction both arms compute moved above the branch (61) |
-| `reassoc` | 746 of 3866 | 1670 | 0 | register-pressure 60, sigsetjmp 56, interpreter-dispatch 54 | integer tree rebuilt in rank order (1057) |
+| `reassoc` | 740 of 3866 | 1664 | 0 | register-pressure 60, sigsetjmp 56, interpreter-dispatch 54 | integer tree rebuilt in rank order (1031) |
 | `discharge` | 0 of 3866 | 0 | 0 |  |  |
 | `dead-plane` | 0 of 3866 | 0 | 0 |  |  |
 | `coalesce` | 0 of 3866 | 0 | 0 |  |  |
 | `plane-sink` | 0 of 3866 | 0 | 0 |  |  |
-| `loop-idiom` | 59 of 3861 | 59 | 2025 | loop-idiom 40, alias-analysis 8, kencc-layout 6 | loop that stores one byte over a range replaced by memset (35) |
-| `loop-delete` | 177 of 3866 | 640 | 4822 | loop-deletion 64, loop-idiom 40, register-pressure 12 | block nothing reaches removed (362) |
+| `loop-idiom` | 41 of 3861 | 41 | 1915 | loop-idiom 28, alias-analysis 6, kencc-layout 6 | loop that stores one byte over a range replaced by memset (25) |
+| `loop-delete` | 116 of 3866 | 421 | 4602 | loop-deletion 48, loop-idiom 28, bit-loops 8 | block nothing reaches removed (240) |
 | `adce` | 33 of 3866 | 182 | 0 | loop-deletion 16, kprintf-format 7, branch-probability 4 | instruction nothing necessary reads removed (86) |
-| `step-sink` | 211 of 3866 | 2713 | 0 | crc32c 64, simd-lfind 30, interpreter-dispatch 27 | step moved after the last read of the value it steps (2713) |
+| `step-sink` | 199 of 3866 | 2557 | 0 | crc32c 64, simd-lfind 30, interpreter-dispatch 27 | step moved after the last read of the value it steps (2557) |
 
