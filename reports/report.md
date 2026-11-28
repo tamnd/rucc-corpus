@@ -524,27 +524,27 @@ Furthest behind:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 54 percent less |
-| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 37 percent less |
-| `long-double` | backend | 10 | 38 percent more | not measured | level | 31 percent less |
+| `simd-lfind` | correctness | 30 | 67 percent more | not measured | inside the noise | 55 percent less |
+| `scheduling` | backend | 20 | 42 percent more | not measured | inside the noise | 36 percent less |
+| `long-double` | backend | 10 | 38 percent more | not measured | inside the noise | 35 percent less |
 | `interpreter-dispatch` | backend | 54 | 37 percent more | not measured | inside the noise | 61 percent less |
-| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 48 percent less |
-| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 42 percent less |
+| `overflow-builtins` | correctness | 144 | 23 percent more | not measured | inside the noise | 49 percent less |
+| `bit-builtins` | backend | 22 | 14 percent more | not measured | inside the noise | 43 percent less |
 | `tail-call` | interprocedural | 36 | 5 percent more | not measured | inside the noise | 36 percent less |
-| `target-attribute` | correctness | 52 | 4 percent more | not measured | inside the noise | 59 percent less |
+| `target-attribute` | correctness | 52 | 4 percent more | not measured | inside the noise | 57 percent less |
 
 Furthest ahead:
 
 | facet | phase | cases | code size | instructions | run time | compile time |
 |---|---|---|---|---|---|---|
-| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 43 percent less |
-| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 46 percent less |
-| `narrow-shift` | backend | 8 | 42 percent less | not measured | level | 55 percent less |
-| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 41 percent less |
-| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 44 percent less |
-| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 43 percent less |
-| `kprintf-format` | correctness | 7 | 32 percent less | not measured | inside the noise | 76 percent less |
-| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 40 percent less |
+| `short-circuit` | local | 26 | 43 percent less | not measured | inside the noise | 45 percent less |
+| `conditional-store` | local | 20 | 42 percent less | not measured | inside the noise | 47 percent less |
+| `narrow-shift` | backend | 8 | 42 percent less | not measured | inside the noise | 55 percent less |
+| `prune` | global | 15 | 39 percent less | not measured | inside the noise | 43 percent less |
+| `stack-slots` | backend | 6 | 35 percent less | not measured | inside the noise | 45 percent less |
+| `value-replacement` | global | 13 | 35 percent less | not measured | inside the noise | 46 percent less |
+| `kprintf-format` | correctness | 7 | 32 percent less | not measured | inside the noise | 77 percent less |
+| `value-settled` | local | 13 | 32 percent less | not measured | inside the noise | 43 percent less |
 
 ## What `-Os` does
 
